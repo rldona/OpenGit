@@ -4,6 +4,7 @@
 pub mod error;
 pub mod models;
 pub mod parsers;
+pub mod patch;
 pub mod runner;
 pub mod version;
 
@@ -137,6 +138,79 @@ pub fn worktree_file_diff(
     args.push(file.into());
     let output = runner.run_checked(&GitCommand::new(args).cwd(repo))?;
     Ok(output.stdout_lossy())
+}
+
+/// Parche de un fichero del working tree o del index, en bytes.
+pub fn worktree_diff_bytes(
+    runner: &Runner,
+    repo: &Path,
+    file: &str,
+    staged: bool,
+) -> Result<Vec<u8>, GitError> {
+    let mut args: Vec<OsString> = vec![
+        "diff".into(),
+        "--no-color".into(),
+        "--no-ext-diff".into(),
+        "-M".into(),
+    ];
+    if staged {
+        args.push("--cached".into());
+    }
+    args.push("--".into());
+    args.push(file.into());
+    let output = runner.run_checked(&GitCommand::new(args).cwd(repo))?;
+    Ok(output.stdout)
+}
+
+/// Aplica un parche al index por stdin (nunca por fichero temporal).
+pub fn apply_index_patch(
+    runner: &Runner,
+    repo: &Path,
+    patch: &[u8],
+    reverse: bool,
+) -> Result<(), GitError> {
+    let mut args: Vec<OsString> = vec![
+        "apply".into(),
+        "--cached".into(),
+        "--recount".into(),
+        "--whitespace=nowarn".into(),
+    ];
+    if reverse {
+        args.push("--reverse".into());
+    }
+    args.push("-".into());
+    runner
+        .run_checked(
+            &GitCommand::new(args)
+                .cwd(repo)
+                .write()
+                .stdin_bytes(patch.to_vec()),
+        )
+        .map(|_| ())
+}
+
+/// Stage/unstage parcial: fichero completo o una selección de hunks/líneas.
+pub fn stage_selection(
+    runner: &Runner,
+    repo: &Path,
+    file: &str,
+    staged: bool,
+    selection: &patch::HunkSelection,
+    reverse: bool,
+) -> Result<(), GitError> {
+    if matches!(selection, patch::HunkSelection::File) {
+        return if reverse {
+            crate::repo::ops::unstage_paths(runner, repo, &[file])
+        } else {
+            crate::repo::ops::stage_paths(runner, repo, &[file])
+        };
+    }
+    let data = worktree_diff_bytes(runner, repo, file, staged)?;
+    let parsed = patch::parse(&data);
+    let Some(built) = parsed.build(selection)? else {
+        return Ok(());
+    };
+    apply_index_patch(runner, repo, &built, reverse)
 }
 
 /// Parche de un fichero dentro de un commit (funciona también en el commit raíz).

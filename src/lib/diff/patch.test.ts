@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isBinaryPatch, splitPatch } from "./patch";
+import { classifyPatchLines, isBinaryPatch, splitPatch } from "./patch";
 
 const PATCH = [
   "diff --git a/a.txt b/a.txt",
@@ -60,6 +60,25 @@ describe("splitPatch", () => {
     const patch = ["diff --git a/a b/a", "old mode 100644", "new mode 100755", ""].join("\n");
     expect(splitPatch(patch)).toBeNull();
     expect(splitPatch("")).toBeNull();
+  });
+
+  it("clasifica las líneas del parche para la vista de staging", () => {
+    const lines = classifyPatchLines(PATCH);
+
+    expect(lines.map((line) => line.type)).toEqual([
+      "meta",
+      "meta",
+      "meta",
+      "meta",
+      "hunk",
+      "context",
+      "del",
+      "add",
+      "context",
+    ]);
+    expect(lines[5].index).toBe(5);
+    expect(lines[6].index).toBe(6);
+    expect(lines[8].hunk).toBe(0);
   });
 
   it("no confunde líneas de contenido que empiezan por guiones", () => {

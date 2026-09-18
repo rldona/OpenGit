@@ -20,3 +20,16 @@ export function commitFiles(path: string, rev: string): Promise<FileDiff[]> {
 export function diffNumstat(path: string, cached: boolean): Promise<FileDiff[]> {
   return invoke<FileDiff[]>("diff_numstat", { path, cached });
 }
+
+export type HunkSelection =
+  { kind: "file" } | { kind: "hunk"; index: number } | { kind: "lines"; indices: number[] };
+
+export function stageSelection(request: {
+  path: string;
+  file: string;
+  staged: boolean;
+  selection: HunkSelection;
+  reverse: boolean;
+}): Promise<void> {
+  return invoke<void>("stage_selection", request);
+}

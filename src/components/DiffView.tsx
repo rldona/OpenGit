@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useRepoStore } from "../lib/stores/repo";
 import { useDiffStore } from "../lib/stores/diff";
 import { DiffEditor } from "./DiffEditor";
+import { PatchView } from "./PatchView";
 
 export function DiffView() {
   const root = useRepoStore((state) => state.repo?.root ?? null);
@@ -15,10 +16,13 @@ export function DiffView() {
   const reversed = useDiffStore((state) => state.reversed);
   const loading = useDiffStore((state) => state.loading);
   const error = useDiffStore((state) => state.error);
+  const selectedLines = useDiffStore((state) => state.selectedLines);
   const openWorktree = useDiffStore((state) => state.openWorktree);
   const selectFile = useDiffStore((state) => state.selectFile);
   const setMode = useDiffStore((state) => state.setMode);
   const toggleReverse = useDiffStore((state) => state.toggleReverse);
+  const toggleLine = useDiffStore((state) => state.toggleLine);
+  const applySelection = useDiffStore((state) => state.applySelection);
 
   useEffect(() => {
     // Solo carga el working tree si no hay un objetivo previo (p. ej. un commit).
@@ -57,6 +61,24 @@ export function DiffView() {
         >
           Invertir
         </button>
+        {target?.kind === "worktree" && selected && !selected.untracked && (
+          <button
+            type="button"
+            onClick={() => void applySelection({ kind: "file" })}
+            disabled={loading}
+          >
+            {selected.staged ? "Unstage file" : "Stage file"}
+          </button>
+        )}
+        {target?.kind === "worktree" && selected && selectedLines.length > 0 && (
+          <button
+            type="button"
+            onClick={() => void applySelection({ kind: "lines", indices: selectedLines })}
+            disabled={loading}
+          >
+            {selected.staged ? "Unstage" : "Stage"} {selectedLines.length} línea(s)
+          </button>
+        )}
         {loading && <span className="muted">Cargando…</span>}
       </div>
 
@@ -104,7 +126,17 @@ export function DiffView() {
           {selected && !selected.untracked && binary && (
             <p className="muted status-empty">Fichero binario: no hay diff de texto.</p>
           )}
-          {selected && !selected.untracked && !binary && patch !== "" && (
+          {selected && !selected.untracked && !binary && patch !== "" && mode === "unified" && (
+            <PatchView
+              patch={patch}
+              staging={target?.kind === "worktree"}
+              stagedSide={selected.staged}
+              selectedLines={selectedLines}
+              onToggleLine={toggleLine}
+              onApply={(selection) => void applySelection(selection)}
+            />
+          )}
+          {selected && !selected.untracked && !binary && patch !== "" && mode === "side" && (
             <DiffEditor patch={patch} fileName={selected.path} mode={mode} />
           )}
         </div>
