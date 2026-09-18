@@ -6,7 +6,7 @@ Cliente de Git de escritorio, multiplataforma (Windows, macOS y Linux), inspirad
 
 ## Estado
 
-**M3 completado** el 2026-09-18. Además del MVP local y los remotos, la app gestiona stash y tags, hace cherry-pick/revert/reset suave y permite buscar commits por mensaje, autor o fichero. El siguiente paso es M4 (rebase interactivo y resolución de conflictos).
+**M4 completado** el 2026-09-18. Además del MVP local, los remotos y el historial avanzado, la app resuelve conflictos por bloques, avisa de operaciones en curso con Abort/Continue y ofrece rebase interactivo visual (pick/reword/squash/fixup/drop). El siguiente paso es M5 (pulido y releases).
 
 | Área | Decisión | ADR |
 | --- | --- | --- |
