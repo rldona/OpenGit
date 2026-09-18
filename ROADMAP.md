@@ -2,17 +2,17 @@
 
 Cada hito se cierra cuando sus tickets están en `done` y sus criterios de salida se cumplen. Los tickets viven en [`docs/tickets/`](docs/tickets/README.md).
 
-## M0 — Fundación
+## M0 — Fundación ✅ _(cerrado el 2026-09-18)_
 
 Documentación, decisiones y esqueleto ejecutable.
 
 - [x] ADRs 0001–0005 aceptados.
 - [x] Repositorio de agentes/skills/workflows en `.ai/`.
-- [ ] App Tauri 2 + React que compila y abre una ventana vacía en macOS, Windows y Linux. _(macOS verificado en OG-001; Windows y Linux pendientes de CI)_
+- [x] App Tauri 2 + React que compila y abre una ventana vacía en macOS, Windows y Linux (OG-001).
 - [x] Lint, typecheck y tests configurados (`npm run lint`, `npm run typecheck`, `cargo test`).
-- [ ] CI mínimo en GitHub Actions (matriz de los tres SO). _(workflow escrito en OG-001; pendiente de verificación en GitHub)_
+- [x] CI mínimo en GitHub Actions (matriz de los tres SO).
 
-**Salida:** `npm run tauri dev` abre la app; CI en verde.
+**Salida:** `npm run tauri dev` abre la app; CI en verde. ✅
 
 ## M1 — MVP local
 
