@@ -67,6 +67,9 @@ impl TodoAction {
 pub struct TodoItem {
     pub hash: String,
     pub action: TodoAction,
+    /// Mensaje nuevo para `reword`; en el resto de acciones se ignora.
+    #[serde(default)]
+    pub message: Option<String>,
 }
 
 /// Commits de `base..HEAD` en orden cronológico (el que se reescribe primero).
@@ -101,14 +104,13 @@ fn shell_quote(value: &str) -> String {
 }
 
 /// Ejecuta el rebase interactivo inyectando el todo-list con `GIT_SEQUENCE_EDITOR`.
-/// El fichero vive en el directorio de datos de la app, nunca en el repo.
+/// Los ficheros de mensaje viven en el directorio de datos de la app, nunca en el repo.
 pub fn interactive_rebase(
     runner: &Runner,
     repo: &Path,
     data_dir: &Path,
     base: &str,
     todos: &[TodoItem],
-    reword_message: Option<&str>,
 ) -> Result<(), GitError> {
     validate_commit_hash(base)?;
     if todos.is_empty() {
@@ -116,18 +118,16 @@ pub fn interactive_rebase(
     }
     for item in todos {
         validate_commit_hash(&item.hash)?;
-    }
-
-    let rewords = todos
-        .iter()
-        .filter(|item| item.action == TodoAction::Reword)
-        .count();
-    if rewords > 1 {
-        return Err(GitError::invalid("only one reword is supported"));
-    }
-    let message = reword_message.map(str::trim).unwrap_or("");
-    if rewords == 1 && message.is_empty() {
-        return Err(GitError::invalid("reword needs a message"));
+        if item.action == TodoAction::Reword
+            && item
+                .message
+                .as_deref()
+                .map(str::trim)
+                .unwrap_or("")
+                .is_empty()
+        {
+            return Err(GitError::invalid("reword needs a message"));
+        }
     }
 
     std::fs::create_dir_all(data_dir).map_err(|error| GitError::Io {
@@ -135,16 +135,18 @@ pub fn interactive_rebase(
     })?;
 
     let mut todo = String::new();
-    for item in todos {
+    for (index, item) in todos.iter().enumerate() {
         todo.push_str(item.action.as_git());
         todo.push(' ');
         todo.push_str(&item.hash);
         todo.push('\n');
         if item.action == TodoAction::Reword {
-            let message_file = data_dir.join("rebase-message.txt");
-            std::fs::write(&message_file, message).map_err(|error| GitError::Io {
-                message: error.to_string(),
-            })?;
+            let message_file = data_dir.join(format!("rebase-message-{index}.txt"));
+            std::fs::write(&message_file, item.message.as_deref().unwrap_or("").trim()).map_err(
+                |error| GitError::Io {
+                    message: error.to_string(),
+                },
+            )?;
             todo.push_str("exec git commit --amend -F ");
             todo.push_str(&shell_quote(&message_file.display().to_string()));
             todo.push('\n');

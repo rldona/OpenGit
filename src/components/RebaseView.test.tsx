@@ -70,8 +70,8 @@ const CLEAN: StatusReport = {
 };
 
 const ROWS = [
-  { hash: "aaaa1111", short: "aaaa1111", subject: "uno", action: "pick" as const },
-  { hash: "bbbb2222", short: "bbbb2222", subject: "dos", action: "pick" as const },
+  { hash: "aaaa1111", short: "aaaa1111", subject: "uno", action: "pick" as const, message: "" },
+  { hash: "bbbb2222", short: "bbbb2222", subject: "dos", action: "pick" as const, message: "" },
 ];
 
 describe("RebaseView", () => {
@@ -112,28 +112,26 @@ describe("RebaseView", () => {
     expect(rows.find((row) => row.subject === "uno")?.action).toBe("drop");
   });
 
-  it("pide mensaje al marcar reword y lo envía al ejecutar", async () => {
+  it("pide mensaje por fila reword y lo envía al ejecutar", async () => {
     const user = userEvent.setup();
     render(<RebaseView />);
 
     await user.selectOptions(screen.getByLabelText("Action for aaaa1111"), "reword");
+    await user.selectOptions(screen.getByLabelText("Action for bbbb2222"), "reword");
     const runButton = screen.getByRole("button", { name: "Run rebase" });
     expect(runButton).toBeDisabled();
 
-    await user.type(screen.getByLabelText("Reword message"), "mensaje nuevo");
+    await user.type(screen.getByLabelText("Reword message for aaaa1111"), "mensaje nuevo");
+    expect(runButton).toBeDisabled();
+    await user.type(screen.getByLabelText("Reword message for bbbb2222"), "otro mensaje");
     expect(runButton).toBeEnabled();
     await user.click(runButton);
 
     expect(confirmDestructive).toHaveBeenCalled();
-    expect(interactiveRebase).toHaveBeenCalledWith(
-      "/tmp/repo",
-      "base1234567",
-      [
-        { hash: "aaaa1111", action: "reword" },
-        { hash: "bbbb2222", action: "pick" },
-      ],
-      "mensaje nuevo",
-    );
+    expect(interactiveRebase).toHaveBeenCalledWith("/tmp/repo", "base1234567", [
+      { hash: "aaaa1111", action: "reword", message: "mensaje nuevo" },
+      { hash: "bbbb2222", action: "reword", message: "otro mensaje" },
+    ]);
   });
 
   it("cancelar vuelve al historial sin ejecutar", async () => {

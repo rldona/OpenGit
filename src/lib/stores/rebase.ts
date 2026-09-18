@@ -13,19 +13,19 @@ export type PlanRow = {
   short: string;
   subject: string;
   action: TodoAction;
+  message: string;
 };
 
 type RebaseState = {
   root: string | null;
   base: string | null;
   rows: PlanRow[];
-  rewordMessage: string;
   loading: boolean;
   error: string | null;
   open: (root: string, base: string) => Promise<void>;
   setAction: (index: number, action: TodoAction) => void;
   move: (index: number, delta: number) => void;
-  setRewordMessage: (message: string) => void;
+  setMessage: (index: number, message: string) => void;
   run: (root: string) => Promise<boolean>;
   reset: () => void;
 };
@@ -38,12 +38,11 @@ export const useRebaseStore = create<RebaseState>((set, get) => ({
   root: null,
   base: null,
   rows: [],
-  rewordMessage: "",
   loading: false,
   error: null,
 
   open: async (root, base) => {
-    set({ root, base, loading: true, error: null, rows: [], rewordMessage: "" });
+    set({ root, base, loading: true, error: null, rows: [] });
     try {
       const plan = await rebasePlan(root, base);
       if (plan.length === 0) {
@@ -56,6 +55,7 @@ export const useRebaseStore = create<RebaseState>((set, get) => ({
           short: commit.short,
           subject: commit.subject,
           action: "pick",
+          message: "",
         })),
         loading: false,
       });
@@ -66,16 +66,7 @@ export const useRebaseStore = create<RebaseState>((set, get) => ({
 
   setAction: (index, action) =>
     set((state) => ({
-      rows: state.rows.map((row, position) => {
-        if (position === index) {
-          return { ...row, action };
-        }
-        // Solo se permite un reword por plan (v1).
-        if (action === "reword" && row.action === "reword") {
-          return { ...row, action: "pick" };
-        }
-        return row;
-      }),
+      rows: state.rows.map((row, position) => (position === index ? { ...row, action } : row)),
     })),
 
   move: (index, delta) =>
@@ -89,16 +80,19 @@ export const useRebaseStore = create<RebaseState>((set, get) => ({
       return { rows };
     }),
 
-  setRewordMessage: (rewordMessage) => set({ rewordMessage }),
+  setMessage: (index, message) =>
+    set((state) => ({
+      rows: state.rows.map((row, position) => (position === index ? { ...row, message } : row)),
+    })),
 
   run: async (root) => {
-    const { base, rows, rewordMessage } = get();
+    const { base, rows } = get();
     if (!base || rows.length === 0) {
       return false;
     }
-    const hasReword = rows.some((row) => row.action === "reword");
-    if (hasReword && rewordMessage.trim() === "") {
-      set({ error: "Write the new message for the reworded commit" });
+    const missing = rows.some((row) => row.action === "reword" && row.message.trim() === "");
+    if (missing) {
+      set({ error: "Write the new message for every reworded commit" });
       return false;
     }
     set({ loading: true, error: null });
@@ -106,8 +100,11 @@ export const useRebaseStore = create<RebaseState>((set, get) => ({
       await interactiveRebase(
         root,
         base,
-        rows.map((row) => ({ hash: row.hash, action: row.action })),
-        hasReword ? rewordMessage : null,
+        rows.map((row) => ({
+          hash: row.hash,
+          action: row.action,
+          message: row.action === "reword" ? row.message : null,
+        })),
       );
       output(`Interactive rebase of ${rows.length} commit(s) done`);
       set({ loading: false });
@@ -133,7 +130,6 @@ export const useRebaseStore = create<RebaseState>((set, get) => ({
       root: null,
       base: null,
       rows: [],
-      rewordMessage: "",
       loading: false,
       error: null,
     }),

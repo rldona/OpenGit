@@ -37,6 +37,15 @@ fn item(hash: &str, action: TodoAction) -> TodoItem {
     TodoItem {
         hash: hash.to_string(),
         action,
+        message: None,
+    }
+}
+
+fn reword(hash: &str, message: &str) -> TodoItem {
+    TodoItem {
+        hash: hash.to_string(),
+        action: TodoAction::Reword,
+        message: Some(message.to_string()),
     }
 }
 
@@ -85,7 +94,6 @@ fn squash_y_fixup_unen_commits() {
             item(&hashes[1], TodoAction::Squash),
             item(&hashes[2], TodoAction::Fixup),
         ],
-        None,
     )
     .expect("rebase");
 
@@ -119,7 +127,6 @@ fn drop_elimina_los_cambios_del_commit() {
             item(&hashes[1], TodoAction::Drop),
             item(&hashes[2], TodoAction::Pick),
         ],
-        None,
     )
     .expect("rebase");
 
@@ -132,7 +139,7 @@ fn drop_elimina_los_cambios_del_commit() {
 }
 
 #[test]
-fn reword_cambia_el_mensaje_con_un_unico_texto() {
+fn reword_cambia_el_mensaje() {
     let (repo, data, base, hashes) = setup();
 
     interactive_rebase(
@@ -142,10 +149,9 @@ fn reword_cambia_el_mensaje_con_un_unico_texto() {
         &base,
         &[
             item(&hashes[0], TodoAction::Pick),
-            item(&hashes[1], TodoAction::Reword),
+            reword(&hashes[1], "mensaje nuevo"),
             item(&hashes[2], TodoAction::Pick),
         ],
-        Some("mensaje nuevo"),
     )
     .expect("rebase");
 
@@ -166,7 +172,6 @@ fn reordenar_commits() {
             item(&hashes[0], TodoAction::Pick),
             item(&hashes[2], TodoAction::Pick),
         ],
-        None,
     )
     .expect("rebase");
 
@@ -174,22 +179,8 @@ fn reordenar_commits() {
 }
 
 #[test]
-fn reword_sin_mensaje_o_duplicado_falla() {
+fn reword_sin_mensaje_falla() {
     let (repo, data, base, hashes) = setup();
-
-    let error = interactive_rebase(
-        &runner(),
-        repo.path(),
-        data.path(),
-        &base,
-        &[item(&hashes[0], TodoAction::Reword)],
-        None,
-    )
-    .expect_err("sin mensaje");
-    assert!(
-        format!("{error}").contains("reword needs a message"),
-        "{error}"
-    );
 
     let error = interactive_rebase(
         &runner(),
@@ -198,12 +189,41 @@ fn reword_sin_mensaje_o_duplicado_falla() {
         &base,
         &[
             item(&hashes[0], TodoAction::Reword),
-            item(&hashes[1], TodoAction::Reword),
+            reword(&hashes[1], "mensaje"),
         ],
-        Some("mensaje"),
     )
-    .expect_err("dos rewords");
-    assert!(format!("{error}").contains("only one reword"), "{error}");
+    .expect_err("reword sin mensaje");
+    assert!(
+        format!("{error}").contains("reword needs a message"),
+        "{error}"
+    );
+}
+
+#[test]
+fn dos_rewords_aplican_mensajes_distintos() {
+    let (repo, data, base, hashes) = setup();
+
+    interactive_rebase(
+        &runner(),
+        repo.path(),
+        data.path(),
+        &base,
+        &[
+            reword(&hashes[0], "primero nuevo"),
+            item(&hashes[1], TodoAction::Pick),
+            reword(&hashes[2], "tercero nuevo"),
+        ],
+    )
+    .expect("rebase");
+
+    assert_eq!(
+        subjects(&repo, &base),
+        vec!["primero nuevo", "c2", "tercero nuevo"]
+    );
+    assert_eq!(
+        std::fs::read_to_string(repo.path().join("a.txt")).unwrap(),
+        "tres\n"
+    );
 }
 
 #[test]
@@ -223,7 +243,6 @@ fn un_conflicto_deja_el_rebase_en_curso_y_se_aborta() {
         data.path(),
         &base,
         &[item(&c2, TodoAction::Pick), item(&c1, TodoAction::Pick)],
-        None,
     )
     .expect_err("conflicto");
     assert!(
