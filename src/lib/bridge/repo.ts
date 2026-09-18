@@ -16,3 +16,8 @@ export function recentRepos(): Promise<RecentRepo[]> {
 export function removeRecentRepo(path: string): Promise<void> {
   return invoke<void>("remove_recent_repo", { path });
 }
+
+/** Detiene el watcher del repo abierto. */
+export function closeRepo(): Promise<void> {
+  return invoke<void>("close_repo");
+}

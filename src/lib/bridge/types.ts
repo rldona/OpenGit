@@ -30,6 +30,25 @@ export type Commit = {
   subject: string;
 };
 
+export type StatusKind = "ordinary" | "renamed" | "unmerged" | "untracked" | "ignored";
+
+export type FileStatus = {
+  kind: StatusKind;
+  xy: string;
+  path: string;
+  orig_path: string | null;
+};
+
+export type StatusReport = {
+  head: string | null;
+  branch: string | null;
+  detached: boolean;
+  upstream: string | null;
+  ahead: number;
+  behind: number;
+  entries: FileStatus[];
+};
+
 export type RefEntry = {
   name: string;
   object_id: string;

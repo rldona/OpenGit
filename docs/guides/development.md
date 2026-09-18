@@ -53,17 +53,18 @@ Artefactos: `opengit-macos`, `opengit-linux`, `opengit-windows`.
 ```
 src/                        # React + TS
   App.tsx                   # layout: toolbar, sidebar, historial, salida
-  components/               # HistoryView, GraphCanvas (OG-004)
+  components/               # HistoryView, GraphCanvas, StatusView
   lib/bridge/               # envoltorios tipados de invoke/eventos
   lib/graph/                # layout de lanes, puro y testeable (OG-004)
-  lib/stores/               # stores de Zustand (ui, repo, log)
+  lib/hooks/                # useRepoEvents (watcher → stores, OG-010)
+  lib/stores/               # stores de Zustand (ui, repo, log, status)
   styles/                   # CSS global
   test/                     # setup de Vitest
 src-tauri/                  # Rust
   src/lib.rs                # arranque de Tauri y estado de la app
   src/commands.rs           # comandos expuestos a la UI
   src/git/                  # runner y parsers (OG-003)
-  src/repo/                 # apertura de repositorios y recientes (OG-002)
+  src/repo/                 # apertura, recientes y operaciones (OG-002, OG-009)
   src/watch/                # watcher de .git (OG-010)
   tests/fixtures/           # salidas reales de git (strings)
   tests/                    # integración: runner, parsers, repo
