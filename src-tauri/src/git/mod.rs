@@ -25,6 +25,141 @@ pub const LOG_FORMAT: &str = "%H%x1f%P%x1f%an%x1f%ae%x1f%at%x1f%D%x1f%s";
 pub const REFS_FORMAT: &str =
     "%(refname)%00%(objectname)%00%(objecttype)%00%(upstream)%00%(upstream:track)";
 
+/// Rama actual y su relación con el upstream.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct BranchTracking {
+    pub current: Option<String>,
+    pub upstream: Option<String>,
+    pub ahead: u32,
+    pub behind: u32,
+}
+
+/// En qué rama estamos y cuántos commits hay por delante/detrás del upstream.
+pub fn branch_tracking(runner: &Runner, repo: &Path) -> Result<BranchTracking, GitError> {
+    let current_output =
+        runner.run(&GitCommand::new(["symbolic-ref", "--short", "-q", "HEAD"]).cwd(repo))?;
+    let current = if current_output.success() {
+        let name = current_output.stdout_lossy().trim().to_string();
+        if name.is_empty() {
+            None
+        } else {
+            Some(name)
+        }
+    } else {
+        None
+    };
+
+    let upstream_output = runner.run(
+        &GitCommand::new([
+            "rev-parse",
+            "--abbrev-ref",
+            "--symbolic-full-name",
+            "@{upstream}",
+        ])
+        .cwd(repo),
+    )?;
+    if !upstream_output.success() {
+        return Ok(BranchTracking {
+            current,
+            upstream: None,
+            ahead: 0,
+            behind: 0,
+        });
+    }
+    let upstream = upstream_output.stdout_lossy().trim().to_string();
+
+    let counts = runner.run_checked(
+        &GitCommand::new(["rev-list", "--left-right", "--count", "HEAD...@{upstream}"]).cwd(repo),
+    )?;
+    let text = counts.stdout_lossy();
+    let mut parts = text.split_whitespace();
+    let ahead = parts
+        .next()
+        .and_then(|value| value.parse().ok())
+        .unwrap_or(0);
+    let behind = parts
+        .next()
+        .and_then(|value| value.parse().ok())
+        .unwrap_or(0);
+
+    Ok(BranchTracking {
+        current,
+        upstream: Some(upstream),
+        ahead,
+        behind,
+    })
+}
+
+fn validate_branch_name(runner: &Runner, repo: &Path, name: &str) -> Result<(), GitError> {
+    let output = runner.run(&GitCommand::new(["check-ref-format", "--branch", name]).cwd(repo))?;
+    if !output.success() {
+        return Err(GitError::invalid(format!("invalid branch name: {name}")));
+    }
+    Ok(())
+}
+
+/// Checkout de una rama local o, con `track`, de una remota creando la local.
+pub fn checkout_ref(
+    runner: &Runner,
+    repo: &Path,
+    target: &str,
+    track: bool,
+) -> Result<(), GitError> {
+    validate_branch_name(runner, repo, target)?;
+    let mut args: Vec<OsString> = vec!["checkout".into()];
+    if track {
+        args.push("--track".into());
+    }
+    args.push(target.into());
+    runner
+        .run_checked(&GitCommand::new(args).cwd(repo).write())
+        .map(|_| ())
+}
+
+/// Crea una rama en un punto de partida (hash o ref).
+pub fn create_branch(
+    runner: &Runner,
+    repo: &Path,
+    name: &str,
+    start_point: &str,
+) -> Result<(), GitError> {
+    validate_branch_name(runner, repo, name)?;
+    let args: Vec<OsString> = vec![
+        "branch".into(),
+        "--".into(),
+        name.into(),
+        start_point.into(),
+    ];
+    runner
+        .run_checked(&GitCommand::new(args).cwd(repo).write())
+        .map(|_| ())
+}
+
+pub fn rename_branch(runner: &Runner, repo: &Path, old: &str, new: &str) -> Result<(), GitError> {
+    validate_branch_name(runner, repo, new)?;
+    runner
+        .run_checked(
+            &GitCommand::new(["branch", "-m", old, new])
+                .cwd(repo)
+                .write(),
+        )
+        .map(|_| ())
+}
+
+/// `force = false` usa `-d`; `-D` solo tras confirmación explícita en la UI.
+pub fn delete_branch(
+    runner: &Runner,
+    repo: &Path,
+    name: &str,
+    force: bool,
+) -> Result<(), GitError> {
+    validate_branch_name(runner, repo, name)?;
+    let flag = if force { "-D" } else { "-d" };
+    runner
+        .run_checked(&GitCommand::new(["branch", flag, name]).cwd(repo).write())
+        .map(|_| ())
+}
+
 /// Resultado de crear un commit.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct CommitResult {

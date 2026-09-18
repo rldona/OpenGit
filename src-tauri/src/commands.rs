@@ -257,6 +257,62 @@ pub fn repo_op_state(
 }
 
 #[tauri::command]
+pub fn branch_tracking(
+    path: String,
+    state: State<'_, AppState>,
+) -> Result<crate::git::BranchTracking, GitError> {
+    crate::git::branch_tracking(&state.runner, Path::new(&path))
+}
+
+#[tauri::command]
+pub fn checkout_ref(
+    path: String,
+    target: String,
+    track: bool,
+    state: State<'_, AppState>,
+) -> Result<(), GitError> {
+    pause_while(&state, || {
+        crate::git::checkout_ref(&state.runner, Path::new(&path), &target, track)
+    })
+}
+
+#[tauri::command]
+pub fn create_branch(
+    path: String,
+    name: String,
+    start_point: String,
+    state: State<'_, AppState>,
+) -> Result<(), GitError> {
+    pause_while(&state, || {
+        crate::git::create_branch(&state.runner, Path::new(&path), &name, &start_point)
+    })
+}
+
+#[tauri::command]
+pub fn rename_branch(
+    path: String,
+    old: String,
+    new_name: String,
+    state: State<'_, AppState>,
+) -> Result<(), GitError> {
+    pause_while(&state, || {
+        crate::git::rename_branch(&state.runner, Path::new(&path), &old, &new_name)
+    })
+}
+
+#[tauri::command]
+pub fn delete_branch(
+    path: String,
+    name: String,
+    force: bool,
+    state: State<'_, AppState>,
+) -> Result<(), GitError> {
+    pause_while(&state, || {
+        crate::git::delete_branch(&state.runner, Path::new(&path), &name, force)
+    })
+}
+
+#[tauri::command]
 pub fn recent_repos(state: State<'_, AppState>) -> Result<Vec<RecentRepo>, GitError> {
     Ok(state.recents.lock().map_err(lock_error)?.list())
 }

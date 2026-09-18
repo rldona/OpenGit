@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { DiffView } from "./components/DiffView";
 import { HistoryView } from "./components/HistoryView";
+import { RefsSidebar } from "./components/RefsSidebar";
 import { StatusView } from "./components/StatusView";
 import { getAppVersion } from "./lib/bridge/core";
 import { useRepoEvents } from "./lib/hooks/useRepoEvents";
@@ -136,12 +137,19 @@ function App() {
             )}
           </section>
 
-          {["Branches", "Tags", "Remotes", "Stashes"].map((title) => (
-            <section key={title} className="sidebar-section">
-              <h2>{title}</h2>
-              <p className="muted">{repo ? "—" : "No repository open"}</p>
+          {repo ? (
+            <RefsSidebar />
+          ) : (
+            <section className="sidebar-section">
+              <h2>Branches</h2>
+              <p className="muted">No repository open</p>
             </section>
-          ))}
+          )}
+
+          <section className="sidebar-section">
+            <h2>Stashes</h2>
+            <p className="muted">{repo ? "—" : "No repository open"}</p>
+          </section>
         </aside>
 
         <main className="content" aria-label="History">

@@ -861,6 +861,209 @@ body {
   border-color: var(--accent);
 }
 
+.refs-toolbar {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.refs-toolbar input {
+  flex: 1;
+  min-width: 0;
+  padding: 3px 6px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-elevated);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+}
+
+.refs-toolbar button {
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.refs-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.refs-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  border-radius: 4px;
+}
+
+.refs-name {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  overflow: hidden;
+  padding: 3px 6px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.refs-name:hover {
+  background: var(--hover);
+}
+
+.refs-name.current {
+  font-weight: 600;
+}
+
+.refs-dot {
+  color: var(--accent);
+  font-size: 10px;
+}
+
+.refs-track {
+  margin-left: auto;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.refs-actions {
+  display: none;
+  gap: 4px;
+}
+
+.refs-item:hover .refs-actions {
+  display: flex;
+}
+
+.refs-actions button,
+.refs-inline button {
+  padding: 1px 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.refs-actions button:hover,
+.refs-inline button:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.refs-actions button.danger:hover,
+.refs-force button.danger:hover {
+  border-color: #dc2626;
+  color: #fca5a5;
+}
+
+.refs-inline {
+  display: flex;
+  gap: 4px;
+  width: 100%;
+  padding: 2px 0;
+}
+
+.refs-inline input {
+  flex: 1;
+  min-width: 0;
+  padding: 2px 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-elevated);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+}
+
+.refs-force {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: 2px 0;
+  font-size: 11px;
+}
+
+.refs-force input {
+  width: 100%;
+  padding: 2px 6px;
+  border: 1px solid #dc2626;
+  border-radius: 4px;
+  background: var(--bg-elevated);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+}
+
+.refs-force button {
+  padding: 1px 8px;
+  border: 1px solid #dc2626;
+  border-radius: 4px;
+  background: transparent;
+  color: #fca5a5;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.refs-group {
+  margin: 4px 0 2px;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.refs-tag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+  padding: 3px 6px;
+  border-radius: 4px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.refs-tag-mark {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+
+.refs-tag-mark.annotated {
+  background: #9a7bd8;
+}
+
+.refs-error {
+  margin: 0;
+  padding: 6px 8px;
+  border: 1px solid #7f1d1d;
+  border-radius: 6px;
+  background: #2a1416;
+  color: #fca5a5;
+  font-size: 12px;
+}
+
 .commit-panel {
   display: flex;
   flex-direction: column;
