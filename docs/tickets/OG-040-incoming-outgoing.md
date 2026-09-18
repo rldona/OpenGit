@@ -1,7 +1,7 @@
 # OG-040 · Commits entrantes/salientes con badges
 
 - **Milestone:** M6 — Paridad visual con SourceTree
-- **Estado:** in-progress
+- **Estado:** done
 - **Depende de:** OG-008, OG-037
 - **Referencias:** ROADMAP.md
 
@@ -43,4 +43,4 @@ El tracking solo se muestra junto a la rama actual (↑/↓ globales) y el grafo
 - Frontend: `parseTrack` para `[ahead N, behind M]` (también `[gone]`/vacío → null); el sidebar pinta ↑/↓ en cualquier rama con upstream usando el campo `track` de `for-each-ref`; el store de refs carga incoming/outgoing solo si hay upstream (una llamada extra por refresco).
 - Historial: badge ↓/↑ y clase `incoming`/`outgoing` por fila; los entrantes tiñen el asunto con el acento.
 - Tests: 232 frontend (2 de parseTrack, 2 de store, aserciones en sidebar y App) y 121 Rust (1 de integración).
-- Pendiente para cerrar: PR y CI verde.
+- Cerrado el 2026-09-18 con CI verde (Frontend 50 s, Rust 1m58s) en el PR #37. Con esto queda completo M6.
