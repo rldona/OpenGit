@@ -64,3 +64,4 @@ Un fichero por ticket, nombrado `OG-NNN-slug.md`. Todo cambio del repositorio na
 | [OG-029](OG-029-reword-multiple.md) | Reword múltiple en rebase (v2) | M5 | done |
 | [OG-030](OG-030-diff-stash.md) | Diff de stash | M5 | done |
 | [OG-031](OG-031-descartar-hunks.md) | Descartar hunks y líneas | M5 | done |
+| [OG-032](OG-032-arbol-ficheros.md) | Árbol de ficheros en diff y status | M5 | in-progress |
