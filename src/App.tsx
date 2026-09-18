@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ConflictView } from "./components/ConflictView";
 import { DiffView } from "./components/DiffView";
 import { HistoryView } from "./components/HistoryView";
 import { OpBanner } from "./components/OpBanner";
@@ -12,6 +13,7 @@ import { useRepoEvents } from "./lib/hooks/useRepoEvents";
 import { useRefsStore } from "./lib/stores/refs";
 import { useRemoteStore } from "./lib/stores/remote";
 import { useRepoStore } from "./lib/stores/repo";
+import { useStatusStore } from "./lib/stores/status";
 import { useUiStore } from "./lib/stores/ui";
 
 function App() {
@@ -36,6 +38,9 @@ function App() {
   const cancelRemote = useRemoteStore((state) => state.cancel);
   const currentBranch = useRefsStore((state) => state.current);
   const currentUpstream = useRefsStore((state) => state.upstream);
+  const conflictCount = useStatusStore(
+    (state) => state.report?.entries.filter((entry) => entry.kind === "unmerged").length ?? 0,
+  );
 
   const [coreVersion, setCoreVersion] = useState<string | null>(null);
 
@@ -191,6 +196,15 @@ function App() {
                     Diff
                   </button>
                 </li>
+                <li>
+                  <button
+                    type="button"
+                    className={`view-button${activeView === "conflict" ? " active" : ""}`}
+                    onClick={() => setActiveView("conflict")}
+                  >
+                    Conflicts{conflictCount > 0 ? ` (${conflictCount})` : ""}
+                  </button>
+                </li>
               </ul>
             ) : (
               <p className="muted">No repository open</p>
@@ -227,6 +241,8 @@ function App() {
               <StatusView />
             ) : activeView === "diff" ? (
               <DiffView />
+            ) : activeView === "conflict" ? (
+              <ConflictView />
             ) : (
               <HistoryView />
             )

@@ -1,7 +1,7 @@
 //! Operaciones de escritura sobre el working tree y el index (OG-009).
 
 use std::ffi::OsString;
-use std::path::{Component, Path};
+use std::path::{Component, Path, PathBuf};
 
 use crate::git::{
     error::GitError,
@@ -47,8 +47,7 @@ pub fn discard_paths(runner: &Runner, repo: &Path, files: &[&str]) -> Result<(),
         .map(|_| ())
 }
 
-/// Borra un fichero sin trackear, validando que la ruta es relativa al repo.
-pub fn remove_untracked(repo: &Path, file: &str) -> Result<(), GitError> {
+fn relative_path(file: &str) -> Result<PathBuf, GitError> {
     let relative = Path::new(file);
     if relative.is_absolute()
         || relative
@@ -57,7 +56,39 @@ pub fn remove_untracked(repo: &Path, file: &str) -> Result<(), GitError> {
     {
         return Err(GitError::invalid("path outside the repository"));
     }
+    Ok(relative.to_path_buf())
+}
+
+/// Borra un fichero sin trackear, validando que la ruta es relativa al repo.
+pub fn remove_untracked(repo: &Path, file: &str) -> Result<(), GitError> {
+    let relative = relative_path(file)?;
     std::fs::remove_file(repo.join(relative)).map_err(|error| GitError::Io {
         message: error.to_string(),
     })
+}
+
+/// Lee un fichero del working tree; `binary = true` si no es UTF-8.
+pub fn read_worktree_file(repo: &Path, file: &str) -> Result<(String, bool), GitError> {
+    let relative = relative_path(file)?;
+    let bytes = std::fs::read(repo.join(relative)).map_err(|error| GitError::Io {
+        message: error.to_string(),
+    })?;
+    match String::from_utf8(bytes) {
+        Ok(content) => Ok((content, false)),
+        Err(_) => Ok((String::new(), true)),
+    }
+}
+
+/// Escribe el contenido resuelto y lo pasa al index.
+pub fn write_and_stage(
+    runner: &Runner,
+    repo: &Path,
+    file: &str,
+    content: &str,
+) -> Result<(), GitError> {
+    let relative = relative_path(file)?;
+    std::fs::write(repo.join(relative), content.as_bytes()).map_err(|error| GitError::Io {
+        message: error.to_string(),
+    })?;
+    stage_paths(runner, repo, &[file])
 }
