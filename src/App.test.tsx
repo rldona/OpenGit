@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
 import { getAppVersion } from "./lib/bridge/core";
 import { pickDirectory } from "./lib/bridge/dialog";
+import { readConflictFile } from "./lib/bridge/conflict";
 import { subscribeRepoEvents } from "./lib/bridge/events";
 import { cherryPick } from "./lib/bridge/history";
 import { repoOpAbort } from "./lib/bridge/ops";
@@ -26,6 +27,11 @@ vi.mock("./lib/bridge/core", () => ({
 vi.mock("./lib/bridge/dialog", () => ({
   pickDirectory: vi.fn(),
   confirmDestructive: vi.fn().mockResolvedValue(true),
+}));
+
+vi.mock("./lib/bridge/conflict", () => ({
+  readConflictFile: vi.fn(),
+  resolveConflict: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("./lib/bridge/ops", () => ({
@@ -194,6 +200,32 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: "Fetch" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Pull" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Push" })).toBeInTheDocument();
+  });
+
+  it("abre el editor de conflictos desde File status", async () => {
+    const user = userEvent.setup();
+    const conflictContent = [
+      "comun",
+      "<<<<<<< HEAD",
+      "nuestra",
+      "=======",
+      "suya",
+      ">>>>>>> feature",
+      "",
+    ].join("\n");
+    vi.mocked(statusRepo).mockResolvedValue({
+      ...REPORT,
+      entries: [{ kind: "unmerged", xy: "UU", path: "conflicto.txt", orig_path: null }],
+    });
+    vi.mocked(readConflictFile).mockResolvedValue({ content: conflictContent, binary: false });
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Choose folder" }));
+    await user.click(await screen.findByRole("button", { name: "File status" }));
+    await user.click(await screen.findByText("conflicto.txt"));
+
+    expect(await screen.findByRole("button", { name: "Take ours" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Conflicts (1)" })).toBeInTheDocument();
   });
 
   it("muestra el banner de operación con Abort y Continue", async () => {

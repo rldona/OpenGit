@@ -25,7 +25,7 @@ export function CommitPanel() {
   }, [root, load]);
 
   const staged = (report?.entries ?? []).filter(
-    (entry) => entry.kind !== "untracked" && entry.xy[0] !== ".",
+    (entry) => entry.kind !== "untracked" && entry.kind !== "unmerged" && entry.xy[0] !== ".",
   );
   const operationActive = opState.merge || opState.rebase || opState.cherry_pick || opState.revert;
 

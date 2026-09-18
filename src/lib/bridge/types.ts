@@ -20,6 +20,11 @@ export type RecentRepo = {
   opened_at: number;
 };
 
+export type ConflictFile = {
+  content: string;
+  binary: boolean;
+};
+
 export type LogSearch = {
   grep: string;
   author: string;
