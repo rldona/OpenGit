@@ -60,7 +60,7 @@ Todo lo necesario para trabajar sin tocar el terminal en repos locales.
 - [x] Temas claro/oscuro (OG-022) y atajos de teclado (OG-023).
 - [x] Submódulos y worktrees en modo lectura (OG-024).
 - [x] Git LFS: detección y avisos (OG-025).
-- [x] Empaquetado y releases sin firmar para los tres SO (OG-026); firma, notarización, updater y rpm quedan para fase 2.
+- [x] Empaquetado y releases para los tres SO con instaladores sin firmar (OG-026, OG-027); la firma y la notarización quedan descartadas por coste (OG-028).
 
 **Salida:** temas, atajos, submódulos/worktrees y avisos LFS en la app, y borrador de release con instaladores desde un tag. ✅
 
@@ -69,3 +69,5 @@ Todo lo necesario para trabajar sin tocar el terminal en repos locales.
 - Reimplementar git (nunca).
 - Integraciones profundas con hostings (PRs, issues) — como mucho, abrir la URL del remoto.
 - Edición de ficheros dentro de la app.
+- Firma y notarización de instaladores: su coste no se asume; se distribuye sin firmar (OG-028).
+- Auto-updater, empaquetado `.rpm` y canales beta.

@@ -63,7 +63,7 @@ El workflow `release.yml`:
 2. Construye los bundles en los tres SO: `.dmg` en macOS; `.deb` y `.AppImage` en Linux; `.msi` y `.exe` (NSIS) en Windows.
 3. Crea un **borrador** de release con las notas generadas y los instaladores adjuntos; revísalo en GitHub y publícalo a mano.
 
-Sin firma ni notarización todavía (fase 2): macOS y Windows avisarán al abrir el instalador. Para relanzar un release ya iniciado: `gh workflow run release.yml -f tag=vX.Y.Z` (los artefactos existentes se reemplazan).
+Sin firma ni notarización (decisión del proyecto, OG-028): macOS y Windows avisarán al abrir el instalador. Las instrucciones para los usuarios están en el README. Para relanzar un release ya iniciado: `gh workflow run release.yml -f tag=vX.Y.Z` (los artefactos existentes se reemplazan).
 
 ## Estructura
 

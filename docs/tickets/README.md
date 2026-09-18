@@ -60,3 +60,4 @@ Un fichero por ticket, nombrado `OG-NNN-slug.md`. Todo cambio del repositorio na
 | [OG-025](OG-025-lfs.md) | Git LFS: detección y avisos | M5 | done |
 | [OG-026](OG-026-releases.md) | Empaquetado y releases (fase 1) | M5 | done |
 | [OG-027](OG-027-release-artefactos.md) | Arreglar subida de artefactos del release | M5 | done |
+| [OG-028](OG-028-sin-firma.md) | Distribución sin firma | M5 | in-progress |
