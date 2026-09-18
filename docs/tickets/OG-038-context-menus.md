@@ -1,7 +1,7 @@
 # OG-038 · Menús contextuales
 
 - **Milestone:** M6 — Paridad visual con SourceTree
-- **Estado:** in-progress
+- **Estado:** done
 - **Depende de:** OG-037
 - **Referencias:** ROADMAP.md
 
@@ -45,4 +45,4 @@ Todas las acciones exigen botones visibles o el panel de detalle. SourceTree con
 - `copyText` sin plugins: `navigator.clipboard` con fallback a `document.execCommand`.
 - Menús: commits (6 acciones), ramas (Checkout/Rename/Delete/Copy name, Delete deshabilitado en la rama actual), tags (Push/Delete/Copy name), ramas remotas (Checkout/Copy name), status (Open diff/Stage o Unstage/Discard/Delete/Copy path) y diff (Select/Copy path).
 - Tests: 224 frontend (3 del menú, 3 de integración) y 120 Rust intactos.
-- Pendiente para cerrar: PR y CI verde.
+- Cerrado el 2026-09-18 con CI verde (Frontend 36 s, Rust 2m16s) en el PR #35.
