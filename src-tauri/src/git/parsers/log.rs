@@ -1,20 +1,24 @@
 use crate::git::error::GitError;
 use crate::git::models::Commit;
 
-use super::{split_fields, split_records, text};
+use super::{split_records, splitn, text};
 
 const FIELD_SEP: u8 = 0x1f;
 const RECORD_SEP: u8 = 0;
-const EXPECTED_FIELDS: usize = 7;
+const EXPECTED_FIELDS: usize = 8;
 
-/// Parsea `git log -z --format=%H%x1f%P%x1f%an%x1f%ae%x1f%at%x1f%D%x1f%s`.
+/// Parsea `git log -z --format=%H%x1f%P%x1f%an%x1f%ae%x1f%at%x1f%D%x1f%s%x1f%b`.
+///
+/// El cuerpo (`%b`) va el último a propósito: puede contener saltos de línea y,
+/// en teoría, el propio separador de campos, así que se trocea con `splitn` y
+/// todo lo que sobra se queda en el cuerpo en vez de romper el registro.
 pub fn parse_log(data: &[u8]) -> Result<Vec<Commit>, GitError> {
     let mut commits = Vec::new();
     for record in split_records(data, RECORD_SEP) {
         if record.is_empty() {
             continue;
         }
-        let fields = split_fields(record, FIELD_SEP);
+        let fields = splitn(record, FIELD_SEP, EXPECTED_FIELDS);
         if fields.len() != EXPECTED_FIELDS {
             return Err(GitError::invalid(format!(
                 "log record with {} fields, expected {EXPECTED_FIELDS}",
@@ -43,6 +47,9 @@ pub fn parse_log(data: &[u8]) -> Result<Vec<Commit>, GitError> {
                 .map(str::to_owned)
                 .collect(),
             subject: text(fields[6]),
+            // git cierra `%b` con saltos de línea sobrantes; el cuerpo vacío
+            // debe quedar como cadena vacía, no como "\n\n".
+            body: text(fields[7]).trim_end().to_owned(),
         });
     }
     Ok(commits)
