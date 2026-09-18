@@ -59,10 +59,13 @@ src/                        # React + TS
   styles/                   # CSS global
   test/                     # setup de Vitest
 src-tauri/                  # Rust
-  src/lib.rs                # comandos Tauri y arranque
+  src/lib.rs                # arranque de Tauri y estado de la app
+  src/commands.rs           # comandos expuestos a la UI
   src/git/                  # runner y parsers (OG-003)
+  src/repo/                 # apertura de repositorios y recientes (OG-002)
   src/watch/                # watcher de .git (OG-010)
   tests/fixtures/           # salidas reales de git (strings)
+  tests/                    # integración: runner, parsers, repo
 ```
 
 ## Flujo de trabajo
