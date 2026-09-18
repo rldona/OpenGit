@@ -1,11 +1,16 @@
 import { useEffect, useRef } from "react";
-import { LanguageDescription } from "@codemirror/language";
+import {
+  LanguageDescription,
+  defaultHighlightStyle,
+  syntaxHighlighting,
+} from "@codemirror/language";
 import { languages } from "@codemirror/language-data";
 import { MergeView } from "@codemirror/merge";
 import { EditorState, RangeSetBuilder, type Extension } from "@codemirror/state";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { Decoration, EditorView, lineNumbers } from "@codemirror/view";
 import { splitPatch } from "../lib/diff/patch";
+import { useThemeStore } from "../lib/stores/theme";
 
 const addLine = Decoration.line({ class: "diff-line-add" });
 const delLine = Decoration.line({ class: "diff-line-del" });
@@ -51,6 +56,7 @@ type Props = {
 
 export function DiffEditor({ patch, fileName, mode }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const theme = useThemeStore((state) => state.resolved);
 
   useEffect(() => {
     const parent = containerRef.current;
@@ -68,7 +74,7 @@ export function DiffEditor({ patch, fileName, mode }: Props) {
         return;
       }
       const common = [
-        oneDark,
+        ...(theme === "dark" ? [oneDark] : [syntaxHighlighting(defaultHighlightStyle)]),
         baseTheme,
         lineNumbers(),
         EditorState.readOnly.of(true),
@@ -101,7 +107,7 @@ export function DiffEditor({ patch, fileName, mode }: Props) {
       merge?.destroy();
       view?.destroy();
     };
-  }, [patch, fileName, mode]);
+  }, [patch, fileName, mode, theme]);
 
   return <div className="diff-editor" ref={containerRef} data-testid="diff-editor" />;
 }
