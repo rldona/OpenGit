@@ -55,12 +55,14 @@ Todo lo necesario para trabajar sin tocar el terminal en repos locales.
 
 **Salida:** resolver un conflicto real de merge sin salir de la app. ✅
 
-## M5 — Pulido
+## M5 — Pulido ✅ _(cerrado el 2026-09-18)_
 
-- [ ] Temas claro/oscuro y atajos de teclado.
-- [ ] Submódulos y worktrees en modo lectura.
-- [ ] Git LFS: detección y avisos.
-- [ ] Empaquetado y firma de releases para los tres SO.
+- [x] Temas claro/oscuro (OG-022) y atajos de teclado (OG-023).
+- [x] Submódulos y worktrees en modo lectura (OG-024).
+- [x] Git LFS: detección y avisos (OG-025).
+- [x] Empaquetado y releases sin firmar para los tres SO (OG-026); firma, notarización, updater y rpm quedan para fase 2.
+
+**Salida:** temas, atajos, submódulos/worktrees y avisos LFS en la app, y borrador de release con instaladores desde un tag. ✅
 
 ## Fuera de alcance
 
