@@ -21,6 +21,12 @@ vi.mock("../lib/bridge/dialog", () => ({
   confirmDestructive: vi.fn(),
 }));
 
+vi.mock("../lib/bridge/diff", () => ({
+  diffFile: vi.fn(),
+  commitFiles: vi.fn(),
+  diffNumstat: vi.fn().mockResolvedValue([]),
+}));
+
 const REPO: RepoInfo = {
   root: "/tmp/repo",
   name: "repo",
