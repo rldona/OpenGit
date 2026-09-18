@@ -10,7 +10,7 @@ Documentación, decisiones y esqueleto ejecutable.
 - [x] Repositorio de agentes/skills/workflows en `.ai/`.
 - [x] App Tauri 2 + React que compila y abre una ventana vacía en macOS, Windows y Linux (OG-001).
 - [x] Lint, typecheck y tests configurados (`npm run lint`, `npm run typecheck`, `cargo test`).
-- [x] CI mínimo en GitHub Actions (matriz de los tres SO).
+- [x] CI de desarrollo (frontend + Rust) y build multiplataforma a demanda (OG-001, OG-012).
 
 **Salida:** `npm run tauri dev` abre la app; CI en verde. ✅
 
