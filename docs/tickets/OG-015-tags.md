@@ -1,7 +1,7 @@
 # OG-015 · Gestión de tags
 
 - **Milestone:** M3 — Historial avanzado
-- **Estado:** in-progress
+- **Estado:** done
 - **Depende de:** OG-008, OG-011
 - **Referencias:** docs/architecture/overview.md
 
@@ -40,4 +40,4 @@ El sidebar ya lista tags (anotados y ligeros) pero no permite crearlos, borrarlo
 - Rust: `tag_create` y `tag_delete` en `git/mod.rs`; `JobKind::PushTag` reutiliza el streaming de OG-011.
 - UI: en el sidebar de Tags, botón "+" (nombre, mensaje opcional y checkbox anotado; destino = commit seleccionado o HEAD) y acciones Delete/Push por tag con confirmación en el borrado.
 - Tests: Rust (crear ligero/anotado, borrar, nombre inválido, push a bare local) y frontend (store y sidebar).
-- Pendiente para cerrar: PR y CI verde (comparte PR con OG-016).
+- Cerrado el 2026-09-18 con CI verde (Frontend 30 s, Rust 1m13s) en el PR #12, junto con OG-016.
