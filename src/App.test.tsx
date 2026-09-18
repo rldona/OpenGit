@@ -21,6 +21,7 @@ import { useExtrasStore } from "./lib/stores/extras";
 import { useLogStore } from "./lib/stores/log";
 import { useRepoStore } from "./lib/stores/repo";
 import { useStatusStore } from "./lib/stores/status";
+import { useRefsStore } from "./lib/stores/refs";
 import { useThemeStore } from "./lib/stores/theme";
 import { useUiStore } from "./lib/stores/ui";
 import { THEME_STORAGE_KEY } from "./lib/theme";
@@ -364,6 +365,18 @@ describe("App", () => {
     expect(commitFiles).toHaveBeenCalledWith("/tmp/mi-repo", "aaaa0000");
     expect(await screen.findByTestId("diff-editor")).toBeInTheDocument();
     expect(screen.getByText("a.txt")).toBeInTheDocument();
+  });
+
+  it("marca los commits entrantes en el historial", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Choose folder" }));
+    await screen.findByText("commit de prueba");
+
+    act(() => useRefsStore.setState({ incoming: ["aaaa0000"] }));
+
+    expect(screen.getByTitle("Incoming commit")).toBeInTheDocument();
   });
 
   it("abre el menú contextual de un commit y ejecuta la acción", async () => {

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { confirmDestructive } from "../bridge/dialog";
 import { listRefs, logPage } from "../bridge/log";
-import { branchTracking, checkoutRef, deleteBranch } from "../bridge/refs";
+import { branchTracking, checkoutRef, deleteBranch, trackingCommits } from "../bridge/refs";
 import { statusRepo } from "../bridge/status";
 import type { RefEntry, StatusReport } from "../bridge/types";
 import { useRefsStore } from "./refs";
@@ -9,6 +9,7 @@ import { useStatusStore } from "./status";
 
 vi.mock("../bridge/refs", () => ({
   branchTracking: vi.fn(),
+  trackingCommits: vi.fn(),
   checkoutRef: vi.fn(),
   createBranch: vi.fn(),
   renameBranch: vi.fn(),
@@ -39,8 +40,8 @@ const REFS: RefEntry[] = [
     name: "refs/heads/feature",
     object_id: "b",
     object_type: "commit",
-    upstream: null,
-    track: null,
+    upstream: "refs/remotes/origin/feature",
+    track: "[ahead 1, behind 2]",
   },
   {
     name: "refs/remotes/origin/remota",
@@ -72,6 +73,7 @@ describe("useRefsStore", () => {
       ahead: 0,
       behind: 0,
     });
+    vi.mocked(trackingCommits).mockResolvedValue({ incoming: [], outgoing: [] });
     vi.mocked(statusRepo).mockResolvedValue(CLEAN);
     vi.mocked(logPage).mockResolvedValue([]);
     vi.mocked(confirmDestructive).mockResolvedValue(true);
@@ -84,6 +86,10 @@ describe("useRefsStore", () => {
       ahead: 1,
       behind: 2,
     });
+    vi.mocked(trackingCommits).mockResolvedValue({
+      incoming: ["remoto1"],
+      outgoing: ["local1"],
+    });
 
     await useRefsStore.getState().load("/tmp/repo");
 
@@ -91,6 +97,17 @@ describe("useRefsStore", () => {
     expect(useRefsStore.getState().current).toBe("main");
     expect(useRefsStore.getState().ahead).toBe(1);
     expect(useRefsStore.getState().behind).toBe(2);
+    expect(trackingCommits).toHaveBeenCalledWith("/tmp/repo", "origin/main");
+    expect(useRefsStore.getState().incoming).toEqual(["remoto1"]);
+    expect(useRefsStore.getState().outgoing).toEqual(["local1"]);
+  });
+
+  it("sin upstream no pide los conjuntos de commits", async () => {
+    await useRefsStore.getState().load("/tmp/repo");
+
+    expect(trackingCommits).not.toHaveBeenCalled();
+    expect(useRefsStore.getState().incoming).toEqual([]);
+    expect(useRefsStore.getState().outgoing).toEqual([]);
   });
 
   it("hace checkout de una rama local", async () => {

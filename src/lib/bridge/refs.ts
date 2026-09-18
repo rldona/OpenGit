@@ -1,8 +1,13 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { BranchTracking } from "./types";
+import type { BranchTracking, TrackingCommits } from "./types";
 
 export function branchTracking(path: string): Promise<BranchTracking> {
   return invoke<BranchTracking>("branch_tracking", { path });
+}
+
+/** Hashes de `HEAD..upstream` (incoming) y `upstream..HEAD` (outgoing). */
+export function trackingCommits(path: string, upstream: string): Promise<TrackingCommits> {
+  return invoke<TrackingCommits>("tracking_commits", { path, upstream });
 }
 
 export function checkoutRef(path: string, target: string, track: boolean): Promise<void> {

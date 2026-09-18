@@ -625,6 +625,15 @@ pub fn remote_urls(
 }
 
 #[tauri::command]
+pub fn tracking_commits(
+    path: String,
+    upstream: String,
+    state: State<'_, AppState>,
+) -> Result<crate::git::TrackingCommits, GitError> {
+    crate::git::tracking_commits(&state.runner, Path::new(&path), &upstream)
+}
+
+#[tauri::command]
 pub fn remove_recent_repo(path: String, state: State<'_, AppState>) -> Result<(), GitError> {
     state.recents.lock().map_err(lock_error)?.remove(&path)
 }
