@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
+import { CollapsibleSection } from "./components/CollapsibleSection";
 import { ConflictView } from "./components/ConflictView";
 import { DiffView } from "./components/DiffView";
 import { ExtrasSidebar } from "./components/ExtrasSidebar";
 import { HistoryView } from "./components/HistoryView";
-import { Icon } from "./components/Icon";
 import { OpBanner } from "./components/OpBanner";
 import { RebaseView } from "./components/RebaseView";
 import { RefsSidebar } from "./components/RefsSidebar";
@@ -11,6 +11,7 @@ import { ShortcutsHelp } from "./components/ShortcutsHelp";
 import { SplitPane } from "./components/SplitPane";
 import { StashSidebar } from "./components/StashSidebar";
 import { StatusView } from "./components/StatusView";
+import { Toolbar } from "./components/Toolbar";
 import { getAppVersion } from "./lib/bridge/core";
 import { confirmDestructive } from "./lib/bridge/dialog";
 import { subscribeMenuEvents } from "./lib/bridge/events";
@@ -29,7 +30,6 @@ import { useRepoStore } from "./lib/stores/repo";
 import { useStatusStore } from "./lib/stores/status";
 import { useThemeStore } from "./lib/stores/theme";
 import { useUiStore } from "./lib/stores/ui";
-import type { ThemePreference } from "./lib/theme";
 
 const PROJECT_URL = "https://github.com/rldona/opengit";
 
@@ -41,9 +41,7 @@ function App() {
   const setActiveView = useUiStore((state) => state.setActiveView);
   const toggleShortcuts = useUiStore((state) => state.toggleShortcuts);
 
-  const themePreference = useThemeStore((state) => state.preference);
   const theme = useThemeStore((state) => state.resolved);
-  const setThemePreference = useThemeStore((state) => state.setPreference);
   const setSystemDark = useThemeStore((state) => state.setSystemDark);
 
   const repo = useRepoStore((state) => state.repo);
@@ -54,17 +52,13 @@ function App() {
   const pickAndOpen = useRepoStore((state) => state.pickAndOpen);
   const open = useRepoStore((state) => state.open);
   const removeRecent = useRepoStore((state) => state.removeRecent);
-  const close = useRepoStore((state) => state.close);
 
-  const remoteRunning = useRemoteStore((state) => state.running);
   const startRemote = useRemoteStore((state) => state.start);
-  const cancelRemote = useRemoteStore((state) => state.cancel);
   const currentBranch = useRefsStore((state) => state.current);
   const currentUpstream = useRefsStore((state) => state.upstream);
   const conflictCount = useStatusStore(
     (state) => state.report?.entries.filter((entry) => entry.kind === "unmerged").length ?? 0,
   );
-  const changeCount = useStatusStore((state) => state.report?.entries.length ?? 0);
 
   const [coreVersion, setCoreVersion] = useState<string | null>(null);
 
@@ -260,74 +254,26 @@ function App() {
   }, []);
 
   useEffect(() => {
-    void setWindowTitle(repo ? repo.root : "OpenGit").catch(() => {
-      // En tests o sin ventana nativa el título no es crítico.
+    // Si esto falla suele ser por un permiso que falta en capabilities/default.json.
+    // Tragarse el error en silencio escondió durante todo M6 que el título nunca
+    // se llegaba a fijar: ahora se ve en el panel de Output.
+    void setWindowTitle(repo ? repo.root : "OpenGit").catch((error: unknown) => {
+      useUiStore
+        .getState()
+        .appendOutput(
+          `Could not set the window title: ${error instanceof Error ? error.message : String(error)}`,
+        );
     });
   }, [repo]);
 
   return (
     <div className="app">
-      <header className="toolbar">
-        <span className="brand">OpenGit</span>
-        <span className="tagline">{repo ? repo.root : "no repository open"}</span>
-        <div className="toolbar-actions">
-          <button type="button" onClick={() => void pickAndOpen()} disabled={loading}>
-            <Icon name="folder" />
-            {loading ? "Opening…" : "Open repository"}
-          </button>
-          {repo && (
-            <>
-              <button type="button" onClick={runFetch} disabled={remoteRunning}>
-                <Icon name="download" />
-                Fetch
-              </button>
-              <button type="button" onClick={runPull} disabled={remoteRunning}>
-                <Icon name="download" />
-                Pull
-              </button>
-              <button type="button" onClick={() => void runPush()} disabled={remoteRunning}>
-                <Icon name="upload" />
-                Push
-              </button>
-              <button type="button" onClick={refreshAll}>
-                <Icon name="refresh" />
-                Refresh
-              </button>
-              {remoteRunning && (
-                <button type="button" onClick={() => void cancelRemote()}>
-                  Cancel
-                </button>
-              )}
-              <button type="button" onClick={() => void close()}>
-                <Icon name="close" />
-                Close
-              </button>
-            </>
-          )}
-          <button
-            type="button"
-            onClick={toggleOutput}
-            aria-pressed={outputOpen}
-            title="Output"
-            aria-label="Output"
-          >
-            <Icon name="terminal" />
-          </button>
-          <button type="button" aria-label="Keyboard shortcuts" onClick={toggleShortcuts}>
-            <Icon name="help" />
-          </button>
-          <select
-            className="theme-select"
-            aria-label="Theme"
-            value={themePreference}
-            onChange={(event) => setThemePreference(event.target.value as ThemePreference)}
-          >
-            <option value="system">System</option>
-            <option value="light">Light</option>
-            <option value="dark">Dark</option>
-          </select>
-        </div>
-      </header>
+      <Toolbar
+        onFetch={runFetch}
+        onPull={runPull}
+        onPush={() => void runPush()}
+        onRefresh={refreshAll}
+      />
 
       <ShortcutsHelp />
 
@@ -355,8 +301,7 @@ function App() {
           label="Resize sidebar"
         >
           <aside className="sidebar" aria-label="Repository">
-            <section className="sidebar-section">
-              <h2>Recents</h2>
+            <CollapsibleSection id="recents" title="Recents" icon="folder" defaultCollapsed>
               {recents.length === 0 ? (
                 <p className="muted">No repositories yet</p>
               ) : (
@@ -383,10 +328,9 @@ function App() {
                   ))}
                 </ul>
               )}
-            </section>
+            </CollapsibleSection>
 
-            <section className="sidebar-section">
-              <h2>Workspace</h2>
+            <CollapsibleSection id="workspace" title="Workspace" icon="workspace">
               {repo ? (
                 <ul>
                   <li>
@@ -429,24 +373,22 @@ function App() {
               ) : (
                 <p className="muted">No repository open</p>
               )}
-            </section>
+            </CollapsibleSection>
 
             {repo ? (
               <RefsSidebar />
             ) : (
-              <section className="sidebar-section">
-                <h2>Branches</h2>
+              <CollapsibleSection id="branches" title="Branches" icon="branch">
                 <p className="muted">No repository open</p>
-              </section>
+              </CollapsibleSection>
             )}
 
             {repo ? (
               <StashSidebar />
             ) : (
-              <section className="sidebar-section">
-                <h2>Stashes</h2>
+              <CollapsibleSection id="stashes" title="Stashes" icon="stash">
                 <p className="muted">No repository open</p>
-              </section>
+              </CollapsibleSection>
             )}
 
             <ExtrasSidebar />
@@ -487,11 +429,9 @@ function App() {
       </SplitPane>
 
       <footer className="status-bar">
+        {/* Ni los cambios ni los conflictos se repiten aquí: los cambios ya van
+            en el badge de Commit y los conflictos en la sidebar. */}
         <span>{repo ? (currentBranch ?? "detached HEAD") : "No repository"}</span>
-        {repo && conflictCount > 0 && (
-          <span className="status-conflicts">{conflictCount} conflict(s)</span>
-        )}
-        {repo && <span className="muted">{changeCount} change(s)</span>}
         <span className="status-spacer" />
         <span className="core-version">{coreVersion ? `core v${coreVersion}` : "core —"}</span>
       </footer>

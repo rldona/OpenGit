@@ -1,20 +1,22 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { formatDateTime, shortRefName } from "../lib/format";
-import { LANE_WIDTH, ROW_HEIGHT } from "../lib/graph/layout";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { classifyRef, formatAuthor, formatCommitDate, shortRefName } from "../lib/format";
+import { ROW_HEIGHT, graphWidth as graphWidthFor, visibleLaneCount } from "../lib/graph/layout";
 import { sameRange, visibleRange, type VisibleRange } from "../lib/graph/viewport";
 import { copyText } from "../lib/clipboard";
+import { COLUMN_LABELS, loadColumnWidths, saveColumnWidths, type ColumnName } from "../lib/columns";
 import { LAYOUT_KEYS } from "../lib/layout";
 import { useCommitActions } from "../lib/hooks/useCommitActions";
 import { useContextMenu } from "../lib/hooks/useContextMenu";
-import type { Commit, LogSearch } from "../lib/bridge/types";
+import type { LogSearch } from "../lib/bridge/types";
 import { useLogStore } from "../lib/stores/log";
 import { useRefsStore } from "../lib/stores/refs";
 import { useRepoStore } from "../lib/stores/repo";
 import { useUiStore } from "../lib/stores/ui";
+import { ColumnResizer } from "./ColumnResizer";
+import { CommitDetailPanel } from "./CommitDetailPanel";
+import { Icon } from "./Icon";
 import { GraphCanvas } from "./GraphCanvas";
 import { SplitPane } from "./SplitPane";
-
-const GRAPH_PADDING = 16;
 
 export function HistoryView() {
   const repo = useRepoStore((state) => state.repo);
@@ -24,7 +26,6 @@ export function HistoryView() {
   const filter = useLogStore((state) => state.filter);
   const selected = useLogStore((state) => state.selected);
   const loading = useLogStore((state) => state.loading);
-  const hasMore = useLogStore((state) => state.hasMore);
   const load = useLogStore((state) => state.load);
   const loadMore = useLogStore((state) => state.loadMore);
   const setFilter = useLogStore((state) => state.setFilter);
@@ -32,6 +33,14 @@ export function HistoryView() {
   const storedSearch = useLogStore((state) => state.search);
   const applySearch = useLogStore((state) => state.applySearch);
   const clearSearch = useLogStore((state) => state.clearSearch);
+
+  const [widths, setWidths] = useState(loadColumnWidths);
+  const setWidth = (column: ColumnName, width: number) =>
+    setWidths((current) => ({ ...current, [column]: width }));
+
+  useEffect(() => {
+    saveColumnWidths(widths);
+  }, [widths]);
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [range, setRange] = useState<VisibleRange>({ start: 0, end: 0 });
@@ -91,19 +100,29 @@ export function HistoryView() {
     updateRange();
   }, [updateRange]);
 
-  const laneCount = rows.reduce(
-    (max, row) => Math.max(max, row.lane + 1, row.before.length, row.after.length),
-    1,
-  );
-  const graphWidth = laneCount * LANE_WIDTH + GRAPH_PADDING;
+  // El panel inferior cambia la altura del scroller: sin esto el virtualizado
+  // seguiría pintando el número de filas de la altura anterior.
+  useEffect(() => {
+    const scroller = scrollRef.current;
+    if (!scroller || typeof ResizeObserver === "undefined") {
+      return;
+    }
+    const observer = new ResizeObserver(() => updateRange());
+    observer.observe(scroller);
+    return () => observer.disconnect();
+  }, [updateRange]);
+
+  // Medido sobre el rango visible, no sobre todo el historial: ver OG-047.
+  const laneCount = visibleLaneCount(rows, range.start, range.end);
+  const graphWidth = graphWidthFor(laneCount);
 
   const visible = rows.slice(range.start, range.end);
   const selectedCommit = selected
     ? (commits.find((commit) => commit.hash === selected) ?? null)
     : null;
-  const branchRefs = refs.filter(
-    (ref) => ref.name.startsWith("refs/heads/") || ref.name.startsWith("refs/remotes/"),
-  );
+  // Solo ramas locales: incluir `refs/remotes/` volcaba aquí las miles de
+  // ramas del remoto y dejaba el desplegable inservible.
+  const branchRefs = refs.filter((ref) => ref.name.startsWith("refs/heads/"));
 
   return (
     <div className="history">
@@ -126,9 +145,6 @@ export function HistoryView() {
             ))}
           </select>
         </label>
-        <span className="muted">
-          {commits.length} commits{hasMore ? "+" : ""}
-        </span>
         {loading && <span className="muted">Loading…</span>}
         <div className="history-search">
           <input
@@ -175,24 +191,37 @@ export function HistoryView() {
 
       <SplitPane
         className="history-body"
-        direction="horizontal"
+        direction="vertical"
         side="end"
-        storageKey={LAYOUT_KEYS.historyDetail}
-        defaultSize={300}
-        min={220}
-        max={560}
+        storageKey={LAYOUT_KEYS.historyBottom}
+        defaultSize={320}
+        min={160}
+        max={720}
         label="Resize commit details"
         collapsed={!selectedCommit}
       >
         <div className="history-list-wrap">
-          <div className="commit-header" aria-hidden="true">
+          <div className="commit-header">
             <span className="commit-header-graph" style={{ width: graphWidth }}>
               Graph
             </span>
             <span className="commit-header-cell">Description</span>
-            <span className="commit-header-cell commit-header-hash">Commit</span>
-            <span className="commit-header-cell commit-header-author">Author</span>
-            <span className="commit-header-cell commit-header-date">Date</span>
+            {(Object.keys(COLUMN_LABELS) as ColumnName[]).map((column) => (
+              <Fragment key={column}>
+                <ColumnResizer
+                  column={column}
+                  label={COLUMN_LABELS[column]}
+                  width={widths[column]}
+                  onResize={(width) => setWidth(column, width)}
+                />
+                <span
+                  className={`commit-header-cell commit-header-${column}`}
+                  style={{ width: widths[column] }}
+                >
+                  {COLUMN_LABELS[column]}
+                </span>
+              </Fragment>
+            ))}
           </div>
           <GraphCanvas
             rows={rows}
@@ -221,7 +250,7 @@ export function HistoryView() {
                     onContextMenu={(event) =>
                       commitMenu.open(event, [
                         {
-                          label: "View diff",
+                          label: "Open in Diff view",
                           onSelect: () => void commitActions.showDiff(commit),
                         },
                         {
@@ -241,7 +270,9 @@ export function HistoryView() {
                       ])
                     }
                   >
-                    <span className="commit-refs">{renderRefs(commit.refs)}</span>
+                    {commit.refs.length > 0 && (
+                      <span className="commit-refs">{renderRefs(commit.refs)}</span>
+                    )}
                     {incomingSet.has(commit.hash) && (
                       <span className="commit-track incoming" title="Incoming commit">
                         ↓
@@ -252,14 +283,20 @@ export function HistoryView() {
                         ↑
                       </span>
                     )}
-                    <span className="commit-subject" title={commit.subject}>
-                      {commit.subject}
+                    <span className="commit-subject">{commit.subject}</span>
+                    <span className="commit-hash" style={{ width: widths.hash }}>
+                      {commit.hash.slice(0, 7)}
                     </span>
-                    <span className="commit-hash">{commit.hash.slice(0, 7)}</span>
-                    <span className="commit-author" title={commit.author_name}>
-                      {commit.author_name}
+                    <span
+                      className="commit-author"
+                      style={{ width: widths.author }}
+                      title={formatAuthor(commit.author_name, commit.author_email)}
+                    >
+                      {formatAuthor(commit.author_name, commit.author_email)}
                     </span>
-                    <span className="commit-date">{formatDateTime(commit.author_time)}</span>
+                    <span className="commit-date" style={{ width: widths.date }}>
+                      {formatCommitDate(commit.author_time)}
+                    </span>
                   </button>
                 );
               })}
@@ -267,7 +304,7 @@ export function HistoryView() {
           </div>
         </div>
         {selectedCommit ? (
-          <CommitDetail commit={selectedCommit} onClose={() => select(null)} />
+          <CommitDetailPanel commit={selectedCommit} onClose={() => select(null)} />
         ) : null}
       </SplitPane>
 
@@ -291,70 +328,11 @@ function renderRefs(refValues: string[]) {
 }
 
 function RefBadge({ value }: { value: string }) {
-  if (value === "HEAD") {
-    return <span className="ref-badge head">HEAD</span>;
-  }
-  if (value.startsWith("HEAD -> ")) {
-    return <span className="ref-badge head">{value.slice("HEAD -> ".length)}</span>;
-  }
-  if (value.startsWith("tag: ")) {
-    return <span className="ref-badge tag">{value.slice("tag: ".length)}</span>;
-  }
-  if (value.includes("/")) {
-    return <span className="ref-badge remote">{value}</span>;
-  }
-  return <span className="ref-badge branch">{value}</span>;
-}
-
-function CommitDetail({ commit, onClose }: { commit: Commit; onClose: () => void }) {
-  const actions = useCommitActions();
-
+  const { kind, label } = classifyRef(value);
   return (
-    <aside className="commit-detail" aria-label="Commit details">
-      <header>
-        <h2>Commit</h2>
-        <button type="button" onClick={onClose} aria-label="Close details">
-          ×
-        </button>
-      </header>
-      <p className="mono break">{commit.hash}</p>
-      <p>
-        <strong>{commit.author_name}</strong> &lt;{commit.author_email}&gt;
-      </p>
-      <p className="muted">{formatDateTime(commit.author_time)}</p>
-      <p className="commit-detail-subject">{commit.subject}</p>
-      <p className="muted">
-        {commit.parents.length} parent(s) · {commit.refs.length} ref(s)
-      </p>
-      <div className="detail-actions">
-        <button
-          type="button"
-          className="detail-action"
-          onClick={() => void actions.showDiff(commit)}
-        >
-          View diff
-        </button>
-        <button
-          type="button"
-          className="detail-action"
-          onClick={() => void actions.cherryPick(commit)}
-        >
-          Cherry-pick
-        </button>
-        <button type="button" className="detail-action" onClick={() => void actions.revert(commit)}>
-          Revert
-        </button>
-        <button
-          type="button"
-          className="detail-action danger"
-          onClick={() => void actions.reset(commit)}
-        >
-          Reset to here
-        </button>
-        <button type="button" className="detail-action" onClick={() => void actions.rebase(commit)}>
-          Interactive rebase from here
-        </button>
-      </div>
-    </aside>
+    <span className={`ref-badge ${kind}`} title={label}>
+      <Icon name={kind === "tag" ? "tag" : "branch"} size={10} />
+      <span className="ref-badge-label">{label}</span>
+    </span>
   );
 }

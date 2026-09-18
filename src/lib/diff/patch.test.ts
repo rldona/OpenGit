@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { classifyPatchLines, isBinaryPatch, parseHunkHeader, splitPatch } from "./patch";
+import {
+  classifyPatchLines,
+  isBinaryPatch,
+  parseHunkHeader,
+  splitPatch,
+  stripPatchHeader,
+} from "./patch";
 
 const PATCH = [
   "diff --git a/a.txt b/a.txt",
@@ -130,5 +136,45 @@ describe("splitPatch", () => {
     const split = splitPatch(patch);
     expect(split?.original).toBe("-- texto que empieza con guiones");
     expect(split?.modified).toBe("++ texto que empieza con mas");
+  });
+});
+
+describe("stripPatchHeader", () => {
+  const PATCH = [
+    "diff --git a/a.txt b/a.txt",
+    "index 323a63d..b7ea4d8 100644",
+    "--- a/a.txt",
+    "+++ b/a.txt",
+    "@@ -1,2 +1,3 @@",
+    " uno",
+    "+dos",
+    " tres",
+  ].join("\n");
+
+  it("quita las cabeceras anteriores al primer hunk", () => {
+    const lines = stripPatchHeader(classifyPatchLines(PATCH));
+
+    expect(lines[0].type).toBe("hunk");
+    expect(lines.some((line) => line.text.startsWith("diff --git"))).toBe(false);
+    expect(lines.some((line) => line.text.startsWith("index "))).toBe(false);
+    expect(lines.some((line) => line.text.startsWith("--- "))).toBe(false);
+    expect(lines.some((line) => line.text.startsWith("+++ "))).toBe(false);
+  });
+
+  it("conserva los índices originales, que son los que usa el staging", () => {
+    const lines = stripPatchHeader(classifyPatchLines(PATCH));
+    const added = lines.find((line) => line.type === "add");
+
+    // "+dos" es la línea 6 (base 0) del parche completo, no la 1 de lo pintado.
+    expect(added?.index).toBe(6);
+    expect(added?.hunk).toBe(0);
+  });
+
+  it("no toca un parche que ya empieza en un hunk ni uno sin hunks", () => {
+    const soloHunk = classifyPatchLines("@@ -1 +1 @@\n-a\n+b");
+    expect(stripPatchHeader(soloHunk)).toHaveLength(soloHunk.length);
+
+    const sinHunks = classifyPatchLines("Binary files a/x and b/x differ");
+    expect(stripPatchHeader(sinHunks)).toHaveLength(sinHunks.length);
   });
 });

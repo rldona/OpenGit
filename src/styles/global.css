@@ -23,6 +23,19 @@
   --tag-annotated: #9a7bd8;
   --overlay: rgb(0 0 0 / 50%);
   --shadow: 0 12px 32px rgb(0 0 0 / 40%);
+  --row-selected: rgb(59 130 246 / 26%);
+  --ref-head-bg: #1d4ed8;
+  --ref-head-border: #3b82f6;
+  --ref-head-fg: #ffffff;
+  --ref-branch-bg: #1e3a8a;
+  --ref-branch-border: #3b82f6;
+  --ref-branch-fg: #dbeafe;
+  --ref-remote-bg: #7c2d12;
+  --ref-remote-border: #ea580c;
+  --ref-remote-fg: #fed7aa;
+  --ref-tag-bg: #14532d;
+  --ref-tag-border: #16a34a;
+  --ref-tag-fg: #bbf7d0;
   --font-ui: system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }
@@ -51,6 +64,19 @@
   --tag-annotated: #7c5cbf;
   --overlay: rgb(15 23 42 / 35%);
   --shadow: 0 12px 32px rgb(15 23 42 / 18%);
+  --row-selected: rgb(37 99 235 / 16%);
+  --ref-head-bg: #2563eb;
+  --ref-head-border: #1d4ed8;
+  --ref-head-fg: #ffffff;
+  --ref-branch-bg: #dbeafe;
+  --ref-branch-border: #60a5fa;
+  --ref-branch-fg: #1e3a8a;
+  --ref-remote-bg: #ffedd5;
+  --ref-remote-border: #fb923c;
+  --ref-remote-fg: #7c2d12;
+  --ref-tag-bg: #dcfce7;
+  --ref-tag-border: #4ade80;
+  --ref-tag-fg: #14532d;
 }
 
 * {
@@ -77,29 +103,183 @@ body {
   height: 100%;
 }
 
+/* Acciones a la izquierda, utilidades a la derecha y el nombre del repo
+   centrado: la disposición de SourceTree (OG-041). */
 .toolbar {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 8px 12px;
-  background: var(--bg-elevated);
+  padding: 4px 10px;
+  background: var(--bg-panel);
   border-bottom: 1px solid var(--border);
 }
 
-.brand {
-  font-weight: 600;
-  letter-spacing: 0.02em;
+.toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
 }
 
-.tagline {
+.toolbar-left {
+  flex: 1;
+}
+
+.toolbar-right {
+  flex: 1;
+  justify-content: flex-end;
+}
+
+.toolbar-divider {
+  width: 1px;
+  height: 26px;
+  margin: 0 6px;
+  background: var(--border);
+}
+
+/* Centrado respecto a la ventana, no respecto al hueco que dejan los botones:
+   con rejilla de 3 columnas la izquierda (8 botones) desbordaba su pista y
+   empujaba el título a la derecha. */
+.toolbar-title {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 40%;
+  color: var(--text-muted);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.toolbar-repo-name {
+  overflow: hidden;
+  color: var(--text);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tool-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 58px;
+  padding: 4px 6px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+/* Sin borde ni fondo al pasar por encima: solo el icono reacciona. */
+.tool-button:hover:not(:disabled) .tool-icon {
+  opacity: 0.75;
+}
+
+.tool-button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.tool-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 26px;
+  color: var(--accent);
+}
+
+.tool-button:disabled .tool-icon {
   color: var(--text-muted);
 }
 
-.toolbar-actions {
+.tool-label {
+  font-size: 10px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+/* Badge de cambios pendientes sobre el icono de Commit. */
+.tool-badge {
+  position: absolute;
+  top: -4px;
+  right: -10px;
+  min-width: 15px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  line-height: 15px;
+  text-align: center;
+}
+
+.toolbar-settings {
+  position: relative;
+}
+
+.settings-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 200px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow);
+}
+
+.settings-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-left: auto;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 6px;
+  font-size: 12px;
+}
+
+.settings-row select {
+  padding: 3px 6px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.settings-item {
+  padding: 5px 6px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.settings-item:hover {
+  background: var(--hover);
+}
+
+.settings-item.danger {
+  color: var(--danger-text);
 }
 
 .core-version {
@@ -129,34 +309,6 @@ body {
 
 .status-spacer {
   flex: 1;
-}
-
-.theme-select {
-  padding: 4px 6px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--bg-elevated);
-  color: var(--text);
-  font: inherit;
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.toolbar button {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: transparent;
-  color: var(--text);
-  font: inherit;
-  cursor: pointer;
-}
-
-.toolbar button:hover {
-  border-color: var(--accent);
 }
 
 .rebase-view {
@@ -479,6 +631,95 @@ body {
   text-transform: uppercase;
 }
 
+.sidebar-heading {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sidebar-toggle {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  padding: 3px 4px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sidebar-toggle:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.sidebar-chevron {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  transition: transform 120ms ease;
+}
+
+.sidebar-chevron.open {
+  transform: rotate(90deg);
+}
+
+.sidebar-section-icon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  opacity: 0.85;
+}
+
+.sidebar-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-heading-extra {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 4px;
+}
+
+.sidebar-section-body {
+  margin-top: 4px;
+}
+
+/* Un remoto dentro de Remotes: sangría y sin mayúsculas, para que se lea
+   como un nodo de la lista y no como otra sección de primer nivel. */
+.sidebar-section.nested {
+  margin-top: 2px;
+  margin-left: 10px;
+}
+
+.sidebar-section.nested .sidebar-toggle {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.refs-count {
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--hover);
+  color: var(--text-muted);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
 .sidebar-section ul {
   margin: 0;
   padding: 0;
@@ -791,19 +1032,42 @@ body {
   flex: 1;
 }
 
-.commit-header-hash {
-  flex-shrink: 0;
-  width: 70px;
-}
-
-.commit-header-author {
-  flex-shrink: 0;
-  width: 140px;
-}
-
+.commit-header-hash,
+.commit-header-author,
 .commit-header-date {
   flex-shrink: 0;
-  width: 110px;
+}
+
+/* Tirador entre columnas. Va en el borde izquierdo de la columna fija que
+   redimensiona; el área sensible es más ancha que la línea que se ve. */
+.column-resizer {
+  flex-shrink: 0;
+  position: relative;
+  width: 7px;
+  margin: 0 -3px;
+  cursor: col-resize;
+  align-self: stretch;
+}
+
+.column-resizer::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: 1px;
+  background: var(--border);
+}
+
+.column-resizer:hover::after,
+.column-resizer:focus-visible::after {
+  top: 0;
+  bottom: 0;
+  background: var(--accent);
+}
+
+.column-resizer:focus-visible {
+  outline: none;
 }
 
 .commit-row {
@@ -829,44 +1093,71 @@ body {
 }
 
 .commit-row.selected {
-  background: rgb(59 130 246 / 18%);
+  background: var(--row-selected);
 }
 
+.commit-row.selected .commit-subject,
+.commit-row.selected .commit-author,
+.commit-row.selected .commit-date {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* Los badges fluyen junto al asunto dentro de Description, como SourceTree.
+   Con ancho fijo el texto arrancaba siempre en la misma x aunque no hubiera
+   ningún ref, y los badges largos se cortaban. */
 .commit-refs {
   display: flex;
   flex-shrink: 0;
   align-items: center;
   gap: 4px;
-  width: 220px;
-  overflow: hidden;
+  max-width: 55%;
   white-space: nowrap;
 }
 
+/* Relleno saturado y glifo por tipo: rama local, remota y tag tienen que
+   distinguirse de un vistazo, sin leer el texto (OG-048). */
 .ref-badge {
-  padding: 1px 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  max-width: 220px;
+  padding: 1px 7px 1px 5px;
   border: 1px solid transparent;
   border-radius: 999px;
   font-size: 11px;
+  line-height: 1.5;
+}
+
+.ref-badge-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ref-badge.head {
-  background: var(--accent);
-  color: var(--accent-fg);
+  background: var(--ref-head-bg);
+  border-color: var(--ref-head-border);
+  color: var(--ref-head-fg);
+  font-weight: 600;
 }
 
 .ref-badge.branch {
-  background: rgb(91 141 239 / 18%);
-  border-color: rgb(91 141 239 / 45%);
+  background: var(--ref-branch-bg);
+  border-color: var(--ref-branch-border);
+  color: var(--ref-branch-fg);
 }
 
 .ref-badge.remote {
-  background: rgb(224 164 88 / 15%);
-  border-color: rgb(224 164 88 / 45%);
+  background: var(--ref-remote-bg);
+  border-color: var(--ref-remote-border);
+  color: var(--ref-remote-fg);
 }
 
 .ref-badge.tag {
-  background: rgb(154 123 216 / 18%);
-  border-color: rgb(154 123 216 / 50%);
+  background: var(--ref-tag-bg);
+  border-color: var(--ref-tag-border);
+  color: var(--ref-tag-fg);
 }
 
 .commit-subject {
@@ -893,7 +1184,6 @@ body {
 
 .commit-hash {
   flex-shrink: 0;
-  width: 70px;
   color: var(--text-muted);
   font-family: var(--font-mono);
   font-size: 12px;
@@ -901,7 +1191,6 @@ body {
 
 .commit-author {
   flex-shrink: 0;
-  width: 140px;
   overflow: hidden;
   color: var(--text-muted);
   text-overflow: ellipsis;
@@ -910,34 +1199,86 @@ body {
 
 .commit-date {
   flex-shrink: 0;
-  width: 110px;
+  overflow: hidden;
   color: var(--text-muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.commit-detail-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--bg-panel);
+  border-top: 1px solid var(--border);
+}
+
+.diff-pane-head {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-panel);
   font-size: 12px;
 }
 
-.commit-detail {
-  overflow-y: auto;
-  padding: 12px;
-  background: var(--bg-panel);
-  border-left: 1px solid var(--border);
-}
-
-.commit-detail header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.commit-detail h2 {
-  margin: 0;
-  color: var(--text-muted);
-  font-size: 11px;
+.diff-pane-path {
+  overflow: hidden;
   font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  direction: rtl;
+  text-align: left;
 }
 
-.commit-detail header button {
+.diff-pane-orig {
+  flex-shrink: 0;
+}
+
+.diff-pane-counts {
+  display: flex;
+  flex-shrink: 0;
+  gap: 6px;
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.commit-left {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.commit-left-body {
+  flex: 1;
+  min-height: 0;
+}
+
+/* Los metadatos van en su propio panel bajo la lista de ficheros, como en
+   SourceTree; las acciones del commit viven en el menú contextual. */
+.commit-meta {
+  overflow-y: auto;
+  min-height: 0;
+  padding: 8px 12px;
+  border-top: 1px solid var(--border);
+}
+
+.commit-meta-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.commit-meta-close {
+  flex-shrink: 0;
+  padding: 0 4px;
   border: none;
   background: transparent;
   color: var(--text-muted);
@@ -945,8 +1286,61 @@ body {
   cursor: pointer;
 }
 
-.commit-detail-subject {
+.commit-meta-close:hover {
+  color: var(--text);
+}
+
+.commit-meta-subject {
+  margin: 0 0 4px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.commit-meta-line {
+  margin: 0;
+  font-size: 12px;
   line-height: 1.5;
+}
+
+.commit-meta-hash {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-family: var(--font-mono);
+  cursor: pointer;
+}
+
+.commit-meta-hash:hover {
+  color: var(--text);
+  text-decoration: underline;
+}
+
+.commit-meta-body {
+  margin: 6px 0 0;
+  padding: 6px 8px;
+  border-left: 2px solid var(--border);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.commit-diff-toolbar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.commit-detail-body {
+  flex: 1;
+  min-height: 0;
 }
 
 .break {

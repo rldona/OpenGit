@@ -144,3 +144,16 @@ export function splitPatch(patch: string): SplitPatch | null {
   }
   return { original: original.join("\n"), modified: modified.join("\n"), hunks };
 }
+
+/**
+ * Descarta las cabeceras del parche anteriores al primer hunk
+ * (`diff --git`, `index`, `---`, `+++`).
+ *
+ * No aportan nada al leer un diff y se comen cuatro filas de alto. Se filtran
+ * al pintar, no al parsear: `index` y `hunk` de cada línea siguen siendo los
+ * del parche original, que es lo que usa el staging por líneas y por hunks.
+ */
+export function stripPatchHeader(lines: ClassifiedPatchLine[]): ClassifiedPatchLine[] {
+  const firstHunk = lines.findIndex((line) => line.type === "hunk");
+  return firstHunk <= 0 ? lines : lines.slice(firstHunk);
+}

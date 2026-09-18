@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
@@ -167,6 +167,7 @@ const COMMIT: Commit = {
   author_time: 1_789_725_600,
   refs: ["HEAD -> main"],
   subject: "commit de prueba",
+  body: "Cuerpo del commit.\nSegunda línea.",
 };
 
 const REPORT: StatusReport = {
@@ -243,11 +244,12 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: "Fetch" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Pull" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Push" })).toBeInTheDocument();
-    expect(screen.getByText("Graph")).toBeInTheDocument();
-    expect(screen.getByText("Description")).toBeInTheDocument();
-    expect(screen.getByText("Commit")).toBeInTheDocument();
-    expect(screen.getByText("Author")).toBeInTheDocument();
-    expect(screen.getByText("Date")).toBeInTheDocument();
+    const header = document.querySelector(".commit-header") as HTMLElement;
+    expect(within(header).getByText("Graph")).toBeInTheDocument();
+    expect(within(header).getByText("Description")).toBeInTheDocument();
+    expect(within(header).getByText("Commit")).toBeInTheDocument();
+    expect(within(header).getByText("Author")).toBeInTheDocument();
+    expect(within(header).getByText("Date")).toBeInTheDocument();
   });
 
   it("abre el editor de conflictos desde File status", async () => {
@@ -331,40 +333,121 @@ describe("App", () => {
     await user.click(screen.getByRole("button", { name: "Choose folder" }));
     await user.click(await screen.findByText("commit de prueba"));
 
-    expect(screen.getByRole("complementary", { name: "Commit details" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Commit details" })).toBeInTheDocument();
     expect(screen.getByText("aaaa0000")).toBeInTheDocument();
+    expect(screen.getByText(/Cuerpo del commit\./)).toHaveTextContent("Segunda línea.");
   });
 
-  it("ofrece cherry-pick, revert y reset en el detalle del commit", async () => {
+  it("ofrece cherry-pick, revert y reset en el menú contextual del commit", async () => {
     const user = userEvent.setup();
     render(<App />);
 
     await user.click(screen.getByRole("button", { name: "Choose folder" }));
-    await user.click(await screen.findByText("commit de prueba"));
+    const subject = await screen.findByText("commit de prueba");
+    fireEvent.contextMenu(subject.closest("button")!);
 
-    expect(screen.getByRole("button", { name: "Cherry-pick" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Revert" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Reset to here" })).toBeInTheDocument();
+    const menu = screen.getByRole("menu");
+    expect(within(menu).getByRole("menuitem", { name: "Revert" })).toBeInTheDocument();
+    expect(within(menu).getByRole("menuitem", { name: "Reset to here" })).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Interactive rebase from here" }),
+      within(menu).getByRole("menuitem", { name: "Interactive rebase from here" }),
     ).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Cherry-pick" }));
+    await user.click(within(menu).getByRole("menuitem", { name: "Cherry-pick" }));
 
     expect(cherryPick).toHaveBeenCalledWith("/tmp/mi-repo", "aaaa0000");
   });
 
-  it("abre el diff de un commit desde el detalle", async () => {
+  it("muestra el diff del commit en la zona inferior sin salir del historial", async () => {
     const user = userEvent.setup();
     render(<App />);
 
     await user.click(screen.getByRole("button", { name: "Choose folder" }));
     await user.click(await screen.findByText("commit de prueba"));
-    await user.click(screen.getByRole("button", { name: "View diff" }));
 
+    expect(await screen.findAllByText("a.txt")).not.toHaveLength(0);
     expect(commitFiles).toHaveBeenCalledWith("/tmp/mi-repo", "aaaa0000");
-    expect(await screen.findByTestId("diff-editor")).toBeInTheDocument();
-    expect(screen.getByText("a.txt")).toBeInTheDocument();
+    // Sigue siendo la vista de historial: la fila del commit no desaparece.
+    expect(useUiStore.getState().activeView).toBe("history");
+    expect(document.querySelector(".commit-subject")).toHaveTextContent("commit de prueba");
+  });
+
+  it("colapsa la zona inferior al deseleccionar el commit", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Choose folder" }));
+    await user.click(await screen.findByText("commit de prueba"));
+    expect(screen.getByRole("region", { name: "Commit details" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Close details" }));
+
+    expect(screen.queryByRole("region", { name: "Commit details" })).not.toBeInTheDocument();
+  });
+
+  it("el desplegable de rama solo lista ramas locales, no las del remoto", async () => {
+    const user = userEvent.setup();
+    const ref = (name: string) => ({
+      name,
+      object_id: "aaaa0000",
+      object_type: "commit",
+      upstream: null,
+      track: null,
+    });
+    vi.mocked(listRefs).mockResolvedValue([
+      ref("refs/heads/main"),
+      ref("refs/heads/feature"),
+      ref("refs/remotes/origin/main"),
+      ref("refs/remotes/origin/una-de-mil"),
+      ref("refs/tags/v1.0.0"),
+    ]);
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Choose folder" }));
+    const select = await screen.findByRole("combobox", { name: /Branch/i });
+
+    // Un repo real tiene miles de ramas remotas: volcarlas aquí inutiliza el
+    // desplegable.
+    expect(within(select).getByRole("option", { name: "main" })).toBeInTheDocument();
+    expect(within(select).getByRole("option", { name: "feature" })).toBeInTheDocument();
+    expect(within(select).queryByRole("option", { name: /origin\// })).not.toBeInTheDocument();
+    expect(within(select).queryByRole("option", { name: "v1.0.0" })).not.toBeInTheDocument();
+  });
+
+  it("no reserva columna de refs en los commits que no tienen ninguna", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Choose folder" }));
+    await screen.findByText("commit de prueba");
+
+    // COMMIT lleva "HEAD -> main", así que sí debe pintarse el bloque de refs.
+    expect(document.querySelector(".commit-refs")).not.toBeNull();
+
+    vi.mocked(logPage).mockResolvedValue([{ ...COMMIT, refs: [] }]);
+    await user.click(screen.getByRole("button", { name: /Refresh/ }));
+
+    // Sin refs no se pinta el hueco: el asunto pega con el grafo.
+    await waitFor(() => expect(document.querySelector(".commit-refs")).toBeNull());
+  });
+
+  it("redimensiona las columnas de la tabla y guarda el ancho", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Choose folder" }));
+    await screen.findByText("commit de prueba");
+
+    const resizer = screen.getByRole("separator", { name: "Resize Author column" });
+    const author = document.querySelector(".commit-author") as HTMLElement;
+    const inicial = author.style.width;
+
+    // Con el teclado, que en jsdom no hay arrastre de puntero de verdad.
+    resizer.focus();
+    await user.keyboard("{ArrowLeft}");
+
+    expect(author.style.width).not.toBe(inicial);
+    expect(localStorage.getItem("opengit.columns.commit-table")).toContain("author");
   });
 
   it("marca los commits entrantes en el historial", async () => {
@@ -390,17 +473,18 @@ describe("App", () => {
     const menu = screen.getByRole("menu");
     expect(within(menu).getByRole("menuitem", { name: "Copy hash" })).toBeInTheDocument();
 
-    await user.click(within(menu).getByRole("menuitem", { name: "View diff" }));
+    await user.click(within(menu).getByRole("menuitem", { name: "Open in Diff view" }));
 
     expect(useUiStore.getState().activeView).toBe("diff");
     expect(commitFiles).toHaveBeenCalledWith("/tmp/mi-repo", "aaaa0000");
   });
 
-  it("alterna el panel de salida", async () => {
+  it("alterna el panel de salida desde Settings", async () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole("button", { name: "Output" }));
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    await user.click(screen.getByRole("button", { name: "Toggle output panel" }));
 
     expect(screen.queryByRole("region", { name: "Output" })).not.toBeInTheDocument();
   });
@@ -409,6 +493,7 @@ describe("App", () => {
     const user = userEvent.setup();
     render(<App />);
 
+    await user.click(screen.getByRole("button", { name: "Settings" }));
     const select = screen.getByRole("combobox", { name: "Theme" });
     expect(select).toHaveValue("system");
 
@@ -437,10 +522,11 @@ describe("App", () => {
     expect(screen.queryByRole("dialog", { name: "Keyboard shortcuts" })).not.toBeInTheDocument();
   });
 
-  it("abre y cierra la ayuda desde el botón de la toolbar", async () => {
+  it("abre y cierra la ayuda desde Settings", async () => {
     const user = userEvent.setup();
     render(<App />);
 
+    await user.click(screen.getByRole("button", { name: "Settings" }));
     await user.click(screen.getByRole("button", { name: "Keyboard shortcuts" }));
     expect(screen.getByRole("dialog", { name: "Keyboard shortcuts" })).toBeInTheDocument();
 
@@ -518,7 +604,16 @@ describe("App", () => {
     expect(setWindowTitle).toHaveBeenLastCalledWith("/tmp/mi-repo");
   });
 
-  it("muestra rama, cambios y versión en la barra de estado", async () => {
+  it("avisa en Output si no se puede fijar el título", async () => {
+    // Regresión: faltaba el permiso core:window:allow-set-title y el error
+    // se tragaba en silencio, así que el título nunca se fijaba de verdad.
+    vi.mocked(setWindowTitle).mockRejectedValueOnce(new Error("window.set_title not allowed"));
+    render(<App />);
+
+    expect(await screen.findByText(/Could not set the window title/)).toBeInTheDocument();
+  });
+
+  it("muestra rama y versión en la barra de estado, sin repetir los cambios", async () => {
     const user = userEvent.setup();
     render(<App />);
 
@@ -527,8 +622,11 @@ describe("App", () => {
 
     const footer = screen.getByRole("contentinfo");
     expect(within(footer).getByText("main")).toBeInTheDocument();
-    expect(await within(footer).findByText("1 change(s)")).toBeInTheDocument();
     expect(within(footer).getByText("core v0.1.0")).toBeInTheDocument();
+    // El recuento de cambios vive en el badge de Commit; aquí sobraba.
+    expect(within(footer).queryByText(/change\(s\)/)).not.toBeInTheDocument();
+    const toolbar = screen.getByRole("banner");
+    expect(within(toolbar).getByRole("button", { name: /Commit/ })).toHaveTextContent("1");
   });
 
   it("enruta los clics del menú nativo a sus acciones", async () => {

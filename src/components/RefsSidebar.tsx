@@ -9,6 +9,9 @@ import { useRefsStore } from "../lib/stores/refs";
 import { useRemoteStore } from "../lib/stores/remote";
 import { useRepoStore } from "../lib/stores/repo";
 import { useContextMenu } from "../lib/hooks/useContextMenu";
+import { useCollapseStore } from "../lib/stores/collapse";
+import { useUiStore } from "../lib/stores/ui";
+import { CollapsibleSection } from "./CollapsibleSection";
 
 export function RefsSidebar() {
   const root = useRepoStore((state) => state.repo?.root ?? null);
@@ -27,6 +30,7 @@ export function RefsSidebar() {
   const forceRemove = useRefsStore((state) => state.forceRemove);
   const cancelForceDelete = useRefsStore((state) => state.cancelForceDelete);
   const selectedCommit = useLogStore((state) => state.selected);
+  const newBranchRequest = useUiStore((state) => state.newBranchRequest);
 
   const createTag = useRefsStore((state) => state.createTag);
   const deleteTag = useRefsStore((state) => state.deleteTag);
@@ -48,6 +52,15 @@ export function RefsSidebar() {
       void load(root);
     }
   }, [root, load]);
+
+  // El botón Branch de la barra reutiliza el formulario que ya vive aquí,
+  // en vez de duplicar un diálogo de creación.
+  useEffect(() => {
+    if (newBranchRequest > 0) {
+      setCreating(true);
+      useCollapseStore.getState().set("branches", false);
+    }
+  }, [newBranchRequest]);
 
   const term = filter.trim().toLowerCase();
   const matches = (name: string) => term === "" || name.toLowerCase().includes(term);
@@ -124,8 +137,7 @@ export function RefsSidebar() {
 
   return (
     <>
-      <section className="sidebar-section">
-        <h2>Branches</h2>
+      <CollapsibleSection id="branches" title="Branches" icon="branch">
         <div className="refs-toolbar">
           <input
             type="search"
@@ -283,29 +295,36 @@ export function RefsSidebar() {
           ))}
           {locals.length === 0 && <li className="muted">No branches</li>}
         </ul>
-      </section>
+      </CollapsibleSection>
 
-      <section className="sidebar-section">
-        <h2>Remotes</h2>
+      <CollapsibleSection id="remotes" title="Remotes" icon="cloud">
         {remoteGroups.size === 0 && <p className="muted">No remote branches</p>}
         {[...remoteGroups.entries()].map(([remote, items]) => {
           const webUrl = remoteInfos.find((entry) => entry.name === remote)?.web_url ?? null;
           return (
-            <div key={remote}>
-              <p className="refs-group">
-                {remote}
-                {webUrl && (
-                  <button
-                    type="button"
-                    className="refs-open-remote"
-                    title={`Open ${webUrl} in the browser`}
-                    aria-label={`Open ${remote} in the browser`}
-                    onClick={() => void openExternal(webUrl)}
-                  >
-                    ↗
-                  </button>
-                )}
-              </p>
+            <CollapsibleSection
+              key={remote}
+              id={`remote:${remote}`}
+              title={remote}
+              nested
+              defaultCollapsed
+              extra={
+                <>
+                  <span className="refs-count">{items.length}</span>
+                  {webUrl && (
+                    <button
+                      type="button"
+                      className="refs-open-remote"
+                      title={`Open ${webUrl} in the browser`}
+                      aria-label={`Open ${remote} in the browser`}
+                      onClick={() => void openExternal(webUrl)}
+                    >
+                      ↗
+                    </button>
+                  )}
+                </>
+              }
+            >
               <ul className="refs-list">
                 {items.map(({ ref, short }) => (
                   <li key={ref.name}>
@@ -326,12 +345,11 @@ export function RefsSidebar() {
                   </li>
                 ))}
               </ul>
-            </div>
+            </CollapsibleSection>
           );
         })}
-      </section>
-      <section className="sidebar-section">
-        <h2>Tags</h2>
+      </CollapsibleSection>
+      <CollapsibleSection id="tags" title="Tags" icon="tag">
         <div className="refs-toolbar">
           <button
             type="button"
@@ -412,7 +430,7 @@ export function RefsSidebar() {
           ))}
           {tags.length === 0 && <li className="muted">No tags</li>}
         </ul>
-      </section>
+      </CollapsibleSection>
       {error && (
         <p role="alert" className="refs-error">
           {error}
