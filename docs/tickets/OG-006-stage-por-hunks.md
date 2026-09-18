@@ -1,7 +1,7 @@
 # OG-006 · Stage/unstage por hunks y líneas
 
 - **Milestone:** M1 — MVP local
-- **Estado:** in-progress
+- **Estado:** done
 - **Depende de:** OG-005
 - **Referencias:** skill `hunk-staging`, ADR-0003
 
@@ -44,4 +44,4 @@ Es la funcionalidad que más se usa en el día a día y la razón principal para
 - UI: en modo **unificado** el parche se pinta con `PatchView` (virtualizado): botón por hunk, selección de líneas `+`/`-` por clic y botones de fichero/como "Stage file"/"Stage N líneas". En commits el staging queda deshabilitado. Tras aplicar, se recarga solo el parche y se refresca el status.
 - Tests: 5 de integración de staging (hunk, líneas, unstage, CRLF/sin newline, rutas) + 6 unitarios del parser; 54 de frontend.
 - De paso se arregló una flakiness de los tests: los `TempDir` podían colisionar (mismo `pid+nanos` en tests paralelos) y ahora llevan contador atómico (ver `.ai/memory/dev-environment.md`).
-- Pendiente para cerrar: PR y CI verde.
+- Cerrado el 2026-09-18 con CI verde (Frontend 25 s, Rust 1m9s) en el PR #8.
