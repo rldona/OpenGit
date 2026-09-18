@@ -22,23 +22,32 @@ pub const LOG_FORMAT: &str = "%H%x1f%P%x1f%an%x1f%ae%x1f%at%x1f%D%x1f%s";
 pub const REFS_FORMAT: &str =
     "%(refname)%00%(objectname)%00%(objecttype)%00%(upstream)%00%(upstream:track)";
 
-/// Página de historial en orden topológico, todas las refs.
+/// Página de historial en orden topológico. Con `rev = None` recorre todas las
+/// refs; con `Some(rev)` solo la rama o ref indicada.
 pub fn log_page(
     runner: &Runner,
     repo: &Path,
     skip: usize,
     limit: usize,
+    rev: Option<&str>,
 ) -> Result<Vec<Commit>, GitError> {
-    let args: Vec<OsString> = vec![
+    let mut args: Vec<OsString> = vec![
         "log".into(),
         "--topo-order".into(),
-        "--all".into(),
         "--parents".into(),
         "-z".into(),
         format!("--format={LOG_FORMAT}").into(),
         format!("--skip={skip}").into(),
         format!("--max-count={limit}").into(),
     ];
+    match rev {
+        Some(rev) => {
+            // Evita que una ref que empiece por "-" se interprete como opción.
+            args.push("--end-of-options".into());
+            args.push(rev.into());
+        }
+        None => args.push("--all".into()),
+    }
     let output = runner.run_checked(&GitCommand::new(args).cwd(repo))?;
     parse_log(&output.stdout)
 }

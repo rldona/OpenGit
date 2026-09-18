@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
+import { HistoryView } from "./components/HistoryView";
 import { getAppVersion } from "./lib/bridge/core";
-import type { RepoInfo } from "./lib/bridge/types";
 import { useRepoStore } from "./lib/stores/repo";
 import { useUiStore } from "./lib/stores/ui";
 
@@ -104,7 +104,7 @@ function App() {
               {error}
             </p>
           )}
-          {repo ? <RepoSummary repo={repo} /> : <Welcome loading={loading} onOpen={pickAndOpen} />}
+          {repo ? <HistoryView /> : <Welcome loading={loading} onOpen={pickAndOpen} />}
         </main>
       </div>
 
@@ -153,26 +153,6 @@ function Welcome({ loading, onOpen }: { loading: boolean; onOpen: () => void }) 
       <button type="button" onClick={onOpen} disabled={loading}>
         Seleccionar carpeta
       </button>
-    </div>
-  );
-}
-
-function RepoSummary({ repo }: { repo: RepoInfo }) {
-  const branch = repo.detached ? "detached HEAD" : (repo.branch ?? "sin commits");
-  return (
-    <div className="repo-summary">
-      <h1>{repo.name}</h1>
-      <p className="repo-root">{repo.root}</p>
-      <p className="repo-badges">
-        <span className="badge">{branch}</span>
-        {repo.head && <span className="mono">{repo.head.slice(0, 7)}</span>}
-        <span className="muted">git {repo.git_version}</span>
-      </p>
-      <p className="muted">
-        {repo.has_commits
-          ? "Historial listo: el grafo llega en OG-004."
-          : "El repositorio todavía no tiene commits."}
-      </p>
     </div>
   );
 }

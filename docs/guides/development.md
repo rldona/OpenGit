@@ -52,10 +52,11 @@ Artefactos: `opengit-macos`, `opengit-linux`, `opengit-windows`.
 
 ```
 src/                        # React + TS
-  App.tsx                   # layout base: toolbar, sidebar, historial, salida
-  components/               # UI reutilizable (a partir de OG-004)
+  App.tsx                   # layout: toolbar, sidebar, historial, salida
+  components/               # HistoryView, GraphCanvas (OG-004)
   lib/bridge/               # envoltorios tipados de invoke/eventos
-  lib/stores/               # stores de Zustand (ui, y por dominio después)
+  lib/graph/                # layout de lanes, puro y testeable (OG-004)
+  lib/stores/               # stores de Zustand (ui, repo, log)
   styles/                   # CSS global
   test/                     # setup de Vitest
 src-tauri/                  # Rust
