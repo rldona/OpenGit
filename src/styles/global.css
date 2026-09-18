@@ -1492,9 +1492,28 @@ body {
 }
 
 .refs-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   margin: 4px 0 2px;
   color: var(--text-muted);
   font-size: 11px;
+}
+
+.refs-open-remote {
+  padding: 0 4px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.refs-open-remote:hover {
+  border-color: var(--accent);
+  color: var(--text);
 }
 
 .refs-tag-form,

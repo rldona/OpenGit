@@ -617,6 +617,14 @@ pub fn lfs_status(
 }
 
 #[tauri::command]
+pub fn remote_urls(
+    path: String,
+    state: State<'_, AppState>,
+) -> Result<Vec<crate::git::Remote>, GitError> {
+    crate::git::remote_urls(&state.runner, Path::new(&path))
+}
+
+#[tauri::command]
 pub fn remove_recent_repo(path: String, state: State<'_, AppState>) -> Result<(), GitError> {
     state.recents.lock().map_err(lock_error)?.remove(&path)
 }

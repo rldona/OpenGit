@@ -128,3 +128,12 @@ pub struct LfsStatus {
     /// Algún `.gitattributes` rastreado usa `filter=lfs`.
     pub configured: bool,
 }
+
+/// Remoto del repositorio, con su URL web cuando es abrible.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct Remote {
+    pub name: String,
+    pub url: String,
+    /// Equivalente `https://…`; `None` para rutas locales o `file://`.
+    pub web_url: Option<String>,
+}
