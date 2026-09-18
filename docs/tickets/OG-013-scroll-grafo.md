@@ -1,7 +1,7 @@
 # OG-013 · Scroll fluido del grafo (sin parpadeo)
 
 - **Milestone:** M1 — MVP local
-- **Estado:** in-progress
+- **Estado:** done
 - **Depende de:** OG-004
 - **Referencias:** ADR-0004, .ai/memory/performance.md
 
@@ -36,4 +36,4 @@ Al hacer scroll rápido en el historial, el grafo parpadea y va a saltos respect
 - `GraphCanvas` ya no recibe `scrollTop`/`viewportHeight`: observa el scroller (`scroll` pasivo + `ResizeObserver`), lee `scrollTop` en el momento del dibujo y repinta en el siguiente `requestAnimationFrame`.
 - El buffer se redimensiona solo si cambia el tamaño o el DPR; el resto de frames solo cambian `ctx` y pintan filas visibles.
 - `HistoryView` calcula la ventana visible con `visibleRange` y solo actualiza estado al cruzar una fila; las filas se posicionan en `index * ROW_HEIGHT` (sin aritmética por píxel).
-- Pendiente para cerrar: PR y CI verde.
+- Cerrado el 2026-09-18 con CI verde (Frontend 28 s, Rust 2m9s) en el PR #7.
