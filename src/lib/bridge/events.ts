@@ -30,3 +30,8 @@ export async function subscribeJobEvents(handlers: JobEventHandlers): Promise<Un
     listen<JobFinishedEvent>("job://finished", (event) => handlers.onFinished(event.payload)),
   ]);
 }
+
+/** Suscribe a los clics del menú nativo; devuelve la función para limpiar. */
+export function subscribeMenuEvents(handler: (id: string) => void): Promise<UnlistenFn> {
+  return listen<string>("menu-action", (event) => handler(event.payload));
+}
