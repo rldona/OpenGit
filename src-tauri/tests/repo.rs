@@ -1,8 +1,8 @@
 mod support;
 
-use opengit_lib::git::{error::GitError, Runner};
+use opengit_lib::git::{self, error::GitError, Runner};
 use opengit_lib::repo::{
-    self,
+    self, ops,
     recents::{RecentRepo, Recents},
 };
 use support::{git, TempDir, TestRepo};
@@ -102,6 +102,51 @@ fn rechaza_carpeta_que_no_es_repo_y_ruta_inexistente() {
 
     let error = repo::open(&runner(), &dir.path().join("no-existe")).expect_err("no existe");
     assert!(matches!(error, GitError::PathNotFound { .. }), "{error:?}");
+}
+
+#[test]
+fn stage_unstage_y_discard_sobre_repo_real() {
+    let repo = TestRepo::init();
+    repo.write("a.txt", b"uno\n");
+    repo.git_ok(&["add", "."]);
+    repo.git_ok(&["commit", "-q", "-m", "base"]);
+
+    repo.write("a.txt", b"dos\n");
+    ops::stage_paths(&runner(), repo.path(), &["a.txt"]).expect("stage");
+    let staged = git::status(&runner(), repo.path()).expect("status staged");
+    assert!(staged
+        .entries
+        .iter()
+        .any(|entry| entry.path == "a.txt" && entry.xy == "M."));
+
+    ops::unstage_paths(&runner(), repo.path(), &["a.txt"]).expect("unstage");
+    let unstaged = git::status(&runner(), repo.path()).expect("status unstaged");
+    assert!(unstaged
+        .entries
+        .iter()
+        .any(|entry| entry.path == "a.txt" && entry.xy == ".M"));
+
+    ops::discard_paths(&runner(), repo.path(), &["a.txt"]).expect("discard");
+    let clean = git::status(&runner(), repo.path()).expect("status limpio");
+    assert!(clean.entries.is_empty(), "{clean:?}");
+    assert_eq!(
+        std::fs::read_to_string(repo.path().join("a.txt")).unwrap(),
+        "uno\n"
+    );
+}
+
+#[test]
+fn borra_untracked_y_rechaza_rutas_fuera_del_repo() {
+    let repo = TestRepo::init();
+    repo.write("suelto.txt", b"x\n");
+    ops::remove_untracked(repo.path(), "suelto.txt").expect("borrar untracked");
+    assert!(!repo.path().join("suelto.txt").exists());
+
+    let error = ops::remove_untracked(repo.path(), "../fuera.txt").expect_err("ruta con ..");
+    assert!(matches!(error, GitError::InvalidOutput { .. }));
+
+    let error = ops::remove_untracked(repo.path(), "/etc/hosts").expect_err("ruta absoluta");
+    assert!(matches!(error, GitError::InvalidOutput { .. }));
 }
 
 #[test]

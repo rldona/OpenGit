@@ -34,6 +34,8 @@ pub enum GitError {
     GitTooOld { found: String, minimum: String },
     /// No se pudo leer o escribir el estado persistido de la app.
     Store { message: String },
+    /// Error de sistema de ficheros fuera del alcance de git.
+    Io { message: String },
 }
 
 impl GitError {
@@ -86,6 +88,7 @@ impl fmt::Display for GitError {
             Self::Store { message } => {
                 write!(f, "no se pudo guardar el estado de la app: {message}")
             }
+            Self::Io { message } => write!(f, "error de fichero: {message}"),
         }
     }
 }
