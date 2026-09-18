@@ -5,6 +5,7 @@ import App from "./App";
 import { getAppVersion } from "./lib/bridge/core";
 import { pickDirectory } from "./lib/bridge/dialog";
 import { subscribeRepoEvents } from "./lib/bridge/events";
+import { cherryPick } from "./lib/bridge/history";
 import { listRefs, logPage } from "./lib/bridge/log";
 import { openRepo, recentRepos } from "./lib/bridge/repo";
 import { commitFiles, diffFile, diffNumstat } from "./lib/bridge/diff";
@@ -22,7 +23,13 @@ vi.mock("./lib/bridge/core", () => ({
 
 vi.mock("./lib/bridge/dialog", () => ({
   pickDirectory: vi.fn(),
-  confirmDestructive: vi.fn(),
+  confirmDestructive: vi.fn().mockResolvedValue(true),
+}));
+
+vi.mock("./lib/bridge/history", () => ({
+  cherryPick: vi.fn().mockResolvedValue(undefined),
+  revertCommit: vi.fn().mockResolvedValue(undefined),
+  resetMixed: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("./lib/bridge/repo", () => ({
@@ -196,6 +203,22 @@ describe("App", () => {
 
     expect(screen.getByRole("complementary", { name: "Commit details" })).toBeInTheDocument();
     expect(screen.getByText("aaaa0000")).toBeInTheDocument();
+  });
+
+  it("ofrece cherry-pick, revert y reset en el detalle del commit", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Choose folder" }));
+    await user.click(await screen.findByText("commit de prueba"));
+
+    expect(screen.getByRole("button", { name: "Cherry-pick" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Revert" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Reset to here" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Cherry-pick" }));
+
+    expect(cherryPick).toHaveBeenCalledWith("/tmp/mi-repo", "aaaa0000");
   });
 
   it("abre el diff de un commit desde el detalle", async () => {

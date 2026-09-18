@@ -25,6 +25,46 @@ pub const LOG_FORMAT: &str = "%H%x1f%P%x1f%an%x1f%ae%x1f%at%x1f%D%x1f%s";
 pub const REFS_FORMAT: &str =
     "%(refname)%00%(objectname)%00%(objecttype)%00%(upstream)%00%(upstream:track)";
 
+fn validate_commit_hash(hash: &str) -> Result<(), GitError> {
+    let valid = (4..=64).contains(&hash.len()) && hash.chars().all(|c| c.is_ascii_hexdigit());
+    if !valid {
+        return Err(GitError::invalid(format!("invalid commit hash: {hash}")));
+    }
+    Ok(())
+}
+
+/// Aplica el commit indicado sobre la rama actual.
+pub fn cherry_pick(runner: &Runner, repo: &Path, hash: &str) -> Result<(), GitError> {
+    validate_commit_hash(hash)?;
+    runner
+        .run_checked(&GitCommand::new(["cherry-pick", hash]).cwd(repo).write())
+        .map(|_| ())
+}
+
+/// Crea el commit de reversión del commit indicado (mensaje por defecto).
+pub fn revert_commit(runner: &Runner, repo: &Path, hash: &str) -> Result<(), GitError> {
+    validate_commit_hash(hash)?;
+    runner
+        .run_checked(
+            &GitCommand::new(["revert", "--no-edit", hash])
+                .cwd(repo)
+                .write(),
+        )
+        .map(|_| ())
+}
+
+/// Reset mixed: mueve HEAD y desestagea, sin tocar el working tree.
+pub fn reset_mixed(runner: &Runner, repo: &Path, hash: &str) -> Result<(), GitError> {
+    validate_commit_hash(hash)?;
+    runner
+        .run_checked(
+            &GitCommand::new(["reset", "--mixed", hash])
+                .cwd(repo)
+                .write(),
+        )
+        .map(|_| ())
+}
+
 /// Crea un tag ligero (sin mensaje) o anotado (con mensaje) en `target`.
 pub fn tag_create(
     runner: &Runner,
