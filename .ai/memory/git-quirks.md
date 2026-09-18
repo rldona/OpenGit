@@ -34,3 +34,13 @@
 - **Contexto:** commitear desde la app.
 - **Hallazgo:** interpolar el mensaje en `-m` requiere escapar comillas y rompe saltos de línea.
 - **Implicación:** pasar el mensaje por stdin (`-F -`), nunca concatenado.
+
+## Formatos exactos con `-z` (log, status, numstat)
+
+- **Fecha:** 2026-09-18
+- **Contexto:** parsers de OG-003; los detalles no obvios se verificaron con fixtures reales.
+- **Hallazgo:**
+  - `git log -z --format=...`: `-z` separa los commits con NUL (además de los separadores del formato); con `%x1f` entre campos queda un stream de tokens limpio.
+  - Rename en `status --porcelain=v2 -z`: la ruta nueva cierra el registro y la original es el **siguiente token** NUL, no un campo del mismo token.
+  - Rename en `diff --numstat -z`: el token de contadores lleva la ruta vacía (`1\t0\t`) y las dos rutas van en los dos tokens siguientes.
+- **Implicación:** parsear por tokens secuenciales con índice, no pre-dividir registros asumiendo un NUL por entrada. Los fixtures reales están en `src-tauri/tests/fixtures/` y se regeneran con `generate.sh`.
