@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { startRemoteJob } from "../lib/bridge/jobs";
@@ -200,6 +200,19 @@ describe("RefsSidebar", () => {
     await user.click(screen.getByRole("button", { name: "Open origin in the browser" }));
 
     expect(openExternal).toHaveBeenCalledWith("https://github.com/rldona/opengit");
+  });
+
+  it("abre el menú contextual de una rama", async () => {
+    render(<RefsSidebar />);
+    await screen.findByText("feature");
+
+    fireEvent.contextMenu(screen.getByText("feature"));
+
+    const menu = screen.getByRole("menu");
+    expect(within(menu).getByRole("menuitem", { name: "Checkout" })).toBeInTheDocument();
+    expect(within(menu).getByRole("menuitem", { name: "Rename" })).toBeInTheDocument();
+    expect(within(menu).getByRole("menuitem", { name: "Delete" })).toBeInTheDocument();
+    expect(within(menu).getByRole("menuitem", { name: "Copy name" })).toBeInTheDocument();
   });
 
   it("no ofrece abrir remotos sin URL web", async () => {

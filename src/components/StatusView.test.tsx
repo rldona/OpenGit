@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { confirmDestructive } from "../lib/bridge/dialog";
@@ -115,6 +115,15 @@ describe("StatusView", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Git LFS but git-lfs is not installed",
     );
+  });
+
+  it("abre el menú contextual de un fichero", async () => {
+    render(<StatusView />);
+    fireEvent.contextMenu(await screen.findByText("modificado.txt"));
+
+    expect(screen.getByRole("menuitem", { name: "Stage" })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "Discard" })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "Copy path" })).toBeInTheDocument();
   });
 
   it("agrupa por directorios en modo árbol y cambia a lista", async () => {

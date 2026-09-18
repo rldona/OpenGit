@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { copyText } from "../lib/clipboard";
 import { confirmDestructive } from "../lib/bridge/dialog";
 import type { FileStatus } from "../lib/bridge/types";
 import { useRepoStore } from "../lib/stores/repo";
@@ -8,6 +9,7 @@ import { useExtrasStore } from "../lib/stores/extras";
 import { useStatusStore } from "../lib/stores/status";
 import { useUiStore } from "../lib/stores/ui";
 import { CommitPanel } from "./CommitPanel";
+import { useContextMenu } from "../lib/hooks/useContextMenu";
 import { FileTree } from "./FileTree";
 
 type SectionKey = "conflicts" | "staged" | "unstaged" | "untracked";
@@ -66,6 +68,7 @@ export function StatusView() {
   const lfs = useExtrasStore((state) => state.lfs);
   const fileTree = useUiStore((state) => state.fileTree);
   const setFileTree = useUiStore((state) => state.setFileTree);
+  const fileMenu = useContextMenu();
 
   const root = repo?.root ?? null;
 
@@ -123,6 +126,33 @@ export function StatusView() {
       key={`${section.key}-${entry.path}`}
       className={`status-row${selected === entry.path ? " selected" : ""}`}
       onClick={() => void openDiff(entry, section.key === "staged")}
+      onContextMenu={(event) =>
+        fileMenu.open(event, [
+          { label: "Open diff", onSelect: () => void openDiff(entry, section.key === "staged") },
+          section.key === "staged"
+            ? { label: "Unstage", onSelect: () => void unstage(entry.path, entry.orig_path) }
+            : { label: "Stage", onSelect: () => void stage(entry.path, entry.orig_path) },
+          ...(section.key === "unstaged"
+            ? [
+                {
+                  label: "Discard",
+                  danger: true,
+                  onSelect: () => void confirmAndRun(entry, "discard"),
+                },
+              ]
+            : []),
+          ...(section.key === "untracked"
+            ? [
+                {
+                  label: "Delete",
+                  danger: true,
+                  onSelect: () => void confirmAndRun(entry, "delete"),
+                },
+              ]
+            : []),
+          { label: "Copy path", onSelect: () => void copyText(entry.path) },
+        ])
+      }
     >
       <span className="status-xy">{entry.xy}</span>
       <span className="status-path" title={entry.path}>
@@ -222,6 +252,7 @@ export function StatusView() {
           ))}
       </div>
       <CommitPanel />
+      {fileMenu.menu}
     </div>
   );
 }

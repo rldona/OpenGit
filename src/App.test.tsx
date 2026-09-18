@@ -1,4 +1,4 @@
-import { act, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
@@ -364,6 +364,23 @@ describe("App", () => {
     expect(commitFiles).toHaveBeenCalledWith("/tmp/mi-repo", "aaaa0000");
     expect(await screen.findByTestId("diff-editor")).toBeInTheDocument();
     expect(screen.getByText("a.txt")).toBeInTheDocument();
+  });
+
+  it("abre el menú contextual de un commit y ejecuta la acción", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Choose folder" }));
+    const subject = await screen.findByText("commit de prueba");
+    fireEvent.contextMenu(subject.closest("button")!);
+
+    const menu = screen.getByRole("menu");
+    expect(within(menu).getByRole("menuitem", { name: "Copy hash" })).toBeInTheDocument();
+
+    await user.click(within(menu).getByRole("menuitem", { name: "View diff" }));
+
+    expect(useUiStore.getState().activeView).toBe("diff");
+    expect(commitFiles).toHaveBeenCalledWith("/tmp/mi-repo", "aaaa0000");
   });
 
   it("alterna el panel de salida", async () => {
