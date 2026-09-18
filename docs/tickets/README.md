@@ -41,7 +41,7 @@ Un fichero por ticket, nombrado `OG-NNN-slug.md`. Todo cambio del repositorio na
 | [OG-006](OG-006-stage-por-hunks.md) | Stage/unstage por hunks y líneas | M1 | backlog |
 | [OG-007](OG-007-panel-commit.md) | Panel de commit | M1 | backlog |
 | [OG-008](OG-008-sidebar-refs-checkout.md) | Sidebar de branches/tags y checkout | M1 | backlog |
-| [OG-009](OG-009-working-tree-status.md) | Working tree status | M1 | in-progress |
-| [OG-010](OG-010-watcher-repo.md) | Watcher de `.git` y refresco | M1 | in-progress |
+| [OG-009](OG-009-working-tree-status.md) | Working tree status | M1 | done |
+| [OG-010](OG-010-watcher-repo.md) | Watcher de `.git` y refresco | M1 | done |
 | [OG-011](OG-011-remotos-fetch-pull-push.md) | Fetch, pull y push | M2 | backlog |
 | [OG-012](OG-012-ci-build-a-demanda.md) | CI: build multiplataforma a demanda | M0 | done |
