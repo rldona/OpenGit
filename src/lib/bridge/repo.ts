@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { GitVersion, RecentRepo, RepoInfo } from "./types";
+import type { GitVersion, RecentRepo, RepoInfo, Submodule, Worktree } from "./types";
 
 export function gitVersion(): Promise<GitVersion> {
   return invoke<GitVersion>("git_version");
@@ -20,4 +20,12 @@ export function removeRecentRepo(path: string): Promise<void> {
 /** Detiene el watcher del repo abierto. */
 export function closeRepo(): Promise<void> {
   return invoke<void>("close_repo");
+}
+
+export function submoduleStatus(path: string): Promise<Submodule[]> {
+  return invoke<Submodule[]>("submodule_status", { path });
+}
+
+export function worktreeList(path: string): Promise<Worktree[]> {
+  return invoke<Worktree[]>("worktree_list", { path });
 }

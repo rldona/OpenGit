@@ -9,8 +9,14 @@ pub mod runner;
 pub mod version;
 
 pub use error::GitError;
-pub use models::{Commit, FileDiff, FileStatus, Ref, Stash, StatusKind, StatusReport};
-pub use parsers::{parse_log, parse_numstat, parse_refs, parse_stash_list, parse_status};
+pub use models::{
+    Commit, FileDiff, FileStatus, Ref, Stash, StatusKind, StatusReport, Submodule, SubmoduleState,
+    Worktree,
+};
+pub use parsers::{
+    parse_log, parse_numstat, parse_refs, parse_stash_list, parse_status, parse_submodule_status,
+    parse_worktree_list,
+};
 pub use runner::{GitCommand, GitOutput, GitProcess, Runner, StdinMode, DEFAULT_TIMEOUT};
 pub use version::{GitVersion, MINIMUM_GIT_VERSION};
 
@@ -243,6 +249,19 @@ pub fn stash_list(runner: &Runner, repo: &Path) -> Result<Vec<Stash>, GitError> 
         &GitCommand::new(["stash", "list", "-z", "--format=%gd%x1f%gs%x1f%ct%x1f%H"]).cwd(repo),
     )?;
     parse_stash_list(&output.stdout)
+}
+
+/// Lista los submódulos del repo (sin recursión).
+pub fn submodule_status(runner: &Runner, repo: &Path) -> Result<Vec<Submodule>, GitError> {
+    let output = runner.run_checked(&GitCommand::new(["submodule", "status"]).cwd(repo))?;
+    parse_submodule_status(&output.stdout)
+}
+
+/// Lista los worktrees del repo, incluido el principal.
+pub fn worktree_list(runner: &Runner, repo: &Path) -> Result<Vec<Worktree>, GitError> {
+    let output =
+        runner.run_checked(&GitCommand::new(["worktree", "list", "--porcelain"]).cwd(repo))?;
+    parse_worktree_list(&output.stdout)
 }
 
 pub fn stash_push(
