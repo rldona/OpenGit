@@ -1,7 +1,7 @@
 # OG-029 · Reword múltiple en rebase interactivo (v2)
 
 - **Milestone:** M5 — Pulido (v2 de OG-021)
-- **Estado:** in-progress
+- **Estado:** done
 - **Depende de:** OG-021
 - **Referencias:** ROADMAP.md, docs/tickets/OG-021-rebase-interactivo.md
 
@@ -43,4 +43,4 @@ OG-021 permitió un solo `reword` por plan con un único mensaje global, resuelt
 - Rust: `TodoItem.message` con `#[serde(default)]`; `interactive_rebase` pierde el `reword_message` global y escribe `rebase-message-<índice>.txt` por cada reword, con un `exec` tras su pick. La validación es por item.
 - Frontend: `PlanRow.message`; el store pasa `message` solo en rewords (`null` en el resto); `RebaseView` pinta el input dentro de la fila (con `flex-wrap`) y deshabilita Run si falta alguno.
 - Tests: 110 Rust (rewords múltiples y reword sin mensaje separados) y 180 frontend (varios mensajes, viaje al reordenar y validación por fila).
-- Pendiente para cerrar: PR y CI verde.
+- Cerrado el 2026-09-18 con CI verde (Frontend 37 s, Rust 1m14s) en el PR #26.
