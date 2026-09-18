@@ -1,7 +1,7 @@
 # OG-017 · Cherry-pick, revert y reset suave
 
 - **Milestone:** M3 — Historial avanzado
-- **Estado:** in-progress
+- **Estado:** done
 - **Depende de:** OG-004, OG-010
 - **Referencias:** ROADMAP.md, AGENTS.md
 
@@ -43,4 +43,4 @@ Reescribir historia de forma controlada desde el grafo: traer un commit a la ram
 - UI: botones en el detalle del commit (Cherry-pick, Revert, Reset to here) con confirmación nativa y aviso específico en el reset; los errores salen en el panel de Salida y el banner de operación en curso (OG-007) avisa del cherry-pick a medias.
 - Tras cada acción se refrescan log, refs y status (además del watcher).
 - Tests: Rust (pick, conflicto, revert, reset mixed, hash inválido) y frontend (store y botones).
-- Pendiente para cerrar: PR y CI verde.
+- Cerrado el 2026-09-18 con CI verde (Frontend 32 s, Rust 1m21s) en el PR #13.
