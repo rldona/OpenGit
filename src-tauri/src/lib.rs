@@ -27,6 +27,8 @@ pub fn run() {
             commands::app_version,
             commands::git_version,
             commands::open_repo,
+            commands::log_page,
+            commands::list_refs,
             commands::recent_repos,
             commands::remove_recent_repo
         ])

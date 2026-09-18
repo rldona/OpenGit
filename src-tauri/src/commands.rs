@@ -37,6 +37,25 @@ pub fn open_repo(path: String, state: State<'_, AppState>) -> Result<repo::RepoI
 }
 
 #[tauri::command]
+pub fn log_page(
+    path: String,
+    skip: usize,
+    limit: usize,
+    rev: Option<String>,
+    state: State<'_, AppState>,
+) -> Result<Vec<crate::git::Commit>, GitError> {
+    crate::git::log_page(&state.runner, Path::new(&path), skip, limit, rev.as_deref())
+}
+
+#[tauri::command]
+pub fn list_refs(
+    path: String,
+    state: State<'_, AppState>,
+) -> Result<Vec<crate::git::Ref>, GitError> {
+    crate::git::refs(&state.runner, Path::new(&path))
+}
+
+#[tauri::command]
 pub fn recent_repos(state: State<'_, AppState>) -> Result<Vec<RecentRepo>, GitError> {
     Ok(state.recents.lock().map_err(lock_error)?.list())
 }
