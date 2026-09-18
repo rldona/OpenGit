@@ -4,6 +4,23 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>OpenGit</title>
+    <script>
+      (function () {
+        var preference = null;
+        try {
+          preference = localStorage.getItem("opengit.theme");
+        } catch (error) {
+          preference = null;
+        }
+        var dark;
+        if (preference === "light" || preference === "dark") {
+          dark = preference === "dark";
+        } else {
+          dark = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)").matches : true;
+        }
+        document.documentElement.dataset.theme = dark ? "dark" : "light";
+      })();
+    </script>
   </head>
 
   <body>
