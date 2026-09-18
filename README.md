@@ -6,7 +6,7 @@ Cliente de Git de escritorio, multiplataforma (Windows, macOS y Linux), inspirad
 
 ## Estado
 
-**M4 completado** el 2026-09-18. Además del MVP local, los remotos y el historial avanzado, la app resuelve conflictos por bloques, avisa de operaciones en curso con Abort/Continue y ofrece rebase interactivo visual (pick/reword/squash/fixup/drop). El siguiente paso es M5 (pulido y releases).
+**M5 completado** el 2026-09-18. Además del MVP local, los remotos, el historial avanzado y el rebase con editor de conflictos, la app incluye temas claro/oscuro, atajos de teclado, submódulos y worktrees en lectura, avisos de Git LFS y releases sin firmar para los tres SO. El siguiente paso es la fase 2 de releases (firma y notarización) o los hitos que se prioricen.
 
 | Área | Decisión | ADR |
 | --- | --- | --- |
