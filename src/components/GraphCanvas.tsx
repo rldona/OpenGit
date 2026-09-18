@@ -12,13 +12,25 @@ type Props = {
   laneCount: number;
   selected: string | null;
   scrollRef: RefObject<HTMLDivElement | null>;
+  /** Filas que la lista antepone al historial (p. ej. Uncommitted changes). */
+  offset?: number;
+  /** Dibuja el nodo hueco de "Uncommitted changes" sobre HEAD. */
+  worktree?: boolean;
 };
 
 /**
  * Capa de canvas fija sobre la lista (no se mueve con el scroll): lee
  * `scrollTop` al dibujar y repinta en el siguiente frame, antes del paint.
  */
-export function GraphCanvas({ rows, colors, laneCount, selected, scrollRef }: Props) {
+export function GraphCanvas({
+  rows,
+  colors,
+  laneCount,
+  selected,
+  scrollRef,
+  offset = 0,
+  worktree = false,
+}: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const frameRef = useRef<number | null>(null);
   const sizeRef = useRef({ width: 0, height: 0, ratio: 0 });
@@ -55,14 +67,30 @@ export function GraphCanvas({ rows, colors, laneCount, selected, scrollRef }: Pr
     context.lineWidth = 2;
     context.lineCap = "round";
 
-    const first = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - 1);
-    const last = Math.min(rows.length, Math.ceil((scrollTop + height) / ROW_HEIGHT) + 1);
+    const first = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - offset - 1);
+    const last = Math.min(rows.length, Math.ceil((scrollTop + height) / ROW_HEIGHT) - offset + 1);
     const x = (lane: number) => PADDING + lane * LANE_WIDTH + LANE_WIDTH / 2;
     const colorOf = (laneId: number) => colors[laneId] ?? GRAPH_COLORS[0];
 
+    if (worktree && rows.length > 0) {
+      // Nodo hueco en la primera fila de la lista, conectado con HEAD.
+      const lane = rows[0].lane;
+      const nodeCenter = ROW_HEIGHT / 2 - scrollTop;
+      const headCenter = offset * ROW_HEIGHT + ROW_HEIGHT / 2 - scrollTop;
+      context.strokeStyle = colorOf(rows[0].laneId);
+      context.beginPath();
+      context.moveTo(x(lane), nodeCenter + NODE_RADIUS);
+      context.lineTo(x(lane), headCenter - NODE_RADIUS);
+      context.stroke();
+      context.strokeStyle = selectionColor;
+      context.beginPath();
+      context.arc(x(lane), nodeCenter, NODE_RADIUS, 0, Math.PI * 2);
+      context.stroke();
+    }
+
     for (let index = first; index < last; index += 1) {
       const row = rows[index];
-      const top = index * ROW_HEIGHT - scrollTop;
+      const top = (index + offset) * ROW_HEIGHT - scrollTop;
       const center = top + ROW_HEIGHT / 2;
       const bottom = top + ROW_HEIGHT;
 
@@ -113,7 +141,7 @@ export function GraphCanvas({ rows, colors, laneCount, selected, scrollRef }: Pr
         context.stroke();
       }
     }
-  }, [rows, colors, selected, scrollRef, width, selectionColor]);
+  }, [rows, colors, selected, scrollRef, width, selectionColor, offset, worktree]);
 
   const schedule = useCallback(() => {
     if (frameRef.current !== null) {

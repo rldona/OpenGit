@@ -79,6 +79,30 @@ describe("useLogStore", () => {
     expect(logPage).toHaveBeenCalledWith("/tmp/repo", 0, 200, null, null);
   });
 
+  it("selecciona el primer commit al entrar en un proyecto", async () => {
+    vi.mocked(logPage).mockResolvedValue(page(3, "p"));
+
+    await useLogStore.getState().load("/tmp/repo");
+
+    expect(useLogStore.getState().selected).toBe("p0");
+  });
+
+  it("sin commits no selecciona nada al entrar en un proyecto", async () => {
+    await useLogStore.getState().load("/tmp/repo");
+
+    expect(useLogStore.getState().selected).toBeNull();
+  });
+
+  it("al filtrar dentro del mismo repositorio no reselecciona", async () => {
+    vi.mocked(logPage).mockResolvedValue(page(3, "p"));
+    await useLogStore.getState().load("/tmp/repo");
+    useLogStore.getState().select("p2");
+
+    await useLogStore.getState().setFilter("/tmp/repo", "refs/heads/main");
+
+    expect(useLogStore.getState().selected).toBeNull();
+  });
+
   it("acumula páginas y mantiene el layout incremental", async () => {
     vi.mocked(logPage).mockResolvedValueOnce(page(200, "p")).mockResolvedValueOnce(page(1, "r"));
 
@@ -139,38 +163,6 @@ describe("useLogStore", () => {
 
     expect(revertCommit).toHaveBeenCalled();
     expect(resetMixed).toHaveBeenCalledWith("/tmp/repo", "abcdef1234567890");
-  });
-
-  it("aplica una búsqueda y aplana el layout", async () => {
-    vi.mocked(logPage).mockResolvedValue([{ ...COMMIT, parents: ["padre-fuera-de-la-busqueda"] }]);
-    await useLogStore.getState().load("/tmp/repo");
-
-    await useLogStore.getState().applySearch("/tmp/repo", {
-      grep: "feat",
-      author: "",
-      path: "",
-    });
-
-    expect(logPage).toHaveBeenLastCalledWith("/tmp/repo", 0, 200, null, {
-      grep: "feat",
-      author: "",
-      path: "",
-    });
-    expect(useLogStore.getState().layout.rows[0].edges).toHaveLength(0);
-  });
-
-  it("limpia la búsqueda y vuelve a cargar sin filtros", async () => {
-    await useLogStore.getState().load("/tmp/repo");
-    await useLogStore.getState().applySearch("/tmp/repo", {
-      grep: "feat",
-      author: "",
-      path: "",
-    });
-
-    await useLogStore.getState().clearSearch("/tmp/repo");
-
-    expect(useLogStore.getState().search).toEqual({ grep: "", author: "", path: "" });
-    expect(logPage).toHaveBeenLastCalledWith("/tmp/repo", 0, 200, null, null);
   });
 
   it("expone el error de git sin romper el estado", async () => {

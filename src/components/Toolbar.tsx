@@ -47,7 +47,6 @@ export function Toolbar({ onFetch, onPull, onPush, onRefresh }: Props) {
   const pickAndOpen = useRepoStore((state) => state.pickAndOpen);
   const close = useRepoStore((state) => state.close);
   const remoteRunning = useRemoteStore((state) => state.running);
-  const cancelRemote = useRemoteStore((state) => state.cancel);
   const changeCount = useStatusStore((state) => state.report?.entries.length ?? 0);
   const remotes = useExtrasStore((state) => state.remotes);
   const setActiveView = useUiStore((state) => state.setActiveView);
@@ -114,7 +113,6 @@ export function Toolbar({ onFetch, onPull, onPush, onRefresh }: Props) {
             <ToolButton icon="branch" label="Branch" onClick={requestNewBranch} />
             <ToolButton icon="stash" label="Stash" onClick={requestNewStash} />
             <ToolButton icon="refresh" label="Refresh" onClick={onRefresh} />
-            {busy && <ToolButton icon="close" label="Cancel" onClick={() => void cancelRemote()} />}
           </>
         ) : (
           <ToolButton

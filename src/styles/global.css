@@ -83,6 +83,14 @@
   box-sizing: border-box;
 }
 
+/* El foco no debe pintar el anillo azul del sistema en los campos: la app ya
+   marca la selección con el borde y el color del texto. */
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+}
+
 html,
 body,
 #root {
@@ -280,35 +288,6 @@ body {
 
 .settings-item.danger {
   color: var(--danger-text);
-}
-
-.core-version {
-  color: var(--text-muted);
-  font-family: var(--font-mono);
-  font-size: 11px;
-}
-
-.status-bar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 4px 12px;
-  border-top: 1px solid var(--border);
-  background: var(--bg-panel);
-  color: var(--text-muted);
-  font-size: 11px;
-}
-
-.status-bar .core-version {
-  font-size: 11px;
-}
-
-.status-conflicts {
-  color: var(--danger-text);
-}
-
-.status-spacer {
-  flex: 1;
 }
 
 .rebase-view {
@@ -711,15 +690,6 @@ body {
   text-transform: none;
 }
 
-.refs-count {
-  padding: 0 5px;
-  border-radius: 999px;
-  background: var(--hover);
-  color: var(--text-muted);
-  font-size: 10px;
-  font-variant-numeric: tabular-nums;
-}
-
 .sidebar-section ul {
   margin: 0;
   padding: 0;
@@ -916,38 +886,6 @@ body {
   padding: 8px 12px;
   background: var(--bg-panel);
   border-bottom: 1px solid var(--border);
-}
-
-.history-search {
-  display: flex;
-  gap: 6px;
-  margin-left: auto;
-}
-
-.history-search input {
-  width: 120px;
-  padding: 3px 6px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--bg-elevated);
-  color: var(--text);
-  font: inherit;
-  font-size: 12px;
-}
-
-.history-search button {
-  padding: 2px 10px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: transparent;
-  color: var(--text);
-  font: inherit;
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.history-search button:hover {
-  border-color: var(--accent);
 }
 
 .history-filter {
@@ -1214,15 +1152,22 @@ body {
   border-top: 1px solid var(--border);
 }
 
-.diff-pane-head {
+/* Las cabeceras del panel de ficheros y del parche van en la misma fila
+   visual: altura fija compartida para que los bordes inferiores coincidan. */
+.diff-pane-head,
+.commit-diff-toolbar {
   display: flex;
   flex-shrink: 0;
   align-items: center;
   gap: 8px;
-  padding: 5px 10px;
+  height: 32px;
+  padding: 0 10px;
   border-bottom: 1px solid var(--border);
-  background: var(--bg-panel);
   font-size: 12px;
+}
+
+.diff-pane-head {
+  background: var(--bg-panel);
 }
 
 .diff-pane-path {
@@ -1269,27 +1214,6 @@ body {
   border-top: 1px solid var(--border);
 }
 
-.commit-meta-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.commit-meta-close {
-  flex-shrink: 0;
-  padding: 0 4px;
-  border: none;
-  background: transparent;
-  color: var(--text-muted);
-  font: inherit;
-  cursor: pointer;
-}
-
-.commit-meta-close:hover {
-  color: var(--text);
-}
-
 .commit-meta-subject {
   margin: 0 0 4px;
   font-weight: 600;
@@ -1327,15 +1251,6 @@ body {
   line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-word;
-}
-
-.commit-diff-toolbar {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 12px;
-  border-bottom: 1px solid var(--border);
 }
 
 .commit-detail-body {
@@ -1383,7 +1298,7 @@ body {
   border-bottom: 1px solid var(--border);
 }
 
-.status-filter {
+.status-sort {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -1391,30 +1306,75 @@ body {
   font-size: 12px;
 }
 
-.status-filter input {
+.status-sort select {
   padding: 3px 6px;
   border: 1px solid var(--border);
   border-radius: 6px;
   background: var(--bg-elevated);
   color: var(--text);
   font: inherit;
+  font-size: 12px;
 }
 
-.status-list {
+.status-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.status-right input[type="search"] {
+  width: 180px;
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-elevated);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+}
+
+.status-layout {
   flex: 1;
+  min-height: 0;
+}
+
+.status-body {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.status-files {
   overflow-y: auto;
-  padding: 8px 0 16px;
+  padding: 6px 0 16px;
+  background: var(--bg-panel);
+}
+
+.status-screen {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
 }
 
 .status-empty {
   padding: 12px;
 }
 
-.status-section h3 {
+.status-section-head {
   display: flex;
   align-items: center;
   gap: 6px;
   margin: 8px 12px 4px;
+}
+
+.status-section-head h3 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
   color: var(--text-muted);
   font-size: 11px;
   font-weight: 600;
@@ -1427,15 +1387,16 @@ body {
   border-radius: 999px;
   background: var(--bg-elevated);
   font-size: 11px;
+  font-weight: 400;
   letter-spacing: normal;
 }
 
 .status-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  height: 28px;
-  padding: 0 12px;
+  gap: 8px;
+  height: 26px;
+  padding: 0 8px 0 10px;
   cursor: pointer;
 }
 
@@ -1447,12 +1408,39 @@ body {
   background: rgb(59 130 246 / 18%);
 }
 
-.status-xy {
-  width: 34px;
+.status-check {
   flex-shrink: 0;
-  color: var(--text-muted);
+  margin: 0;
+}
+
+.status-badge {
+  flex-shrink: 0;
+  width: 14px;
   font-family: var(--font-mono);
   font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.status-badge.added {
+  color: var(--add);
+}
+
+.status-badge.deleted {
+  color: var(--del);
+}
+
+.status-badge.modified {
+  color: var(--warning-text);
+}
+
+.status-badge.conflict {
+  color: var(--danger-text);
+}
+
+.status-badge.untracked,
+.status-badge.muted {
+  color: var(--text-muted);
 }
 
 .status-path {
@@ -1462,29 +1450,20 @@ body {
   white-space: nowrap;
 }
 
-.status-actions {
-  display: flex;
-  gap: 6px;
-}
-
-.status-actions button {
-  padding: 2px 8px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
+.status-more {
+  flex-shrink: 0;
+  padding: 0 4px;
+  border: none;
+  border-radius: 4px;
   background: transparent;
-  color: var(--text);
+  color: var(--text-muted);
   font: inherit;
-  font-size: 12px;
   cursor: pointer;
 }
 
-.status-actions button:hover {
-  border-color: var(--accent);
-}
-
-.status-actions button.danger:hover {
-  border-color: var(--danger);
-  color: var(--danger-text);
+.status-more:hover {
+  background: var(--hover);
+  color: var(--text);
 }
 
 .diff-view {
@@ -1556,21 +1535,6 @@ body {
   padding: 4px 0;
   background: var(--bg-panel);
   border-right: 1px solid var(--border);
-}
-
-.diff-files-search {
-  padding: 2px 8px 6px;
-}
-
-.diff-files-search input {
-  width: 100%;
-  padding: 3px 8px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--bg-elevated);
-  color: var(--text);
-  font: inherit;
-  font-size: 12px;
 }
 
 .diff-file {
@@ -1845,18 +1809,6 @@ body {
   margin-bottom: 6px;
 }
 
-.refs-toolbar input {
-  flex: 1;
-  min-width: 0;
-  padding: 3px 6px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--bg-elevated);
-  color: var(--text);
-  font: inherit;
-  font-size: 12px;
-}
-
 .refs-toolbar button {
   padding: 2px 8px;
   border: 1px solid var(--border);
@@ -1908,16 +1860,30 @@ body {
   font-weight: 600;
 }
 
+.refs-name.selected {
+  background: rgb(59 130 246 / 18%);
+}
+
 .refs-dot {
   color: var(--accent);
   font-size: 10px;
 }
 
+/* Badge de tracking (12↓), como SourceTree: píldora gris con contador y
+   flecha, más visible que el texto suelto de antes. */
 .refs-track {
+  display: inline-flex;
+  flex-shrink: 0;
+  gap: 4px;
   margin-left: auto;
-  color: var(--text-muted);
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--border);
+  color: var(--text);
   font-family: var(--font-mono);
   font-size: 11px;
+  font-weight: 600;
+  line-height: 17px;
 }
 
 .refs-actions {
@@ -2053,6 +2019,21 @@ body {
   flex-direction: column;
   min-width: 0;
   padding: 3px 6px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.refs-stash:hover {
+  background: var(--hover);
+}
+
+.refs-stash.selected {
+  background: rgb(59 130 246 / 18%);
 }
 
 .refs-stash-subject {
@@ -2101,56 +2082,77 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-height: 45%;
   overflow-y: auto;
-  padding: 10px 12px;
+  height: 100%;
+  padding: 8px 12px 10px;
   background: var(--bg-panel);
-  border-top: 1px solid var(--border);
 }
 
-.commit-staged h3 {
+.commit-author {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin: 0 0 4px;
-  color: var(--text-muted);
-  font-size: 11px;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.commit-avatar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
-.commit-staged .count {
-  padding: 0 6px;
-  border-radius: 999px;
-  background: var(--bg-elevated);
-  font-size: 11px;
-  letter-spacing: normal;
-}
-
-.commit-staged ul {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.commit-file {
+.commit-author-name {
   overflow: hidden;
-  padding: 1px 0;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.commit-amend {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+.commit-options {
+  position: relative;
+  margin-left: auto;
+}
+
+.commit-options > button {
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
   color: var(--text-muted);
+  font: inherit;
   font-size: 12px;
+  cursor: pointer;
+}
+
+.commit-options > button:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.commit-options-menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 6px);
+  z-index: 30;
+  min-width: 180px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow);
 }
 
 .commit-message {
+  flex: 1;
   width: 100%;
+  min-height: 64px;
   resize: vertical;
   padding: 6px 8px;
   border: 1px solid var(--border);
@@ -2163,10 +2165,33 @@ body {
 .commit-footer {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 10px;
 }
 
-.commit-footer button {
+.commit-push {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.commit-footer .commit-cancel {
+  margin-left: auto;
+  padding: 4px 14px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.commit-footer .commit-cancel:hover {
+  border-color: var(--accent);
+}
+
+.commit-footer .commit-submit {
   padding: 4px 14px;
   border: 1px solid var(--accent);
   border-radius: 6px;
@@ -2176,7 +2201,7 @@ body {
   cursor: pointer;
 }
 
-.commit-footer button:disabled {
+.commit-footer .commit-submit:disabled {
   opacity: 0.5;
   cursor: default;
 }
@@ -2325,42 +2350,250 @@ body {
   font-size: 12px;
 }
 
-.stash-diff-overlay {
+/* Vista de un stash embebida (OG-046): ficheros apilados con su parche,
+   como SourceTree. */
+.stash-view {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.stash-toolbar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+}
+
+.stash-title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.stash-title {
+  overflow: hidden;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stash-branch {
+  font-size: 11px;
+}
+
+.stash-actions {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.stash-actions button {
+  padding: 3px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.stash-actions button:hover {
+  border-color: var(--accent);
+}
+
+.stash-actions button.danger:hover {
+  border-color: var(--danger);
+  color: var(--danger-text);
+}
+
+.stash-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding-bottom: 16px;
+}
+
+.stash-file {
+  border-bottom: 1px solid var(--border);
+}
+
+.stash-file-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  background: var(--bg-elevated);
+  font-size: 12px;
+}
+
+.stash-file-toggle {
+  display: flex;
+  align-items: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.stash-file-path {
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stash-file-head .diff-counts {
+  margin-left: auto;
+}
+
+.stash-file-label {
+  padding: 3px 10px;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.stash-file-patch .patch-line {
+  position: static;
+  height: auto;
+  min-height: 20px;
+}
+
+/* Ventanas de los jobs de red (pull/fetch/push): opciones, progreso y error.
+   Mismo lenguaje que los otros modales, con la disposición de SourceTree. */
+.modal-overlay {
   position: fixed;
   inset: 0;
-  z-index: 40;
+  z-index: 50;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--overlay);
 }
 
-.stash-diff-dialog {
+.remote-dialog {
   display: flex;
   flex-direction: column;
-  width: min(960px, calc(100vw - 48px));
-  height: min(80vh, 720px);
-  padding: 14px 16px;
+  gap: 10px;
+  width: min(560px, calc(100vw - 32px));
+  padding: 16px 18px;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--bg-panel);
   box-shadow: var(--shadow);
 }
 
-.stash-diff-dialog header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
-}
-
-.stash-diff-dialog h2 {
+.remote-dialog-title {
   margin: 0;
   font-size: 14px;
 }
 
-.stash-diff-dialog header button {
-  padding: 2px 8px;
+.remote-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+}
+
+.remote-field > span:first-child {
+  flex-shrink: 0;
+  width: 160px;
+}
+
+.remote-field select {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-elevated);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+}
+
+.remote-field select:disabled {
+  opacity: 0.5;
+}
+
+.remote-url {
+  overflow: hidden;
+  margin: 0 0 0 170px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.remote-value {
+  color: var(--text-muted);
+}
+
+.remote-refresh {
+  flex-shrink: 0;
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.remote-refresh:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.remote-refresh:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.remote-options {
+  margin: 4px 0 0;
+  padding: 8px 10px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.remote-options legend {
+  padding: 0 4px;
+  color: var(--text-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.remote-options label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+}
+
+.remote-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.remote-dialog-actions button {
+  padding: 4px 14px;
   border: 1px solid var(--border);
   border-radius: 6px;
   background: transparent;
@@ -2369,9 +2602,78 @@ body {
   cursor: pointer;
 }
 
-.stash-diff-body {
-  flex: 1;
-  min-height: 0;
+.remote-dialog-actions button:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.remote-dialog-actions button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.remote-dialog-actions button.primary {
+  border-color: var(--accent);
+  background: rgb(59 130 246 / 22%);
+}
+
+.remote-progress {
+  position: relative;
+  overflow: hidden;
+  height: 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg);
+}
+
+.remote-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width 120ms linear;
+}
+
+.remote-progress.indeterminate .remote-progress-fill {
+  width: 35%;
+  animation: remote-progress-slide 1.1s ease-in-out infinite;
+}
+
+@keyframes remote-progress-slide {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(320%);
+  }
+}
+
+.remote-job-line {
+  overflow: hidden;
+  margin: 0;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.remote-job-output {
+  max-height: 260px;
+  overflow: auto;
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  white-space: pre-wrap;
+}
+
+.remote-job-error {
+  margin: 0;
+  color: var(--danger-text);
 }
 
 .split-pane {
@@ -2397,6 +2699,15 @@ body {
   flex-shrink: 0;
   overflow: hidden;
   display: flex;
+}
+
+/* El panel fijo es un contenedor flex, así que su hijo se dimensionaba por
+   contenido en vez de llenarlo: la sidebar quedaba despegada del separador
+   (y el output dejaba un hueco abajo) desde OG-036. */
+.split-fixed > * {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
 }
 
 .split-pane.vertical > .split-fixed {

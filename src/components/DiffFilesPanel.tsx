@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { copyText } from "../lib/clipboard";
 import { useDiffStore, type DiffFileEntry } from "../lib/stores/diff";
 import { useUiStore } from "../lib/stores/ui";
@@ -15,17 +14,6 @@ export function DiffFilesPanel() {
   const selectFile = useDiffStore((state) => state.selectFile);
   const fileTree = useUiStore((state) => state.fileTree);
   const fileMenu = useContextMenu();
-  const [fileFilter, setFileFilter] = useState("");
-
-  const needle = fileFilter.trim().toLowerCase();
-  const visibleFiles =
-    needle === ""
-      ? files
-      : files.filter(
-          (entry) =>
-            entry.path.toLowerCase().includes(needle) ||
-            (entry.orig_path?.toLowerCase().includes(needle) ?? false),
-        );
 
   const renderFileEntry = (entry: DiffFileEntry, displayPath = entry.path) => (
     <button
@@ -59,22 +47,10 @@ export function DiffFilesPanel() {
 
   return (
     <div className="diff-files">
-      <div className="diff-files-search">
-        <input
-          type="search"
-          aria-label="Filter files"
-          placeholder="Filter…"
-          value={fileFilter}
-          onChange={(event) => setFileFilter(event.target.value)}
-        />
-      </div>
       {files.length === 0 && <p className="muted status-empty">No changes to show</p>}
-      {files.length > 0 && visibleFiles.length === 0 && (
-        <p className="muted status-empty">No files match</p>
-      )}
       {fileTree ? (
         <FileTree
-          items={visibleFiles}
+          items={files}
           pathOf={(entry) => entry.path}
           renderFile={(entry, name) => renderFileEntry(entry, name)}
           renderDirExtra={(dir) => {
@@ -94,7 +70,7 @@ export function DiffFilesPanel() {
           }}
         />
       ) : (
-        visibleFiles.map((entry) => (
+        files.map((entry) => (
           <div key={entry.key} className="diff-file-row">
             {renderFileEntry(entry)}
           </div>

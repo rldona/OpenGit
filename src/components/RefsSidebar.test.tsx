@@ -127,29 +127,43 @@ describe("RefsSidebar", () => {
     expect(screen.getByLabelText("Current branch")).toBeInTheDocument();
     expect(screen.getByText("v1.0.0").querySelector(".refs-tag-mark.annotated")).not.toBeNull();
     expect(screen.getByText("ligero").querySelector(".refs-tag-mark.annotated")).toBeNull();
-    expect(screen.getByText("↑1")).toBeInTheDocument();
-    expect(screen.getByText("↓2")).toBeInTheDocument();
+    expect(screen.getByText("1↑")).toBeInTheDocument();
+    expect(screen.getByText("2↓")).toBeInTheDocument();
   });
 
-  it("filtra el árbol de refs", async () => {
+  it("selecciona la rama al pulsar, sin hacer checkout", async () => {
+    const user = userEvent.setup();
+    render(<RefsSidebar />);
+
+    const feature = await screen.findByRole("button", { name: "feature" });
+    await user.click(feature);
+
+    expect(feature).toHaveClass("selected");
+    expect(checkoutRef).not.toHaveBeenCalled();
+  });
+
+  it("hace checkout desde el menú contextual", async () => {
     const user = userEvent.setup();
     render(<RefsSidebar />);
     await screen.findByText("feature");
 
-    await user.type(screen.getByLabelText("Filter refs"), "feat");
-
-    expect(screen.queryByText("main")).not.toBeInTheDocument();
-    expect(screen.getByText("feature")).toBeInTheDocument();
-    expect(screen.queryByText("v1.0.0")).not.toBeInTheDocument();
-  });
-
-  it("hace checkout al pulsar una rama local", async () => {
-    const user = userEvent.setup();
-    render(<RefsSidebar />);
-
-    await user.click(await screen.findByRole("button", { name: "feature" }));
+    fireEvent.contextMenu(screen.getByText("feature"));
+    await user.click(screen.getByRole("menuitem", { name: "Checkout" }));
 
     expect(checkoutRef).toHaveBeenCalledWith("/tmp/repo", "feature", false);
+  });
+
+  it("selecciona una rama remota sin hacer checkout", async () => {
+    const user = userEvent.setup();
+    render(<RefsSidebar />);
+    await screen.findByText("feature");
+
+    await user.click(screen.getByRole("button", { name: "origin" }));
+    const remote = await screen.findByRole("button", { name: "origin/remota" });
+    await user.click(remote);
+
+    expect(remote).toHaveClass("selected");
+    expect(checkoutRef).not.toHaveBeenCalled();
   });
 
   it("crea un tag en el commit seleccionado o HEAD", async () => {
@@ -221,6 +235,32 @@ describe("RefsSidebar", () => {
     expect(within(menu).getByRole("menuitem", { name: "Rename" })).toBeInTheDocument();
     expect(within(menu).getByRole("menuitem", { name: "Delete" })).toBeInTheDocument();
     expect(within(menu).getByRole("menuitem", { name: "Copy name" })).toBeInTheDocument();
+  });
+
+  it("abre el menú de la sección Branches con el botón derecho", async () => {
+    const user = userEvent.setup();
+    render(<RefsSidebar />);
+    await screen.findByText("feature");
+
+    fireEvent.contextMenu(screen.getByRole("button", { name: "Branches" }));
+
+    expect(screen.getByRole("menuitem", { name: "New Branch…" })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "New Tag…" })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "New Remote…" })).toBeDisabled();
+    expect(screen.getByRole("menuitem", { name: "Add Submodule…" })).toBeDisabled();
+
+    await user.click(screen.getByRole("menuitem", { name: "New Branch…" }));
+
+    expect(screen.getByLabelText("New branch name")).toBeInTheDocument();
+  });
+
+  it("no expone Rename ni Delete al pasar por encima de una rama", async () => {
+    render(<RefsSidebar />);
+
+    const row = (await screen.findByText("feature")).closest("li")!;
+
+    expect(within(row).queryByRole("button", { name: "Rename" })).not.toBeInTheDocument();
+    expect(within(row).queryByRole("button", { name: "Delete" })).not.toBeInTheDocument();
   });
 
   it("pliega los remotos por defecto y los despliega al pulsar", async () => {

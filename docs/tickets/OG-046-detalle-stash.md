@@ -1,7 +1,7 @@
 # OG-046 · Detalle de stash como vista
 
 - **Milestone:** M7 — Paridad SourceTree (fase 2)
-- **Estado:** backlog
+- **Estado:** in progress
 - **Depende de:** OG-030, OG-044
 - **Referencias:** ROADMAP.md, OG-030
 
@@ -17,11 +17,11 @@ OG-030 resolvió el diff de un stash con `StashDiffDialog`, un modal. Un modal c
 
 ## Criterios de aceptación
 
-- [ ] Pulsar un stash muestra sus ficheros y el diff sin abrir ningún modal.
-- [ ] La cabecera muestra mensaje y rama de origen del stash.
-- [ ] Apply/Pop/Drop funcionan desde la vista, y Drop pide confirmación.
-- [ ] Tras Pop o Drop la vista se cierra y la lista de stashes se refresca.
-- [ ] Tests: selección carga ficheros, confirmación de Drop y refresco posterior.
+- [x] Pulsar un stash muestra sus ficheros y el diff sin abrir ningún modal.
+- [x] La cabecera muestra mensaje y rama de origen del stash.
+- [x] Apply/Pop/Drop funcionan desde la vista, y Drop pide confirmación.
+- [x] Tras Pop o Drop la vista se cierra y la lista de stashes se refresca.
+- [x] Tests: selección carga ficheros, confirmación de Drop y refresco posterior.
 
 ## Fuera de alcance
 

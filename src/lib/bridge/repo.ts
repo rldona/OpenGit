@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import type {
+  AuthorIdent,
   GitVersion,
   LfsStatus,
   RecentRepo,
@@ -44,4 +45,9 @@ export function lfsStatus(path: string): Promise<LfsStatus> {
 
 export function remoteUrls(path: string): Promise<Remote[]> {
   return invoke<Remote[]>("remote_urls", { path });
+}
+
+/** Identidad efectiva con la que se firmarán los commits. */
+export function authorIdent(path: string): Promise<AuthorIdent> {
+  return invoke<AuthorIdent>("author_ident", { path });
 }

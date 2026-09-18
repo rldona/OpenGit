@@ -62,7 +62,7 @@ describe("CommitDetailPanel", () => {
   });
 
   it("muestra autor, fecha y hash del commit", async () => {
-    render(<CommitDetailPanel commit={commit("aaaa1111")} onClose={() => {}} />);
+    render(<CommitDetailPanel commit={commit("aaaa1111")} />);
 
     expect(screen.getByText(/Ana <ana@example\.com>/)).toBeInTheDocument();
     expect(screen.getByText("aaaa1111")).toBeInTheDocument();
@@ -70,7 +70,7 @@ describe("CommitDetailPanel", () => {
   });
 
   it("no repite aquí las acciones del commit: viven en el menú contextual", () => {
-    render(<CommitDetailPanel commit={commit("aaaa1111")} onClose={() => {}} />);
+    render(<CommitDetailPanel commit={commit("aaaa1111")} />);
 
     expect(screen.queryByRole("button", { name: "Cherry-pick" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Revert" })).not.toBeInTheDocument();
@@ -79,28 +79,21 @@ describe("CommitDetailPanel", () => {
   });
 
   it("muestra el cuerpo del mensaje cuando lo hay", async () => {
-    render(
-      <CommitDetailPanel
-        commit={commit("aaaa1111", "Primera línea.\nSegunda línea.")}
-        onClose={() => {}}
-      />,
-    );
+    render(<CommitDetailPanel commit={commit("aaaa1111", "Primera línea.\nSegunda línea.")} />);
 
     const body = await screen.findByText(/Primera línea\./);
     expect(body).toHaveTextContent("Segunda línea.");
   });
 
   it("omite el cuerpo cuando el commit solo tiene asunto", () => {
-    const { container } = render(
-      <CommitDetailPanel commit={commit("aaaa1111")} onClose={() => {}} />,
-    );
+    const { container } = render(<CommitDetailPanel commit={commit("aaaa1111")} />);
 
     expect(container.querySelector(".commit-meta-body")).toBeNull();
   });
 
   it("permite cambiar el modo del diff y la vista de ficheros", async () => {
     const user = userEvent.setup();
-    render(<CommitDetailPanel commit={commit("aaaa1111")} onClose={() => {}} />);
+    render(<CommitDetailPanel commit={commit("aaaa1111")} />);
 
     await user.click(screen.getByRole("button", { name: "Side by side" }));
     expect(useDiffStore.getState().mode).toBe("side");
@@ -112,11 +105,9 @@ describe("CommitDetailPanel", () => {
   it("no pide el diff una vez por commit al navegar rápido", async () => {
     vi.useFakeTimers();
     try {
-      const { rerender } = render(
-        <CommitDetailPanel commit={commit("aaaa0001")} onClose={() => {}} />,
-      );
-      rerender(<CommitDetailPanel commit={commit("aaaa0002")} onClose={() => {}} />);
-      rerender(<CommitDetailPanel commit={commit("aaaa0003")} onClose={() => {}} />);
+      const { rerender } = render(<CommitDetailPanel commit={commit("aaaa0001")} />);
+      rerender(<CommitDetailPanel commit={commit("aaaa0002")} />);
+      rerender(<CommitDetailPanel commit={commit("aaaa0003")} />);
 
       expect(commitFiles).not.toHaveBeenCalled();
 

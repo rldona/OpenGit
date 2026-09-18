@@ -140,6 +140,13 @@ pub struct Remote {
     pub web_url: Option<String>,
 }
 
+/// Identidad efectiva con la que git firmaría un commit (`git var GIT_AUTHOR_IDENT`).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct AuthorIdent {
+    pub name: String,
+    pub email: String,
+}
+
 /// Commits que faltan por llegar del upstream y por subir a él.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize)]
 pub struct TrackingCommits {

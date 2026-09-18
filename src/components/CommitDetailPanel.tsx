@@ -15,7 +15,6 @@ export const COMMIT_DIFF_DEBOUNCE_MS = 120;
 
 type Props = {
   commit: Commit;
-  onClose: () => void;
 };
 
 /**
@@ -26,7 +25,7 @@ type Props = {
  * Las acciones sobre el commit (cherry-pick, revert, reset, rebase) no viven
  * aquí: están en el menú contextual de la fila del commit.
  */
-export function CommitDetailPanel({ commit, onClose }: Props) {
+export function CommitDetailPanel({ commit }: Props) {
   const root = useRepoStore((state) => state.repo?.root ?? null);
   const openCommit = useDiffStore((state) => state.openCommit);
   const loading = useDiffStore((state) => state.loading);
@@ -113,17 +112,7 @@ export function CommitDetailPanel({ commit, onClose }: Props) {
             <DiffFilesPanel />
 
             <div className="commit-meta">
-              <div className="commit-meta-head">
-                <p className="commit-meta-subject">{commit.subject}</p>
-                <button
-                  type="button"
-                  className="commit-meta-close"
-                  aria-label="Close details"
-                  onClick={onClose}
-                >
-                  ×
-                </button>
-              </div>
+              <p className="commit-meta-subject">{commit.subject}</p>
               <p className="commit-meta-line muted">
                 {formatAuthor(commit.author_name, commit.author_email)}
                 {" · "}

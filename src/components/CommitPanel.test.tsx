@@ -27,6 +27,12 @@ vi.mock("../lib/bridge/status", () => ({
   deleteUntracked: vi.fn(),
 }));
 
+vi.mock("../lib/bridge/repo", () => ({
+  authorIdent: vi
+    .fn()
+    .mockResolvedValue({ name: "Raúl López", email: "rldona@users.noreply.github.com" }),
+}));
+
 vi.mock("../lib/bridge/log", () => ({
   logPage: vi.fn().mockResolvedValue([]),
   listRefs: vi.fn().mockResolvedValue([]),
@@ -69,11 +75,13 @@ describe("CommitPanel", () => {
     useCommitStore.getState().reset();
   });
 
-  it("muestra los ficheros staged antes de commitear", async () => {
+  it("muestra la identidad de git que firmará el commit", async () => {
     render(<CommitPanel />);
 
-    expect(await screen.findByRole("heading", { name: /Staged/ })).toBeInTheDocument();
-    expect(screen.getByText("staged.txt")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Raúl López <rldona@users.noreply.github.com>"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("R")).toBeInTheDocument();
   });
 
   it("rechaza commitear sin mensaje", async () => {
@@ -107,7 +115,7 @@ describe("CommitPanel", () => {
     });
     render(<CommitPanel />);
 
-    await screen.findByText("staged.txt");
+    await screen.findByLabelText("Commit message");
     expect(screen.getByRole("button", { name: "Commit" })).toBeDisabled();
   });
 });

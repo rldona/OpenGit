@@ -7,16 +7,16 @@ import { COLUMN_LABELS, loadColumnWidths, saveColumnWidths, type ColumnName } fr
 import { LAYOUT_KEYS } from "../lib/layout";
 import { useCommitActions } from "../lib/hooks/useCommitActions";
 import { useContextMenu } from "../lib/hooks/useContextMenu";
-import type { LogSearch } from "../lib/bridge/types";
-import { useLogStore } from "../lib/stores/log";
+import { WORKTREE_SELECTION, useLogStore } from "../lib/stores/log";
 import { useRefsStore } from "../lib/stores/refs";
 import { useRepoStore } from "../lib/stores/repo";
-import { useUiStore } from "../lib/stores/ui";
+import { useStatusStore } from "../lib/stores/status";
 import { ColumnResizer } from "./ColumnResizer";
 import { CommitDetailPanel } from "./CommitDetailPanel";
 import { Icon } from "./Icon";
 import { GraphCanvas } from "./GraphCanvas";
 import { SplitPane } from "./SplitPane";
+import { WorktreeDetailPanel } from "./WorktreeDetailPanel";
 
 export function HistoryView() {
   const repo = useRepoStore((state) => state.repo);
@@ -30,9 +30,6 @@ export function HistoryView() {
   const loadMore = useLogStore((state) => state.loadMore);
   const setFilter = useLogStore((state) => state.setFilter);
   const select = useLogStore((state) => state.select);
-  const storedSearch = useLogStore((state) => state.search);
-  const applySearch = useLogStore((state) => state.applySearch);
-  const clearSearch = useLogStore((state) => state.clearSearch);
 
   const [widths, setWidths] = useState(loadColumnWidths);
   const setWidth = (column: ColumnName, width: number) =>
@@ -44,7 +41,6 @@ export function HistoryView() {
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [range, setRange] = useState<VisibleRange>({ start: 0, end: 0 });
-  const [searchForm, setSearchForm] = useState<LogSearch>({ grep: "", author: "", path: "" });
   const commitActions = useCommitActions();
   const commitMenu = useContextMenu();
   const incoming = useRefsStore((state) => state.incoming);
@@ -52,25 +48,14 @@ export function HistoryView() {
   const incomingSet = useMemo(() => new Set(incoming), [incoming]);
   const outgoingSet = useMemo(() => new Set(outgoing), [outgoing]);
 
-  const searchActive =
-    storedSearch.grep !== "" || storedSearch.author !== "" || storedSearch.path !== "";
-  const runSearch = () => {
-    if (root) {
-      void applySearch(root, searchForm);
-    }
-  };
-  const resetSearch = () => {
-    setSearchForm({ grep: "", author: "", path: "" });
-    if (root) {
-      void clearSearch(root);
-    }
-  };
-
   const root = repo?.root ?? null;
   const rows = layout.rows;
-
-  const searchFocusRequest = useUiStore((state) => state.searchFocusRequest);
-  const searchMessageRef = useRef<HTMLInputElement | null>(null);
+  const changes = useStatusStore((state) => state.report?.entries.length ?? 0);
+  // La fila "Uncommitted changes" solo tiene sentido con cambios pendientes.
+  const showWorktree = changes > 0;
+  const worktreeSelected = selected === WORKTREE_SELECTION;
+  const totalRows = rows.length + (showWorktree ? 1 : 0);
+  const commitOffset = showWorktree ? 1 : 0;
 
   useEffect(() => {
     if (root) {
@@ -78,23 +63,17 @@ export function HistoryView() {
     }
   }, [root, load]);
 
-  useEffect(() => {
-    if (searchFocusRequest > 0) {
-      searchMessageRef.current?.focus();
-    }
-  }, [searchFocusRequest]);
-
   const updateRange = useCallback(() => {
     const scroller = scrollRef.current;
     if (!scroller) {
       return;
     }
-    const next = visibleRange(scroller.scrollTop, scroller.clientHeight, rows.length);
+    const next = visibleRange(scroller.scrollTop, scroller.clientHeight, totalRows);
     setRange((current) => (sameRange(current, next) ? current : next));
     if (scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < ROW_HEIGHT * 12) {
       void loadMore();
     }
-  }, [rows.length, loadMore]);
+  }, [totalRows, loadMore]);
 
   useEffect(() => {
     updateRange();
@@ -113,13 +92,30 @@ export function HistoryView() {
   }, [updateRange]);
 
   // Medido sobre el rango visible, no sobre todo el historial: ver OG-047.
-  const laneCount = visibleLaneCount(rows, range.start, range.end);
+  const laneCount = visibleLaneCount(
+    rows,
+    Math.max(0, range.start - commitOffset),
+    Math.max(0, range.end - commitOffset),
+  );
   const graphWidth = graphWidthFor(laneCount);
 
-  const visible = rows.slice(range.start, range.end);
-  const selectedCommit = selected
-    ? (commits.find((commit) => commit.hash === selected) ?? null)
-    : null;
+  const visible = Array.from({ length: Math.max(0, range.end - range.start) }, (_, offset) => {
+    const index = range.start + offset;
+    if (showWorktree && index === 0) {
+      return { index, worktree: true as const };
+    }
+    const commitIndex = index - commitOffset;
+    return {
+      index,
+      worktree: false as const,
+      commit: commits[commitIndex],
+      row: rows[commitIndex],
+    };
+  });
+  const selectedCommit =
+    selected && !worktreeSelected
+      ? (commits.find((commit) => commit.hash === selected) ?? null)
+      : null;
   // Solo ramas locales: incluir `refs/remotes/` volcaba aquí las miles de
   // ramas del remoto y dejaba el desplegable inservible.
   const branchRefs = refs.filter((ref) => ref.name.startsWith("refs/heads/"));
@@ -146,47 +142,6 @@ export function HistoryView() {
           </select>
         </label>
         {loading && <span className="muted">Loading…</span>}
-        <div className="history-search">
-          <input
-            ref={searchMessageRef}
-            type="search"
-            aria-label="Search message"
-            placeholder="Message"
-            value={searchForm.grep}
-            onChange={(event) => setSearchForm({ ...searchForm, grep: event.target.value })}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") runSearch();
-            }}
-          />
-          <input
-            type="search"
-            aria-label="Search author"
-            placeholder="Author"
-            value={searchForm.author}
-            onChange={(event) => setSearchForm({ ...searchForm, author: event.target.value })}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") runSearch();
-            }}
-          />
-          <input
-            type="search"
-            aria-label="Search file"
-            placeholder="File path"
-            value={searchForm.path}
-            onChange={(event) => setSearchForm({ ...searchForm, path: event.target.value })}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") runSearch();
-            }}
-          />
-          <button type="button" onClick={runSearch}>
-            Search
-          </button>
-          {searchActive && (
-            <button type="button" onClick={resetSearch}>
-              Clear
-            </button>
-          )}
-        </div>
       </div>
 
       <SplitPane
@@ -198,7 +153,7 @@ export function HistoryView() {
         min={160}
         max={720}
         label="Resize commit details"
-        collapsed={!selectedCommit}
+        collapsed={!selectedCommit && !worktreeSelected}
       >
         <div className="history-list-wrap">
           <div className="commit-header">
@@ -229,24 +184,45 @@ export function HistoryView() {
             laneCount={laneCount}
             selected={selected}
             scrollRef={scrollRef}
+            offset={commitOffset}
+            worktree={showWorktree}
           />
           <div className="history-list" ref={scrollRef} onScroll={updateRange}>
-            <div className="history-inner" style={{ height: rows.length * ROW_HEIGHT }}>
-              {visible.map((row, offset) => {
-                const index = range.start + offset;
-                const commit = commits[index];
-                if (!commit) {
+            <div className="history-inner" style={{ height: totalRows * ROW_HEIGHT }}>
+              {visible.map((row) => {
+                const index = row.index;
+                if (row.worktree) {
+                  return (
+                    <button
+                      key="worktree"
+                      type="button"
+                      className={`commit-row worktree-row${worktreeSelected ? " selected" : ""}`}
+                      style={{ top: index * ROW_HEIGHT, paddingLeft: graphWidth }}
+                      onClick={() => select(WORKTREE_SELECTION)}
+                    >
+                      <span className="commit-subject">Uncommitted changes</span>
+                      <span className="commit-hash" style={{ width: widths.hash }} />
+                      <span className="commit-author" style={{ width: widths.author }} />
+                      <span className="commit-date" style={{ width: widths.date }}>
+                        {formatCommitDate(Math.floor(Date.now() / 1000))}
+                      </span>
+                    </button>
+                  );
+                }
+                const rowData = row.row;
+                const commit = row.commit;
+                if (!commit || !rowData) {
                   return null;
                 }
                 return (
                   <button
-                    key={row.hash}
+                    key={rowData.hash}
                     type="button"
-                    className={`commit-row${selected === row.hash ? " selected" : ""}${
+                    className={`commit-row${selected === rowData.hash ? " selected" : ""}${
                       incomingSet.has(commit.hash) ? " incoming" : ""
                     }${outgoingSet.has(commit.hash) ? " outgoing" : ""}`}
                     style={{ top: index * ROW_HEIGHT, paddingLeft: graphWidth }}
-                    onClick={() => select(row.hash)}
+                    onClick={() => select(rowData.hash)}
                     onContextMenu={(event) =>
                       commitMenu.open(event, [
                         {
@@ -303,8 +279,10 @@ export function HistoryView() {
             </div>
           </div>
         </div>
-        {selectedCommit ? (
-          <CommitDetailPanel commit={selectedCommit} onClose={() => select(null)} />
+        {worktreeSelected && root ? (
+          <WorktreeDetailPanel root={root} />
+        ) : selectedCommit ? (
+          <CommitDetailPanel commit={selectedCommit} />
         ) : null}
       </SplitPane>
 

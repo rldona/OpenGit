@@ -89,6 +89,14 @@ pub fn cancel_remote_job(job_id: String, state: State<'_, AppState>) -> Result<b
     Ok(state.jobs.cancel(&job_id))
 }
 
+#[tauri::command]
+pub fn author_ident(
+    path: String,
+    state: State<'_, AppState>,
+) -> Result<crate::git::AuthorIdent, GitError> {
+    crate::git::author_ident(&state.runner, Path::new(&path))
+}
+
 impl AppState {
     fn pause_watcher(&self) {
         if let Ok(watcher) = self.watcher.lock() {

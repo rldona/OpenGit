@@ -3,16 +3,19 @@ import { CollapsibleSection } from "./components/CollapsibleSection";
 import { ConflictView } from "./components/ConflictView";
 import { DiffView } from "./components/DiffView";
 import { ExtrasSidebar } from "./components/ExtrasSidebar";
+import { FetchDialog } from "./components/FetchDialog";
 import { HistoryView } from "./components/HistoryView";
 import { OpBanner } from "./components/OpBanner";
+import { PullDialog } from "./components/PullDialog";
 import { RebaseView } from "./components/RebaseView";
+import { RemoteJobModal } from "./components/RemoteJobModal";
 import { RefsSidebar } from "./components/RefsSidebar";
 import { ShortcutsHelp } from "./components/ShortcutsHelp";
 import { SplitPane } from "./components/SplitPane";
 import { StashSidebar } from "./components/StashSidebar";
+import { StashView } from "./components/StashView";
 import { StatusView } from "./components/StatusView";
 import { Toolbar } from "./components/Toolbar";
-import { getAppVersion } from "./lib/bridge/core";
 import { confirmDestructive } from "./lib/bridge/dialog";
 import { subscribeMenuEvents } from "./lib/bridge/events";
 import { openExternal } from "./lib/bridge/opener";
@@ -60,20 +63,21 @@ function App() {
     (state) => state.report?.entries.filter((entry) => entry.kind === "unmerged").length ?? 0,
   );
 
-  const [coreVersion, setCoreVersion] = useState<string | null>(null);
-
   useRepoEvents(repo?.root ?? null);
   useJobEvents();
 
+  const [pullOpen, setPullOpen] = useState(false);
+  const [fetchOpen, setFetchOpen] = useState(false);
+
   const runFetch = () => {
     if (repo) {
-      void startRemote(repo.root, { kind: "fetch", prune: false, remote: null });
+      setFetchOpen(true);
     }
   };
 
   const runPull = () => {
     if (repo) {
-      void startRemote(repo.root, { kind: "pull" });
+      setPullOpen(true);
     }
   };
 
@@ -93,20 +97,6 @@ function App() {
       set_upstream: currentUpstream === null,
     });
   };
-
-  useEffect(() => {
-    let cancelled = false;
-    getAppVersion()
-      .then((version) => {
-        if (!cancelled) setCoreVersion(version);
-      })
-      .catch(() => {
-        if (!cancelled) setCoreVersion(null);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   useEffect(() => {
     void loadRecents();
@@ -149,14 +139,6 @@ function App() {
     void submit(stagedEntries(useStatusStore.getState().report).length);
   };
 
-  const focusHistorySearch = () => {
-    if (!useRepoStore.getState().repo) {
-      return;
-    }
-    setActiveView("history");
-    useUiStore.getState().requestSearchFocus();
-  };
-
   const closeOverlayOrSelection = () => {
     const ui = useUiStore.getState();
     if (ui.shortcutsOpen) {
@@ -170,7 +152,6 @@ function App() {
     open: () => void pickAndOpen(),
     refresh: refreshAll,
     commit: commitStaged,
-    search: focusHistorySearch,
     viewStatus: () => {
       if (useRepoStore.getState().repo) setActiveView("status");
     },
@@ -276,6 +257,10 @@ function App() {
       />
 
       <ShortcutsHelp />
+
+      {repo && fetchOpen && <FetchDialog onClose={() => setFetchOpen(false)} />}
+      {repo && pullOpen && <PullDialog onClose={() => setPullOpen(false)} />}
+      <RemoteJobModal />
 
       {repo && <OpBanner />}
 
@@ -409,6 +394,8 @@ function App() {
                 <ConflictView />
               ) : activeView === "rebase" ? (
                 <RebaseView />
+              ) : activeView === "stash" ? (
+                <StashView />
               ) : (
                 <HistoryView />
               )
@@ -427,14 +414,6 @@ function App() {
           ))}
         </section>
       </SplitPane>
-
-      <footer className="status-bar">
-        {/* Ni los cambios ni los conflictos se repiten aquí: los cambios ya van
-            en el badge de Commit y los conflictos en la sidebar. */}
-        <span>{repo ? (currentBranch ?? "detached HEAD") : "No repository"}</span>
-        <span className="status-spacer" />
-        <span className="core-version">{coreVersion ? `core v${coreVersion}` : "core —"}</span>
-      </footer>
     </div>
   );
 }

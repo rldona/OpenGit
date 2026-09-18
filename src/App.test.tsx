@@ -2,8 +2,8 @@ import { act, fireEvent, render, screen, waitFor, within } from "@testing-librar
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
-import { getAppVersion } from "./lib/bridge/core";
 import { pickDirectory } from "./lib/bridge/dialog";
+import { startRemoteJob } from "./lib/bridge/jobs";
 import { readConflictFile } from "./lib/bridge/conflict";
 import { subscribeRepoEvents } from "./lib/bridge/events";
 import { setWindowTitle } from "./lib/bridge/window";
@@ -25,10 +25,6 @@ import { useRefsStore } from "./lib/stores/refs";
 import { useThemeStore } from "./lib/stores/theme";
 import { useUiStore } from "./lib/stores/ui";
 import { THEME_STORAGE_KEY } from "./lib/theme";
-
-vi.mock("./lib/bridge/core", () => ({
-  getAppVersion: vi.fn(),
-}));
 
 vi.mock("./lib/bridge/dialog", () => ({
   pickDirectory: vi.fn(),
@@ -180,9 +176,14 @@ const REPORT: StatusReport = {
   entries: [{ kind: "ordinary", xy: "M.", path: "staged.txt", orig_path: null }],
 };
 
+/** La fila de la lista: el asunto se repite en el panel de detalle. */
+async function findCommitRow(): Promise<HTMLElement> {
+  await screen.findAllByText("commit de prueba");
+  return document.querySelector(".commit-row:not(.worktree-row) .commit-subject") as HTMLElement;
+}
+
 describe("App", () => {
   beforeEach(() => {
-    vi.mocked(getAppVersion).mockResolvedValue("0.1.0");
     vi.mocked(recentRepos).mockResolvedValue([
       { path: "/tmp/mi-repo", name: "mi-repo", opened_at: 1 },
     ]);
@@ -211,11 +212,10 @@ describe("App", () => {
     useStatusStore.getState().reset();
     useDiffStore.getState().reset();
     useUiStore.setState({
-      outputOpen: true,
+      outputOpen: false,
       outputLines: ["OpenGit listo."],
       activeView: "history",
       shortcutsOpen: false,
-      searchFocusRequest: 0,
       fileTree: true,
     });
     localStorage.clear();
@@ -223,22 +223,22 @@ describe("App", () => {
     useThemeStore.setState({ preference: "system", systemDark: true, resolved: "dark" });
   });
 
-  it("muestra el estado vacío y la versión del núcleo", async () => {
+  it("muestra el estado vacío con el panel de Output oculto por defecto", async () => {
     render(<App />);
 
     expect(screen.getByRole("heading", { name: "No repository open" })).toBeInTheDocument();
-    expect(await screen.findByText("core v0.1.0")).toBeInTheDocument();
-    expect(screen.getByRole("region", { name: "Output" })).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Output" })).not.toBeInTheDocument();
   });
 
   it("abre el repositorio elegido y muestra el historial", async () => {
     const user = userEvent.setup();
+    useUiStore.setState({ outputOpen: true });
     render(<App />);
 
     await user.click(screen.getByRole("button", { name: "Choose folder" }));
 
     expect(openRepo).toHaveBeenCalledWith("/tmp/mi-repo");
-    expect(await screen.findByText("commit de prueba")).toBeInTheDocument();
+    expect(await screen.findAllByText("commit de prueba")).not.toHaveLength(0);
     expect(subscribeRepoEvents).toHaveBeenCalled();
     expect(await screen.findByText(/Repository opened: mi-repo/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Fetch" })).toBeInTheDocument();
@@ -298,20 +298,54 @@ describe("App", () => {
     expect(repoOpAbort).toHaveBeenCalledWith("/tmp/mi-repo");
   });
 
-  it("busca commits por mensaje desde la toolbar", async () => {
+  it("el botón Pull abre el diálogo de opciones sin lanzar el job", async () => {
     const user = userEvent.setup();
     render(<App />);
 
     await user.click(screen.getByRole("button", { name: "Choose folder" }));
-    await screen.findByText("commit de prueba");
-    await user.type(screen.getByLabelText("Search message"), "feat");
-    await user.click(screen.getByRole("button", { name: "Search" }));
+    await findCommitRow();
 
-    expect(logPage).toHaveBeenLastCalledWith("/tmp/mi-repo", 0, 200, null, {
-      grep: "feat",
-      author: "",
-      path: "",
+    await user.click(screen.getByRole("button", { name: "Pull" }));
+
+    expect(screen.getByRole("dialog", { name: "Pull" })).toBeInTheDocument();
+    expect(startRemoteJob).not.toHaveBeenCalled();
+  });
+
+  it("el botón Fetch abre el diálogo de opciones", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Choose folder" }));
+    await findCommitRow();
+
+    await user.click(screen.getByRole("button", { name: "Fetch" }));
+
+    expect(screen.getByRole("dialog", { name: "Fetch" })).toBeInTheDocument();
+  });
+
+  it("muestra la fila Uncommitted changes y abre su diff", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Choose folder" }));
+    await findCommitRow();
+    useStatusStore.setState({
+      report: {
+        head: "aaaa0000",
+        branch: "main",
+        detached: false,
+        upstream: null,
+        ahead: 0,
+        behind: 0,
+        entries: [{ kind: "ordinary", xy: ".M", path: "modificado.txt", orig_path: null }],
+      },
     });
+
+    const row = await screen.findByRole("button", { name: /Uncommitted changes/ });
+    await user.click(row);
+
+    expect(await screen.findByRole("region", { name: "Uncommitted changes" })).toBeInTheDocument();
+    expect(row).toHaveClass("selected");
   });
 
   it("cambia a la vista File status y muestra los cambios", async () => {
@@ -331,7 +365,7 @@ describe("App", () => {
     render(<App />);
 
     await user.click(screen.getByRole("button", { name: "Choose folder" }));
-    await user.click(await screen.findByText("commit de prueba"));
+    await user.click(await findCommitRow());
 
     expect(screen.getByRole("region", { name: "Commit details" })).toBeInTheDocument();
     expect(screen.getByText("aaaa0000")).toBeInTheDocument();
@@ -343,7 +377,7 @@ describe("App", () => {
     render(<App />);
 
     await user.click(screen.getByRole("button", { name: "Choose folder" }));
-    const subject = await screen.findByText("commit de prueba");
+    const subject = await findCommitRow();
     fireEvent.contextMenu(subject.closest("button")!);
 
     const menu = screen.getByRole("menu");
@@ -363,26 +397,13 @@ describe("App", () => {
     render(<App />);
 
     await user.click(screen.getByRole("button", { name: "Choose folder" }));
-    await user.click(await screen.findByText("commit de prueba"));
+    await user.click(await findCommitRow());
 
     expect(await screen.findAllByText("a.txt")).not.toHaveLength(0);
     expect(commitFiles).toHaveBeenCalledWith("/tmp/mi-repo", "aaaa0000");
     // Sigue siendo la vista de historial: la fila del commit no desaparece.
     expect(useUiStore.getState().activeView).toBe("history");
     expect(document.querySelector(".commit-subject")).toHaveTextContent("commit de prueba");
-  });
-
-  it("colapsa la zona inferior al deseleccionar el commit", async () => {
-    const user = userEvent.setup();
-    render(<App />);
-
-    await user.click(screen.getByRole("button", { name: "Choose folder" }));
-    await user.click(await screen.findByText("commit de prueba"));
-    expect(screen.getByRole("region", { name: "Commit details" })).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "Close details" }));
-
-    expect(screen.queryByRole("region", { name: "Commit details" })).not.toBeInTheDocument();
   });
 
   it("el desplegable de rama solo lista ramas locales, no las del remoto", async () => {
@@ -419,7 +440,7 @@ describe("App", () => {
     render(<App />);
 
     await user.click(screen.getByRole("button", { name: "Choose folder" }));
-    await screen.findByText("commit de prueba");
+    await findCommitRow();
 
     // COMMIT lleva "HEAD -> main", así que sí debe pintarse el bloque de refs.
     expect(document.querySelector(".commit-refs")).not.toBeNull();
@@ -436,7 +457,7 @@ describe("App", () => {
     render(<App />);
 
     await user.click(screen.getByRole("button", { name: "Choose folder" }));
-    await screen.findByText("commit de prueba");
+    await findCommitRow();
 
     const resizer = screen.getByRole("separator", { name: "Resize Author column" });
     const author = document.querySelector(".commit-author") as HTMLElement;
@@ -455,7 +476,7 @@ describe("App", () => {
     render(<App />);
 
     await user.click(screen.getByRole("button", { name: "Choose folder" }));
-    await screen.findByText("commit de prueba");
+    await findCommitRow();
 
     act(() => useRefsStore.setState({ incoming: ["aaaa0000"] }));
 
@@ -467,7 +488,7 @@ describe("App", () => {
     render(<App />);
 
     await user.click(screen.getByRole("button", { name: "Choose folder" }));
-    const subject = await screen.findByText("commit de prueba");
+    const subject = await findCommitRow();
     fireEvent.contextMenu(subject.closest("button")!);
 
     const menu = screen.getByRole("menu");
@@ -483,9 +504,13 @@ describe("App", () => {
     const user = userEvent.setup();
     render(<App />);
 
+    expect(screen.queryByRole("region", { name: "Output" })).not.toBeInTheDocument();
+
     await user.click(screen.getByRole("button", { name: "Settings" }));
     await user.click(screen.getByRole("button", { name: "Toggle output panel" }));
+    expect(screen.getByRole("region", { name: "Output" })).toBeInTheDocument();
 
+    await user.click(screen.getByRole("button", { name: "Toggle output panel" }));
     expect(screen.queryByRole("region", { name: "Output" })).not.toBeInTheDocument();
   });
 
@@ -548,24 +573,13 @@ describe("App", () => {
     render(<App />);
 
     await user.click(screen.getByRole("button", { name: "Choose folder" }));
-    await screen.findByText("commit de prueba");
+    await findCommitRow();
     vi.mocked(listRefs).mockClear();
 
     await user.keyboard("{Control>}r{/Control}");
 
     expect(listRefs).toHaveBeenCalledWith("/tmp/mi-repo");
     expect(logPage).toHaveBeenCalled();
-  });
-
-  it("enfoca la búsqueda del historial con Ctrl+F", async () => {
-    const user = userEvent.setup();
-    render(<App />);
-
-    await user.click(screen.getByRole("button", { name: "Choose folder" }));
-    await user.click(await screen.findByRole("button", { name: "File status" }));
-    await user.keyboard("{Control>}f{/Control}");
-
-    expect(await screen.findByLabelText("Search message")).toHaveFocus();
   });
 
   it("hace commit con Ctrl+Enter", async () => {
@@ -586,7 +600,8 @@ describe("App", () => {
     render(<App />);
 
     await user.click(screen.getByRole("button", { name: "Choose folder" }));
-    const input = await screen.findByLabelText("Search message");
+    await user.click(await screen.findByRole("button", { name: "File status" }));
+    const input = await screen.findByLabelText("Commit message");
     await user.type(input, "?");
 
     expect(input).toHaveValue("?");
@@ -608,23 +623,19 @@ describe("App", () => {
     // Regresión: faltaba el permiso core:window:allow-set-title y el error
     // se tragaba en silencio, así que el título nunca se fijaba de verdad.
     vi.mocked(setWindowTitle).mockRejectedValueOnce(new Error("window.set_title not allowed"));
+    useUiStore.setState({ outputOpen: true });
     render(<App />);
 
     expect(await screen.findByText(/Could not set the window title/)).toBeInTheDocument();
   });
 
-  it("muestra rama y versión en la barra de estado, sin repetir los cambios", async () => {
+  it("el recuento de cambios vive en el badge de Commit", async () => {
     const user = userEvent.setup();
     render(<App />);
 
     await user.click(screen.getByRole("button", { name: "Choose folder" }));
     await user.click(await screen.findByRole("button", { name: "File status" }));
 
-    const footer = screen.getByRole("contentinfo");
-    expect(within(footer).getByText("main")).toBeInTheDocument();
-    expect(within(footer).getByText("core v0.1.0")).toBeInTheDocument();
-    // El recuento de cambios vive en el badge de Commit; aquí sobraba.
-    expect(within(footer).queryByText(/change\(s\)/)).not.toBeInTheDocument();
     const toolbar = screen.getByRole("banner");
     expect(within(toolbar).getByRole("button", { name: /Commit/ })).toHaveTextContent("1");
   });
@@ -634,7 +645,7 @@ describe("App", () => {
     render(<App />);
 
     await user.click(screen.getByRole("button", { name: "Choose folder" }));
-    await screen.findByText("commit de prueba");
+    await findCommitRow();
     vi.mocked(listRefs).mockClear();
 
     act(() => menuMock.handler?.("view-status"));
@@ -644,6 +655,6 @@ describe("App", () => {
     expect(listRefs).toHaveBeenCalledWith("/tmp/mi-repo");
 
     act(() => menuMock.handler?.("toggle-output"));
-    expect(screen.queryByRole("region", { name: "Output" })).not.toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Output" })).toBeInTheDocument();
   });
 });
