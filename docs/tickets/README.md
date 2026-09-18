@@ -70,6 +70,6 @@ Un fichero por ticket, nombrado `OG-NNN-slug.md`. Todo cambio del repositorio na
 | [OG-035](OG-035-chrome.md) | Chrome de la ventana (menú, toolbar, título, status bar) | M6 | done |
 | [OG-036](OG-036-splits.md) | Splits redimensionables | M6 | done |
 | [OG-037](OG-037-tabla-commits.md) | Tabla de commits con cabecera | M6 | done |
-| OG-038 | Menús contextuales | M6 | pending |
+| [OG-038](OG-038-context-menus.md) | Menús contextuales | M6 | done |
 | OG-039 | Paneles de status/diff estilo SourceTree | M6 | pending |
 | OG-040 | Commits entrantes/salientes con badges | M6 | pending |

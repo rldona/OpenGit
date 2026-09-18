@@ -1,10 +1,12 @@
 import { useEffect } from "react";
 import { confirmDestructive } from "../lib/bridge/dialog";
+import { copyText } from "../lib/clipboard";
 import { LAYOUT_KEYS } from "../lib/layout";
 import { parseLfsPointerPatch } from "../lib/lfs";
 import { useRepoStore } from "../lib/stores/repo";
 import { useDiffStore } from "../lib/stores/diff";
 import { useUiStore } from "../lib/stores/ui";
+import { useContextMenu } from "../lib/hooks/useContextMenu";
 import { DiffEditor } from "./DiffEditor";
 import { FileTree } from "./FileTree";
 import { PatchView } from "./PatchView";
@@ -32,6 +34,7 @@ export function DiffView() {
   const discardSelection = useDiffStore((state) => state.discardSelection);
   const fileTree = useUiStore((state) => state.fileTree);
   const setFileTree = useUiStore((state) => state.setFileTree);
+  const fileMenu = useContextMenu();
 
   useEffect(() => {
     // Solo carga el working tree si no hay un objetivo previo (p. ej. un commit).
@@ -57,6 +60,12 @@ export function DiffView() {
       type="button"
       className={`diff-file${selected?.key === entry.key ? " selected" : ""}`}
       onClick={() => void selectFile(entry)}
+      onContextMenu={(event) =>
+        fileMenu.open(event, [
+          { label: "Select", onSelect: () => void selectFile(entry) },
+          { label: "Copy path", onSelect: () => void copyText(entry.path) },
+        ])
+      }
     >
       <span className="diff-file-path" title={entry.path}>
         {entry.staged && <span className="diff-tag">index</span>}
@@ -238,6 +247,7 @@ export function DiffView() {
           )}
         </div>
       </SplitPane>
+      {fileMenu.menu}
     </div>
   );
 }
