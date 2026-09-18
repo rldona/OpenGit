@@ -1,7 +1,7 @@
 # OG-034 · Abrir la URL del remoto
 
 - **Milestone:** M5 — Pulido
-- **Estado:** in-progress
+- **Estado:** done
 - **Depende de:** OG-008
 - **Referencias:** ROADMAP.md
 
@@ -43,4 +43,4 @@ La app muestra ramas remotas pero no la URL del remoto, y el roadmap permite com
 - Plugin `tauri-plugin-opener` (crate y npm) con capability scope a http/https; hallazgo anotado en `.ai/memory/tauri.md`.
 - UI: `RefsSidebar` lee los remotos del store `extras` y pinta **↗** por remoto con URL web; el resto no muestra botón.
 - Tests: 120 Rust (3 nuevos) y 204 frontend (2 en el sidebar).
-- Pendiente para cerrar: PR y CI verde.
+- Cerrado el 2026-09-18 con CI verde (Frontend 39 s, Rust 3m56s; incluye compilar el plugin nuevo) en el PR #31.
