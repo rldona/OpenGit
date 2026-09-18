@@ -1032,6 +1032,42 @@ body {
   font-size: 11px;
 }
 
+.refs-tag-form,
+.refs-stash-form {
+  flex-wrap: wrap;
+}
+
+.refs-check {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.refs-item .refs-tag {
+  flex: 1;
+  min-width: 0;
+}
+
+.refs-stash {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  padding: 3px 6px;
+}
+
+.refs-stash-subject {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.refs-stash-date {
+  font-size: 11px;
+}
+
 .refs-tag {
   display: flex;
   align-items: center;

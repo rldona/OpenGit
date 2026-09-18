@@ -30,6 +30,10 @@ pub enum JobKind {
         remote: Option<String>,
         set_upstream: bool,
     },
+    PushTag {
+        remote: Option<String>,
+        tag: String,
+    },
 }
 
 impl JobKind {
@@ -38,6 +42,7 @@ impl JobKind {
             Self::Fetch { .. } => "fetch",
             Self::Pull => "pull",
             Self::Push { .. } => "push",
+            Self::PushTag { .. } => "push tag",
         }
     }
 }
@@ -114,6 +119,13 @@ pub fn command_for(runner: &Runner, repo: &Path, kind: &JobKind) -> Result<GitCo
             args.push("pull".into());
             args.push("--ff-only".into());
             args.push("--progress".into());
+        }
+        JobKind::PushTag { remote, tag } => {
+            crate::git::validate_ref_name(runner, repo, tag)?;
+            args.push("push".into());
+            args.push("--progress".into());
+            args.push(remote.clone().unwrap_or_else(|| "origin".into()).into());
+            args.push(format!("refs/tags/{tag}").into());
         }
         JobKind::Push {
             remote,

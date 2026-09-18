@@ -33,7 +33,15 @@ export type Commit = {
 export type JobKind =
   | { kind: "fetch"; prune: boolean; remote: string | null }
   | { kind: "pull" }
-  | { kind: "push"; remote: string | null; set_upstream: boolean };
+  | { kind: "push"; remote: string | null; set_upstream: boolean }
+  | { kind: "push_tag"; remote: string | null; tag: string };
+
+export type Stash = {
+  reference: string;
+  subject: string;
+  timestamp: number;
+  hash: string;
+};
 
 export type JobOutputEvent = {
   job_id: string;

@@ -49,3 +49,10 @@
 - **Contexto:** tests de integración de Rust en paralelo; fallos aleatorios de un test distinto en cada pasada (detached HEAD, errores de git, diffs).
 - **Hallazgo:** `TempDir::new` generaba el nombre con `pid + nanos`; dos hilos podían obtener el mismo `nanos` y compartir carpeta, pisándose y borrándose entre tests.
 - **Implicación:** el nombre incluye ahora un contador atómico (`AtomicU64`). Si los tests vuelven a fallar de forma no determinista, sospechar primero de recursos compartidos (temp dirs, puertos, ficheros de config).
+
+## `.trunk/` y vitest
+
+- **Fecha:** 2026-09-18
+- **Contexto:** de repente `npm run test` recolectaba 213 ficheros de test.
+- **Hallazgo:** apareció un directorio `.trunk/` (plugins del linter Trunk) con sus propios `*.test.ts`; vitest los escaneaba y fallaban al cargar.
+- **Implicación:** `vite.config.ts` excluye `**/.trunk/**` (y `src-tauri`) y `.gitignore` ignora `.trunk/`. Si vuelven a aparecer cientos de ficheros en Vitest, revisar el primer directorio inesperado.

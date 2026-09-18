@@ -1,8 +1,10 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { startRemoteJob } from "../lib/bridge/jobs";
 import { listRefs } from "../lib/bridge/log";
 import { checkoutRef } from "../lib/bridge/refs";
+import { tagCreate, tagDelete } from "../lib/bridge/tags";
 import type { RefEntry, RepoInfo } from "../lib/bridge/types";
 import { useRefsStore } from "../lib/stores/refs";
 import { useRepoStore } from "../lib/stores/repo";
@@ -26,6 +28,16 @@ vi.mock("../lib/bridge/log", () => ({
 vi.mock("../lib/bridge/dialog", () => ({
   pickDirectory: vi.fn(),
   confirmDestructive: vi.fn().mockResolvedValue(true),
+}));
+
+vi.mock("../lib/bridge/tags", () => ({
+  tagCreate: vi.fn(),
+  tagDelete: vi.fn(),
+}));
+
+vi.mock("../lib/bridge/jobs", () => ({
+  startRemoteJob: vi.fn().mockResolvedValue("job-1"),
+  cancelRemoteJob: vi.fn().mockResolvedValue(true),
 }));
 
 vi.mock("../lib/bridge/status", () => ({
@@ -114,6 +126,46 @@ describe("RefsSidebar", () => {
     await user.click(await screen.findByRole("button", { name: "feature" }));
 
     expect(checkoutRef).toHaveBeenCalledWith("/tmp/repo", "feature", false);
+  });
+
+  it("crea un tag en el commit seleccionado o HEAD", async () => {
+    const user = userEvent.setup();
+    vi.mocked(tagCreate).mockResolvedValue(undefined);
+    render(<RefsSidebar />);
+    await screen.findByText("feature");
+
+    await user.click(screen.getByRole("button", { name: "New tag" }));
+    await user.type(screen.getByLabelText("New tag name"), "v2.0.0");
+    await user.click(screen.getByRole("button", { name: "Create" }));
+
+    expect(tagCreate).toHaveBeenCalledWith("/tmp/repo", "v2.0.0", "HEAD", null);
+  });
+
+  it("borra un tag solo tras confirmar", async () => {
+    const user = userEvent.setup();
+    vi.mocked(tagDelete).mockResolvedValue(undefined);
+    render(<RefsSidebar />);
+    await screen.findByText("v1.0.0");
+
+    const row = screen.getByText("v1.0.0").closest("li")!;
+    await user.click(within(row).getByRole("button", { name: "Delete" }));
+
+    expect(tagDelete).toHaveBeenCalledWith("/tmp/repo", "v1.0.0");
+  });
+
+  it("hace push del tag al remoto", async () => {
+    const user = userEvent.setup();
+    render(<RefsSidebar />);
+    await screen.findByText("v1.0.0");
+
+    const row = screen.getByText("v1.0.0").closest("li")!;
+    await user.click(within(row).getByRole("button", { name: "Push" }));
+
+    expect(startRemoteJob).toHaveBeenCalledWith("/tmp/repo", {
+      kind: "push_tag",
+      remote: null,
+      tag: "v1.0.0",
+    });
   });
 
   it("muestra la confirmación por nombre para borrar sin mergear", () => {

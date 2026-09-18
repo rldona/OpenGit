@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { subscribeRepoEvents } from "../bridge/events";
 import { useLogStore } from "../stores/log";
 import { useRefsStore } from "../stores/refs";
+import { useStashStore } from "../stores/stash";
 import { useStatusStore } from "../stores/status";
 
 /** Conecta los eventos del watcher con los stores (OG-010). */
@@ -21,11 +22,15 @@ export function useRepoEvents(root: string | null): void {
     const reloadRefs = () => {
       void useRefsStore.getState().refresh(root);
     };
+    const reloadStashes = () => {
+      void useStashStore.getState().refresh(root);
+    };
     void subscribeRepoEvents({
       onRefsChanged: () => {
         reloadLog();
         reloadRefs();
         reloadStatus();
+        reloadStashes();
       },
       onIndexChanged: reloadStatus,
       onWorktreeChanged: reloadStatus,
@@ -33,6 +38,7 @@ export function useRepoEvents(root: string | null): void {
         reloadLog();
         reloadRefs();
         reloadStatus();
+        reloadStashes();
       },
     })
       .then((functions) => {

@@ -79,6 +79,18 @@ vi.mock("./lib/bridge/refs", () => ({
   deleteBranch: vi.fn(),
 }));
 
+vi.mock("./lib/bridge/tags", () => ({
+  tagCreate: vi.fn().mockResolvedValue(undefined),
+  tagDelete: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("./lib/bridge/stash", () => ({
+  stashList: vi.fn().mockResolvedValue([]),
+  stashPush: vi.fn().mockResolvedValue(undefined),
+  stashApply: vi.fn().mockResolvedValue(undefined),
+  stashDrop: vi.fn().mockResolvedValue(undefined),
+}));
+
 vi.mock("./components/DiffEditor", () => ({
   DiffEditor: () => <div data-testid="diff-editor" />,
 }));
