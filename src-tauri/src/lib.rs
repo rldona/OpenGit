@@ -6,12 +6,78 @@ pub mod watch;
 
 use std::sync::{Arc, Mutex};
 
-use tauri::Manager;
+use tauri::menu::{AboutMetadata, MenuBuilder, MenuItemBuilder, SubmenuBuilder};
+use tauri::{Emitter, Manager};
 
 use crate::commands::AppState;
 use crate::git::Runner;
 use crate::jobs::JobManager;
 use crate::repo::recents::Recents;
+
+/// Menú nativo: los clics emiten `menu-action` con el id del ítem y la UI los
+/// enruta a los mismos handlers que los atajos. Sin aceleradores (salvo los
+/// predefinidos de Edit) para no duplicar la gestión del teclado.
+fn build_menu(app: &tauri::App) -> tauri::Result<()> {
+    let app_menu = SubmenuBuilder::new(app, "OpenGit")
+        .about(Some(AboutMetadata::default()))
+        .separator()
+        .quit()
+        .build()?;
+
+    let file_menu = SubmenuBuilder::new(app, "File")
+        .item(&MenuItemBuilder::with_id("open-repo", "Open Repository…").build(app)?)
+        .item(&MenuItemBuilder::with_id("close-repo", "Close Repository").build(app)?)
+        .separator()
+        .close_window()
+        .build()?;
+
+    let edit_menu = SubmenuBuilder::new(app, "Edit")
+        .undo()
+        .redo()
+        .separator()
+        .cut()
+        .copy()
+        .paste()
+        .select_all()
+        .build()?;
+
+    let view_menu = SubmenuBuilder::new(app, "View")
+        .item(&MenuItemBuilder::with_id("view-status", "File Status").build(app)?)
+        .item(&MenuItemBuilder::with_id("view-history", "History").build(app)?)
+        .item(&MenuItemBuilder::with_id("view-diff", "Diff").build(app)?)
+        .separator()
+        .item(&MenuItemBuilder::with_id("toggle-output", "Output").build(app)?)
+        .item(&MenuItemBuilder::with_id("shortcuts", "Keyboard Shortcuts").build(app)?)
+        .build()?;
+
+    let repository_menu = SubmenuBuilder::new(app, "Repository")
+        .item(&MenuItemBuilder::with_id("fetch", "Fetch").build(app)?)
+        .item(&MenuItemBuilder::with_id("pull", "Pull").build(app)?)
+        .item(&MenuItemBuilder::with_id("push", "Push").build(app)?)
+        .separator()
+        .item(&MenuItemBuilder::with_id("refresh", "Refresh").build(app)?)
+        .build()?;
+
+    let help_menu = SubmenuBuilder::new(app, "Help")
+        .item(&MenuItemBuilder::with_id("documentation", "Documentation").build(app)?)
+        .build()?;
+
+    let menu = MenuBuilder::new(app)
+        .items(&[
+            &app_menu,
+            &file_menu,
+            &edit_menu,
+            &view_menu,
+            &repository_menu,
+            &help_menu,
+        ])
+        .build()?;
+    app.set_menu(menu)?;
+    app.on_menu_event(|app, event| {
+        let _ = app.emit("menu-action", event.id().as_ref().to_string());
+    });
+    Ok(())
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -21,6 +87,7 @@ pub fn run() {
         .setup(|app| {
             let data_dir = app.path().app_data_dir()?;
             std::fs::create_dir_all(&data_dir)?;
+            build_menu(app)?;
             app.manage(AppState {
                 runner: Runner::locate(),
                 recents: Mutex::new(Recents::new(data_dir.join("recent_repos.json"))),

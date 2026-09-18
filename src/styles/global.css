@@ -108,6 +108,29 @@ body {
   font-size: 11px;
 }
 
+.status-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 12px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-panel);
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.status-bar .core-version {
+  font-size: 11px;
+}
+
+.status-conflicts {
+  color: var(--danger-text);
+}
+
+.status-spacer {
+  flex: 1;
+}
+
 .theme-select {
   padding: 4px 6px;
   border: 1px solid var(--border);
@@ -120,6 +143,9 @@ body {
 }
 
 .toolbar button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 4px 10px;
   border: 1px solid var(--border);
   border-radius: 6px;
