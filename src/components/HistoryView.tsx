@@ -179,6 +179,15 @@ export function HistoryView() {
         collapsed={!selectedCommit}
       >
         <div className="history-list-wrap">
+          <div className="commit-header" aria-hidden="true">
+            <span className="commit-header-graph" style={{ width: graphWidth }}>
+              Graph
+            </span>
+            <span className="commit-header-cell">Description</span>
+            <span className="commit-header-cell commit-header-hash">Commit</span>
+            <span className="commit-header-cell commit-header-author">Author</span>
+            <span className="commit-header-cell commit-header-date">Date</span>
+          </div>
           <GraphCanvas
             rows={rows}
             colors={layout.colors}
@@ -203,9 +212,13 @@ export function HistoryView() {
                     onClick={() => select(row.hash)}
                   >
                     <span className="commit-refs">{renderRefs(commit.refs)}</span>
-                    <span className="commit-subject">{commit.subject}</span>
+                    <span className="commit-subject" title={commit.subject}>
+                      {commit.subject}
+                    </span>
                     <span className="commit-hash">{commit.hash.slice(0, 7)}</span>
-                    <span className="commit-author">{commit.author_name}</span>
+                    <span className="commit-author" title={commit.author_name}>
+                      {commit.author_name}
+                    </span>
                     <span className="commit-date">{formatDateTime(commit.author_time)}</span>
                   </button>
                 );
