@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useCommitStore } from "../lib/stores/commit";
+import { hasActiveOperation, stagedEntries, useCommitStore } from "../lib/stores/commit";
 import { useRepoStore } from "../lib/stores/repo";
 import { useStatusStore } from "../lib/stores/status";
 
@@ -24,10 +24,8 @@ export function CommitPanel() {
     }
   }, [root, load]);
 
-  const staged = (report?.entries ?? []).filter(
-    (entry) => entry.kind !== "untracked" && entry.kind !== "unmerged" && entry.xy[0] !== ".",
-  );
-  const operationActive = opState.merge || opState.rebase || opState.cherry_pick || opState.revert;
+  const staged = stagedEntries(report);
+  const operationActive = hasActiveOperation(opState);
 
   return (
     <section className="commit-panel" aria-label="Commit">
