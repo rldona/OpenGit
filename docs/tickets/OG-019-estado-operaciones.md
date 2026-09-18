@@ -1,7 +1,7 @@
 # OG-019 · Estado de operaciones y Abort/Continue
 
 - **Milestone:** M4 — Rebase y conflictos
-- **Estado:** in-progress
+- **Estado:** done
 - **Depende de:** OG-007, OG-017
 - **Referencias:** ROADMAP.md
 
@@ -42,4 +42,4 @@ Hoy un merge, rebase, cherry-pick o revert a medias solo deja un aviso y el comm
 - Rust: `RepoOpState` gana `revert` y el progreso del rebase (`rebase_current`/`rebase_total`); `repo_op_abort` y `repo_op_continue` despachan según el estado y fallan con error si no hay operación.
 - UI: `OpBanner` global (bajo la toolbar) con la operación, el paso y los botones Abort/Continue; el panel de commit ya no duplica el aviso.
 - Tests: Rust (merge abort/continue, rebase abort/continue con progreso, cherry-pick abort, sin operación) y frontend (store y banner).
-- Pendiente para cerrar: PR y CI verde.
+- Cerrado el 2026-09-18 con CI verde (Frontend 34 s, Rust 1m54s) en el PR #15.
