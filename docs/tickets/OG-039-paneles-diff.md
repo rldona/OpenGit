@@ -1,7 +1,7 @@
 # OG-039 · Paneles de status/diff estilo SourceTree
 
 - **Milestone:** M6 — Paridad visual con SourceTree
-- **Estado:** in-progress
+- **Estado:** done
 - **Depende de:** OG-038
 - **Referencias:** ROADMAP.md
 
@@ -41,4 +41,4 @@ El visor de parches muestra las líneas sin numeración y con una cabecera de hu
 - `PatchView`: columnas de números (40 px, mono, muted), etiqueta `Hunk N · Lines x–y` con la sección del header al lado y acciones de staging a la derecha.
 - `DiffView`: input "Filter files" local que filtra por ruta y `orig_path`; estado "No files match" sin tocar la selección.
 - Tests: 228 frontend (numeración del parser, etiqueta de hunk y filtro) y 120 Rust intactos.
-- Pendiente para cerrar: PR y CI verde.
+- Cerrado el 2026-09-18 con CI verde (Frontend 36 s, Rust 1m30s) en el PR #36.
