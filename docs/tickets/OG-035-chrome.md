@@ -1,7 +1,7 @@
 # OG-035 · Chrome de la ventana
 
 - **Milestone:** M6 — Paridad visual con SourceTree
-- **Estado:** in-progress
+- **Estado:** done
 - **Depende de:** OG-001, OG-023
 - **Referencias:** ROADMAP.md
 
@@ -50,4 +50,4 @@ La app funciona pero su chasis no se parece al de SourceTree: no hay menú nativ
 - Frontend: `subscribeMenuEvents` en `lib/bridge/events.ts`; App enruta el evento a los mismos handlers de los atajos mediante un ref; `Icon` propio (SVG inline, sin dependencias); toolbar agrupada (repositorio + vistas); barra de estado con rama, conflictos, cambios y versión del core (movida desde la toolbar).
 - Título de ventana con la ruta del repo (`lib/bridge/window.ts`).
 - Tests: 207 frontend (título, status bar y enrutado de menú) y 120 Rust intactos.
-- Pendiente para cerrar: PR y CI verde.
+- Cerrado el 2026-09-18 con CI verde (Frontend 34 s, Rust 2m9s) en el PR #32.
