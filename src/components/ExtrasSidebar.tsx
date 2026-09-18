@@ -26,6 +26,7 @@ export function ExtrasSidebar() {
   const open = useRepoStore((state) => state.open);
   const submodules = useExtrasStore((state) => state.submodules);
   const worktrees = useExtrasStore((state) => state.worktrees);
+  const lfs = useExtrasStore((state) => state.lfs);
   const error = useExtrasStore((state) => state.error);
   const load = useExtrasStore((state) => state.load);
 
@@ -40,7 +41,8 @@ export function ExtrasSidebar() {
   }
   const showSubmodules = submodules.length > 0;
   const showWorktrees = worktrees.length > 1;
-  if (!showSubmodules && !showWorktrees && !error) {
+  const showLfs = lfs?.configured === true;
+  if (!showSubmodules && !showWorktrees && !showLfs && !error) {
     return null;
   }
 
@@ -99,6 +101,15 @@ export function ExtrasSidebar() {
               );
             })}
           </ul>
+        </section>
+      )}
+
+      {showLfs && lfs && (
+        <section className="sidebar-section">
+          <h2>Git LFS</h2>
+          <p className={lfs.installed ? "muted" : "lfs-missing"}>
+            {lfs.installed ? (lfs.version ?? "Installed") : "Not installed"}
+          </p>
         </section>
       )}
 

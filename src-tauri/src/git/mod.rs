@@ -10,12 +10,12 @@ pub mod version;
 
 pub use error::GitError;
 pub use models::{
-    Commit, FileDiff, FileStatus, Ref, Stash, StatusKind, StatusReport, Submodule, SubmoduleState,
-    Worktree,
+    Commit, FileDiff, FileStatus, LfsStatus, Ref, Stash, StatusKind, StatusReport, Submodule,
+    SubmoduleState, Worktree,
 };
 pub use parsers::{
-    parse_log, parse_numstat, parse_refs, parse_stash_list, parse_status, parse_submodule_status,
-    parse_worktree_list,
+    parse_gitattributes_paths, parse_gitattributes_uses_lfs, parse_log, parse_numstat, parse_refs,
+    parse_stash_list, parse_status, parse_submodule_status, parse_worktree_list,
 };
 pub use runner::{GitCommand, GitOutput, GitProcess, Runner, StdinMode, DEFAULT_TIMEOUT};
 pub use version::{GitVersion, MINIMUM_GIT_VERSION};
@@ -262,6 +262,41 @@ pub fn worktree_list(runner: &Runner, repo: &Path) -> Result<Vec<Worktree>, GitE
     let output =
         runner.run_checked(&GitCommand::new(["worktree", "list", "--porcelain"]).cwd(repo))?;
     parse_worktree_list(&output.stdout)
+}
+
+/// Estado de Git LFS: binario disponible y atributos `filter=lfs` rastreados.
+pub fn lfs_status(runner: &Runner, repo: &Path) -> Result<LfsStatus, GitError> {
+    let output = runner.run(&GitCommand::new(["lfs", "version"]).cwd(repo))?;
+    let (installed, version) = if output.success() {
+        let version = output.stdout_lossy().trim().to_string();
+        (
+            true,
+            if version.is_empty() {
+                None
+            } else {
+                Some(version)
+            },
+        )
+    } else {
+        (false, None)
+    };
+
+    let listed = runner.run_checked(&GitCommand::new(["ls-files", "-z"]).cwd(repo))?;
+    let mut configured = false;
+    for path in parse_gitattributes_paths(&listed.stdout) {
+        if std::fs::read(repo.join(&path))
+            .is_ok_and(|content| parse_gitattributes_uses_lfs(&content))
+        {
+            configured = true;
+            break;
+        }
+    }
+
+    Ok(LfsStatus {
+        installed,
+        version,
+        configured,
+    })
 }
 
 pub fn stash_push(

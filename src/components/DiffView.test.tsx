@@ -95,4 +95,19 @@ describe("DiffView", () => {
     expect(await screen.findByRole("button", { name: "Stage hunk" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Stage file" })).toBeInTheDocument();
   });
+
+  it("avisa cuando el parche es un puntero LFS", async () => {
+    vi.mocked(diffFile).mockResolvedValue(
+      [
+        "diff --git a/a.txt b/a.txt",
+        "@@ -1,3 +1,3 @@",
+        "+version https://git-lfs.github.com/spec/v1",
+        `+oid sha256:${"a".repeat(64)}`,
+        "+size 4096",
+      ].join("\n"),
+    );
+    render(<DiffView />);
+
+    expect(await screen.findByText(/Git LFS pointer/)).toHaveTextContent("4096 bytes");
+  });
 });

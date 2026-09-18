@@ -1,6 +1,7 @@
 use opengit_lib::git::{
-    parse_log, parse_numstat, parse_refs, parse_status, parse_submodule_status,
-    parse_worktree_list, GitError, StatusKind, SubmoduleState,
+    parse_gitattributes_paths, parse_gitattributes_uses_lfs, parse_log, parse_numstat, parse_refs,
+    parse_status, parse_submodule_status, parse_worktree_list, GitError, StatusKind,
+    SubmoduleState,
 };
 
 const LOG_TOPO: &[u8] = include_bytes!("fixtures/log_topo.bin");
@@ -261,4 +262,25 @@ fn worktree_list_vacio_y_error() {
         parse_worktree_list(b"branch refs/heads/main\n"),
         Err(GitError::InvalidOutput { .. })
     ));
+}
+
+#[test]
+fn gitattributes_paths_filtra_solo_los_atributos() {
+    let data = b".gitattributes\0src/.gitattributes\0src/main.rs\0docs/notas.gitattributesx\0";
+    let paths = parse_gitattributes_paths(data);
+    assert_eq!(paths, vec![".gitattributes", "src/.gitattributes"]);
+}
+
+#[test]
+fn gitattributes_uses_lfs_detecta_lineas_activas() {
+    assert!(parse_gitattributes_uses_lfs(
+        b"*.bin filter=lfs diff=lfs merge=lfs -text\n"
+    ));
+    assert!(parse_gitattributes_uses_lfs(
+        b"# comentario\nvideos/** filter=lfs\n"
+    ));
+    assert!(parse_gitattributes_uses_lfs(b"  *.bin   filter=lfs  \n"));
+    assert!(!parse_gitattributes_uses_lfs(b"# *.bin filter=lfs\n"));
+    assert!(!parse_gitattributes_uses_lfs(b"*.txt text\n"));
+    assert!(!parse_gitattributes_uses_lfs(b""));
 }
