@@ -128,6 +128,24 @@ export type StatusReport = {
   entries: FileStatus[];
 };
 
+export type SubmoduleState = "clean" | "modified" | "uninitialized" | "conflict";
+
+export type Submodule = {
+  path: string;
+  head: string;
+  state: SubmoduleState;
+  describe: string | null;
+};
+
+export type Worktree = {
+  path: string;
+  head: string;
+  branch: string | null;
+  detached: boolean;
+  bare: boolean;
+  locked: boolean;
+};
+
 export type RefEntry = {
   name: string;
   object_id: string;
