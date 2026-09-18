@@ -137,3 +137,12 @@ pub struct Remote {
     /// Equivalente `https://…`; `None` para rutas locales o `file://`.
     pub web_url: Option<String>,
 }
+
+/// Commits que faltan por llegar del upstream y por subir a él.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize)]
+pub struct TrackingCommits {
+    /// `HEAD..upstream`, en orden de `rev-list`.
+    pub incoming: Vec<String>,
+    /// `upstream..HEAD`.
+    pub outgoing: Vec<String>,
+}

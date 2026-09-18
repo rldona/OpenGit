@@ -1,7 +1,8 @@
 mod support;
 
 use opengit_lib::git::{
-    branch_tracking, checkout_ref, create_branch, delete_branch, rename_branch, Runner,
+    branch_tracking, checkout_ref, create_branch, delete_branch, rename_branch, tracking_commits,
+    Runner,
 };
 use support::TestRepo;
 
@@ -146,4 +147,37 @@ fn nombres_de_rama_invalidos_fallan() {
 
     let error = create_branch(&runner(), repo.path(), "mala..rama", &c1).expect_err("inválida");
     assert!(format!("{error}").contains("invalid ref name"), "{error}");
+}
+
+#[test]
+fn tracking_commits_separa_entrantes_y_salientes() {
+    let repo = TestRepo::init();
+    commit_file(&repo, "a.txt", "base\n", "base");
+    let base = head_hash(&repo);
+    repo.git_ok(&["update-ref", "refs/remotes/origin/main", &base]);
+
+    // El commit remoto sale de la base, no del commit local.
+    repo.git_ok(&["checkout", "-q", "-b", "origen"]);
+    commit_file(&repo, "b.txt", "remoto\n", "remoto");
+    let remote = head_hash(&repo);
+    repo.git_ok(&["update-ref", "refs/remotes/origin/main", &remote]);
+    repo.git_ok(&["checkout", "-q", "main"]);
+
+    commit_file(&repo, "a.txt", "local\n", "local");
+    let local = head_hash(&repo);
+
+    let tracking = tracking_commits(&runner(), repo.path(), "refs/remotes/origin/main")
+        .expect("tracking commits");
+
+    assert_eq!(tracking.incoming, vec![remote]);
+    assert_eq!(tracking.outgoing, vec![local]);
+
+    assert!(
+        tracking_commits(&runner(), repo.path(), "HEAD..x").is_err(),
+        "el rango no es una ref válida"
+    );
+    assert!(
+        tracking_commits(&runner(), repo.path(), "--all").is_err(),
+        "las opciones no son refs"
+    );
 }

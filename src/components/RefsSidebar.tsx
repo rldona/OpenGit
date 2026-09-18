@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { copyText } from "../lib/clipboard";
 import { confirmDestructive } from "../lib/bridge/dialog";
 import { openExternal } from "../lib/bridge/opener";
+import { parseTrack } from "../lib/format";
 import { useExtrasStore } from "../lib/stores/extras";
 import { useLogStore } from "../lib/stores/log";
 import { useRefsStore } from "../lib/stores/refs";
@@ -13,9 +14,6 @@ export function RefsSidebar() {
   const root = useRepoStore((state) => state.repo?.root ?? null);
   const refs = useRefsStore((state) => state.refs);
   const current = useRefsStore((state) => state.current);
-  const upstream = useRefsStore((state) => state.upstream);
-  const ahead = useRefsStore((state) => state.ahead);
-  const behind = useRefsStore((state) => state.behind);
   const filter = useRefsStore((state) => state.filter);
   const error = useRefsStore((state) => state.error);
   const pendingForceDelete = useRefsStore((state) => state.pendingForceDelete);
@@ -222,13 +220,19 @@ export function RefsSidebar() {
                       </span>
                     )}
                     {short}
-                    {current === short && upstream && (ahead > 0 || behind > 0) && (
-                      <span className="refs-track">
-                        {ahead > 0 ? `↑${ahead}` : ""}
-                        {behind > 0 ? `↓${behind}` : ""}
-                      </span>
-                    )}
                   </button>
+                  {(() => {
+                    const track = parseTrack(ref.track);
+                    if (!track || (track.ahead === 0 && track.behind === 0)) {
+                      return null;
+                    }
+                    return (
+                      <span className="refs-track">
+                        {track.ahead > 0 && <span>↑{track.ahead}</span>}
+                        {track.behind > 0 && <span>↓{track.behind}</span>}
+                      </span>
+                    );
+                  })()}
                   <span className="refs-actions">
                     <button
                       type="button"
