@@ -1,7 +1,7 @@
 # OG-022 · Tema claro/oscuro
 
 - **Milestone:** M5 — Pulido
-- **Estado:** in-progress
+- **Estado:** done
 - **Depende de:** —
 - **Referencias:** ROADMAP.md
 
@@ -46,3 +46,4 @@ La UI nació con un único tema oscuro. Los tokens están centralizados en `:roo
 - Los 32 colores hardcodeados de `global.css` pasan a tokens; `[data-theme="light"]` redefine paleta y `color-scheme`.
 - `DiffEditor` elige `oneDark` o `syntaxHighlighting(defaultHighlightStyle)` y se reconstruye al cambiar de tema; `GraphCanvas` usa `selectionRingColor`.
 - Tests: 147 frontend (12 nuevos de tema, store y selector), 97 Rust intactos.
+- Cerrado el 2026-09-18 con CI verde (Frontend 32 s, Rust 1m35s) en el PR #18.
