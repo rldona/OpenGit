@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { HunkSelection } from "../lib/bridge/diff";
-import { classifyPatchLines, PATCH_ROW_HEIGHT } from "../lib/diff/patch";
+import { classifyPatchLines, parseHunkHeader, PATCH_ROW_HEIGHT } from "../lib/diff/patch";
 import { sameRange, visibleRange, type VisibleRange } from "../lib/graph/viewport";
 
 const OVERSCAN = 8;
@@ -59,9 +59,18 @@ export function PatchView({
           const index = range.start + offset;
           const top = index * PATCH_ROW_HEIGHT;
           if (line.type === "hunk") {
+            const header = parseHunkHeader(line.text);
+            const lastLine = header ? header.newStart + Math.max(header.newCount, 1) - 1 : null;
+            const label =
+              header && lastLine !== null
+                ? `Hunk ${(line.hunk ?? 0) + 1} · Lines ${header.newStart}–${lastLine}`
+                : line.text;
             return (
               <div key={line.index} className="patch-line hunk" style={{ top }}>
-                <span className="patch-text">{line.text}</span>
+                <span className="patch-hunk-label" title={line.text}>
+                  {label}
+                </span>
+                <span className="patch-hunk-section">{header?.section ?? ""}</span>
                 {staging && (
                   <span className="patch-actions">
                     <button
@@ -96,6 +105,8 @@ export function PatchView({
               style={{ top }}
               onClick={selectable ? () => onToggleLine(line.index) : undefined}
             >
+              <span className="patch-line-no">{line.oldLine ?? ""}</span>
+              <span className="patch-line-no">{line.newLine ?? ""}</span>
               <span className="patch-text">{line.text === "" ? " " : line.text}</span>
             </div>
           );

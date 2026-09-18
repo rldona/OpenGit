@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { classifyPatchLines, isBinaryPatch, splitPatch } from "./patch";
+import { classifyPatchLines, isBinaryPatch, parseHunkHeader, splitPatch } from "./patch";
 
 const PATCH = [
   "diff --git a/a.txt b/a.txt",
@@ -79,6 +79,41 @@ describe("splitPatch", () => {
     expect(lines[5].index).toBe(5);
     expect(lines[6].index).toBe(6);
     expect(lines[8].hunk).toBe(0);
+  });
+
+  it("numera las líneas antiguas y nuevas de cada tipo", () => {
+    const lines = classifyPatchLines(PATCH);
+
+    const hunk = lines.find((line) => line.type === "hunk")!;
+    expect(hunk.oldLine).toBeNull();
+    expect(hunk.newLine).toBeNull();
+
+    // contexto: numeran en ambas versiones
+    expect(lines[5]).toMatchObject({ type: "context", oldLine: 1, newLine: 1 });
+    // borrada: solo antigua
+    expect(lines[6]).toMatchObject({ type: "del", oldLine: 2, newLine: null });
+    // añadida: solo nueva
+    expect(lines[7]).toMatchObject({ type: "add", oldLine: null, newLine: 2 });
+    // contexto tras el cambio: la nueva avanza por el añadido
+    expect(lines[8]).toMatchObject({ type: "context", oldLine: 3, newLine: 3 });
+  });
+
+  it("acepta cabeceras con conteos implícitos y sección", () => {
+    expect(parseHunkHeader("@@ -1 +1 @@")).toEqual({
+      oldStart: 1,
+      oldCount: 1,
+      newStart: 1,
+      newCount: 1,
+      section: "",
+    });
+    expect(parseHunkHeader("@@ -10,0 +12,4 @@ function ejemplo()")).toEqual({
+      oldStart: 10,
+      oldCount: 0,
+      newStart: 12,
+      newCount: 4,
+      section: "function ejemplo()",
+    });
+    expect(parseHunkHeader("no es una cabecera")).toBeNull();
   });
 
   it("no confunde líneas de contenido que empiezan por guiones", () => {
