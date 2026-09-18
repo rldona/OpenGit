@@ -53,8 +53,9 @@ Artefactos: `opengit-macos`, `opengit-linux`, `opengit-windows`.
 ```
 src/                        # React + TS
   App.tsx                   # layout: toolbar, sidebar, historial, salida
-  components/               # HistoryView, GraphCanvas, StatusView
+  components/               # HistoryView, GraphCanvas, StatusView, DiffView
   lib/bridge/               # envoltorios tipados de invoke/eventos
+  lib/diff/                 # separación del parche de git (OG-005)
   lib/graph/                # layout de lanes, puro y testeable (OG-004)
   lib/hooks/                # useRepoEvents (watcher → stores, OG-010)
   lib/stores/               # stores de Zustand (ui, repo, log, status)

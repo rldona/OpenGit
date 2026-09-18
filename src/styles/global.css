@@ -620,3 +620,164 @@ body {
   border-color: #dc2626;
   color: #fca5a5;
 }
+
+.diff-view {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.diff-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+}
+
+.diff-toolbar > button {
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.diff-toolbar > button[aria-pressed="true"] {
+  border-color: var(--accent);
+}
+
+.diff-toolbar > button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.diff-modes {
+  display: flex;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.diff-modes button {
+  padding: 3px 10px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.diff-modes button.active {
+  background: rgb(59 130 246 / 22%);
+  color: var(--text);
+}
+
+.diff-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.diff-files {
+  width: 280px;
+  flex-shrink: 0;
+  overflow-y: auto;
+  padding: 4px 0;
+  background: var(--bg-panel);
+  border-right: 1px solid var(--border);
+}
+
+.diff-file {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 28px;
+  padding: 0 10px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.diff-file:hover {
+  background: var(--hover);
+}
+
+.diff-file.selected {
+  background: rgb(59 130 246 / 18%);
+}
+
+.diff-file-path {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.diff-tag {
+  margin-right: 6px;
+  padding: 0 5px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.diff-counts {
+  display: flex;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.diff-counts .added {
+  color: #6cc070;
+}
+
+.diff-counts .deleted {
+  color: #e07b5b;
+}
+
+.diff-pane {
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+}
+
+.diff-editor,
+.diff-editor .cm-editor {
+  height: 100%;
+}
+
+.diff-line-add {
+  background: rgb(46 160 67 / 15%);
+}
+
+.diff-line-del {
+  background: rgb(248 81 73 / 15%);
+}
+
+.detail-action {
+  margin-top: 12px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.detail-action:hover {
+  border-color: var(--accent);
+}
