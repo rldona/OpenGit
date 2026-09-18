@@ -65,6 +65,7 @@ src-tauri/                  # Rust
   src/lib.rs                # arranque de Tauri y estado de la app
   src/commands.rs           # comandos expuestos a la UI
   src/git/                  # runner y parsers (OG-003)
+  src/jobs/                 # fetch/pull/push en streaming (OG-011)
   src/repo/                 # apertura, recientes y operaciones (OG-002, OG-009)
   src/watch/                # watcher de .git (OG-010)
   tests/fixtures/           # salidas reales de git (strings)

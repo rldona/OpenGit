@@ -47,6 +47,15 @@ pub struct TestRepo {
 }
 
 impl TestRepo {
+    /// Envuelve un repo ya existente (por ejemplo, un clon local).
+    pub fn at(path: &Path) -> Self {
+        Self {
+            dir: TempDir {
+                path: path.to_path_buf(),
+            },
+        }
+    }
+
     pub fn init() -> Self {
         let repo = Self {
             dir: TempDir::new("repo"),

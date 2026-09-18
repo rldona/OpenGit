@@ -1,14 +1,16 @@
 pub mod commands;
 pub mod git;
+pub mod jobs;
 pub mod repo;
 pub mod watch;
 
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 
 use tauri::Manager;
 
 use crate::commands::AppState;
 use crate::git::Runner;
+use crate::jobs::JobManager;
 use crate::repo::recents::Recents;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -22,6 +24,7 @@ pub fn run() {
                 runner: Runner::locate(),
                 recents: Mutex::new(Recents::new(data_dir.join("recent_repos.json"))),
                 watcher: Mutex::new(None),
+                jobs: Arc::new(JobManager::new()),
             });
             Ok(())
         })
@@ -47,6 +50,8 @@ pub fn run() {
             commands::create_branch,
             commands::rename_branch,
             commands::delete_branch,
+            commands::start_remote_job,
+            commands::cancel_remote_job,
             commands::discard_path,
             commands::delete_untracked,
             commands::recent_repos,
