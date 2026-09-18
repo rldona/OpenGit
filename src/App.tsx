@@ -8,6 +8,7 @@ import { OpBanner } from "./components/OpBanner";
 import { RebaseView } from "./components/RebaseView";
 import { RefsSidebar } from "./components/RefsSidebar";
 import { ShortcutsHelp } from "./components/ShortcutsHelp";
+import { SplitPane } from "./components/SplitPane";
 import { StashSidebar } from "./components/StashSidebar";
 import { StatusView } from "./components/StatusView";
 import { getAppVersion } from "./lib/bridge/core";
@@ -18,6 +19,7 @@ import { setWindowTitle } from "./lib/bridge/window";
 import { useJobEvents } from "./lib/hooks/useJobEvents";
 import { useRepoEvents } from "./lib/hooks/useRepoEvents";
 import { useShortcuts, type ShortcutHandlers } from "./lib/hooks/useShortcuts";
+import { LAYOUT_KEYS } from "./lib/layout";
 import { hasActiveOperation, stagedEntries, useCommitStore } from "./lib/stores/commit";
 import { useExtrasStore } from "./lib/stores/extras";
 import { useLogStore } from "./lib/stores/log";
@@ -331,130 +333,149 @@ function App() {
 
       {repo && <OpBanner />}
 
-      <div className="panes">
-        <aside className="sidebar" aria-label="Repository">
-          <section className="sidebar-section">
-            <h2>Recents</h2>
-            {recents.length === 0 ? (
-              <p className="muted">No repositories yet</p>
-            ) : (
-              <ul className="recent-list">
-                {recents.map((recent) => (
-                  <li key={recent.path} className="recent-item">
+      <SplitPane
+        className="workspace"
+        direction="vertical"
+        side="end"
+        storageKey={LAYOUT_KEYS.output}
+        defaultSize={160}
+        min={80}
+        max={420}
+        label="Resize output"
+        collapsed={!outputOpen}
+      >
+        <SplitPane
+          className="panes"
+          direction="horizontal"
+          side="start"
+          storageKey={LAYOUT_KEYS.sidebar}
+          defaultSize={240}
+          min={180}
+          max={480}
+          label="Resize sidebar"
+        >
+          <aside className="sidebar" aria-label="Repository">
+            <section className="sidebar-section">
+              <h2>Recents</h2>
+              {recents.length === 0 ? (
+                <p className="muted">No repositories yet</p>
+              ) : (
+                <ul className="recent-list">
+                  {recents.map((recent) => (
+                    <li key={recent.path} className="recent-item">
+                      <button
+                        type="button"
+                        className="recent-open"
+                        title={recent.path}
+                        onClick={() => void open(recent.path)}
+                      >
+                        {recent.name}
+                      </button>
+                      <button
+                        type="button"
+                        className="recent-remove"
+                        aria-label={`Remove ${recent.name} from recents`}
+                        onClick={() => void removeRecent(recent.path)}
+                      >
+                        ×
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+
+            <section className="sidebar-section">
+              <h2>Workspace</h2>
+              {repo ? (
+                <ul>
+                  <li>
                     <button
                       type="button"
-                      className="recent-open"
-                      title={recent.path}
-                      onClick={() => void open(recent.path)}
+                      className={`view-button${activeView === "status" ? " active" : ""}`}
+                      onClick={() => setActiveView("status")}
                     >
-                      {recent.name}
-                    </button>
-                    <button
-                      type="button"
-                      className="recent-remove"
-                      aria-label={`Remove ${recent.name} from recents`}
-                      onClick={() => void removeRecent(recent.path)}
-                    >
-                      ×
+                      File status
                     </button>
                   </li>
-                ))}
-              </ul>
-            )}
-          </section>
+                  <li>
+                    <button
+                      type="button"
+                      className={`view-button${activeView === "history" ? " active" : ""}`}
+                      onClick={() => setActiveView("history")}
+                    >
+                      History
+                    </button>
+                  </li>
+                  <li>
+                    <button
+                      type="button"
+                      className={`view-button${activeView === "diff" ? " active" : ""}`}
+                      onClick={() => setActiveView("diff")}
+                    >
+                      Diff
+                    </button>
+                  </li>
+                  <li>
+                    <button
+                      type="button"
+                      className={`view-button${activeView === "conflict" ? " active" : ""}`}
+                      onClick={() => setActiveView("conflict")}
+                    >
+                      Conflicts{conflictCount > 0 ? ` (${conflictCount})` : ""}
+                    </button>
+                  </li>
+                </ul>
+              ) : (
+                <p className="muted">No repository open</p>
+              )}
+            </section>
 
-          <section className="sidebar-section">
-            <h2>Workspace</h2>
             {repo ? (
-              <ul>
-                <li>
-                  <button
-                    type="button"
-                    className={`view-button${activeView === "status" ? " active" : ""}`}
-                    onClick={() => setActiveView("status")}
-                  >
-                    File status
-                  </button>
-                </li>
-                <li>
-                  <button
-                    type="button"
-                    className={`view-button${activeView === "history" ? " active" : ""}`}
-                    onClick={() => setActiveView("history")}
-                  >
-                    History
-                  </button>
-                </li>
-                <li>
-                  <button
-                    type="button"
-                    className={`view-button${activeView === "diff" ? " active" : ""}`}
-                    onClick={() => setActiveView("diff")}
-                  >
-                    Diff
-                  </button>
-                </li>
-                <li>
-                  <button
-                    type="button"
-                    className={`view-button${activeView === "conflict" ? " active" : ""}`}
-                    onClick={() => setActiveView("conflict")}
-                  >
-                    Conflicts{conflictCount > 0 ? ` (${conflictCount})` : ""}
-                  </button>
-                </li>
-              </ul>
+              <RefsSidebar />
             ) : (
-              <p className="muted">No repository open</p>
+              <section className="sidebar-section">
+                <h2>Branches</h2>
+                <p className="muted">No repository open</p>
+              </section>
             )}
-          </section>
 
-          {repo ? (
-            <RefsSidebar />
-          ) : (
-            <section className="sidebar-section">
-              <h2>Branches</h2>
-              <p className="muted">No repository open</p>
-            </section>
-          )}
-
-          {repo ? (
-            <StashSidebar />
-          ) : (
-            <section className="sidebar-section">
-              <h2>Stashes</h2>
-              <p className="muted">No repository open</p>
-            </section>
-          )}
-
-          <ExtrasSidebar />
-        </aside>
-
-        <main className="content" aria-label="History">
-          {error && (
-            <p role="alert" className="error-banner">
-              {error}
-            </p>
-          )}
-          {repo ? (
-            activeView === "status" ? (
-              <StatusView />
-            ) : activeView === "diff" ? (
-              <DiffView />
-            ) : activeView === "conflict" ? (
-              <ConflictView />
-            ) : activeView === "rebase" ? (
-              <RebaseView />
+            {repo ? (
+              <StashSidebar />
             ) : (
-              <HistoryView />
-            )
-          ) : (
-            <Welcome loading={loading} onOpen={pickAndOpen} />
-          )}
-        </main>
-      </div>
+              <section className="sidebar-section">
+                <h2>Stashes</h2>
+                <p className="muted">No repository open</p>
+              </section>
+            )}
 
-      {outputOpen && (
+            <ExtrasSidebar />
+          </aside>
+
+          <main className="content" aria-label="History">
+            {error && (
+              <p role="alert" className="error-banner">
+                {error}
+              </p>
+            )}
+            {repo ? (
+              activeView === "status" ? (
+                <StatusView />
+              ) : activeView === "diff" ? (
+                <DiffView />
+              ) : activeView === "conflict" ? (
+                <ConflictView />
+              ) : activeView === "rebase" ? (
+                <RebaseView />
+              ) : (
+                <HistoryView />
+              )
+            ) : (
+              <Welcome loading={loading} onOpen={pickAndOpen} />
+            )}
+          </main>
+        </SplitPane>
+
         <section className="output-panel" aria-label="Output">
           <h2>Output</h2>
           {outputLines.map((line, index) => (
@@ -463,7 +484,7 @@ function App() {
             </p>
           ))}
         </section>
-      )}
+      </SplitPane>
 
       <footer className="status-bar">
         <span>{repo ? (currentBranch ?? "detached HEAD") : "No repository"}</span>

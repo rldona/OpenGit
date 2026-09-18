@@ -3,6 +3,7 @@ import { confirmDestructive } from "../lib/bridge/dialog";
 import { formatDateTime, shortRefName } from "../lib/format";
 import { LANE_WIDTH, ROW_HEIGHT } from "../lib/graph/layout";
 import { sameRange, visibleRange, type VisibleRange } from "../lib/graph/viewport";
+import { LAYOUT_KEYS } from "../lib/layout";
 import type { Commit, LogSearch } from "../lib/bridge/types";
 import { useRefsStore } from "../lib/stores/refs";
 import { useDiffStore } from "../lib/stores/diff";
@@ -11,6 +12,7 @@ import { useRebaseStore } from "../lib/stores/rebase";
 import { useRepoStore } from "../lib/stores/repo";
 import { useUiStore } from "../lib/stores/ui";
 import { GraphCanvas } from "./GraphCanvas";
+import { SplitPane } from "./SplitPane";
 
 const GRAPH_PADDING = 16;
 
@@ -165,7 +167,17 @@ export function HistoryView() {
         </div>
       </div>
 
-      <div className="history-body">
+      <SplitPane
+        className="history-body"
+        direction="horizontal"
+        side="end"
+        storageKey={LAYOUT_KEYS.historyDetail}
+        defaultSize={300}
+        min={220}
+        max={560}
+        label="Resize commit details"
+        collapsed={!selectedCommit}
+      >
         <div className="history-list-wrap">
           <GraphCanvas
             rows={rows}
@@ -201,8 +213,10 @@ export function HistoryView() {
             </div>
           </div>
         </div>
-        {selectedCommit && <CommitDetail commit={selectedCommit} onClose={() => select(null)} />}
-      </div>
+        {selectedCommit ? (
+          <CommitDetail commit={selectedCommit} onClose={() => select(null)} />
+        ) : null}
+      </SplitPane>
     </div>
   );
 }
