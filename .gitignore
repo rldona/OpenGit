@@ -23,6 +23,9 @@ Thumbs.db
 .env.local
 *.local
 
+# Trunk (linter)
+.trunk/
+
 # Logs
 *.log
 npm-debug.log*

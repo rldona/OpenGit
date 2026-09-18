@@ -9,8 +9,8 @@ pub mod runner;
 pub mod version;
 
 pub use error::GitError;
-pub use models::{Commit, FileDiff, FileStatus, Ref, StatusKind, StatusReport};
-pub use parsers::{parse_log, parse_numstat, parse_refs, parse_status};
+pub use models::{Commit, FileDiff, FileStatus, Ref, Stash, StatusKind, StatusReport};
+pub use parsers::{parse_log, parse_numstat, parse_refs, parse_stash_list, parse_status};
 pub use runner::{GitCommand, GitOutput, GitProcess, Runner, StdinMode, DEFAULT_TIMEOUT};
 pub use version::{GitVersion, MINIMUM_GIT_VERSION};
 
@@ -24,6 +24,109 @@ pub const LOG_FORMAT: &str = "%H%x1f%P%x1f%an%x1f%ae%x1f%at%x1f%D%x1f%s";
 /// Formato de `for-each-ref`: campos separados por NUL.
 pub const REFS_FORMAT: &str =
     "%(refname)%00%(objectname)%00%(objecttype)%00%(upstream)%00%(upstream:track)";
+
+/// Crea un tag ligero (sin mensaje) o anotado (con mensaje) en `target`.
+pub fn tag_create(
+    runner: &Runner,
+    repo: &Path,
+    name: &str,
+    target: &str,
+    message: Option<&str>,
+) -> Result<(), GitError> {
+    validate_ref_name(runner, repo, name)?;
+    let mut args: Vec<OsString> = vec!["tag".into()];
+    match message {
+        Some(message) if !message.trim().is_empty() => {
+            args.push("-a".into());
+            args.push(name.into());
+            args.push("-m".into());
+            args.push(message.into());
+        }
+        _ => args.push(name.into()),
+    }
+    args.push(target.into());
+    runner
+        .run_checked(&GitCommand::new(args).cwd(repo).write())
+        .map(|_| ())
+}
+
+pub fn tag_delete(runner: &Runner, repo: &Path, name: &str) -> Result<(), GitError> {
+    validate_ref_name(runner, repo, name)?;
+    runner
+        .run_checked(&GitCommand::new(["tag", "-d", name]).cwd(repo).write())
+        .map(|_| ())
+}
+
+/// Lista los stashes con su referencia, mensaje, fecha y commit.
+pub fn stash_list(runner: &Runner, repo: &Path) -> Result<Vec<Stash>, GitError> {
+    let output = runner.run_checked(
+        &GitCommand::new(["stash", "list", "-z", "--format=%gd%x1f%gs%x1f%ct%x1f%H"]).cwd(repo),
+    )?;
+    parse_stash_list(&output.stdout)
+}
+
+pub fn stash_push(
+    runner: &Runner,
+    repo: &Path,
+    message: Option<&str>,
+    include_untracked: bool,
+) -> Result<(), GitError> {
+    let mut args: Vec<OsString> = vec!["stash".into(), "push".into()];
+    if include_untracked {
+        args.push("--include-untracked".into());
+    }
+    if let Some(message) = message {
+        if !message.trim().is_empty() {
+            args.push("-m".into());
+            args.push(message.into());
+        }
+    }
+    runner
+        .run_checked(&GitCommand::new(args).cwd(repo).write())
+        .map(|_| ())
+}
+
+/// Aplica un stash; con `drop` usa `pop` (solo lo borra si aplica bien).
+pub fn stash_apply(
+    runner: &Runner,
+    repo: &Path,
+    reference: &str,
+    drop: bool,
+) -> Result<(), GitError> {
+    validate_stash_reference(reference)?;
+    let verb = if drop { "pop" } else { "apply" };
+    runner
+        .run_checked(
+            &GitCommand::new(["stash", verb, reference])
+                .cwd(repo)
+                .write(),
+        )
+        .map(|_| ())
+}
+
+pub fn stash_drop(runner: &Runner, repo: &Path, reference: &str) -> Result<(), GitError> {
+    validate_stash_reference(reference)?;
+    runner
+        .run_checked(
+            &GitCommand::new(["stash", "drop", reference])
+                .cwd(repo)
+                .write(),
+        )
+        .map(|_| ())
+}
+
+fn validate_stash_reference(reference: &str) -> Result<(), GitError> {
+    let inner = reference
+        .strip_prefix("stash@{")
+        .and_then(|rest| rest.strip_suffix('}'))
+        .ok_or_else(|| GitError::invalid(format!("invalid stash reference: {reference}")))?;
+    if inner.is_empty() || !inner.chars().all(|character| character.is_ascii_digit()) {
+        return Err(GitError::invalid(format!(
+            "invalid stash reference: {reference}"
+        )));
+    }
+    Ok(())
+}
 
 /// Rama actual y su relación con el upstream.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -90,10 +193,10 @@ pub fn branch_tracking(runner: &Runner, repo: &Path) -> Result<BranchTracking, G
     })
 }
 
-fn validate_branch_name(runner: &Runner, repo: &Path, name: &str) -> Result<(), GitError> {
+pub(crate) fn validate_ref_name(runner: &Runner, repo: &Path, name: &str) -> Result<(), GitError> {
     let output = runner.run(&GitCommand::new(["check-ref-format", "--branch", name]).cwd(repo))?;
     if !output.success() {
-        return Err(GitError::invalid(format!("invalid branch name: {name}")));
+        return Err(GitError::invalid(format!("invalid ref name: {name}")));
     }
     Ok(())
 }
@@ -105,7 +208,7 @@ pub fn checkout_ref(
     target: &str,
     track: bool,
 ) -> Result<(), GitError> {
-    validate_branch_name(runner, repo, target)?;
+    validate_ref_name(runner, repo, target)?;
     let mut args: Vec<OsString> = vec!["checkout".into()];
     if track {
         args.push("--track".into());
@@ -123,7 +226,7 @@ pub fn create_branch(
     name: &str,
     start_point: &str,
 ) -> Result<(), GitError> {
-    validate_branch_name(runner, repo, name)?;
+    validate_ref_name(runner, repo, name)?;
     let args: Vec<OsString> = vec![
         "branch".into(),
         "--".into(),
@@ -136,7 +239,7 @@ pub fn create_branch(
 }
 
 pub fn rename_branch(runner: &Runner, repo: &Path, old: &str, new: &str) -> Result<(), GitError> {
-    validate_branch_name(runner, repo, new)?;
+    validate_ref_name(runner, repo, new)?;
     runner
         .run_checked(
             &GitCommand::new(["branch", "-m", old, new])
@@ -153,7 +256,7 @@ pub fn delete_branch(
     name: &str,
     force: bool,
 ) -> Result<(), GitError> {
-    validate_branch_name(runner, repo, name)?;
+    validate_ref_name(runner, repo, name)?;
     let flag = if force { "-D" } else { "-d" };
     runner
         .run_checked(&GitCommand::new(["branch", flag, name]).cwd(repo).write())

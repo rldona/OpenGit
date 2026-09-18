@@ -47,3 +47,5 @@ Un fichero por ticket, nombrado `OG-NNN-slug.md`. Todo cambio del repositorio na
 | [OG-012](OG-012-ci-build-a-demanda.md) | CI: build multiplataforma a demanda | M0 | done |
 | [OG-013](OG-013-scroll-grafo.md) | Scroll fluido del grafo (sin parpadeo) | M1 | done |
 | [OG-014](OG-014-ui-en-ingles.md) | UI en inglés (pre-i18n) | M1 | done |
+| [OG-015](OG-015-tags.md) | Gestión de tags | M3 | in-progress |
+| [OG-016](OG-016-stash.md) | Stash | M3 | in-progress |
