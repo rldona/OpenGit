@@ -19,7 +19,7 @@ React UI (WebView)  →  Tauri IPC (invoke/events)  →  Rust core  →  binario
 
 ## Desarrollo
 
-Estado actual: **M3 completado** (2026-09-18). MVP local + remotos + historial avanzado (stash, tags, cherry-pick/revert/reset, búsqueda por mensaje/autor/fichero). Siguiente: M4 (rebase interactivo y conflictos).
+Estado actual: **M4 completado** (2026-09-18). MVP local + remotos + historial avanzado + rebase interactivo y editor de conflictos. Siguiente: M5 (pulido, temas, releases).
 
 ```bash
 npm install

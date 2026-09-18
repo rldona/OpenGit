@@ -3,6 +3,7 @@ import { ConflictView } from "./components/ConflictView";
 import { DiffView } from "./components/DiffView";
 import { HistoryView } from "./components/HistoryView";
 import { OpBanner } from "./components/OpBanner";
+import { RebaseView } from "./components/RebaseView";
 import { RefsSidebar } from "./components/RefsSidebar";
 import { StashSidebar } from "./components/StashSidebar";
 import { StatusView } from "./components/StatusView";
@@ -243,6 +244,8 @@ function App() {
               <DiffView />
             ) : activeView === "conflict" ? (
               <ConflictView />
+            ) : activeView === "rebase" ? (
+              <RebaseView />
             ) : (
               <HistoryView />
             )
