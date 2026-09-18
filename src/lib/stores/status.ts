@@ -86,7 +86,7 @@ export const useStatusStore = create<StatusState>((set, get) => ({
     if (!root) return;
     try {
       await discardPath(root, file, origFile);
-      output(`Descartado: ${file}`);
+      output(`Discarded: ${file}`);
       await get().refresh(root);
     } catch (error) {
       set({ error: formatGitError(error) });
@@ -98,7 +98,7 @@ export const useStatusStore = create<StatusState>((set, get) => ({
     if (!root) return;
     try {
       await deleteUntracked(root, file);
-      output(`Eliminado: ${file}`);
+      output(`Deleted: ${file}`);
       await get().refresh(root);
     } catch (error) {
       set({ error: formatGitError(error) });

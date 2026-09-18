@@ -93,8 +93,8 @@ export function StatusView() {
   const confirmAndRun = async (entry: FileStatus, action: "discard" | "delete") => {
     const message =
       action === "discard"
-        ? `¿Descartar los cambios en ${entry.path}? Esta acción no se puede deshacer.`
-        : `¿Eliminar el fichero sin trackear ${entry.path}? Esta acción no se puede deshacer.`;
+        ? `Discard changes in ${entry.path}? This cannot be undone.`
+        : `Delete untracked file ${entry.path}? This cannot be undone.`;
     const confirmed = await confirmDestructive(message);
     if (!confirmed) {
       return;
@@ -110,21 +110,21 @@ export function StatusView() {
     <div className="status-view" aria-label="File status">
       <div className="status-toolbar">
         <label className="status-filter">
-          <span>Filtrar</span>
+          <span>Filter</span>
           <input
             type="search"
             value={filter}
-            placeholder="Nombre de fichero"
+            placeholder="File name"
             onChange={(event) => setFilter(event.target.value)}
           />
         </label>
         <span className="muted">
-          {total} cambio(s){loading ? " · Cargando…" : ""}
+          {total} change(s){loading ? " · Loading…" : ""}
         </span>
       </div>
 
       <div className="status-list">
-        {report && total === 0 && <p className="muted status-empty">Sin cambios</p>}
+        {report && total === 0 && <p className="muted status-empty">No changes</p>}
         {sections
           .filter((section) => section.entries.length > 0)
           .map((section) => (
@@ -163,7 +163,7 @@ export function StatusView() {
                         className="danger"
                         onClick={() => void confirmAndRun(entry, "discard")}
                       >
-                        Descartar
+                        Discard
                       </button>
                     )}
                     {section.key === "untracked" && (
@@ -172,7 +172,7 @@ export function StatusView() {
                         className="danger"
                         onClick={() => void confirmAndRun(entry, "delete")}
                       >
-                        Eliminar
+                        Delete
                       </button>
                     )}
                   </span>

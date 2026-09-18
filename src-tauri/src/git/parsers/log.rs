@@ -17,13 +17,13 @@ pub fn parse_log(data: &[u8]) -> Result<Vec<Commit>, GitError> {
         let fields = split_fields(record, FIELD_SEP);
         if fields.len() != EXPECTED_FIELDS {
             return Err(GitError::invalid(format!(
-                "registro de log con {} campos, se esperaban {EXPECTED_FIELDS}",
+                "log record with {} fields, expected {EXPECTED_FIELDS}",
                 fields.len()
             )));
         }
         let author_time = text(fields[4]).parse::<i64>().map_err(|_| {
             GitError::invalid(format!(
-                "timestamp de commit ilegible: {:?}",
+                "unreadable commit timestamp: {:?}",
                 text(fields[4])
             ))
         })?;

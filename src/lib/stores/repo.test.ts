@@ -41,7 +41,7 @@ describe("useRepoStore", () => {
     expect(useRepoStore.getState().repo).toEqual(REPO);
     expect(useRepoStore.getState().recents).toHaveLength(1);
     expect(useRepoStore.getState().error).toBeNull();
-    expect(useUiStore.getState().outputLines.join("\n")).toContain("Repositorio abierto: mi-repo");
+    expect(useUiStore.getState().outputLines.join("\n")).toContain("Repository opened: mi-repo");
   });
 
   it("traduce el error de validación a un mensaje legible", async () => {
@@ -50,7 +50,7 @@ describe("useRepoStore", () => {
     await useRepoStore.getState().open("/tmp/x");
 
     expect(useRepoStore.getState().repo).toBeNull();
-    expect(useRepoStore.getState().error).toBe("La carpeta seleccionada no es un repositorio git");
-    expect(useUiStore.getState().outputLines.join("\n")).toContain("Error al abrir /tmp/x");
+    expect(useRepoStore.getState().error).toBe("The selected folder is not a git repository");
+    expect(useUiStore.getState().outputLines.join("\n")).toContain("Could not open /tmp/x");
   });
 });

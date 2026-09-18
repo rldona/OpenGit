@@ -17,7 +17,7 @@ function text(value: unknown): string {
   return JSON.stringify(value);
 }
 
-/** Convierte el error serializado de Rust en un mensaje para la UI. */
+/** Turns the serialized Rust error into a message for the UI. */
 export function formatGitError(error: unknown): string {
   const payload = asPayload(error);
   if (!payload) {
@@ -25,34 +25,34 @@ export function formatGitError(error: unknown): string {
   }
   switch (payload.kind) {
     case "not_found":
-      return `No se encontró el binario de git: ${text(payload.binary)}`;
+      return `Git binary not found: ${text(payload.binary)}`;
     case "spawn":
-      return `No se pudo ejecutar git: ${text(payload.message)}`;
+      return `Could not run git: ${text(payload.message)}`;
     case "command_failed": {
       const stderr = text(payload.stderr).trim();
       const stdout = text(payload.stdout).trim();
       const detail = stderr || stdout;
-      return `git falló con código ${text(payload.exit_code)}${detail ? `: ${detail}` : ""}`;
+      return `git failed with code ${text(payload.exit_code)}${detail ? `: ${detail}` : ""}`;
     }
     case "timeout":
-      return "git no respondió a tiempo";
+      return "git timed out";
     case "cancelled":
-      return "Operación cancelada";
+      return "Operation cancelled";
     case "invalid_output":
-      return `Salida inesperada de git: ${text(payload.message)}`;
+      return `Unexpected git output: ${text(payload.message)}`;
     case "path_not_found":
-      return "La carpeta no existe";
+      return "The folder does not exist";
     case "not_a_repository":
-      return "La carpeta seleccionada no es un repositorio git";
+      return "The selected folder is not a git repository";
     case "not_a_work_tree":
-      return "Los repositorios bare no están soportados todavía";
+      return "Bare repositories are not supported yet";
     case "invalid_head":
-      return "El repositorio tiene un HEAD inválido";
+      return "The repository has an invalid HEAD";
     case "git_too_old":
-      return `Se requiere git ${text(payload.minimum)} o superior (instalado ${text(payload.found)})`;
+      return `git ${text(payload.minimum)} or newer is required (found ${text(payload.found)})`;
     case "store":
-      return `No se pudo guardar el estado de la app: ${text(payload.message)}`;
+      return `Could not save app state: ${text(payload.message)}`;
     default:
-      return `Error de git: ${JSON.stringify(payload)}`;
+      return `Git error: ${JSON.stringify(payload)}`;
   }
 }

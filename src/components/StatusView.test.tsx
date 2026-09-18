@@ -96,11 +96,11 @@ describe("StatusView", () => {
     render(<StatusView />);
 
     vi.mocked(confirmDestructive).mockResolvedValue(false);
-    await user.click((await screen.findAllByText("Descartar"))[0]);
+    await user.click((await screen.findAllByText("Discard"))[0]);
     expect(discardPath).not.toHaveBeenCalled();
 
     vi.mocked(confirmDestructive).mockResolvedValue(true);
-    await user.click(screen.getAllByText("Descartar")[0]);
+    await user.click(screen.getAllByText("Discard")[0]);
     expect(discardPath).toHaveBeenCalledWith("/tmp/repo", "modificado.txt", null);
   });
 });

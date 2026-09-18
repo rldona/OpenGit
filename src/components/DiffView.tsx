@@ -43,14 +43,14 @@ export function DiffView() {
             className={mode === "unified" ? "active" : ""}
             onClick={() => setMode("unified")}
           >
-            Unificado
+            Unified
           </button>
           <button
             type="button"
             className={mode === "side" ? "active" : ""}
             onClick={() => setMode("side")}
           >
-            Lado a lado
+            Side by side
           </button>
         </div>
         <button
@@ -59,7 +59,7 @@ export function DiffView() {
           aria-pressed={reversed}
           disabled={!selected || selected.untracked}
         >
-          Invertir
+          Reverse
         </button>
         {target?.kind === "worktree" && selected && !selected.untracked && (
           <button
@@ -76,15 +76,15 @@ export function DiffView() {
             onClick={() => void applySelection({ kind: "lines", indices: selectedLines })}
             disabled={loading}
           >
-            {selected.staged ? "Unstage" : "Stage"} {selectedLines.length} línea(s)
+            {selected.staged ? "Unstage" : "Stage"} {selectedLines.length} line(s)
           </button>
         )}
-        {loading && <span className="muted">Cargando…</span>}
+        {loading && <span className="muted">Loading…</span>}
       </div>
 
       <div className="diff-body">
         <div className="diff-files">
-          {files.length === 0 && <p className="muted status-empty">Sin cambios que mostrar</p>}
+          {files.length === 0 && <p className="muted status-empty">No changes to show</p>}
           {files.map((entry) => (
             <button
               key={entry.key}
@@ -99,7 +99,7 @@ export function DiffView() {
               </span>
               <span className="diff-counts">
                 {entry.untracked ? (
-                  <span className="added">nuevo</span>
+                  <span className="added">new</span>
                 ) : (
                   <>
                     <span className="added">+{entry.added ?? 0}</span>
@@ -117,14 +117,14 @@ export function DiffView() {
               {error}
             </p>
           )}
-          {!selected && !error && <p className="muted status-empty">Sin fichero seleccionado</p>}
+          {!selected && !error && <p className="muted status-empty">No file selected</p>}
           {selected?.untracked && (
             <p className="muted status-empty">
-              Fichero sin trackear: todavía no hay diff. Haz stage para verlo.
+              Untracked file: no diff yet. Stage it to see the content.
             </p>
           )}
           {selected && !selected.untracked && binary && (
-            <p className="muted status-empty">Fichero binario: no hay diff de texto.</p>
+            <p className="muted status-empty">Binary file: no text diff available.</p>
           )}
           {selected && !selected.untracked && !binary && patch !== "" && mode === "unified" && (
             <PatchView

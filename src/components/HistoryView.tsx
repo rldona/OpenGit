@@ -71,7 +71,7 @@ export function HistoryView() {
     <div className="history">
       <div className="history-toolbar">
         <label className="history-filter">
-          <span>Rama</span>
+          <span>Branch</span>
           <select
             value={filter ?? ""}
             onChange={(event) => {
@@ -80,7 +80,7 @@ export function HistoryView() {
               }
             }}
           >
-            <option value="">Todas las ramas</option>
+            <option value="">All branches</option>
             {branchRefs.map((ref) => (
               <option key={ref.name} value={ref.name}>
                 {shortRefName(ref.name)}
@@ -91,7 +91,7 @@ export function HistoryView() {
         <span className="muted">
           {commits.length} commits{hasMore ? "+" : ""}
         </span>
-        {loading && <span className="muted">Cargando…</span>}
+        {loading && <span className="muted">Loading…</span>}
       </div>
 
       <div className="history-body">
@@ -180,10 +180,10 @@ function CommitDetail({ commit, onClose }: { commit: Commit; onClose: () => void
   };
 
   return (
-    <aside className="commit-detail" aria-label="Detalle del commit">
+    <aside className="commit-detail" aria-label="Commit details">
       <header>
         <h2>Commit</h2>
-        <button type="button" onClick={onClose} aria-label="Cerrar detalle">
+        <button type="button" onClick={onClose} aria-label="Close details">
           ×
         </button>
       </header>
@@ -194,10 +194,10 @@ function CommitDetail({ commit, onClose }: { commit: Commit; onClose: () => void
       <p className="muted">{formatDateTime(commit.author_time)}</p>
       <p className="commit-detail-subject">{commit.subject}</p>
       <p className="muted">
-        {commit.parents.length} padre(s) · {commit.refs.length} ref(s)
+        {commit.parents.length} parent(s) · {commit.refs.length} ref(s)
       </p>
       <button type="button" className="detail-action" onClick={() => void showDiff()}>
-        Ver diff
+        View diff
       </button>
     </aside>
   );

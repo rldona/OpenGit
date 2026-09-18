@@ -55,7 +55,7 @@ pub fn remove_untracked(repo: &Path, file: &str) -> Result<(), GitError> {
             .components()
             .any(|component| matches!(component, Component::ParentDir | Component::RootDir))
     {
-        return Err(GitError::invalid("ruta fuera del repositorio"));
+        return Err(GitError::invalid("path outside the repository"));
     }
     std::fs::remove_file(repo.join(relative)).map_err(|error| GitError::Io {
         message: error.to_string(),

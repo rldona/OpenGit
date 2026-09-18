@@ -39,7 +39,7 @@ export function CommitPanel() {
     <section className="commit-panel" aria-label="Commit">
       {operation && (
         <p className="commit-warning" role="status">
-          Hay un {operation} en curso. Termínalo o aborta desde el terminal (M4).
+          There is a {operation} in progress. Finish or abort it from the terminal (M4).
         </p>
       )}
 
@@ -48,7 +48,7 @@ export function CommitPanel() {
           Staged <span className="count">{staged.length}</span>
         </h3>
         {staged.length === 0 ? (
-          <p className="muted">Nada en el index</p>
+          <p className="muted">Nothing staged</p>
         ) : (
           <ul>
             {staged.slice(0, MAX_LISTED).map((entry) => (
@@ -57,7 +57,7 @@ export function CommitPanel() {
               </li>
             ))}
             {staged.length > MAX_LISTED && (
-              <li className="muted">+{staged.length - MAX_LISTED} más</li>
+              <li className="muted">+{staged.length - MAX_LISTED} more</li>
             )}
           </ul>
         )}
@@ -69,20 +69,20 @@ export function CommitPanel() {
           checked={amend}
           onChange={(event) => void setAmend(event.target.checked)}
         />
-        Amend del último commit
+        Amend last commit
       </label>
 
       <textarea
         className="commit-message"
-        aria-label="Mensaje del commit"
-        placeholder="Mensaje del commit"
+        aria-label="Commit message"
+        placeholder="Commit message"
         rows={3}
         value={message}
         onChange={(event) => setMessage(event.target.value)}
       />
 
       <div className="commit-footer">
-        <span className="muted">{message.length} caracteres</span>
+        <span className="muted">{message.length} characters</span>
         <button
           type="button"
           onClick={() => void submit(staged.length)}
