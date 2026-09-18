@@ -58,7 +58,7 @@ export const useCommitStore = create<CommitState>((set, get) => ({
       return;
     }
     const confirmed = await confirmDestructive(
-      "Amend reescribe el último commit. ¿Quieres continuar?",
+      "Amend rewrites the last commit. Do you want to continue?",
     );
     if (!confirmed) {
       set({ amend: false });
@@ -77,11 +77,11 @@ export const useCommitStore = create<CommitState>((set, get) => ({
       return false;
     }
     if (message.trim() === "") {
-      set({ error: "Escribe un mensaje de commit" });
+      set({ error: "Write a commit message" });
       return false;
     }
     if (stagedCount === 0 && !amend) {
-      set({ error: "No hay cambios en el index: haz stage antes de commitear" });
+      set({ error: "Nothing staged: stage changes before committing" });
       return false;
     }
     set({ loading: true, error: null });

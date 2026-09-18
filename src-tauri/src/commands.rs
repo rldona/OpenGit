@@ -268,7 +268,7 @@ pub fn remove_recent_repo(path: String, state: State<'_, AppState>) -> Result<()
 
 fn lock_error<T>(_error: std::sync::PoisonError<T>) -> GitError {
     GitError::Store {
-        message: "estado interno bloqueado".into(),
+        message: "internal state poisoned".into(),
     }
 }
 

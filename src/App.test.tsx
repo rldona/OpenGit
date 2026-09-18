@@ -127,28 +127,28 @@ describe("App", () => {
   it("muestra el estado vacío y la versión del núcleo", async () => {
     render(<App />);
 
-    expect(screen.getByRole("heading", { name: "Sin repositorio abierto" })).toBeInTheDocument();
-    expect(await screen.findByText("núcleo v0.1.0")).toBeInTheDocument();
-    expect(screen.getByRole("region", { name: "Salida" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "No repository open" })).toBeInTheDocument();
+    expect(await screen.findByText("core v0.1.0")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Output" })).toBeInTheDocument();
   });
 
   it("abre el repositorio elegido y muestra el historial", async () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole("button", { name: "Seleccionar carpeta" }));
+    await user.click(screen.getByRole("button", { name: "Choose folder" }));
 
     expect(openRepo).toHaveBeenCalledWith("/tmp/mi-repo");
     expect(await screen.findByText("commit de prueba")).toBeInTheDocument();
     expect(subscribeRepoEvents).toHaveBeenCalled();
-    expect(await screen.findByText(/Repositorio abierto: mi-repo/)).toBeInTheDocument();
+    expect(await screen.findByText(/Repository opened: mi-repo/)).toBeInTheDocument();
   });
 
   it("cambia a la vista File status y muestra los cambios", async () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole("button", { name: "Seleccionar carpeta" }));
+    await user.click(screen.getByRole("button", { name: "Choose folder" }));
     await user.click(await screen.findByRole("button", { name: "File status" }));
 
     expect((await screen.findAllByRole("heading", { name: /Staged/ })).length).toBeGreaterThan(0);
@@ -160,10 +160,10 @@ describe("App", () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole("button", { name: "Seleccionar carpeta" }));
+    await user.click(screen.getByRole("button", { name: "Choose folder" }));
     await user.click(await screen.findByText("commit de prueba"));
 
-    expect(screen.getByRole("complementary", { name: "Detalle del commit" })).toBeInTheDocument();
+    expect(screen.getByRole("complementary", { name: "Commit details" })).toBeInTheDocument();
     expect(screen.getByText("aaaa0000")).toBeInTheDocument();
   });
 
@@ -171,9 +171,9 @@ describe("App", () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole("button", { name: "Seleccionar carpeta" }));
+    await user.click(screen.getByRole("button", { name: "Choose folder" }));
     await user.click(await screen.findByText("commit de prueba"));
-    await user.click(screen.getByRole("button", { name: "Ver diff" }));
+    await user.click(screen.getByRole("button", { name: "View diff" }));
 
     expect(commitFiles).toHaveBeenCalledWith("/tmp/mi-repo", "aaaa0000");
     expect(await screen.findByTestId("diff-editor")).toBeInTheDocument();
@@ -184,8 +184,8 @@ describe("App", () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole("button", { name: "Salida" }));
+    await user.click(screen.getByRole("button", { name: "Output" }));
 
-    expect(screen.queryByRole("region", { name: "Salida" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Output" })).not.toBeInTheDocument();
   });
 });

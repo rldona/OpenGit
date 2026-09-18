@@ -33,7 +33,7 @@ cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings
 cargo fmt --manifest-path src-tauri/Cargo.toml --check
 ```
 
-Convenciones: documentación e issues en español; código, ramas y commits en inglés. Commits en Conventional Commits con scope del área (`feat(graph): ...`). Todo cambio nace de un ticket (`OG-NNN`).
+Convenciones: documentación e issues en español; código, ramas, commits y **textos de UI** en inglés (el multidioma se decidirá más adelante). Commits en Conventional Commits con scope del área (`feat(graph): ...`). Todo cambio nace de un ticket (`OG-NNN`).
 
 ## Reglas
 

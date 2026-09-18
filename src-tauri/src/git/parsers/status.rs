@@ -21,7 +21,7 @@ pub fn parse_status(data: &[u8]) -> Result<StatusReport, GitError> {
                 let fields = splitn(record, b' ', 9);
                 if fields.len() != 9 {
                     return Err(GitError::invalid(format!(
-                        "entrada v2 ordinaria con {} campos",
+                        "ordinal v2 entry with {} fields",
                         fields.len()
                     )));
                 }
@@ -37,7 +37,7 @@ pub fn parse_status(data: &[u8]) -> Result<StatusReport, GitError> {
                 let fields = splitn(record, b' ', 10);
                 if fields.len() != 10 {
                     return Err(GitError::invalid(format!(
-                        "entrada v2 de rename con {} campos",
+                        "v2 rename entry with {} fields",
                         fields.len()
                     )));
                 }
@@ -55,7 +55,7 @@ pub fn parse_status(data: &[u8]) -> Result<StatusReport, GitError> {
                 let fields = splitn(record, b' ', 11);
                 if fields.len() != 11 {
                     return Err(GitError::invalid(format!(
-                        "entrada v2 de conflicto con {} campos",
+                        "v2 unmerged entry with {} fields",
                         fields.len()
                     )));
                 }
@@ -84,7 +84,7 @@ pub fn parse_status(data: &[u8]) -> Result<StatusReport, GitError> {
             }
             Some(other) => {
                 return Err(GitError::invalid(format!(
-                    "entrada de status desconocida: {:?}",
+                    "unknown status entry: {:?}",
                     *other as char
                 )));
             }
