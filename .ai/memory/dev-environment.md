@@ -28,6 +28,13 @@
 - **Hallazgo:** el `~/.npmrc` de esta máquina configura un Artifactory corporativo, así que `npm install` escribió las 276 URLs `resolved` del lock contra ese host. GitHub no tiene (ni debe tener) esas credenciales.
 - **Implicación:** el `package-lock.json` debe resolver contra `https://registry.npmjs.org`. El `.npmrc` del repo fija `replace-registry-host=always` para que npm sustituya el host del lock por el registry configurado en cada máquina (CI → público; local → corporativo). Si un `npm install` vuelve a meter URLs del Artifactory, hay que regenerar el lock antes de pushear.
 
+## Los commits van con el noreply de GitHub, no con la cuenta corporativa
+
+- **Fecha:** 2026-09-18
+- **Contexto:** el historial del repo se creó con el `user.email` global de la máquina (cuenta corporativa) y hubo que reescribirlo.
+- **Hallazgo:** el repo no tenía identidad propia; `git config --global user.email` apunta a la cuenta de empresa. Se reescribieron autor y committer con `git filter-branch --env-filter` conservando fechas, y se fuerza-pushearon `main` y las ramas.
+- **Implicación:** el repo fija en su config local `user.name=Raúl López` y `user.email=rldona@users.noreply.github.com`; AGENTS.md lo exige como regla 11. Si algún commit sale con otro correo, se corrige antes de pushear.
+
 ## No cambies de rama con `tauri dev` corriendo
 
 - **Fecha:** 2026-09-18
