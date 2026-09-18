@@ -4,6 +4,7 @@ import type { FileStatus } from "../lib/bridge/types";
 import { useRepoStore } from "../lib/stores/repo";
 import { useConflictStore } from "../lib/stores/conflict";
 import { useDiffStore } from "../lib/stores/diff";
+import { useExtrasStore } from "../lib/stores/extras";
 import { useStatusStore } from "../lib/stores/status";
 import { useUiStore } from "../lib/stores/ui";
 import { CommitPanel } from "./CommitPanel";
@@ -61,6 +62,7 @@ export function StatusView() {
   const openWorktreeFile = useDiffStore((state) => state.openWorktreeFile);
   const openConflict = useConflictStore((state) => state.open);
   const setActiveView = useUiStore((state) => state.setActiveView);
+  const lfs = useExtrasStore((state) => state.lfs);
 
   const root = repo?.root ?? null;
 
@@ -115,6 +117,11 @@ export function StatusView() {
 
   return (
     <div className="status-view" aria-label="File status">
+      {lfs?.configured && !lfs.installed && (
+        <p role="alert" className="lfs-warning">
+          This repository uses Git LFS but git-lfs is not installed: LFS files show as pointers.
+        </p>
+      )}
       <div className="status-toolbar">
         <label className="status-filter">
           <span>Filter</span>

@@ -73,7 +73,8 @@ pub fn run() {
             commands::recent_repos,
             commands::remove_recent_repo,
             commands::submodule_status,
-            commands::worktree_list
+            commands::worktree_list,
+            commands::lfs_status
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

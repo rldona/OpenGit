@@ -146,6 +146,12 @@ export type Worktree = {
   locked: boolean;
 };
 
+export type LfsStatus = {
+  installed: boolean;
+  version: string | null;
+  configured: boolean;
+};
+
 export type RefEntry = {
   name: string;
   object_id: string;

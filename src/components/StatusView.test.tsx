@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { confirmDestructive } from "../lib/bridge/dialog";
 import { discardPath, stagePath, statusRepo } from "../lib/bridge/status";
 import type { RepoInfo, StatusReport } from "../lib/bridge/types";
+import { useExtrasStore } from "../lib/stores/extras";
 import { useRepoStore } from "../lib/stores/repo";
 import { useStatusStore } from "../lib/stores/status";
 import { StatusView } from "./StatusView";
@@ -69,6 +70,7 @@ describe("StatusView", () => {
     vi.mocked(confirmDestructive).mockResolvedValue(true);
     useRepoStore.setState({ repo: REPO, recents: [], loading: false, error: null });
     useStatusStore.getState().reset();
+    useExtrasStore.setState({ lfs: null });
   });
 
   it("muestra las secciones con sus ficheros", async () => {
@@ -102,5 +104,24 @@ describe("StatusView", () => {
     vi.mocked(confirmDestructive).mockResolvedValue(true);
     await user.click(screen.getAllByText("Discard")[0]);
     expect(discardPath).toHaveBeenCalledWith("/tmp/repo", "modificado.txt", null);
+  });
+
+  it("avisa si el repo usa LFS y git-lfs no está instalado", async () => {
+    useExtrasStore.setState({ lfs: { installed: false, version: null, configured: true } });
+    render(<StatusView />);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Git LFS but git-lfs is not installed",
+    );
+  });
+
+  it("no avisa si Git LFS está instalado", async () => {
+    useExtrasStore.setState({
+      lfs: { installed: true, version: "git-lfs/3.5.1", configured: true },
+    });
+    render(<StatusView />);
+
+    await screen.findAllByText("Staged");
+    expect(screen.queryByText(/git-lfs is not installed/)).not.toBeInTheDocument();
   });
 });

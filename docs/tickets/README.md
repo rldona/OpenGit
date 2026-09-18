@@ -57,3 +57,4 @@ Un fichero por ticket, nombrado `OG-NNN-slug.md`. Todo cambio del repositorio na
 | [OG-022](OG-022-temas.md) | Tema claro/oscuro | M5 | done |
 | [OG-023](OG-023-atajos-teclado.md) | Atajos de teclado | M5 | done |
 | [OG-024](OG-024-submodulos-worktrees.md) | Submódulos y worktrees en lectura | M5 | done |
+| [OG-025](OG-025-lfs.md) | Git LFS: detección y avisos | M5 | done |

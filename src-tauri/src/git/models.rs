@@ -117,3 +117,14 @@ pub struct Worktree {
     pub bare: bool,
     pub locked: bool,
 }
+
+/// Estado de Git LFS en el repositorio.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct LfsStatus {
+    /// `git lfs version` funciona.
+    pub installed: bool,
+    /// Salida de `git lfs version`, si está instalado.
+    pub version: Option<String>,
+    /// Algún `.gitattributes` rastreado usa `filter=lfs`.
+    pub configured: bool,
+}
