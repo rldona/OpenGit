@@ -2,15 +2,17 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { startRemoteJob } from "../lib/bridge/jobs";
-import { listRefs } from "../lib/bridge/log";
+import { listRefs, logPage } from "../lib/bridge/log";
 import { openExternal } from "../lib/bridge/opener";
 import { checkoutRef } from "../lib/bridge/refs";
 import { tagCreate, tagDelete } from "../lib/bridge/tags";
 import type { RefEntry, Remote, RepoInfo } from "../lib/bridge/types";
 import { useExtrasStore } from "../lib/stores/extras";
+import { useLogStore } from "../lib/stores/log";
 import { useRefsStore } from "../lib/stores/refs";
 import { useCollapseStore } from "../lib/stores/collapse";
 import { useRepoStore } from "../lib/stores/repo";
+import { useUiStore } from "../lib/stores/ui";
 import { RefsSidebar } from "./RefsSidebar";
 
 vi.mock("../lib/bridge/opener", () => ({
@@ -66,13 +68,21 @@ const REPO: RepoInfo = {
 };
 
 const REFS: RefEntry[] = [
-  { name: "refs/heads/main", object_id: "a", object_type: "commit", upstream: null, track: null },
+  {
+    name: "refs/heads/main",
+    object_id: "a",
+    object_type: "commit",
+    upstream: null,
+    track: null,
+    target: "a",
+  },
   {
     name: "refs/heads/feature",
     object_id: "b",
     object_type: "commit",
     upstream: "refs/remotes/origin/feature",
     track: "[ahead 1, behind 2]",
+    target: "b",
   },
   {
     name: "refs/remotes/origin/remota",
@@ -80,9 +90,24 @@ const REFS: RefEntry[] = [
     object_type: "commit",
     upstream: null,
     track: null,
+    target: "c",
   },
-  { name: "refs/tags/v1.0.0", object_id: "d", object_type: "tag", upstream: null, track: null },
-  { name: "refs/tags/ligero", object_id: "e", object_type: "commit", upstream: null, track: null },
+  {
+    name: "refs/tags/v1.0.0",
+    object_id: "d",
+    object_type: "tag",
+    upstream: null,
+    track: null,
+    target: "commit-d",
+  },
+  {
+    name: "refs/tags/ligero",
+    object_id: "e",
+    object_type: "commit",
+    upstream: null,
+    track: null,
+    target: "e",
+  },
 ];
 
 const REMOTES: Remote[] = [
@@ -172,11 +197,38 @@ describe("RefsSidebar", () => {
     render(<RefsSidebar />);
     await screen.findByText("feature");
 
-    await user.click(screen.getByRole("button", { name: "New tag" }));
+    fireEvent.contextMenu(screen.getByRole("button", { name: "Tags" }));
+    await user.click(screen.getByRole("menuitem", { name: "New Tag…" }));
     await user.type(screen.getByLabelText("New tag name"), "v2.0.0");
     await user.click(screen.getByRole("button", { name: "Create" }));
 
     expect(tagCreate).toHaveBeenCalledWith("/tmp/repo", "v2.0.0", "HEAD", null);
+  });
+
+  it("localiza en el historial el commit de un tag al pulsarlo", async () => {
+    const user = userEvent.setup();
+    vi.mocked(logPage).mockResolvedValue([
+      {
+        hash: "commit-d",
+        parents: [],
+        author_name: "Ana",
+        author_email: "ana@example.com",
+        author_time: 1_700_000_000,
+        subject: "commit del tag",
+        refs: [],
+        body: "",
+      },
+    ]);
+    await useLogStore.getState().load("/tmp/repo");
+    render(<RefsSidebar />);
+    await screen.findByText("feature");
+
+    const tag = screen.getByRole("button", { name: "v1.0.0" });
+    await user.click(tag);
+
+    expect(useLogStore.getState().selected).toBe("commit-d");
+    expect(useUiStore.getState().activeView).toBe("history");
+    expect(tag).toHaveClass("selected");
   });
 
   it("borra un tag solo tras confirmar", async () => {
@@ -185,8 +237,8 @@ describe("RefsSidebar", () => {
     render(<RefsSidebar />);
     await screen.findByText("v1.0.0");
 
-    const row = screen.getByText("v1.0.0").closest("li")!;
-    await user.click(within(row).getByRole("button", { name: "Delete" }));
+    fireEvent.contextMenu(screen.getByText("v1.0.0"));
+    await user.click(screen.getByRole("menuitem", { name: "Delete" }));
 
     expect(tagDelete).toHaveBeenCalledWith("/tmp/repo", "v1.0.0");
   });
@@ -196,14 +248,23 @@ describe("RefsSidebar", () => {
     render(<RefsSidebar />);
     await screen.findByText("v1.0.0");
 
-    const row = screen.getByText("v1.0.0").closest("li")!;
-    await user.click(within(row).getByRole("button", { name: "Push" }));
+    fireEvent.contextMenu(screen.getByText("v1.0.0"));
+    await user.click(screen.getByRole("menuitem", { name: "Push" }));
 
     expect(startRemoteJob).toHaveBeenCalledWith("/tmp/repo", {
       kind: "push_tag",
       remote: null,
       tag: "v1.0.0",
     });
+  });
+
+  it("no expone Push ni Delete al pasar por encima de un tag", async () => {
+    render(<RefsSidebar />);
+
+    const row = (await screen.findByText("v1.0.0")).closest("li")!;
+
+    expect(within(row).queryByRole("button", { name: "Push" })).not.toBeInTheDocument();
+    expect(within(row).queryByRole("button", { name: "Delete" })).not.toBeInTheDocument();
   });
 
   it("muestra la confirmación por nombre para borrar sin mergear", () => {
