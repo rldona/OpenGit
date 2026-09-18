@@ -3,12 +3,18 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { startRemoteJob } from "../lib/bridge/jobs";
 import { listRefs } from "../lib/bridge/log";
+import { openExternal } from "../lib/bridge/opener";
 import { checkoutRef } from "../lib/bridge/refs";
 import { tagCreate, tagDelete } from "../lib/bridge/tags";
-import type { RefEntry, RepoInfo } from "../lib/bridge/types";
+import type { RefEntry, Remote, RepoInfo } from "../lib/bridge/types";
+import { useExtrasStore } from "../lib/stores/extras";
 import { useRefsStore } from "../lib/stores/refs";
 import { useRepoStore } from "../lib/stores/repo";
 import { RefsSidebar } from "./RefsSidebar";
+
+vi.mock("../lib/bridge/opener", () => ({
+  openExternal: vi.fn().mockResolvedValue(undefined),
+}));
 
 vi.mock("../lib/bridge/refs", () => ({
   branchTracking: vi
@@ -78,6 +84,15 @@ const REFS: RefEntry[] = [
   { name: "refs/tags/ligero", object_id: "e", object_type: "commit", upstream: null, track: null },
 ];
 
+const REMOTES: Remote[] = [
+  {
+    name: "origin",
+    url: "git@github.com:rldona/opengit.git",
+    web_url: "https://github.com/rldona/opengit",
+  },
+  { name: "local", url: "/tmp/otro", web_url: null },
+];
+
 describe("RefsSidebar", () => {
   beforeEach(() => {
     useRepoStore.setState({ repo: REPO, recents: [], loading: false, error: null });
@@ -90,6 +105,7 @@ describe("RefsSidebar", () => {
       ahead: 0,
       behind: 0,
     });
+    useExtrasStore.setState({ remotes: REMOTES });
     vi.mocked(checkoutRef).mockResolvedValue(undefined);
     vi.mocked(listRefs).mockResolvedValue(REFS);
   });
@@ -174,5 +190,25 @@ describe("RefsSidebar", () => {
 
     expect(screen.getByText(/Type feature to force delete/)).toBeInTheDocument();
     expect(screen.getByLabelText("Confirm force delete feature")).toBeInTheDocument();
+  });
+
+  it("abre la URL web del remoto en el navegador", async () => {
+    const user = userEvent.setup();
+    render(<RefsSidebar />);
+    await screen.findByText("origin/remota");
+
+    await user.click(screen.getByRole("button", { name: "Open origin in the browser" }));
+
+    expect(openExternal).toHaveBeenCalledWith("https://github.com/rldona/opengit");
+  });
+
+  it("no ofrece abrir remotos sin URL web", async () => {
+    useExtrasStore.setState({ remotes: [{ name: "origin", url: "/tmp/origen", web_url: null }] });
+    render(<RefsSidebar />);
+    await screen.findByText("origin/remota");
+
+    expect(
+      screen.queryByRole("button", { name: "Open origin in the browser" }),
+    ).not.toBeInTheDocument();
   });
 });

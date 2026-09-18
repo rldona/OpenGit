@@ -10,8 +10,8 @@ pub mod version;
 
 pub use error::GitError;
 pub use models::{
-    Commit, FileDiff, FileStatus, LfsStatus, Ref, Stash, StatusKind, StatusReport, Submodule,
-    SubmoduleState, Worktree,
+    Commit, FileDiff, FileStatus, LfsStatus, Ref, Remote, Stash, StatusKind, StatusReport,
+    Submodule, SubmoduleState, Worktree,
 };
 pub use parsers::{
     parse_gitattributes_paths, parse_gitattributes_uses_lfs, parse_log, parse_numstat, parse_refs,
@@ -299,6 +299,72 @@ pub fn lfs_status(runner: &Runner, repo: &Path) -> Result<LfsStatus, GitError> {
         version,
         configured,
     })
+}
+
+/// Convierte una URL de remoto en su equivalente web (`https://…`).
+/// Devuelve `None` para rutas locales, `file://` o formatos desconocidos.
+pub fn remote_web_url(url: &str) -> Option<String> {
+    let trimmed = url.trim().trim_end_matches('/');
+    if trimmed.is_empty() || trimmed.starts_with("file://") {
+        return None;
+    }
+
+    let (host, path) = if let Some(rest) = trimmed
+        .strip_prefix("https://")
+        .or_else(|| trimmed.strip_prefix("http://"))
+    {
+        let (host, path) = rest.split_once('/')?;
+        (host.to_string(), path.to_string())
+    } else if let Some(rest) = trimmed.strip_prefix("ssh://") {
+        let (authority, path) = rest.split_once('/')?;
+        let authority = authority.rsplit('@').next().unwrap_or(authority);
+        let host = authority.split(':').next().unwrap_or(authority);
+        (host.to_string(), path.to_string())
+    } else if let Some(rest) = trimmed.strip_prefix("git://") {
+        let (host, path) = rest.split_once('/')?;
+        (host.to_string(), path.to_string())
+    } else if let Some((before, after)) = trimmed.split_once(':') {
+        // Formato scp: `git@host:org/repo.git`. Descarta rutas locales y
+        // unidades de Windows antes de tratarlo como host.
+        if before.contains('/') || before.contains('\\') || after.starts_with('\\') {
+            return None;
+        }
+        if before.len() == 1 && before.chars().all(|c| c.is_ascii_alphabetic()) {
+            return None;
+        }
+        let host = before.rsplit('@').next().unwrap_or(before);
+        (host.to_string(), after.to_string())
+    } else {
+        return None;
+    };
+
+    let path = path.trim_matches('/').trim_end_matches(".git");
+    let path = path.trim_end_matches('/');
+    if host.is_empty() || path.is_empty() {
+        return None;
+    }
+    Some(format!("https://{host}/{path}"))
+}
+
+/// Lista los remotos del repo con su URL y su URL web cuando la hay.
+pub fn remote_urls(runner: &Runner, repo: &Path) -> Result<Vec<Remote>, GitError> {
+    let listed = runner.run_checked(&GitCommand::new(["remote"]).cwd(repo))?;
+    let mut remotes = Vec::new();
+    for name in listed
+        .stdout_lossy()
+        .lines()
+        .map(str::trim)
+        .filter(|name| !name.is_empty())
+    {
+        let output = runner.run_checked(&GitCommand::new(["remote", "get-url", name]).cwd(repo))?;
+        let url = output.stdout_lossy().trim().to_string();
+        remotes.push(Remote {
+            name: name.to_string(),
+            web_url: remote_web_url(&url),
+            url,
+        });
+    }
+    Ok(remotes)
 }
 
 pub fn stash_push(
