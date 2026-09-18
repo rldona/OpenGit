@@ -4,7 +4,11 @@ import { HistoryView } from "./components/HistoryView";
 import { RefsSidebar } from "./components/RefsSidebar";
 import { StatusView } from "./components/StatusView";
 import { getAppVersion } from "./lib/bridge/core";
+import { confirmDestructive } from "./lib/bridge/dialog";
+import { useJobEvents } from "./lib/hooks/useJobEvents";
 import { useRepoEvents } from "./lib/hooks/useRepoEvents";
+import { useRefsStore } from "./lib/stores/refs";
+import { useRemoteStore } from "./lib/stores/remote";
 import { useRepoStore } from "./lib/stores/repo";
 import { useUiStore } from "./lib/stores/ui";
 
@@ -25,9 +29,45 @@ function App() {
   const removeRecent = useRepoStore((state) => state.removeRecent);
   const close = useRepoStore((state) => state.close);
 
+  const remoteRunning = useRemoteStore((state) => state.running);
+  const startRemote = useRemoteStore((state) => state.start);
+  const cancelRemote = useRemoteStore((state) => state.cancel);
+  const currentBranch = useRefsStore((state) => state.current);
+  const currentUpstream = useRefsStore((state) => state.upstream);
+
   const [coreVersion, setCoreVersion] = useState<string | null>(null);
 
   useRepoEvents(repo?.root ?? null);
+  useJobEvents();
+
+  const runFetch = () => {
+    if (repo) {
+      void startRemote(repo.root, { kind: "fetch", prune: false, remote: null });
+    }
+  };
+
+  const runPull = () => {
+    if (repo) {
+      void startRemote(repo.root, { kind: "pull" });
+    }
+  };
+
+  const runPush = async () => {
+    if (!repo) {
+      return;
+    }
+    if (
+      (currentBranch === "main" || currentBranch === "master") &&
+      !(await confirmDestructive(`Push ${currentBranch} to the remote?`))
+    ) {
+      return;
+    }
+    await startRemote(repo.root, {
+      kind: "push",
+      remote: null,
+      set_upstream: currentUpstream === null,
+    });
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -55,9 +95,25 @@ function App() {
         <div className="toolbar-actions">
           <span className="core-version">{coreVersion ? `core v${coreVersion}` : "core —"}</span>
           {repo && (
-            <button type="button" onClick={() => void close()}>
-              Close
-            </button>
+            <>
+              <button type="button" onClick={runFetch} disabled={remoteRunning}>
+                Fetch
+              </button>
+              <button type="button" onClick={runPull} disabled={remoteRunning}>
+                Pull
+              </button>
+              <button type="button" onClick={() => void runPush()} disabled={remoteRunning}>
+                Push
+              </button>
+              {remoteRunning && (
+                <button type="button" onClick={() => void cancelRemote()}>
+                  Cancel
+                </button>
+              )}
+              <button type="button" onClick={() => void close()}>
+                Close
+              </button>
+            </>
           )}
           <button type="button" onClick={() => void pickAndOpen()} disabled={loading}>
             {loading ? "Opening…" : "Open repository"}
