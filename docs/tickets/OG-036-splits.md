@@ -1,7 +1,7 @@
 # OG-036 · Splits redimensionables
 
 - **Milestone:** M6 — Paridad visual con SourceTree
-- **Estado:** in-progress
+- **Estado:** done
 - **Depende de:** OG-035
 - **Referencias:** ROADMAP.md
 
@@ -49,4 +49,4 @@ Los paneles tienen anchos/altos fijos (sidebar 240 px, lista de diff 280 px, sal
 - `SplitPane`: divisor con pointer events (escucha en `window` para no perder el gesto), teclado ±10/±40, `role="separator"` con `aria-*`, y modo plegado sin divisor.
 - Integraciones: sidebar↔contenido y salida (vertical, plegable al ocultar Output) en App; lista↔diff en DiffView; lista↔detalle en HistoryView (plegado sin selección). Se quitaron los anchos fijos de `.sidebar`, `.diff-files` y `.commit-detail`.
 - Tests: 218 frontend (4 de layout y 7 de SplitPane) y 120 Rust intactos.
-- Pendiente para cerrar: PR y CI verde.
+- Cerrado el 2026-09-18 con CI verde (Frontend 37 s, Rust 2m7s) en el PR #33.
