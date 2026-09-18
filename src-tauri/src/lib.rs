@@ -143,6 +143,7 @@ pub fn run() {
             commands::delete_untracked,
             commands::recent_repos,
             commands::remove_recent_repo,
+            commands::open_terminal,
             commands::submodule_status,
             commands::worktree_list,
             commands::lfs_status,
