@@ -329,11 +329,18 @@ body {
   min-height: 0;
 }
 
-.history-list {
+.history-list-wrap {
   position: relative;
   flex: 1;
-  overflow-y: auto;
+  overflow: hidden;
   min-width: 0;
+}
+
+.history-list {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow-y: auto;
 }
 
 .history-inner {
@@ -342,6 +349,7 @@ body {
 
 .history-graph {
   position: absolute;
+  top: 0;
   left: 0;
   z-index: 0;
   pointer-events: none;

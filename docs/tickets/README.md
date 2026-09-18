@@ -45,3 +45,4 @@ Un fichero por ticket, nombrado `OG-NNN-slug.md`. Todo cambio del repositorio na
 | [OG-010](OG-010-watcher-repo.md) | Watcher de `.git` y refresco | M1 | done |
 | [OG-011](OG-011-remotos-fetch-pull-push.md) | Fetch, pull y push | M2 | backlog |
 | [OG-012](OG-012-ci-build-a-demanda.md) | CI: build multiplataforma a demanda | M0 | done |
+| [OG-013](OG-013-scroll-grafo.md) | Scroll fluido del grafo (sin parpadeo) | M1 | done |

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { formatDateTime, shortRefName } from "../lib/format";
 import { LANE_WIDTH, ROW_HEIGHT } from "../lib/graph/layout";
+import { sameRange, visibleRange, type VisibleRange } from "../lib/graph/viewport";
 import type { Commit } from "../lib/bridge/types";
 import { useDiffStore } from "../lib/stores/diff";
 import { useLogStore } from "../lib/stores/log";
@@ -8,7 +9,6 @@ import { useRepoStore } from "../lib/stores/repo";
 import { useUiStore } from "../lib/stores/ui";
 import { GraphCanvas } from "./GraphCanvas";
 
-const OVERSCAN = 6;
 const GRAPH_PADDING = 16;
 
 export function HistoryView() {
@@ -25,11 +25,11 @@ export function HistoryView() {
   const setFilter = useLogStore((state) => state.setFilter);
   const select = useLogStore((state) => state.select);
 
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const [scrollTop, setScrollTop] = useState(0);
-  const [viewportHeight, setViewportHeight] = useState(0);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [range, setRange] = useState<VisibleRange>({ start: 0, end: 0 });
 
   const root = repo?.root ?? null;
+  const rows = layout.rows;
 
   useEffect(() => {
     if (root) {
@@ -37,42 +37,29 @@ export function HistoryView() {
     }
   }, [root, load]);
 
-  useEffect(() => {
-    const element = containerRef.current;
-    if (!element) {
+  const updateRange = useCallback(() => {
+    const scroller = scrollRef.current;
+    if (!scroller) {
       return;
     }
-    const update = () => setViewportHeight(element.clientHeight);
-    update();
-    const observer = new ResizeObserver(update);
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, []);
-
-  const handleScroll = useCallback(() => {
-    const element = containerRef.current;
-    if (!element) {
-      return;
-    }
-    setScrollTop(element.scrollTop);
-    if (element.scrollHeight - element.scrollTop - element.clientHeight < ROW_HEIGHT * 12) {
+    const next = visibleRange(scroller.scrollTop, scroller.clientHeight, rows.length);
+    setRange((current) => (sameRange(current, next) ? current : next));
+    if (scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < ROW_HEIGHT * 12) {
       void loadMore();
     }
-  }, [loadMore]);
+  }, [rows.length, loadMore]);
 
-  const laneCount = layout.rows.reduce(
+  useEffect(() => {
+    updateRange();
+  }, [updateRange]);
+
+  const laneCount = rows.reduce(
     (max, row) => Math.max(max, row.lane + 1, row.before.length, row.after.length),
     1,
   );
   const graphWidth = laneCount * LANE_WIDTH + GRAPH_PADDING;
-  const rows = layout.rows;
 
-  const first = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - OVERSCAN);
-  const last = Math.min(
-    rows.length,
-    Math.ceil((scrollTop + viewportHeight) / ROW_HEIGHT) + OVERSCAN,
-  );
-  const visible = rows.slice(first, last);
+  const visible = rows.slice(range.start, range.end);
   const selectedCommit = selected
     ? (commits.find((commit) => commit.hash === selected) ?? null)
     : null;
@@ -108,38 +95,39 @@ export function HistoryView() {
       </div>
 
       <div className="history-body">
-        <div className="history-list" ref={containerRef} onScroll={handleScroll}>
-          <div className="history-inner" style={{ height: rows.length * ROW_HEIGHT }}>
-            <GraphCanvas
-              rows={rows}
-              colors={layout.colors}
-              scrollTop={scrollTop}
-              viewportHeight={viewportHeight}
-              laneCount={laneCount}
-              selected={selected}
-            />
-            {visible.map((row, offset) => {
-              const index = first + offset;
-              const commit = commits[index];
-              if (!commit) {
-                return null;
-              }
-              return (
-                <button
-                  key={row.hash}
-                  type="button"
-                  className={`commit-row${selected === row.hash ? " selected" : ""}`}
-                  style={{ top: index * ROW_HEIGHT, paddingLeft: graphWidth }}
-                  onClick={() => select(row.hash)}
-                >
-                  <span className="commit-refs">{renderRefs(commit.refs)}</span>
-                  <span className="commit-subject">{commit.subject}</span>
-                  <span className="commit-hash">{commit.hash.slice(0, 7)}</span>
-                  <span className="commit-author">{commit.author_name}</span>
-                  <span className="commit-date">{formatDateTime(commit.author_time)}</span>
-                </button>
-              );
-            })}
+        <div className="history-list-wrap">
+          <GraphCanvas
+            rows={rows}
+            colors={layout.colors}
+            laneCount={laneCount}
+            selected={selected}
+            scrollRef={scrollRef}
+          />
+          <div className="history-list" ref={scrollRef} onScroll={updateRange}>
+            <div className="history-inner" style={{ height: rows.length * ROW_HEIGHT }}>
+              {visible.map((row, offset) => {
+                const index = range.start + offset;
+                const commit = commits[index];
+                if (!commit) {
+                  return null;
+                }
+                return (
+                  <button
+                    key={row.hash}
+                    type="button"
+                    className={`commit-row${selected === row.hash ? " selected" : ""}`}
+                    style={{ top: index * ROW_HEIGHT, paddingLeft: graphWidth }}
+                    onClick={() => select(row.hash)}
+                  >
+                    <span className="commit-refs">{renderRefs(commit.refs)}</span>
+                    <span className="commit-subject">{commit.subject}</span>
+                    <span className="commit-hash">{commit.hash.slice(0, 7)}</span>
+                    <span className="commit-author">{commit.author_name}</span>
+                    <span className="commit-date">{formatDateTime(commit.author_time)}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
         {selectedCommit && <CommitDetail commit={selectedCommit} onClose={() => select(null)} />}
