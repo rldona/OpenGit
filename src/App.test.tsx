@@ -29,6 +29,11 @@ vi.mock("./lib/bridge/dialog", () => ({
   confirmDestructive: vi.fn().mockResolvedValue(true),
 }));
 
+vi.mock("./lib/bridge/rebase", () => ({
+  rebasePlan: vi.fn().mockResolvedValue([]),
+  interactiveRebase: vi.fn().mockResolvedValue(undefined),
+}));
+
 vi.mock("./lib/bridge/conflict", () => ({
   readConflictFile: vi.fn(),
   resolveConflict: vi.fn().mockResolvedValue(undefined),
@@ -297,6 +302,9 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: "Cherry-pick" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Revert" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Reset to here" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Interactive rebase from here" }),
+    ).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Cherry-pick" }));
 

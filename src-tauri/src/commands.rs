@@ -16,6 +16,7 @@ pub struct AppState {
     pub recents: Mutex<Recents>,
     pub watcher: Mutex<Option<WatcherHandle>>,
     pub jobs: Arc<JobManager>,
+    pub data_dir: PathBuf,
 }
 
 #[derive(Clone, Serialize)]
@@ -397,6 +398,35 @@ pub fn delete_branch(
 pub struct ConflictFile {
     pub content: String,
     pub binary: bool,
+}
+
+#[tauri::command]
+pub fn rebase_plan(
+    path: String,
+    base: String,
+    state: State<'_, AppState>,
+) -> Result<Vec<crate::git::PlanCommit>, GitError> {
+    crate::git::rebase_plan(&state.runner, Path::new(&path), &base)
+}
+
+#[tauri::command]
+pub fn interactive_rebase(
+    path: String,
+    base: String,
+    todos: Vec<crate::git::TodoItem>,
+    reword_message: Option<String>,
+    state: State<'_, AppState>,
+) -> Result<(), GitError> {
+    pause_while(&state, || {
+        crate::git::interactive_rebase(
+            &state.runner,
+            Path::new(&path),
+            &state.data_dir,
+            &base,
+            &todos,
+            reword_message.as_deref(),
+        )
+    })
 }
 
 #[tauri::command]

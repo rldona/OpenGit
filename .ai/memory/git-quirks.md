@@ -73,3 +73,13 @@
   - Rename en `status --porcelain=v2 -z`: la ruta nueva cierra el registro y la original es el **siguiente token** NUL, no un campo del mismo token.
   - Rename en `diff --numstat -z`: el token de contadores lleva la ruta vacía (`1\t0\t`) y las dos rutas van en los dos tokens siguientes.
 - **Implicación:** parsear por tokens secuenciales con índice, no pre-dividir registros asumiendo un NUL por entrada. Los fixtures reales están en `src-tauri/tests/fixtures/` y se regeneran con `generate.sh`.
+
+## Rebase interactivo sin editor: GIT_SEQUENCE_EDITOR y reword con `exec`
+
+- **Fecha:** 2026-09-18
+- **Contexto:** OG-021; hay que ejecutar `git rebase -i` con un plan generado por la app, sin abrir editores.
+- **Hallazgo:**
+  - `GIT_SEQUENCE_EDITOR="cp '<todo>'"` funciona: git invoca `<editor> <fichero-todo>`, así que `cp` recibe origen y destino. El todo vive en el directorio de datos de la app, nunca en el repo.
+  - La acción `reword` abre el editor de mensajes, que choca con el `GIT_EDITOR=true` que usamos para aceptar los mensajes por defecto del squash. Se resuelve emitiendo `pick <sha>` + `exec git commit --amend -F '<mensaje>'`; así cada reword (en v1, uno) tiene su mensaje sin editor.
+  - En un squash, el asunto resultante es el del commit **anterior** (el que recibe), no el del squashado: `pick c1; squash c2` deja el asunto de c1 y el mensaje de c2 en el cuerpo.
+- **Implicación:** el todo-list es un detalle interno de `interactive_rebase`; cualquier cambio debe cubrir squash/fixup, drop, reword, reordenar y conflicto con abort.
