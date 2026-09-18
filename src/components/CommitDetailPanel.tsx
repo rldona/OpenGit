@@ -58,7 +58,7 @@ export function CommitDetailPanel({ commit }: Props) {
         direction="horizontal"
         side="start"
         storageKey={LAYOUT_KEYS.historyFiles}
-        defaultSize={320}
+        defaultSize={470}
         min={200}
         max={560}
         label="Resize commit file list"

@@ -149,7 +149,7 @@ export function HistoryView() {
         direction="vertical"
         side="end"
         storageKey={LAYOUT_KEYS.historyBottom}
-        defaultSize={320}
+        defaultSize={520}
         min={160}
         max={720}
         label="Resize commit details"

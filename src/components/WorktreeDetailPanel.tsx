@@ -20,7 +20,7 @@ export function WorktreeDetailPanel({ root }: { root: string }) {
         direction="horizontal"
         side="start"
         storageKey={LAYOUT_KEYS.historyFiles}
-        defaultSize={320}
+        defaultSize={470}
         min={200}
         max={560}
         label="Resize uncommitted file list"
