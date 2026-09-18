@@ -973,18 +973,20 @@ body {
 .commit-header-hash,
 .commit-header-author,
 .commit-header-date {
+  position: relative;
   flex-shrink: 0;
 }
 
-/* Tirador entre columnas. Va en el borde izquierdo de la columna fija que
-   redimensiona; el área sensible es más ancha que la línea que se ve. */
+/* Tirador entre columnas. Se posiciona absoluto en el borde izquierdo de su
+   columna: si ocupara sitio en el flex, la cabecera se desplazaría respecto a
+   las filas (las filas no llevan tiradores). */
 .column-resizer {
-  flex-shrink: 0;
-  position: relative;
-  width: 7px;
-  margin: 0 -3px;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -4px;
+  width: 9px;
   cursor: col-resize;
-  align-self: stretch;
 }
 
 .column-resizer::after {
@@ -992,7 +994,7 @@ body {
   position: absolute;
   top: 3px;
   bottom: 3px;
-  left: 3px;
+  left: 4px;
   width: 1px;
   background: var(--border);
 }
@@ -1886,16 +1888,6 @@ body {
   line-height: 17px;
 }
 
-.refs-actions {
-  display: none;
-  gap: 4px;
-}
-
-.refs-item:hover .refs-actions {
-  display: flex;
-}
-
-.refs-actions button,
 .refs-inline button {
   padding: 1px 6px;
   border: 1px solid var(--border);
@@ -1907,13 +1899,11 @@ body {
   cursor: pointer;
 }
 
-.refs-actions button:hover,
 .refs-inline button:hover {
   border-color: var(--accent);
   color: var(--text);
 }
 
-.refs-actions button.danger:hover,
 .refs-force button.danger:hover {
   border-color: var(--danger);
   color: var(--danger-text);
@@ -2052,9 +2042,19 @@ body {
   gap: 6px;
   overflow: hidden;
   padding: 3px 6px;
+  border: none;
   border-radius: 4px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
   text-overflow: ellipsis;
   white-space: nowrap;
+  cursor: pointer;
+}
+
+.refs-tag.selected {
+  background: rgb(59 130 246 / 18%);
 }
 
 .refs-tag-mark {
@@ -2732,20 +2732,33 @@ body {
   background: var(--border);
 }
 
+/* La línea se ve de 1px; el área sensible se ensancha con un pseudo-elemento
+   para que siga siendo fácil de arrastrar. Sin cambio de color al pasar. */
 .split-pane.horizontal > .split-separator {
-  width: 4px;
+  width: 1px;
   cursor: col-resize;
 }
 
 .split-pane.vertical > .split-separator {
-  height: 4px;
+  height: 1px;
   cursor: row-resize;
 }
 
-.split-separator:hover,
+.split-pane.horizontal > .split-separator::after {
+  content: "";
+  position: absolute;
+  inset: 0 -4px;
+}
+
+.split-pane.vertical > .split-separator::after {
+  content: "";
+  position: absolute;
+  inset: -4px 0;
+}
+
 .split-separator:focus-visible {
-  background: var(--accent);
-  outline: none;
+  outline: 1px solid var(--accent);
+  outline-offset: 1px;
 }
 
 .context-menu {

@@ -30,6 +30,7 @@ const branch = (name: string): RefEntry => ({
   object_type: "commit",
   upstream: null,
   track: null,
+  target: "a",
 });
 
 describe("PullDialog", () => {

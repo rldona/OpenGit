@@ -414,6 +414,7 @@ describe("App", () => {
       object_type: "commit",
       upstream: null,
       track: null,
+      target: "aaaa0000",
     });
     vi.mocked(listRefs).mockResolvedValue([
       ref("refs/heads/main"),

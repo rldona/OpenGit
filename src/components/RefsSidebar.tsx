@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { copyText } from "../lib/clipboard";
 import { confirmDestructive } from "../lib/bridge/dialog";
 import { openExternal } from "../lib/bridge/opener";
+import type { RefEntry } from "../lib/bridge/types";
 import { parseTrack } from "../lib/format";
 import { useExtrasStore } from "../lib/stores/extras";
 import { useLogStore } from "../lib/stores/log";
@@ -28,7 +29,9 @@ export function RefsSidebar() {
   const forceRemove = useRefsStore((state) => state.forceRemove);
   const cancelForceDelete = useRefsStore((state) => state.cancelForceDelete);
   const selectedCommit = useLogStore((state) => state.selected);
+  const revealCommit = useLogStore((state) => state.revealCommit);
   const newBranchRequest = useUiStore((state) => state.newBranchRequest);
+  const setActiveView = useUiStore((state) => state.setActiveView);
 
   const createTag = useRefsStore((state) => state.createTag);
   const deleteTag = useRefsStore((state) => state.deleteTag);
@@ -62,6 +65,16 @@ export function RefsSidebar() {
       useCollapseStore.getState().set("branches", false);
     }
   }, [newBranchRequest]);
+
+  // Pulsar una tag localiza su commit en el historial y lo selecciona.
+  const reveal = (ref: RefEntry) => {
+    if (!root) {
+      return;
+    }
+    setSelectedRef(ref.name);
+    setActiveView("history");
+    void revealCommit(root, ref.target);
+  };
 
   const locals = refs
     .filter((ref) => ref.name.startsWith("refs/heads/"))
@@ -334,17 +347,14 @@ export function RefsSidebar() {
           );
         })}
       </CollapsibleSection>
-      <CollapsibleSection id="tags" title="Tags" icon="tag">
-        <div className="refs-toolbar">
-          <button
-            type="button"
-            aria-label="New tag"
-            title="New tag"
-            onClick={() => setTagForm((value) => !value)}
-          >
-            +
-          </button>
-        </div>
+      <CollapsibleSection
+        id="tags"
+        title="Tags"
+        icon="tag"
+        onContextMenu={(event) =>
+          refMenu.open(event, [{ label: "New Tag…", onSelect: () => setTagForm(true) }])
+        }
+      >
         {tagForm && (
           <div className="refs-inline refs-tag-form">
             <input
@@ -382,10 +392,14 @@ export function RefsSidebar() {
               className="refs-item"
               title={ref.object_type === "tag" ? "Annotated tag" : "Lightweight tag"}
             >
-              <span
-                className="refs-tag"
+              <button
+                type="button"
+                className={`refs-tag${selectedRef === ref.name ? " selected" : ""}`}
+                title={ref.name}
+                onClick={() => reveal(ref)}
                 onContextMenu={(event) =>
                   refMenu.open(event, [
+                    { label: "Show in history", onSelect: () => reveal(ref) },
                     { label: "Push", onSelect: () => pushTag(short) },
                     {
                       label: "Delete",
@@ -398,19 +412,7 @@ export function RefsSidebar() {
               >
                 <span className={`refs-tag-mark${ref.object_type === "tag" ? " annotated" : ""}`} />
                 {short}
-              </span>
-              <span className="refs-actions">
-                <button type="button" onClick={() => pushTag(short)}>
-                  Push
-                </button>
-                <button
-                  type="button"
-                  className="danger"
-                  onClick={() => void confirmDeleteTag(short)}
-                >
-                  Delete
-                </button>
-              </span>
+              </button>
             </li>
           ))}
           {tags.length === 0 && <li className="muted">No tags</li>}

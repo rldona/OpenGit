@@ -35,13 +35,21 @@ vi.mock("../bridge/dialog", () => ({
 }));
 
 const REFS: RefEntry[] = [
-  { name: "refs/heads/main", object_id: "a", object_type: "commit", upstream: null, track: null },
+  {
+    name: "refs/heads/main",
+    object_id: "a",
+    object_type: "commit",
+    upstream: null,
+    track: null,
+    target: "a",
+  },
   {
     name: "refs/heads/feature",
     object_id: "b",
     object_type: "commit",
     upstream: "refs/remotes/origin/feature",
     track: "[ahead 1, behind 2]",
+    target: "b",
   },
   {
     name: "refs/remotes/origin/remota",
@@ -49,8 +57,16 @@ const REFS: RefEntry[] = [
     object_type: "commit",
     upstream: null,
     track: null,
+    target: "c",
   },
-  { name: "refs/tags/v1.0.0", object_id: "d", object_type: "tag", upstream: null, track: null },
+  {
+    name: "refs/tags/v1.0.0",
+    object_id: "d",
+    object_type: "tag",
+    upstream: null,
+    track: null,
+    target: "commit-d",
+  },
 ];
 
 const CLEAN: StatusReport = {

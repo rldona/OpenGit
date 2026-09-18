@@ -186,6 +186,8 @@ export type RefEntry = {
   object_type: string;
   upstream: string | null;
   track: string | null;
+  /** Objeto al que resuelve: en un tag anotado, el commit pelado. */
+  target: string;
 };
 
 /** Error serializado por el núcleo Rust (campo `kind` discriminante). */
