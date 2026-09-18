@@ -6,6 +6,8 @@ import { getAppVersion } from "./lib/bridge/core";
 import { pickDirectory } from "./lib/bridge/dialog";
 import { subscribeRepoEvents } from "./lib/bridge/events";
 import { cherryPick } from "./lib/bridge/history";
+import { repoOpAbort } from "./lib/bridge/ops";
+import { repoOpState } from "./lib/bridge/commit";
 import { listRefs, logPage } from "./lib/bridge/log";
 import { openRepo, recentRepos } from "./lib/bridge/repo";
 import { commitFiles, diffFile, diffNumstat } from "./lib/bridge/diff";
@@ -24,6 +26,11 @@ vi.mock("./lib/bridge/core", () => ({
 vi.mock("./lib/bridge/dialog", () => ({
   pickDirectory: vi.fn(),
   confirmDestructive: vi.fn().mockResolvedValue(true),
+}));
+
+vi.mock("./lib/bridge/ops", () => ({
+  repoOpAbort: vi.fn().mockResolvedValue(undefined),
+  repoOpContinue: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("./lib/bridge/history", () => ({
@@ -73,7 +80,14 @@ vi.mock("./lib/bridge/diff", () => ({
 vi.mock("./lib/bridge/commit", () => ({
   commitMessage: vi.fn().mockResolvedValue(""),
   commitRepo: vi.fn(),
-  repoOpState: vi.fn().mockResolvedValue({ merge: false, rebase: false, cherry_pick: false }),
+  repoOpState: vi.fn().mockResolvedValue({
+    merge: false,
+    rebase: false,
+    cherry_pick: false,
+    revert: false,
+    rebase_current: null,
+    rebase_total: null,
+  }),
 }));
 
 vi.mock("./lib/bridge/refs", () => ({
@@ -180,6 +194,26 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: "Fetch" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Pull" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Push" })).toBeInTheDocument();
+  });
+
+  it("muestra el banner de operación con Abort y Continue", async () => {
+    const user = userEvent.setup();
+    vi.mocked(repoOpState).mockResolvedValue({
+      merge: true,
+      rebase: false,
+      cherry_pick: false,
+      revert: false,
+      rebase_current: null,
+      rebase_total: null,
+    });
+    useRepoStore.setState({ repo: REPO, recents: [], loading: false, error: null });
+    render(<App />);
+
+    expect(await screen.findByRole("status")).toHaveTextContent("merge in progress");
+
+    await user.click(screen.getByRole("button", { name: "Abort" }));
+
+    expect(repoOpAbort).toHaveBeenCalledWith("/tmp/mi-repo");
   });
 
   it("busca commits por mensaje desde la toolbar", async () => {

@@ -27,22 +27,10 @@ export function CommitPanel() {
   const staged = (report?.entries ?? []).filter(
     (entry) => entry.kind !== "untracked" && entry.xy[0] !== ".",
   );
-  const operation = opState.merge
-    ? "merge"
-    : opState.rebase
-      ? "rebase"
-      : opState.cherry_pick
-        ? "cherry-pick"
-        : null;
+  const operationActive = opState.merge || opState.rebase || opState.cherry_pick || opState.revert;
 
   return (
     <section className="commit-panel" aria-label="Commit">
-      {operation && (
-        <p className="commit-warning" role="status">
-          There is a {operation} in progress. Finish or abort it from the terminal (M4).
-        </p>
-      )}
-
       <div className="commit-staged">
         <h3>
           Staged <span className="count">{staged.length}</span>
@@ -86,7 +74,7 @@ export function CommitPanel() {
         <button
           type="button"
           onClick={() => void submit(staged.length)}
-          disabled={loading || operation !== null}
+          disabled={loading || operationActive}
         >
           {amend ? "Amend" : "Commit"}
         </button>
