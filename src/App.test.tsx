@@ -54,6 +54,13 @@ vi.mock("./lib/bridge/diff", () => ({
   diffFile: vi.fn(),
   commitFiles: vi.fn(),
   diffNumstat: vi.fn(),
+  stageSelection: vi.fn(),
+}));
+
+vi.mock("./lib/bridge/commit", () => ({
+  commitMessage: vi.fn().mockResolvedValue(""),
+  commitRepo: vi.fn(),
+  repoOpState: vi.fn().mockResolvedValue({ merge: false, rebase: false, cherry_pick: false }),
 }));
 
 vi.mock("./components/DiffEditor", () => ({
@@ -144,8 +151,9 @@ describe("App", () => {
     await user.click(screen.getByRole("button", { name: "Seleccionar carpeta" }));
     await user.click(await screen.findByRole("button", { name: "File status" }));
 
-    expect(await screen.findByRole("heading", { name: /Staged/ })).toBeInTheDocument();
-    expect(screen.getByText("staged.txt")).toBeInTheDocument();
+    expect((await screen.findAllByRole("heading", { name: /Staged/ })).length).toBeGreaterThan(0);
+    expect(screen.getAllByText("staged.txt").length).toBeGreaterThan(0);
+    expect(screen.getByRole("button", { name: "Commit" })).toBeInTheDocument();
   });
 
   it("selecciona un commit y muestra su detalle", async () => {

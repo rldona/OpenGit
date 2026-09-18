@@ -35,6 +35,13 @@
 - **Hallazgo:** interpolar el mensaje en `-m` requiere escapar comillas y rompe saltos de línea.
 - **Implicación:** pasar el mensaje por stdin (`-F -`), nunca concatenado.
 
+## La salida de los hooks de commit va a stdout
+
+- **Fecha:** 2026-09-18
+- **Contexto:** OG-007; al fallar un `pre-commit` solo se veía el stderr de git.
+- **Hallazgo:** los hooks escriben sus mensajes en **stdout**; `GitError::CommandFailed` solo guardaba stderr y se perdía la causa real.
+- **Implicación:** `CommandFailed` incluye `stdout` y `stderr`; al mostrar errores, preferir stderr y caer a stdout. El mensaje del commit se pasa por stdin (`--file=-`), sin `--no-verify`.
+
 ## Stage parcial: un `-` descartado debe pasar a contexto
 
 - **Fecha:** 2026-09-18

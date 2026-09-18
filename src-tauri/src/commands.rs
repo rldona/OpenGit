@@ -232,6 +232,31 @@ pub fn diff_numstat(
 }
 
 #[tauri::command]
+pub fn commit_message(path: String, state: State<'_, AppState>) -> Result<String, GitError> {
+    crate::git::last_commit_message(&state.runner, Path::new(&path))
+}
+
+#[tauri::command]
+pub fn commit_repo(
+    path: String,
+    message: String,
+    amend: bool,
+    state: State<'_, AppState>,
+) -> Result<crate::git::CommitResult, GitError> {
+    pause_while(&state, || {
+        crate::git::commit(&state.runner, Path::new(&path), &message, amend)
+    })
+}
+
+#[tauri::command]
+pub fn repo_op_state(
+    path: String,
+    state: State<'_, AppState>,
+) -> Result<crate::git::RepoOpState, GitError> {
+    crate::git::repo_op_state(&state.runner, Path::new(&path))
+}
+
+#[tauri::command]
 pub fn recent_repos(state: State<'_, AppState>) -> Result<Vec<RecentRepo>, GitError> {
     Ok(state.recents.lock().map_err(lock_error)?.list())
 }

@@ -30,6 +30,17 @@ export type Commit = {
   subject: string;
 };
 
+export type CommitResult = {
+  hash: string;
+  subject: string;
+};
+
+export type RepoOpState = {
+  merge: boolean;
+  rebase: boolean;
+  cherry_pick: boolean;
+};
+
 export type FileDiff = {
   path: string;
   orig_path: string | null;
