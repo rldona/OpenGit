@@ -66,6 +66,7 @@ pub fn run() {
             commands::stash_push,
             commands::stash_apply,
             commands::stash_drop,
+            commands::stash_show,
             commands::start_remote_job,
             commands::cancel_remote_job,
             commands::discard_path,

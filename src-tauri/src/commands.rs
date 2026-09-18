@@ -559,6 +559,15 @@ pub fn stash_drop(
 }
 
 #[tauri::command]
+pub fn stash_show(
+    path: String,
+    reference: String,
+    state: State<'_, AppState>,
+) -> Result<String, GitError> {
+    crate::git::stash_show(&state.runner, Path::new(&path), &reference)
+}
+
+#[tauri::command]
 pub fn recent_repos(state: State<'_, AppState>) -> Result<Vec<RecentRepo>, GitError> {
     Ok(state.recents.lock().map_err(lock_error)?.list())
 }
