@@ -42,3 +42,10 @@
 - **Contexto:** `npm run tauri dev` en marcha mientras se hizo `git checkout main` + `git pull` (el pull escribió de nuevo todo el árbol).
 - **Hallazgo:** Vite detectó el cambio de `vite.config.ts`, reinició el servidor y se quedó en el puerto 5174 en vez de 1420 (5173 estaba ocupado por otro proyecto), pese a `strictPort`. La ventana Tauri siguió cargando `devUrl` (1420), que ya no respondía → pantalla blanca. En el log: `Port 5173 is in use, trying another one...` y `Local: http://localhost:5174/`.
 - **Implicación:** no hacer checkout/pull con el dev server vivo. Si pasa: parar todo (`pkill -f "opengit/node_modules/.bin/vite"; pkill -f target/debug/opengit`) y relanzar `npm run tauri dev`, comprobando en el log `http://localhost:1420/` antes de dar por buena la ventana.
+
+## Los TempDir de los tests deben ser únicos aunque el reloj se repita
+
+- **Fecha:** 2026-09-18
+- **Contexto:** tests de integración de Rust en paralelo; fallos aleatorios de un test distinto en cada pasada (detached HEAD, errores de git, diffs).
+- **Hallazgo:** `TempDir::new` generaba el nombre con `pid + nanos`; dos hilos podían obtener el mismo `nanos` y compartir carpeta, pisándose y borrándose entre tests.
+- **Implicación:** el nombre incluye ahora un contador atómico (`AtomicU64`). Si los tests vuelven a fallar de forma no determinista, sospechar primero de recursos compartidos (temp dirs, puertos, ficheros de config).
