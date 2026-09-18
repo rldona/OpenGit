@@ -2,17 +2,22 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { confirmDestructive } from "../lib/bridge/dialog";
-import { stashApply, stashDrop, stashList, stashPush } from "../lib/bridge/stash";
+import { stashApply, stashDrop, stashList, stashPush, stashShow } from "../lib/bridge/stash";
 import type { RepoInfo, Stash } from "../lib/bridge/types";
 import { useRepoStore } from "../lib/stores/repo";
 import { useStashStore } from "../lib/stores/stash";
 import { StashSidebar } from "./StashSidebar";
+
+vi.mock("./DiffEditor", () => ({
+  DiffEditor: ({ patch }: { patch: string }) => <div data-testid="stash-patch">{patch}</div>,
+}));
 
 vi.mock("../lib/bridge/stash", () => ({
   stashList: vi.fn(),
   stashPush: vi.fn(),
   stashApply: vi.fn(),
   stashDrop: vi.fn(),
+  stashShow: vi.fn(),
 }));
 
 vi.mock("../lib/bridge/dialog", () => ({
@@ -53,6 +58,7 @@ describe("StashSidebar", () => {
     vi.mocked(stashPush).mockResolvedValue(undefined);
     vi.mocked(stashApply).mockResolvedValue(undefined);
     vi.mocked(stashDrop).mockResolvedValue(undefined);
+    vi.mocked(stashShow).mockResolvedValue("diff --git a/a.txt b/a.txt\n+dos\n");
     vi.mocked(confirmDestructive).mockResolvedValue(true);
     useRepoStore.setState({ repo: REPO, recents: [], loading: false, error: null });
     useStashStore.getState().reset();
@@ -99,5 +105,21 @@ describe("StashSidebar", () => {
     vi.mocked(confirmDestructive).mockResolvedValue(true);
     await user.click(within(row).getByRole("button", { name: "Drop" }));
     expect(stashDrop).toHaveBeenCalledWith("/tmp/repo", "stash@{0}");
+  });
+
+  it("abre el diff del stash y lo cierra", async () => {
+    const user = userEvent.setup();
+    render(<StashSidebar />);
+
+    const row = (await screen.findByText("WIP on main: cambios")).closest("li")!;
+    await user.click(within(row).getByRole("button", { name: "Diff" }));
+
+    expect(stashShow).toHaveBeenCalledWith("/tmp/repo", "stash@{0}");
+    const dialog = await screen.findByRole("dialog", { name: "Diff of stash@{0}" });
+    expect(within(dialog).getByTestId("stash-patch")).toHaveTextContent("+dos");
+
+    await user.click(within(dialog).getByRole("button", { name: "Close" }));
+
+    expect(screen.queryByRole("dialog", { name: "Diff of stash@{0}" })).not.toBeInTheDocument();
   });
 });

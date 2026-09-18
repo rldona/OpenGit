@@ -1722,3 +1722,52 @@ body {
   color: var(--warning-text);
   font-size: 12px;
 }
+
+.stash-diff-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--overlay);
+}
+
+.stash-diff-dialog {
+  display: flex;
+  flex-direction: column;
+  width: min(960px, calc(100vw - 48px));
+  height: min(80vh, 720px);
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-panel);
+  box-shadow: var(--shadow);
+}
+
+.stash-diff-dialog header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.stash-diff-dialog h2 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.stash-diff-dialog header button {
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.stash-diff-body {
+  flex: 1;
+  min-height: 0;
+}

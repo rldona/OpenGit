@@ -351,6 +351,15 @@ pub fn stash_drop(runner: &Runner, repo: &Path, reference: &str) -> Result<(), G
         .map(|_| ())
 }
 
+/// Parche completo de un stash, incluidos los untracked guardados con `-u`.
+pub fn stash_show(runner: &Runner, repo: &Path, reference: &str) -> Result<String, GitError> {
+    validate_stash_reference(reference)?;
+    let output = runner.run_checked(
+        &GitCommand::new(["stash", "show", "-p", "--include-untracked", reference]).cwd(repo),
+    )?;
+    Ok(output.stdout_lossy())
+}
+
 fn validate_stash_reference(reference: &str) -> Result<(), GitError> {
     let inner = reference
         .strip_prefix("stash@{")
