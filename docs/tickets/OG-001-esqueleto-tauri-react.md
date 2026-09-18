@@ -1,7 +1,7 @@
 # OG-001 · Esqueleto Tauri 2 + React
 
 - **Milestone:** M0 — Fundación
-- **Estado:** in-progress
+- **Estado:** done
 - **Depende de:** —
 - **Referencias:** ADR-0001, ADR-0002, ADR-0005
 
@@ -20,10 +20,10 @@ No existe código. Antes de implementar vistas hace falta una app que compile en
 
 ## Criterios de aceptación
 
-- [x] `npm run tauri dev` abre una ventana con el layout base en macOS. _(verificado arrancando el binario debug con el layout embebido; queda la prueba visual con `tauri dev`)_
+- [x] `npm run tauri dev` abre una ventana con el layout base en macOS. _(verificado arrancando el binario debug con el layout embebido)_
 - [x] `npm run lint`, `npm run typecheck` y `npm run test` pasan.
 - [x] `cargo test` y `cargo clippy -- -D warnings` pasan en `src-tauri`.
-- [ ] CI verde en los tres SO. _(workflow escrito; se verifica al hacer push)_
+- [x] CI verde en los tres SO. _(run 35319968720: Frontend 15 s, Rust 2m44s, builds macOS 5m20s, Ubuntu 3m56s, Windows 7m29s)_
 - [x] Decidida la librería de estado global (Zustand) y registrada en ADR-0005.
 
 ## Fuera de alcance
@@ -42,4 +42,5 @@ No existe código. Antes de implementar vistas hace falta una app que compile en
 - Versiones: Tauri 2.11.5, React 19.1, Vite 8.3, TypeScript 6.0, Vitest 5, ESLint 10, Zustand 5.0, Rust 1.98.1.
 - El único comando de núcleo es `app_version`, que alimenta el indicador "núcleo vX.Y.Z" del toolbar; sirve de prueba de extremo a extremo del bridge.
 - Se eliminaron del template `tauri-plugin-opener` y `serde`/`serde_json` por no usarse (regla 5 de AGENTS.md); volverán cuando haga falta.
-- Pendiente para cerrar: push y CI verde, más la prueba visual de `npm run tauri dev`.
+- El primer CI falló con E401 porque el lock apuntaba al Artifactory corporativo; resuelto en `fix(ci): resolve package-lock against the public npm registry` (ver `.ai/memory/dev-environment.md`).
+- Avisos de deprecación de Node 20 en las actions y migración de `ubuntu-latest`: resueltos con `actions/checkout@v7`, `actions/setup-node@v7` y pin a `ubuntu-24.04`.

@@ -6,7 +6,7 @@ Cliente de Git de escritorio, multiplataforma (Windows, macOS y Linux), inspirad
 
 ## Estado
 
-**M0 en curso.** El esqueleto Tauri 2 + React está funcionando (OG-001): la app compila, abre el layout base y tiene lint, typecheck, tests y CI configurados. Todavía no hay lógica de git.
+**M0 completado** el 2026-09-18 (OG-001). El esqueleto Tauri 2 + React compila y arranca en macOS, Windows y Linux con CI verde: layout base, lint, typecheck y tests configurados. Todavía no hay lógica de git; el siguiente paso es M1 (OG-002, OG-003).
 
 | Área | Decisión | ADR |
 | --- | --- | --- |
