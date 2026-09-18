@@ -1,7 +1,7 @@
 # OG-002 · Abrir repositorio y recientes
 
 - **Milestone:** M1 — MVP local
-- **Estado:** in-progress
+- **Estado:** done
 - **Depende de:** OG-001, OG-003
 - **Referencias:** docs/architecture/overview.md
 
@@ -42,4 +42,4 @@ Punto de entrada de la app: elegir una carpeta y validarla como repositorio git,
 - Dependencias nuevas justificadas por el ticket: `tauri-plugin-dialog` (selector nativo) y `serde_json` (persistencia de recientes).
 - UI: botón en toolbar + estado vacío, lista de recientes en el sidebar (con quitar), resumen del repo abierto y errores en banner; todo el output de la app pasa al panel de salida.
 - Tests: 7 de Rust (repo + recientes) y 7 de frontend (App y stores); `cargo clippy -D warnings`, `rustfmt`, ESLint, Prettier, `tsc` y build limpios.
-- Pendiente para cerrar: PR y CI verde.
+- Cerrado el 2026-09-18: CI verde (Frontend 18 s, Rust 1m4s) tras corregir el lock con `registry=https://registry.npmjs.org/` en el `.npmrc` del repo (el Artifactory corporativo rompía CI).
