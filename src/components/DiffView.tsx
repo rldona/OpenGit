@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { confirmDestructive } from "../lib/bridge/dialog";
+import { LAYOUT_KEYS } from "../lib/layout";
 import { parseLfsPointerPatch } from "../lib/lfs";
 import { useRepoStore } from "../lib/stores/repo";
 import { useDiffStore } from "../lib/stores/diff";
@@ -7,6 +8,7 @@ import { useUiStore } from "../lib/stores/ui";
 import { DiffEditor } from "./DiffEditor";
 import { FileTree } from "./FileTree";
 import { PatchView } from "./PatchView";
+import { SplitPane } from "./SplitPane";
 
 export function DiffView() {
   const root = useRepoStore((state) => state.repo?.root ?? null);
@@ -153,7 +155,16 @@ export function DiffView() {
         {loading && <span className="muted">Loading…</span>}
       </div>
 
-      <div className="diff-body">
+      <SplitPane
+        className="diff-body"
+        direction="horizontal"
+        side="start"
+        storageKey={LAYOUT_KEYS.diffFiles}
+        defaultSize={280}
+        min={180}
+        max={520}
+        label="Resize file list"
+      >
         <div className="diff-files">
           {files.length === 0 && <p className="muted status-empty">No changes to show</p>}
           {fileTree ? (
@@ -226,7 +237,7 @@ export function DiffView() {
             <DiffEditor patch={patch} fileName={selected.path} mode={mode} />
           )}
         </div>
-      </div>
+      </SplitPane>
     </div>
   );
 }
