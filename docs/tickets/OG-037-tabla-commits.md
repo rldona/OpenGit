@@ -1,7 +1,7 @@
 # OG-037 · Tabla de commits con cabecera
 
 - **Milestone:** M6 — Paridad visual con SourceTree
-- **Estado:** in-progress
+- **Estado:** done
 - **Depende de:** OG-035, OG-036
 - **Referencias:** ROADMAP.md
 
@@ -42,4 +42,4 @@ El historial no tiene cabecera ni columnas: los datos (hash, autor, fecha) van e
 - Lista y canvas bajan 24 px para no quedar bajo la cabecera; virtualización y scroll intactos.
 - Asunto y autor con `title` para el texto completo.
 - Tests: 218 frontend (aserciones de cabecera en App) y 120 Rust intactos.
-- Pendiente para cerrar: PR y CI verde.
+- Cerrado el 2026-09-18 con CI verde (Frontend 36 s, Rust 2m7s tras reejecutar el job por un flake del test de watcher, anotado en `.ai/memory/ci.md`) en el PR #34.
