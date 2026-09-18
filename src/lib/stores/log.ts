@@ -6,7 +6,7 @@ import {
   revertCommit as revertRequest,
 } from "../bridge/history";
 import { listRefs, logPage } from "../bridge/log";
-import type { Commit, RefEntry } from "../bridge/types";
+import type { Commit, LogSearch, RefEntry } from "../bridge/types";
 import { emptyLayout, layoutPage, type GraphLayout } from "../graph/layout";
 import { useRefsStore } from "./refs";
 import { useStatusStore } from "./status";
@@ -14,12 +14,23 @@ import { useUiStore } from "./ui";
 
 const PAGE_SIZE = 200;
 
+export const EMPTY_SEARCH: LogSearch = { grep: "", author: "", path: "" };
+
+function hasSearch(search: LogSearch): boolean {
+  return [search.grep, search.author, search.path].some((value) => value.trim() !== "");
+}
+
+function searchRequest(search: LogSearch): LogSearch | null {
+  return hasSearch(search) ? search : null;
+}
+
 type LogState = {
   root: string | null;
   commits: Commit[];
   layout: GraphLayout;
   refs: RefEntry[];
   filter: string | null;
+  search: LogSearch;
   selected: string | null;
   loading: boolean;
   hasMore: boolean;
@@ -28,6 +39,8 @@ type LogState = {
   reload: (root: string) => Promise<void>;
   loadMore: () => Promise<void>;
   setFilter: (root: string, rev: string | null) => Promise<void>;
+  applySearch: (root: string, search: LogSearch) => Promise<void>;
+  clearSearch: (root: string) => Promise<void>;
   select: (hash: string | null) => void;
   cherryPick: (root: string, hash: string) => Promise<void>;
   revert: (root: string, hash: string) => Promise<void>;
@@ -48,8 +61,8 @@ async function refreshAfterRewrite(root: string, reload: () => Promise<void>): P
   await useStatusStore.getState().refresh(root);
 }
 
-function toInput(commit: Commit) {
-  return { hash: commit.hash, parents: commit.parents, refs: commit.refs };
+function toInput(commit: Commit, flat: boolean) {
+  return { hash: commit.hash, parents: flat ? [] : commit.parents, refs: commit.refs };
 }
 
 export const useLogStore = create<LogState>((set, get) => ({
@@ -58,6 +71,7 @@ export const useLogStore = create<LogState>((set, get) => ({
   layout: emptyLayout(),
   refs: [],
   filter: null,
+  search: { ...EMPTY_SEARCH },
   selected: null,
   loading: false,
   hasMore: true,
@@ -74,15 +88,16 @@ export const useLogStore = create<LogState>((set, get) => ({
       hasMore: true,
     });
     try {
-      const filter = get().filter;
+      const { filter, search } = get();
       const [refs, commits] = await Promise.all([
         listRefs(root),
-        logPage(root, 0, PAGE_SIZE, filter),
+        logPage(root, 0, PAGE_SIZE, filter, searchRequest(search)),
       ]);
+      const flat = hasSearch(search);
       set({
         refs,
         commits,
-        layout: layoutPage(commits.map(toInput)),
+        layout: layoutPage(commits.map((commit) => toInput(commit, flat))),
         hasMore: commits.length === PAGE_SIZE,
       });
     } catch (error) {
@@ -95,16 +110,17 @@ export const useLogStore = create<LogState>((set, get) => ({
   /// Refresco silencioso tras el watcher: conserva selección y filtro.
   reload: async (root) => {
     try {
-      const filter = get().filter;
+      const { filter, search } = get();
       const [refs, commits] = await Promise.all([
         listRefs(root),
-        logPage(root, 0, PAGE_SIZE, filter),
+        logPage(root, 0, PAGE_SIZE, filter, searchRequest(search)),
       ]);
+      const flat = hasSearch(search);
       set({
         root,
         refs,
         commits,
-        layout: layoutPage(commits.map(toInput)),
+        layout: layoutPage(commits.map((commit) => toInput(commit, flat))),
         hasMore: commits.length === PAGE_SIZE,
       });
     } catch (error) {
@@ -113,14 +129,17 @@ export const useLogStore = create<LogState>((set, get) => ({
   },
 
   loadMore: async () => {
-    const { root, loading, hasMore, commits, layout, filter } = get();
+    const { root, loading, hasMore, commits, layout, filter, search } = get();
     if (!root || loading || !hasMore) return;
     set({ loading: true });
     try {
-      const page = await logPage(root, commits.length, PAGE_SIZE, filter);
+      const page = await logPage(root, commits.length, PAGE_SIZE, filter, searchRequest(search));
       set({
         commits: [...commits, ...page],
-        layout: layoutPage(page.map(toInput), layout),
+        layout: layoutPage(
+          page.map((commit) => toInput(commit, hasSearch(search))),
+          layout,
+        ),
         hasMore: page.length === PAGE_SIZE,
       });
     } catch (error) {
@@ -132,6 +151,16 @@ export const useLogStore = create<LogState>((set, get) => ({
 
   setFilter: async (root, rev) => {
     set({ filter: rev });
+    await get().load(root);
+  },
+
+  applySearch: async (root, search) => {
+    set({ search });
+    await get().load(root);
+  },
+
+  clearSearch: async (root) => {
+    set({ search: { ...EMPTY_SEARCH } });
     await get().load(root);
   },
 
@@ -180,6 +209,7 @@ export const useLogStore = create<LogState>((set, get) => ({
       layout: emptyLayout(),
       refs: [],
       filter: null,
+      search: { ...EMPTY_SEARCH },
       selected: null,
       loading: false,
       hasMore: true,

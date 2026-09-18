@@ -299,11 +299,44 @@ body {
 
 .history-toolbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 12px;
   padding: 8px 12px;
   background: var(--bg-panel);
   border-bottom: 1px solid var(--border);
+}
+
+.history-search {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.history-search input {
+  width: 120px;
+  padding: 3px 6px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-elevated);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+}
+
+.history-search button {
+  padding: 2px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.history-search button:hover {
+  border-color: var(--accent);
 }
 
 .history-filter {

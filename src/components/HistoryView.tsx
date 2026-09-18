@@ -3,7 +3,7 @@ import { confirmDestructive } from "../lib/bridge/dialog";
 import { formatDateTime, shortRefName } from "../lib/format";
 import { LANE_WIDTH, ROW_HEIGHT } from "../lib/graph/layout";
 import { sameRange, visibleRange, type VisibleRange } from "../lib/graph/viewport";
-import type { Commit } from "../lib/bridge/types";
+import type { Commit, LogSearch } from "../lib/bridge/types";
 import { useRefsStore } from "../lib/stores/refs";
 import { useDiffStore } from "../lib/stores/diff";
 import { useLogStore } from "../lib/stores/log";
@@ -26,9 +26,27 @@ export function HistoryView() {
   const loadMore = useLogStore((state) => state.loadMore);
   const setFilter = useLogStore((state) => state.setFilter);
   const select = useLogStore((state) => state.select);
+  const storedSearch = useLogStore((state) => state.search);
+  const applySearch = useLogStore((state) => state.applySearch);
+  const clearSearch = useLogStore((state) => state.clearSearch);
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [range, setRange] = useState<VisibleRange>({ start: 0, end: 0 });
+  const [searchForm, setSearchForm] = useState<LogSearch>({ grep: "", author: "", path: "" });
+
+  const searchActive =
+    storedSearch.grep !== "" || storedSearch.author !== "" || storedSearch.path !== "";
+  const runSearch = () => {
+    if (root) {
+      void applySearch(root, searchForm);
+    }
+  };
+  const resetSearch = () => {
+    setSearchForm({ grep: "", author: "", path: "" });
+    if (root) {
+      void clearSearch(root);
+    }
+  };
 
   const root = repo?.root ?? null;
   const rows = layout.rows;
@@ -94,6 +112,46 @@ export function HistoryView() {
           {commits.length} commits{hasMore ? "+" : ""}
         </span>
         {loading && <span className="muted">Loading…</span>}
+        <div className="history-search">
+          <input
+            type="search"
+            aria-label="Search message"
+            placeholder="Message"
+            value={searchForm.grep}
+            onChange={(event) => setSearchForm({ ...searchForm, grep: event.target.value })}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") runSearch();
+            }}
+          />
+          <input
+            type="search"
+            aria-label="Search author"
+            placeholder="Author"
+            value={searchForm.author}
+            onChange={(event) => setSearchForm({ ...searchForm, author: event.target.value })}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") runSearch();
+            }}
+          />
+          <input
+            type="search"
+            aria-label="Search file"
+            placeholder="File path"
+            value={searchForm.path}
+            onChange={(event) => setSearchForm({ ...searchForm, path: event.target.value })}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") runSearch();
+            }}
+          />
+          <button type="button" onClick={runSearch}>
+            Search
+          </button>
+          {searchActive && (
+            <button type="button" onClick={resetSearch}>
+              Clear
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="history-body">

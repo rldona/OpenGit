@@ -86,7 +86,7 @@ describe("useCommitStore", () => {
     expect(useCommitStore.getState().message).toBe("");
     expect(useUiStore.getState().outputLines.join("\n")).toContain("Commit abc1234: feat: algo");
     expect(statusRepo).toHaveBeenCalledWith("/tmp/repo");
-    expect(logPage).toHaveBeenCalledWith("/tmp/repo", 0, 200, null);
+    expect(logPage).toHaveBeenCalledWith("/tmp/repo", 0, 200, null, null);
   });
 
   it("el amend pide confirmación y precarga el mensaje anterior", async () => {

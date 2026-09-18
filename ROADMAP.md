@@ -40,12 +40,12 @@ Todo lo necesario para trabajar sin tocar el terminal en repos locales.
 
 **Salida:** ciclo diario completo en un repo con remoto, sin abrir el terminal. ✅
 
-## M3 — Historial avanzado
+## M3 — Historial avanzado ✅ _(cerrado el 2026-09-18)_
 
-- [ ] Stash: listar, crear, aplicar, pop, drop.
-- [ ] Tags: crear, borrar, push.
-- [ ] Cherry-pick, revert y reset suave (`--mixed`) con confirmación explícita.
-- [ ] Búsqueda de commits (mensaje, autor, fichero) y filtros.
+- [x] Stash: listar, crear, aplicar, pop, drop (OG-016).
+- [x] Tags: crear, borrar, push (OG-015).
+- [x] Cherry-pick, revert y reset suave (`--mixed`) con confirmación explícita (OG-017).
+- [x] Búsqueda de commits (mensaje, autor, fichero) y filtros (OG-018).
 
 ## M4 — Rebase y conflictos
 

@@ -20,6 +20,12 @@ export type RecentRepo = {
   opened_at: number;
 };
 
+export type LogSearch = {
+  grep: string;
+  author: string;
+  path: string;
+};
+
 export type Commit = {
   hash: string;
   parents: string[];
