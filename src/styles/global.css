@@ -155,28 +155,6 @@ body {
   gap: 6px;
 }
 
-.rebase-reword {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.rebase-reword label {
-  color: var(--text-muted);
-  font-size: 12px;
-}
-
-.rebase-reword input {
-  flex: 1;
-  min-width: 0;
-  padding: 4px 8px;
-  border: 1px solid var(--accent);
-  border-radius: 6px;
-  background: var(--bg-elevated);
-  color: var(--text);
-  font: inherit;
-}
-
 .rebase-plan {
   display: flex;
   flex-direction: column;
@@ -188,12 +166,23 @@ body {
 
 .rebase-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 10px;
   padding: 4px 8px;
   border: 1px solid var(--border);
   border-radius: 6px;
   background: var(--bg-panel);
+}
+
+.rebase-message {
+  flex-basis: 100%;
+  padding: 4px 8px;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  background: var(--bg-elevated);
+  color: var(--text);
+  font: inherit;
 }
 
 .rebase-row.dropped {

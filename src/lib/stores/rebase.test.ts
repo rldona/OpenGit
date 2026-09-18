@@ -87,13 +87,23 @@ describe("useRebaseStore", () => {
     expect(useRebaseStore.getState().rows.map((row) => row.action)).toEqual(["pick", "pick"]);
   });
 
-  it("permite un solo reword por plan", async () => {
+  it("permite varios rewords con mensajes distintos", async () => {
     await useRebaseStore.getState().open("/tmp/repo", "base1234");
 
     useRebaseStore.getState().setAction(0, "reword");
     useRebaseStore.getState().setAction(1, "reword");
+    useRebaseStore.getState().setMessage(0, "mensaje uno");
+    useRebaseStore.getState().setMessage(1, "mensaje dos");
 
-    expect(useRebaseStore.getState().rows.map((row) => row.action)).toEqual(["pick", "reword"]);
+    expect(useRebaseStore.getState().rows.map((row) => row.action)).toEqual(["reword", "reword"]);
+
+    const ok = await useRebaseStore.getState().run("/tmp/repo");
+
+    expect(ok).toBe(true);
+    expect(interactiveRebase).toHaveBeenCalledWith("/tmp/repo", "base1234", [
+      { hash: "aaaa1111", action: "reword", message: "mensaje uno" },
+      { hash: "bbbb2222", action: "reword", message: "mensaje dos" },
+    ]);
   });
 
   it("mueve filas arriba y abajo", async () => {
@@ -104,14 +114,28 @@ describe("useRebaseStore", () => {
     expect(useRebaseStore.getState().rows.map((row) => row.subject)).toEqual(["dos", "uno"]);
   });
 
-  it("exige mensaje cuando hay reword", async () => {
+  it("el mensaje viaja con la fila al reordenar", async () => {
     await useRebaseStore.getState().open("/tmp/repo", "base1234");
     useRebaseStore.getState().setAction(0, "reword");
+    useRebaseStore.getState().setMessage(0, "mensaje uno");
+
+    useRebaseStore.getState().move(0, 1);
+
+    const rows = useRebaseStore.getState().rows;
+    expect(rows[0].subject).toBe("dos");
+    expect(rows[1]).toMatchObject({ subject: "uno", action: "reword", message: "mensaje uno" });
+  });
+
+  it("exige mensaje en todos los rewords", async () => {
+    await useRebaseStore.getState().open("/tmp/repo", "base1234");
+    useRebaseStore.getState().setAction(0, "reword");
+    useRebaseStore.getState().setMessage(0, "mensaje uno");
+    useRebaseStore.getState().setAction(1, "reword");
 
     const ok = await useRebaseStore.getState().run("/tmp/repo");
 
     expect(ok).toBe(false);
-    expect(useRebaseStore.getState().error).toContain("reworded commit");
+    expect(useRebaseStore.getState().error).toContain("every reworded commit");
     expect(interactiveRebase).not.toHaveBeenCalled();
   });
 
@@ -122,15 +146,10 @@ describe("useRebaseStore", () => {
     const ok = await useRebaseStore.getState().run("/tmp/repo");
 
     expect(ok).toBe(true);
-    expect(interactiveRebase).toHaveBeenCalledWith(
-      "/tmp/repo",
-      "base1234",
-      [
-        { hash: "aaaa1111", action: "pick" },
-        { hash: "bbbb2222", action: "squash" },
-      ],
-      null,
-    );
+    expect(interactiveRebase).toHaveBeenCalledWith("/tmp/repo", "base1234", [
+      { hash: "aaaa1111", action: "pick", message: null },
+      { hash: "bbbb2222", action: "squash", message: null },
+    ]);
     expect(statusRepo).toHaveBeenCalled();
     expect(logPage).toHaveBeenCalled();
     expect(useUiStore.getState().outputLines.join("\n")).toContain("Interactive rebase");

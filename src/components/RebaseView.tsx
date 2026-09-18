@@ -10,17 +10,16 @@ export function RebaseView() {
   const root = useRepoStore((state) => state.repo?.root ?? null);
   const base = useRebaseStore((state) => state.base);
   const rows = useRebaseStore((state) => state.rows);
-  const rewordMessage = useRebaseStore((state) => state.rewordMessage);
   const loading = useRebaseStore((state) => state.loading);
   const error = useRebaseStore((state) => state.error);
   const setAction = useRebaseStore((state) => state.setAction);
   const move = useRebaseStore((state) => state.move);
-  const setRewordMessage = useRebaseStore((state) => state.setRewordMessage);
+  const setMessage = useRebaseStore((state) => state.setMessage);
   const run = useRebaseStore((state) => state.run);
   const reset = useRebaseStore((state) => state.reset);
 
   const setActiveView = useUiStore((state) => state.setActiveView);
-  const hasReword = rows.some((row) => row.action === "reword");
+  const missingMessage = rows.some((row) => row.action === "reword" && row.message.trim() === "");
   const dropping = rows.filter((row) => row.action === "drop").length;
 
   const confirmRun = async () => {
@@ -57,25 +56,13 @@ export function RebaseView() {
           <button
             type="button"
             className="detail-action danger"
-            disabled={loading || rows.length === 0 || (hasReword && rewordMessage.trim() === "")}
+            disabled={loading || rows.length === 0 || missingMessage}
             onClick={() => void confirmRun()}
           >
             Run rebase
           </button>
         </div>
       </div>
-
-      {hasReword && (
-        <div className="rebase-reword">
-          <label htmlFor="rebase-reword-message">New message for the reworded commit</label>
-          <input
-            id="rebase-reword-message"
-            aria-label="Reword message"
-            value={rewordMessage}
-            onChange={(event) => setRewordMessage(event.target.value)}
-          />
-        </div>
-      )}
 
       <ol className="rebase-plan">
         {rows.map((row, index) => (
@@ -112,6 +99,15 @@ export function RebaseView() {
                 ↓
               </button>
             </span>
+            {row.action === "reword" && (
+              <input
+                className="rebase-message"
+                aria-label={`Reword message for ${row.short}`}
+                placeholder="New message"
+                value={row.message}
+                onChange={(event) => setMessage(index, event.target.value)}
+              />
+            )}
           </li>
         ))}
       </ol>
