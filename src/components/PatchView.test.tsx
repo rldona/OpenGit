@@ -46,6 +46,21 @@ describe("PatchView", () => {
     expect(screen.getByRole("button", { name: "Unstage hunk" })).toBeInTheDocument();
   });
 
+  it("ofrece descartar el hunk en el lado unstaged", async () => {
+    const user = userEvent.setup();
+    const props = renderPatch({ onDiscard: vi.fn() });
+
+    await user.click(screen.getByRole("button", { name: "Discard hunk" }));
+
+    expect(props.onDiscard).toHaveBeenCalledWith({ kind: "hunk", index: 0 });
+  });
+
+  it("no ofrece descartar en el lado del index", () => {
+    renderPatch({ stagedSide: true, onDiscard: vi.fn() });
+
+    expect(screen.queryByRole("button", { name: "Discard hunk" })).not.toBeInTheDocument();
+  });
+
   it("permite seleccionar líneas + y -", async () => {
     const user = userEvent.setup();
     const props = renderPatch();

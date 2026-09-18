@@ -14,6 +14,8 @@ type Props = {
   selectedLines: number[];
   onToggleLine: (index: number) => void;
   onApply: (selection: HunkSelection) => void;
+  /** Presente en el lado unstaged: descarta el hunk del working tree. */
+  onDiscard?: (selection: HunkSelection) => void;
 };
 
 export function PatchView({
@@ -23,6 +25,7 @@ export function PatchView({
   selectedLines,
   onToggleLine,
   onApply,
+  onDiscard,
 }: Props) {
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const [range, setRange] = useState<VisibleRange>({ start: 0, end: 0 });
@@ -60,13 +63,24 @@ export function PatchView({
               <div key={line.index} className="patch-line hunk" style={{ top }}>
                 <span className="patch-text">{line.text}</span>
                 {staging && (
-                  <button
-                    type="button"
-                    className="patch-action"
-                    onClick={() => onApply({ kind: "hunk", index: line.hunk ?? 0 })}
-                  >
-                    {actionLabel}
-                  </button>
+                  <span className="patch-actions">
+                    <button
+                      type="button"
+                      className="patch-action"
+                      onClick={() => onApply({ kind: "hunk", index: line.hunk ?? 0 })}
+                    >
+                      {actionLabel}
+                    </button>
+                    {onDiscard && !stagedSide && (
+                      <button
+                        type="button"
+                        className="patch-action danger"
+                        onClick={() => onDiscard({ kind: "hunk", index: line.hunk ?? 0 })}
+                      >
+                        Discard hunk
+                      </button>
+                    )}
+                  </span>
                 )}
               </div>
             );
