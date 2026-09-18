@@ -864,6 +864,7 @@ pub fn apply_index_patch(
     let mut args: Vec<OsString> = vec![
         "apply".into(),
         "--cached".into(),
+        "--unidiff-zero".into(),
         "--recount".into(),
         "--whitespace=nowarn".into(),
     ];
@@ -903,6 +904,55 @@ pub fn stage_selection(
         return Ok(());
     };
     apply_index_patch(runner, repo, &built, reverse)
+}
+
+/// Aplica un parche al working tree por stdin; con `reverse` lo descarta.
+/// `--unidiff-zero` es necesario porque una selección de líneas puede dejar
+/// el borde del hunk sin contexto; el parche se reconstruye del diff recién leído.
+pub fn apply_worktree_patch(
+    runner: &Runner,
+    repo: &Path,
+    patch: &[u8],
+    reverse: bool,
+) -> Result<(), GitError> {
+    let mut args: Vec<OsString> = vec![
+        "apply".into(),
+        "--unidiff-zero".into(),
+        "--recount".into(),
+        "--whitespace=nowarn".into(),
+    ];
+    if reverse {
+        args.push("--reverse".into());
+    }
+    args.push("-".into());
+    runner
+        .run_checked(
+            &GitCommand::new(args)
+                .cwd(repo)
+                .write()
+                .stdin_bytes(patch.to_vec()),
+        )
+        .map(|_| ())
+}
+
+/// Descarta una selección de hunks/líneas del working tree (destructivo).
+pub fn discard_selection(
+    runner: &Runner,
+    repo: &Path,
+    file: &str,
+    selection: &patch::HunkSelection,
+) -> Result<(), GitError> {
+    if matches!(selection, patch::HunkSelection::File) {
+        return Err(GitError::invalid(
+            "whole-file discard is not resolved with patches",
+        ));
+    }
+    let data = worktree_diff_bytes(runner, repo, file, false)?;
+    let parsed = patch::parse(&data);
+    let Some(built) = parsed.build(selection)? else {
+        return Ok(());
+    };
+    apply_worktree_patch(runner, repo, &built, true)
 }
 
 /// Parche de un fichero dentro de un commit (funciona también en el commit raíz).

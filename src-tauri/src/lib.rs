@@ -43,6 +43,7 @@ pub fn run() {
             commands::stage_path,
             commands::unstage_path,
             commands::stage_selection,
+            commands::discard_selection,
             commands::commit_message,
             commands::commit_repo,
             commands::repo_op_state,

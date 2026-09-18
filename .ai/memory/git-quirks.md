@@ -90,3 +90,10 @@
 - **Contexto:** tests de `git submodule status` (OG-024) con repos locales, sin red.
 - **Hallazgo:** desde git 2.38.1 el protocolo `file://` está restringido y `git submodule add <ruta-local>` falla sin `-c protocol.file.allow=always`. Además, un commit en el repo origen **no mueve el submódulo**: `submodule add` clona en `<super>/.git/modules/<path>`; el estado `+` (different commit) solo aparece al commitear dentro de `super/<path>`. El `-` de `deinit` y el espacio de clean se calculan contra el gitlink del índice del superproyecto.
 - **Implicación:** los tests de submódulos usan `protocol.file.allow=always` y commitean en el clon del submódulo (no en el repo origen).
+
+## Parches recortados por líneas: `git apply --unidiff-zero`
+
+- **Fecha:** 2026-09-18
+- **Contexto:** OG-031, descartar hunks/líneas reconstruyendo el parche del diff y aplicándolo invertido al working tree.
+- **Hallazgo:** al seleccionar líneas sueltas, el hunk reconstruido puede quedar con un borde sin contexto (p. ej. termina en `+linea`). `git apply` rechaza esos hunks con «patch does not apply» aunque el contenido coincida, tanto en forward como en `--reverse`, salvo que se pase `--unidiff-zero`.
+- **Implicación:** los aplicadores de stage (`--cached`) y discard (worktree) usan `--unidiff-zero`; la seguridad viene de reconstruir el parche desde el diff recién leído, no de la heurística de contexto de git.
