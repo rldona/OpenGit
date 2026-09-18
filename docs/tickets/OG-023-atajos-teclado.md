@@ -1,7 +1,7 @@
 # OG-023 · Atajos de teclado
 
 - **Milestone:** M5 — Pulido
-- **Estado:** in-progress
+- **Estado:** done
 - **Depende de:** —
 - **Referencias:** ROADMAP.md
 
@@ -49,4 +49,4 @@ Todas las acciones exigen ratón y no hay forma de descubrir atajos. M5 incluye 
 - La ayuda es `ShortcutsHelp` sobre `ui.shortcutsOpen`; `mod+F` usa `searchFocusRequest` para que `HistoryView` enfoque el campo sin acoplarse por DOM.
 - De paso, `CommitPanel` reutiliza `stagedEntries`/`hasActiveOperation` en vez de duplicar el filtro.
 - Tests: 161 frontend (7 del matcher y formateo, 7 de acciones y ayuda en App), 97 Rust intactos.
-- Pendiente para cerrar: PR y CI verde.
+- Cerrado el 2026-09-18 con CI verde (Frontend 27 s, Rust 1m44s) en el PR #19.

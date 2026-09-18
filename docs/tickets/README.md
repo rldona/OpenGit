@@ -55,4 +55,4 @@ Un fichero por ticket, nombrado `OG-NNN-slug.md`. Todo cambio del repositorio na
 | [OG-020](OG-020-editor-conflictos.md) | Editor de conflictos por bloques | M4 | done |
 | [OG-021](OG-021-rebase-interactivo.md) | Rebase interactivo visual | M4 | done |
 | [OG-022](OG-022-temas.md) | Tema claro/oscuro | M5 | done |
-| [OG-023](OG-023-atajos-teclado.md) | Atajos de teclado | M5 | in-progress |
+| [OG-023](OG-023-atajos-teclado.md) | Atajos de teclado | M5 | done |
