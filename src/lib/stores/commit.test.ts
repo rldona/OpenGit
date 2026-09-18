@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { commitMessage, commitRepo, repoOpState } from "../bridge/commit";
 import { confirmDestructive } from "../bridge/dialog";
-import { repoOpAbort, repoOpContinue } from "../bridge/ops";
+import { repoOpAbort, repoOpContinue, repoOpSkip } from "../bridge/ops";
 import { listRefs, logPage } from "../bridge/log";
 import { statusRepo } from "../bridge/status";
 import type { StatusReport } from "../bridge/types";
@@ -22,6 +22,7 @@ vi.mock("../bridge/dialog", () => ({
 vi.mock("../bridge/ops", () => ({
   repoOpAbort: vi.fn(),
   repoOpContinue: vi.fn(),
+  repoOpSkip: vi.fn(),
 }));
 
 vi.mock("../bridge/status", () => ({
@@ -141,6 +142,17 @@ describe("useCommitStore", () => {
 
     expect(repoOpContinue).toHaveBeenCalledWith("/tmp/repo");
     expect(useUiStore.getState().outputLines.join("\n")).toContain("Operation continued");
+  });
+
+  it("salta la operación en curso y refresca", async () => {
+    vi.mocked(repoOpSkip).mockResolvedValue(undefined);
+    await useCommitStore.getState().load("/tmp/repo");
+
+    await useCommitStore.getState().skipOp("/tmp/repo");
+
+    expect(repoOpSkip).toHaveBeenCalledWith("/tmp/repo");
+    expect(statusRepo).toHaveBeenCalled();
+    expect(useUiStore.getState().outputLines.join("\n")).toContain("Operation skipped");
   });
 
   it("muestra la salida del hook cuando el commit falla", async () => {

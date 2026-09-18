@@ -58,6 +58,7 @@ pub fn run() {
             commands::resolve_conflict,
             commands::repo_op_abort,
             commands::repo_op_continue,
+            commands::repo_op_skip,
             commands::cherry_pick,
             commands::revert_commit,
             commands::reset_mixed,

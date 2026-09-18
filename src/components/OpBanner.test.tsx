@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { repoOpState } from "../lib/bridge/commit";
-import { repoOpAbort, repoOpContinue } from "../lib/bridge/ops";
+import { repoOpAbort, repoOpContinue, repoOpSkip } from "../lib/bridge/ops";
 import type { RepoInfo } from "../lib/bridge/types";
 import { useCommitStore } from "../lib/stores/commit";
 import { useRepoStore } from "../lib/stores/repo";
@@ -17,6 +17,7 @@ vi.mock("../lib/bridge/commit", () => ({
 vi.mock("../lib/bridge/ops", () => ({
   repoOpAbort: vi.fn().mockResolvedValue(undefined),
   repoOpContinue: vi.fn().mockResolvedValue(undefined),
+  repoOpSkip: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("../lib/bridge/status", () => ({
@@ -113,5 +114,23 @@ describe("OpBanner", () => {
 
     expect(repoOpAbort).toHaveBeenCalledWith("/tmp/repo");
     expect(repoOpContinue).toHaveBeenCalledWith("/tmp/repo");
+  });
+
+  it("ofrece Skip en rebase y cherry-pick", async () => {
+    vi.mocked(repoOpState).mockResolvedValue({ ...CLEAN, rebase: true });
+    const user = userEvent.setup();
+    render(<OpBanner />);
+
+    await user.click(await screen.findByRole("button", { name: "Skip" }));
+
+    expect(repoOpSkip).toHaveBeenCalledWith("/tmp/repo");
+  });
+
+  it("no ofrece Skip en un merge", async () => {
+    vi.mocked(repoOpState).mockResolvedValue({ ...CLEAN, merge: true });
+    render(<OpBanner />);
+
+    expect(await screen.findByRole("status")).toHaveTextContent("merge in progress");
+    expect(screen.queryByRole("button", { name: "Skip" })).not.toBeInTheDocument();
   });
 });

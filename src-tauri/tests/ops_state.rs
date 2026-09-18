@@ -1,6 +1,6 @@
 mod support;
 
-use opengit_lib::git::{repo_op_abort, repo_op_continue, repo_op_state, Runner};
+use opengit_lib::git::{repo_op_abort, repo_op_continue, repo_op_skip, repo_op_state, Runner};
 use support::TestRepo;
 
 fn runner() -> Runner {
@@ -162,7 +162,7 @@ fn cherry_pick_en_conflicto_se_aborta() {
 }
 
 #[test]
-fn sin_operacion_abort_y_continue_fallan() {
+fn sin_operacion_abort_continue_y_skip_fallan() {
     let repo = TestRepo::init();
     commit_file(&repo, "a.txt", "uno\n", "base");
 
@@ -176,5 +176,71 @@ fn sin_operacion_abort_y_continue_fallan() {
     assert!(
         format!("{cont}").contains("no operation in progress"),
         "{cont}"
+    );
+
+    let skip = repo_op_skip(&runner(), repo.path()).expect_err("sin operación");
+    assert!(
+        format!("{skip}").contains("no operation in progress"),
+        "{skip}"
+    );
+}
+
+#[test]
+fn cherry_pick_en_conflicto_se_salta() {
+    let repo = TestRepo::init();
+    commit_file(&repo, "a.txt", "base\n", "base");
+    repo.git_ok(&["checkout", "-q", "-b", "feature"]);
+    commit_file(&repo, "a.txt", "feature\n", "cambio feature");
+    let feature_head = head(&repo);
+    repo.git_ok(&["checkout", "-q", "main"]);
+    commit_file(&repo, "a.txt", "main\n", "cambio main");
+    let main_head = head(&repo);
+    let pick = repo.git(&["cherry-pick", &feature_head]);
+    assert!(!pick.status.success());
+
+    repo_op_skip(&runner(), repo.path()).expect("skip");
+
+    assert!(repo_op_state(&runner(), repo.path()).unwrap().is_clean());
+    assert_eq!(head(&repo), main_head, "el commit saltado no se aplica");
+    assert_eq!(
+        repo.git_ok(&["log", "-1", "--format=%s"]).stdout,
+        b"cambio main\n"
+    );
+}
+
+#[test]
+fn rebase_en_conflicto_se_salta_y_termina() {
+    let repo = TestRepo::init();
+    commit_file(&repo, "a.txt", "base\n", "base");
+    repo.git_ok(&["checkout", "-q", "-b", "feature"]);
+    commit_file(&repo, "a.txt", "feature\n", "cambio feature");
+    repo.git_ok(&["checkout", "-q", "main"]);
+    commit_file(&repo, "a.txt", "main\n", "cambio main");
+    let main_head = head(&repo);
+    repo.git_ok(&["checkout", "-q", "feature"]);
+    let rebase = repo.git(&["rebase", "main"]);
+    assert!(!rebase.status.success());
+
+    repo_op_skip(&runner(), repo.path()).expect("skip");
+
+    assert!(repo_op_state(&runner(), repo.path()).unwrap().is_clean());
+    assert_eq!(head(&repo), main_head, "el patch saltado no se aplica");
+    assert_eq!(
+        std::fs::read_to_string(repo.path().join("a.txt")).unwrap(),
+        "main\n"
+    );
+}
+
+#[test]
+fn merge_en_conflicto_no_se_puede_saltar() {
+    let repo = TestRepo::init();
+    conflicted_merge(&repo);
+
+    let error = repo_op_skip(&runner(), repo.path()).expect_err("merge sin skip");
+    assert!(format!("{error}").contains("merge has no skip"), "{error}");
+    assert_eq!(
+        repo_op_state(&runner(), repo.path()).unwrap().operation(),
+        Some("merge"),
+        "el merge sigue en curso"
     );
 }

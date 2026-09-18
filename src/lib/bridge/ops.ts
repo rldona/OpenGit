@@ -9,3 +9,8 @@ export function repoOpAbort(path: string): Promise<void> {
 export function repoOpContinue(path: string): Promise<void> {
   return invoke<void>("repo_op_continue", { path });
 }
+
+/** Salta el commit o patch conflictivo (no disponible en merge). */
+export function repoOpSkip(path: string): Promise<void> {
+  return invoke<void>("repo_op_skip", { path });
+}
