@@ -37,6 +37,17 @@ Build de prueba sin empaquetar (útil para validar sin firmar):
 npm run tauri build -- --debug --no-bundle
 ```
 
+### Builds multiplataforma a demanda
+
+Los builds de macOS, Windows y Linux **no** corren en cada PR (cuestan minutos, sobre todo macOS). El PR solo pasa frontend + Rust en Ubuntu (~3 min). Los builds completos se lanzan a mano y suben el binario sin empaquetar como artefacto:
+
+```bash
+gh workflow run build.yml --ref main
+gh run watch
+```
+
+Artefactos: `opengit-macos`, `opengit-linux`, `opengit-windows`.
+
 ## Estructura
 
 ```
