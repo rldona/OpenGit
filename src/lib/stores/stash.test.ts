@@ -103,8 +103,8 @@ describe("useStashStore", () => {
     expect(stashDrop).toHaveBeenCalledWith("/tmp/repo", "stash@{0}");
   });
 
-  it("openDiff carga el parche del stash", async () => {
-    await useStashStore.getState().openDiff("/tmp/repo", "stash@{0}");
+  it("select carga el parche del stash para la vista", async () => {
+    await useStashStore.getState().select("/tmp/repo", "stash@{0}");
 
     expect(stashShow).toHaveBeenCalledWith("/tmp/repo", "stash@{0}");
     expect(useStashStore.getState().diffReference).toBe("stash@{0}");
@@ -113,21 +113,35 @@ describe("useStashStore", () => {
     expect(useStashStore.getState().diffError).toBeNull();
   });
 
-  it("openDiff registra el error", async () => {
+  it("select registra el error", async () => {
     vi.mocked(stashShow).mockRejectedValue(new Error("boom"));
 
-    await useStashStore.getState().openDiff("/tmp/repo", "stash@{0}");
+    await useStashStore.getState().select("/tmp/repo", "stash@{0}");
 
     expect(useStashStore.getState().diffError).toContain("boom");
     expect(useStashStore.getState().diffLoading).toBe(false);
   });
 
-  it("closeDiff limpia la referencia y el parche", async () => {
-    await useStashStore.getState().openDiff("/tmp/repo", "stash@{0}");
+  it("clearSelection limpia la referencia y el parche", async () => {
+    await useStashStore.getState().select("/tmp/repo", "stash@{0}");
 
-    useStashStore.getState().closeDiff();
+    useStashStore.getState().clearSelection();
 
     expect(useStashStore.getState().diffReference).toBeNull();
     expect(useStashStore.getState().diffPatch).toBe("");
+  });
+
+  it("pop y drop deseleccionan: los stash@{n} se renumeran", async () => {
+    await useStashStore.getState().load("/tmp/repo");
+    await useStashStore.getState().select("/tmp/repo", "stash@{0}");
+
+    await useStashStore.getState().pop("/tmp/repo", "stash@{0}");
+
+    expect(useStashStore.getState().diffReference).toBeNull();
+
+    await useStashStore.getState().select("/tmp/repo", "stash@{0}");
+    await useStashStore.getState().drop("/tmp/repo", "stash@{0}");
+
+    expect(useStashStore.getState().diffReference).toBeNull();
   });
 });

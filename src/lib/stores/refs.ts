@@ -47,7 +47,6 @@ type RefsState = {
   upstream: string | null;
   ahead: number;
   behind: number;
-  filter: string;
   incoming: string[];
   outgoing: string[];
   loading: boolean;
@@ -55,7 +54,6 @@ type RefsState = {
   pendingForceDelete: string | null;
   load: (root: string) => Promise<void>;
   refresh: (root: string) => Promise<void>;
-  setFilter: (filter: string) => void;
   checkout: (root: string, ref: RefEntry) => Promise<void>;
   create: (root: string, name: string, startPoint: string) => Promise<boolean>;
   rename: (root: string, oldName: string, newName: string) => Promise<boolean>;
@@ -79,7 +77,6 @@ export const useRefsStore = create<RefsState>((set, get) => ({
   upstream: null,
   ahead: 0,
   behind: 0,
-  filter: "",
   incoming: [],
   outgoing: [],
   loading: false,
@@ -122,8 +119,6 @@ export const useRefsStore = create<RefsState>((set, get) => ({
       set({ error: formatGitError(error) });
     }
   },
-
-  setFilter: (filter) => set({ filter }),
 
   checkout: async (root, ref) => {
     const isRemote = ref.name.startsWith("refs/remotes/");
@@ -248,7 +243,6 @@ export const useRefsStore = create<RefsState>((set, get) => ({
       upstream: null,
       ahead: 0,
       behind: 0,
-      filter: "",
       incoming: [],
       outgoing: [],
       loading: false,

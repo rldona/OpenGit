@@ -25,7 +25,18 @@ pub enum JobKind {
         prune: bool,
         remote: Option<String>,
     },
-    Pull,
+    Pull {
+        remote: Option<String>,
+        branch: Option<String>,
+        /// `--rebase` en lugar de merge.
+        rebase: bool,
+        /// `--no-ff`: commit de merge aunque el fast-forward fuera posible.
+        no_ff: bool,
+        /// `--no-commit`: deja los cambios mergeados sin commitear.
+        no_commit: bool,
+        /// `--log`: incluye los asuntos de los commits fusionados en el merge commit.
+        include_messages: bool,
+    },
     Push {
         remote: Option<String>,
         set_upstream: bool,
@@ -40,7 +51,7 @@ impl JobKind {
     pub fn label(&self) -> &'static str {
         match self {
             Self::Fetch { .. } => "fetch",
-            Self::Pull => "pull",
+            Self::Pull { .. } => "pull",
             Self::Push { .. } => "push",
             Self::PushTag { .. } => "push tag",
         }
@@ -115,10 +126,35 @@ pub fn command_for(runner: &Runner, repo: &Path, kind: &JobKind) -> Result<GitCo
                 None => args.push("--all".into()),
             }
         }
-        JobKind::Pull => {
+        JobKind::Pull {
+            remote,
+            branch,
+            rebase,
+            no_ff,
+            no_commit,
+            include_messages,
+        } => {
             args.push("pull".into());
-            args.push("--ff-only".into());
             args.push("--progress".into());
+            if *rebase {
+                args.push("--rebase".into());
+            } else {
+                if *no_ff {
+                    args.push("--no-ff".into());
+                }
+                if *no_commit {
+                    args.push("--no-commit".into());
+                }
+                if *include_messages {
+                    args.push("--log".into());
+                }
+            }
+            if let Some(remote) = remote {
+                args.push(remote.into());
+                if let Some(branch) = branch {
+                    args.push(branch.into());
+                }
+            }
         }
         JobKind::PushTag { remote, tag } => {
             crate::git::validate_ref_name(runner, repo, tag)?;
@@ -193,4 +229,74 @@ where
     });
 
     Ok(token)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::git::Runner;
+
+    fn pull_args(kind: &JobKind) -> Vec<String> {
+        command_for(&Runner::locate(), Path::new("."), kind)
+            .expect("comando de pull")
+            .args()
+    }
+
+    fn pull(rebase: bool, no_ff: bool, no_commit: bool, include_messages: bool) -> JobKind {
+        JobKind::Pull {
+            remote: Some("origin".into()),
+            branch: Some("main".into()),
+            rebase,
+            no_ff,
+            no_commit,
+            include_messages,
+        }
+    }
+
+    #[test]
+    fn fetch_mapea_prune_y_remoto() {
+        let args = command_for(
+            &Runner::locate(),
+            Path::new("."),
+            &JobKind::Fetch {
+                prune: true,
+                remote: Some("origin".into()),
+            },
+        )
+        .expect("comando de fetch")
+        .args();
+        assert_eq!(args, vec!["fetch", "--progress", "--prune", "origin"]);
+    }
+
+    #[test]
+    fn pull_por_defecto_mergea_sin_ff_only() {
+        assert_eq!(
+            pull_args(&pull(false, false, false, false)),
+            vec!["pull", "--progress", "origin", "main"]
+        );
+    }
+
+    #[test]
+    fn pull_mapea_las_opciones_del_dialogo() {
+        assert_eq!(
+            pull_args(&pull(false, true, true, true)),
+            vec![
+                "pull",
+                "--progress",
+                "--no-ff",
+                "--no-commit",
+                "--log",
+                "origin",
+                "main"
+            ]
+        );
+    }
+
+    #[test]
+    fn pull_con_rebase_ignora_las_opciones_de_merge() {
+        assert_eq!(
+            pull_args(&pull(true, true, true, true)),
+            vec!["pull", "--progress", "--rebase", "origin", "main"]
+        );
+    }
 }

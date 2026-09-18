@@ -143,11 +143,13 @@ pub fn run() {
             commands::delete_untracked,
             commands::recent_repos,
             commands::remove_recent_repo,
+            commands::open_terminal,
             commands::submodule_status,
             commands::worktree_list,
             commands::lfs_status,
             commands::remote_urls,
-            commands::tracking_commits
+            commands::tracking_commits,
+            commands::author_ident
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

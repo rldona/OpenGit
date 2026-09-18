@@ -1,13 +1,5 @@
 export type ShortcutId =
-  | "open"
-  | "refresh"
-  | "commit"
-  | "search"
-  | "viewStatus"
-  | "viewHistory"
-  | "viewDiff"
-  | "help"
-  | "close";
+  "open" | "refresh" | "commit" | "viewStatus" | "viewHistory" | "viewDiff" | "help" | "close";
 
 export type ShortcutGroup = "Repository" | "Commit" | "Navigation" | "Help";
 
@@ -22,7 +14,6 @@ export const SHORTCUTS: Shortcut[] = [
   { id: "open", keys: "mod+o", label: "Open repository", group: "Repository" },
   { id: "refresh", keys: "mod+r", label: "Refresh status, refs and history", group: "Repository" },
   { id: "commit", keys: "mod+enter", label: "Commit staged changes", group: "Commit" },
-  { id: "search", keys: "mod+f", label: "Search in history", group: "Navigation" },
   { id: "viewStatus", keys: "mod+1", label: "File status", group: "Navigation" },
   { id: "viewHistory", keys: "mod+2", label: "History", group: "Navigation" },
   { id: "viewDiff", keys: "mod+3", label: "Diff", group: "Navigation" },

@@ -1,0 +1,91 @@
+import { confirmDestructive } from "../lib/bridge/dialog";
+import { parseLfsPointerPatch } from "../lib/lfs";
+import { useDiffStore } from "../lib/stores/diff";
+import { DiffEditor } from "./DiffEditor";
+import { PatchView } from "./PatchView";
+
+/**
+ * Panel del parche del fichero seleccionado. Las acciones de staging solo se
+ * ofrecen sobre el working tree sin invertir: en un commit el diff es de lectura.
+ */
+export function DiffPatchPanel() {
+  const target = useDiffStore((state) => state.target);
+  const selected = useDiffStore((state) => state.selected);
+  const patch = useDiffStore((state) => state.patch);
+  const binary = useDiffStore((state) => state.binary);
+  const mode = useDiffStore((state) => state.mode);
+  const reversed = useDiffStore((state) => state.reversed);
+  const error = useDiffStore((state) => state.error);
+  const selectedLines = useDiffStore((state) => state.selectedLines);
+  const toggleLine = useDiffStore((state) => state.toggleLine);
+  const applySelection = useDiffStore((state) => state.applySelection);
+  const discardSelection = useDiffStore((state) => state.discardSelection);
+
+  const patchActions = target?.kind === "worktree" && !reversed;
+  const pointer = selected && !selected.untracked && !binary ? parseLfsPointerPatch(patch) : null;
+
+  const confirmDiscard = async (selection: Parameters<typeof discardSelection>[0]) => {
+    if (await confirmDestructive("Discard the selected changes? This cannot be undone.")) {
+      await discardSelection(selection);
+    }
+  };
+
+  return (
+    <div className="diff-pane">
+      {/* Cabecera con la ruta del fichero, como SourceTree: sustituye a las
+          líneas `diff --git`/`index`/`---`/`+++` que ya no se pintan. */}
+      {selected && (
+        <div className="diff-pane-head" title={selected.path}>
+          <span className="diff-pane-path">{selected.path}</span>
+          {selected.orig_path && (
+            <span className="diff-pane-orig muted">← {selected.orig_path}</span>
+          )}
+          {!selected.untracked && (
+            <span className="diff-pane-counts">
+              <span className="added">+{selected.added ?? 0}</span>
+              <span className="deleted">-{selected.deleted ?? 0}</span>
+            </span>
+          )}
+        </div>
+      )}
+      {error && (
+        <p role="alert" className="error-banner">
+          {error}
+        </p>
+      )}
+      {pointer && (
+        <p className="lfs-warning">
+          Git LFS pointer (oid {pointer.oid.slice(0, 12)}…, {pointer.size} bytes): the real content
+          is not available locally.
+        </p>
+      )}
+      {!selected && !error && <p className="muted status-empty">No file selected</p>}
+      {selected?.untracked && (
+        <p className="muted status-empty">
+          Untracked file: no diff yet. Stage it to see the content.
+        </p>
+      )}
+      {selected && !selected.untracked && binary && (
+        <p className="muted status-empty">Binary file: no text diff available.</p>
+      )}
+      {selected && !selected.untracked && !binary && patch !== "" && mode === "unified" && (
+        <PatchView
+          patch={patch}
+          staging={patchActions}
+          stagedSide={selected.staged}
+          selectedLines={selectedLines}
+          onToggleLine={toggleLine}
+          onApply={(selection) => void applySelection(selection)}
+          onDiscard={
+            patchActions && !selected.staged
+              ? (selection) => void confirmDiscard(selection)
+              : undefined
+          }
+        />
+      )}
+      {selected && !selected.untracked && !binary && patch !== "" && mode === "side" && (
+        <DiffEditor patch={patch} fileName={selected.path} mode={mode} />
+      )}
+    </div>
+  );
+}

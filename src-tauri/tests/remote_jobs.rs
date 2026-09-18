@@ -144,6 +144,53 @@ fn fetch_actualiza_las_refs_remotas() {
 }
 
 #[test]
+fn pull_mergea_los_cambios_del_remoto() {
+    let remote = TempDir::new("bare-pull");
+    init_bare(&remote);
+    let a = TestRepo::init();
+    commit_file(&a, "a.txt", "uno\n", "c1");
+    a.git_ok(&["remote", "add", "origin", remote.path().to_str().unwrap()]);
+    a.git_ok(&["push", "-q", "--set-upstream", "origin", "main"]);
+
+    let clones = TempDir::new("clones-pull");
+    let b_path = clones.path().join("b");
+    let cloned = git(
+        clones.path(),
+        &[
+            "clone",
+            "--branch",
+            "main",
+            remote.path().to_str().unwrap(),
+            "b",
+        ],
+    );
+    assert!(cloned.status.success());
+
+    commit_file(&a, "a.txt", "dos\n", "c2");
+    a.git_ok(&["push", "-q"]);
+
+    let b = TestRepo::at(&b_path);
+    let (_id, receiver) = spawn_job(
+        &b,
+        JobKind::Pull {
+            remote: Some("origin".into()),
+            branch: Some("main".into()),
+            rebase: false,
+            no_ff: false,
+            no_commit: false,
+            include_messages: false,
+        },
+    );
+    let (lines, finished) = collect_until_finished(&receiver, Duration::from_secs(20));
+    let (success, _) = finished.expect("evento de fin");
+    assert!(success, "el pull debe funcionar: {lines:?}");
+
+    let b_head = String::from_utf8(b.git_ok(&["rev-parse", "HEAD"]).stdout).unwrap();
+    let a_head = String::from_utf8(a.git_ok(&["rev-parse", "HEAD"]).stdout).unwrap();
+    assert_eq!(b_head, a_head);
+}
+
+#[test]
 fn push_rechazado_por_non_fast_forward() {
     let remote = TempDir::new("bare-nff");
     init_bare(&remote);

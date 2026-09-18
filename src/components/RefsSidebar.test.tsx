@@ -9,6 +9,7 @@ import { tagCreate, tagDelete } from "../lib/bridge/tags";
 import type { RefEntry, Remote, RepoInfo } from "../lib/bridge/types";
 import { useExtrasStore } from "../lib/stores/extras";
 import { useRefsStore } from "../lib/stores/refs";
+import { useCollapseStore } from "../lib/stores/collapse";
 import { useRepoStore } from "../lib/stores/repo";
 import { RefsSidebar } from "./RefsSidebar";
 
@@ -95,6 +96,8 @@ const REMOTES: Remote[] = [
 
 describe("RefsSidebar", () => {
   beforeEach(() => {
+    localStorage.clear();
+    useCollapseStore.setState({ collapsed: {} });
     useRepoStore.setState({ repo: REPO, recents: [], loading: false, error: null });
     useRefsStore.getState().reset();
     useRefsStore.setState({
@@ -111,39 +114,56 @@ describe("RefsSidebar", () => {
   });
 
   it("muestra ramas, remotas y tags con la actual marcada", async () => {
+    const user = userEvent.setup();
     render(<RefsSidebar />);
 
     await screen.findByText("feature");
     expect(screen.getByText("main")).toBeInTheDocument();
     expect(screen.getByText("feature")).toBeInTheDocument();
+    // Los remotos arrancan plegados: hay que abrir "origin" para ver sus ramas.
+    await user.click(screen.getByRole("button", { name: "origin" }));
     expect(screen.getByText("origin/remota")).toBeInTheDocument();
     expect(screen.getByText("v1.0.0")).toBeInTheDocument();
     expect(screen.getByLabelText("Current branch")).toBeInTheDocument();
     expect(screen.getByText("v1.0.0").querySelector(".refs-tag-mark.annotated")).not.toBeNull();
     expect(screen.getByText("ligero").querySelector(".refs-tag-mark.annotated")).toBeNull();
-    expect(screen.getByText("↑1")).toBeInTheDocument();
-    expect(screen.getByText("↓2")).toBeInTheDocument();
+    expect(screen.getByText("1↑")).toBeInTheDocument();
+    expect(screen.getByText("2↓")).toBeInTheDocument();
   });
 
-  it("filtra el árbol de refs", async () => {
+  it("selecciona la rama al pulsar, sin hacer checkout", async () => {
+    const user = userEvent.setup();
+    render(<RefsSidebar />);
+
+    const feature = await screen.findByRole("button", { name: "feature" });
+    await user.click(feature);
+
+    expect(feature).toHaveClass("selected");
+    expect(checkoutRef).not.toHaveBeenCalled();
+  });
+
+  it("hace checkout desde el menú contextual", async () => {
     const user = userEvent.setup();
     render(<RefsSidebar />);
     await screen.findByText("feature");
 
-    await user.type(screen.getByLabelText("Filter refs"), "feat");
-
-    expect(screen.queryByText("main")).not.toBeInTheDocument();
-    expect(screen.getByText("feature")).toBeInTheDocument();
-    expect(screen.queryByText("v1.0.0")).not.toBeInTheDocument();
-  });
-
-  it("hace checkout al pulsar una rama local", async () => {
-    const user = userEvent.setup();
-    render(<RefsSidebar />);
-
-    await user.click(await screen.findByRole("button", { name: "feature" }));
+    fireEvent.contextMenu(screen.getByText("feature"));
+    await user.click(screen.getByRole("menuitem", { name: "Checkout" }));
 
     expect(checkoutRef).toHaveBeenCalledWith("/tmp/repo", "feature", false);
+  });
+
+  it("selecciona una rama remota sin hacer checkout", async () => {
+    const user = userEvent.setup();
+    render(<RefsSidebar />);
+    await screen.findByText("feature");
+
+    await user.click(screen.getByRole("button", { name: "origin" }));
+    const remote = await screen.findByRole("button", { name: "origin/remota" });
+    await user.click(remote);
+
+    expect(remote).toHaveClass("selected");
+    expect(checkoutRef).not.toHaveBeenCalled();
   });
 
   it("crea un tag en el commit seleccionado o HEAD", async () => {
@@ -197,7 +217,7 @@ describe("RefsSidebar", () => {
   it("abre la URL web del remoto en el navegador", async () => {
     const user = userEvent.setup();
     render(<RefsSidebar />);
-    await screen.findByText("origin/remota");
+    await screen.findByText("feature");
 
     await user.click(screen.getByRole("button", { name: "Open origin in the browser" }));
 
@@ -217,10 +237,53 @@ describe("RefsSidebar", () => {
     expect(within(menu).getByRole("menuitem", { name: "Copy name" })).toBeInTheDocument();
   });
 
+  it("abre el menú de la sección Branches con el botón derecho", async () => {
+    const user = userEvent.setup();
+    render(<RefsSidebar />);
+    await screen.findByText("feature");
+
+    fireEvent.contextMenu(screen.getByRole("button", { name: "Branches" }));
+
+    expect(screen.getByRole("menuitem", { name: "New Branch…" })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "New Tag…" })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "New Remote…" })).toBeDisabled();
+    expect(screen.getByRole("menuitem", { name: "Add Submodule…" })).toBeDisabled();
+
+    await user.click(screen.getByRole("menuitem", { name: "New Branch…" }));
+
+    expect(screen.getByLabelText("New branch name")).toBeInTheDocument();
+  });
+
+  it("no expone Rename ni Delete al pasar por encima de una rama", async () => {
+    render(<RefsSidebar />);
+
+    const row = (await screen.findByText("feature")).closest("li")!;
+
+    expect(within(row).queryByRole("button", { name: "Rename" })).not.toBeInTheDocument();
+    expect(within(row).queryByRole("button", { name: "Delete" })).not.toBeInTheDocument();
+  });
+
+  it("pliega los remotos por defecto y los despliega al pulsar", async () => {
+    const user = userEvent.setup();
+    render(<RefsSidebar />);
+    await screen.findByText("feature");
+
+    // Sin esto, un repo con cientos de ramas remotas expulsa de la vista
+    // todo lo que va debajo (tags, stashes, submódulos).
+    expect(screen.queryByText("origin/remota")).not.toBeInTheDocument();
+    const toggle = screen.getByRole("button", { name: "origin" });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+
+    await user.click(toggle);
+
+    expect(screen.getByText("origin/remota")).toBeInTheDocument();
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+  });
+
   it("no ofrece abrir remotos sin URL web", async () => {
     useExtrasStore.setState({ remotes: [{ name: "origin", url: "/tmp/origen", web_url: null }] });
     render(<RefsSidebar />);
-    await screen.findByText("origin/remota");
+    await screen.findByText("feature");
 
     expect(
       screen.queryByRole("button", { name: "Open origin in the browser" }),

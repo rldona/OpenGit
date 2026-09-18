@@ -89,6 +89,14 @@ pub fn cancel_remote_job(job_id: String, state: State<'_, AppState>) -> Result<b
     Ok(state.jobs.cancel(&job_id))
 }
 
+#[tauri::command]
+pub fn author_ident(
+    path: String,
+    state: State<'_, AppState>,
+) -> Result<crate::git::AuthorIdent, GitError> {
+    crate::git::author_ident(&state.runner, Path::new(&path))
+}
+
 impl AppState {
     fn pause_watcher(&self) {
         if let Ok(watcher) = self.watcher.lock() {
@@ -636,6 +644,64 @@ pub fn tracking_commits(
 #[tauri::command]
 pub fn remove_recent_repo(path: String, state: State<'_, AppState>) -> Result<(), GitError> {
     state.recents.lock().map_err(lock_error)?.remove(&path)
+}
+
+/// Abre un terminal del sistema en `path`.
+///
+/// El programa y sus argumentos se pasan siempre como argv (regla 3 de
+/// AGENTS.md): nada de construir una orden de shell con la ruta interpolada,
+/// que en un repo llamado `foo; rm -rf ~` sería una inyección de libro.
+#[tauri::command]
+pub fn open_terminal(path: String) -> Result<(), GitError> {
+    let dir = Path::new(&path);
+    if !dir.is_dir() {
+        return Err(GitError::invalid(format!("not a directory: {path}")));
+    }
+    terminal_candidates(dir)
+        .into_iter()
+        .find_map(|(program, args)| {
+            std::process::Command::new(program)
+                .args(&args)
+                .spawn()
+                .ok()
+                .map(|_| ())
+        })
+        .ok_or_else(|| GitError::invalid("no terminal emulator available".to_string()))
+}
+
+/// Candidatos por plataforma, en orden de preferencia.
+fn terminal_candidates(dir: &Path) -> Vec<(&'static str, Vec<std::ffi::OsString>)> {
+    let path = dir.as_os_str().to_os_string();
+    #[cfg(target_os = "macos")]
+    {
+        vec![("open", vec!["-a".into(), "Terminal".into(), path])]
+    }
+    #[cfg(target_os = "windows")]
+    {
+        // `wt` (Windows Terminal) si está; si no, la consola clásica.
+        vec![
+            ("wt", vec!["-d".into(), path.clone()]),
+            ("cmd", vec!["/c".into(), "start".into(), "cmd".into()]),
+        ]
+    }
+    #[cfg(all(unix, not(target_os = "macos")))]
+    {
+        vec![
+            ("x-terminal-emulator", vec![]),
+            ("gnome-terminal", vec![]),
+            ("konsole", vec![]),
+            ("xterm", vec![]),
+        ]
+        .into_iter()
+        .map(
+            |(program, mut args): (&'static str, Vec<std::ffi::OsString>)| {
+                args.push("--working-directory".into());
+                args.push(path.clone());
+                (program, args)
+            },
+        )
+        .collect()
+    }
 }
 
 fn lock_error<T>(_error: std::sync::PoisonError<T>) -> GitError {

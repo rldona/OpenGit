@@ -10,8 +10,8 @@ pub mod version;
 
 pub use error::GitError;
 pub use models::{
-    Commit, FileDiff, FileStatus, LfsStatus, Ref, Remote, Stash, StatusKind, StatusReport,
-    Submodule, SubmoduleState, TrackingCommits, Worktree,
+    AuthorIdent, Commit, FileDiff, FileStatus, LfsStatus, Ref, Remote, Stash, StatusKind,
+    StatusReport, Submodule, SubmoduleState, TrackingCommits, Worktree,
 };
 pub use parsers::{
     parse_gitattributes_paths, parse_gitattributes_uses_lfs, parse_log, parse_numstat, parse_refs,
@@ -27,7 +27,7 @@ use std::time::Duration;
 use serde::{Deserialize, Serialize};
 
 /// Formato de una línea de log: campos separados por `%x1f`, commits por `-z`.
-pub const LOG_FORMAT: &str = "%H%x1f%P%x1f%an%x1f%ae%x1f%at%x1f%D%x1f%s";
+pub const LOG_FORMAT: &str = "%H%x1f%P%x1f%an%x1f%ae%x1f%at%x1f%D%x1f%s%x1f%b";
 /// Formato de `for-each-ref`: campos separados por NUL.
 pub const REFS_FORMAT: &str =
     "%(refname)%00%(objectname)%00%(objecttype)%00%(upstream)%00%(upstream:track)";
@@ -365,6 +365,22 @@ pub fn remote_urls(runner: &Runner, repo: &Path) -> Result<Vec<Remote>, GitError
         });
     }
     Ok(remotes)
+}
+
+/// Identidad efectiva que git usaría al commitear: `Name <email> timestamp tz`.
+pub fn author_ident(runner: &Runner, repo: &Path) -> Result<AuthorIdent, GitError> {
+    let output = runner.run_checked(&GitCommand::new(["var", "GIT_AUTHOR_IDENT"]).cwd(repo))?;
+    let text = output.stdout_lossy();
+    let text = text.trim();
+    let open = text.rfind('<');
+    let close = text.rfind('>');
+    match (open, close) {
+        (Some(open), Some(close)) if open > 0 && close > open => Ok(AuthorIdent {
+            name: text[..open].trim().to_string(),
+            email: text[open + 1..close].to_string(),
+        }),
+        _ => Err(GitError::invalid("could not parse the git author identity")),
+    }
 }
 
 fn rev_list(runner: &Runner, repo: &Path, range: &str) -> Result<Vec<String>, GitError> {
@@ -850,7 +866,14 @@ pub fn log_page(
             args.push("--end-of-options".into());
             args.push(rev.into());
         }
-        None => args.push("--all".into()),
+        None => {
+            // `--all` incluiría `refs/stash`, y con él el commit del stash y su
+            // commit interno "index on <rama>: …", que no pintan nada en el
+            // historial: los stashes tienen su propia sección.
+            // El `--exclude` afecta al `--all` que va justo detrás.
+            args.push("--exclude=refs/stash".into());
+            args.push("--all".into());
+        }
     }
 
     if let Some(path) = search

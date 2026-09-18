@@ -9,16 +9,17 @@ import { useRefsStore } from "../lib/stores/refs";
 import { useRemoteStore } from "../lib/stores/remote";
 import { useRepoStore } from "../lib/stores/repo";
 import { useContextMenu } from "../lib/hooks/useContextMenu";
+import { useCollapseStore } from "../lib/stores/collapse";
+import { useUiStore } from "../lib/stores/ui";
+import { CollapsibleSection } from "./CollapsibleSection";
 
 export function RefsSidebar() {
   const root = useRepoStore((state) => state.repo?.root ?? null);
   const refs = useRefsStore((state) => state.refs);
   const current = useRefsStore((state) => state.current);
-  const filter = useRefsStore((state) => state.filter);
   const error = useRefsStore((state) => state.error);
   const pendingForceDelete = useRefsStore((state) => state.pendingForceDelete);
   const load = useRefsStore((state) => state.load);
-  const setFilter = useRefsStore((state) => state.setFilter);
   const checkout = useRefsStore((state) => state.checkout);
   const remoteInfos = useExtrasStore((state) => state.remotes);
   const create = useRefsStore((state) => state.create);
@@ -27,6 +28,7 @@ export function RefsSidebar() {
   const forceRemove = useRefsStore((state) => state.forceRemove);
   const cancelForceDelete = useRefsStore((state) => state.cancelForceDelete);
   const selectedCommit = useLogStore((state) => state.selected);
+  const newBranchRequest = useUiStore((state) => state.newBranchRequest);
 
   const createTag = useRefsStore((state) => state.createTag);
   const deleteTag = useRefsStore((state) => state.deleteTag);
@@ -34,6 +36,8 @@ export function RefsSidebar() {
 
   const [creating, setCreating] = useState(false);
   const refMenu = useContextMenu();
+  // Selección visual: el checkout solo se hace desde el menú contextual.
+  const [selectedRef, setSelectedRef] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
   const [renaming, setRenaming] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
@@ -47,22 +51,27 @@ export function RefsSidebar() {
     if (root) {
       void load(root);
     }
+    setSelectedRef(null);
   }, [root, load]);
 
-  const term = filter.trim().toLowerCase();
-  const matches = (name: string) => term === "" || name.toLowerCase().includes(term);
+  // El botón Branch de la barra reutiliza el formulario que ya vive aquí,
+  // en vez de duplicar un diálogo de creación.
+  useEffect(() => {
+    if (newBranchRequest > 0) {
+      setCreating(true);
+      useCollapseStore.getState().set("branches", false);
+    }
+  }, [newBranchRequest]);
+
   const locals = refs
     .filter((ref) => ref.name.startsWith("refs/heads/"))
-    .map((ref) => ({ ref, short: ref.name.slice("refs/heads/".length) }))
-    .filter(({ short }) => matches(short));
+    .map((ref) => ({ ref, short: ref.name.slice("refs/heads/".length) }));
   const remotes = refs
     .filter((ref) => ref.name.startsWith("refs/remotes/") && !ref.name.endsWith("/HEAD"))
-    .map((ref) => ({ ref, short: ref.name.slice("refs/remotes/".length) }))
-    .filter(({ short }) => matches(short));
+    .map((ref) => ({ ref, short: ref.name.slice("refs/remotes/".length) }));
   const tags = refs
     .filter((ref) => ref.name.startsWith("refs/tags/"))
-    .map((ref) => ({ ref, short: ref.name.slice("refs/tags/".length) }))
-    .filter(({ short }) => matches(short));
+    .map((ref) => ({ ref, short: ref.name.slice("refs/tags/".length) }));
 
   const remoteGroups = new Map<string, typeof remotes>();
   for (const item of remotes) {
@@ -124,25 +133,28 @@ export function RefsSidebar() {
 
   return (
     <>
-      <section className="sidebar-section">
-        <h2>Branches</h2>
-        <div className="refs-toolbar">
-          <input
-            type="search"
-            aria-label="Filter refs"
-            placeholder="Filter…"
-            value={filter}
-            onChange={(event) => setFilter(event.target.value)}
-          />
-          <button
-            type="button"
-            aria-label="New branch"
-            title="New branch"
-            onClick={() => setCreating((value) => !value)}
-          >
-            +
-          </button>
-        </div>
+      <CollapsibleSection
+        id="branches"
+        title="Branches"
+        icon="branch"
+        onContextMenu={(event) =>
+          refMenu.open(event, [
+            { label: "New Branch…", onSelect: () => setCreating(true) },
+            {
+              label: "New Tag…",
+              onSelect: () => {
+                setTagForm(true);
+                useCollapseStore.getState().set("tags", false);
+              },
+            },
+            // Como en SourceTree, pero sin backend todavía: se muestran
+            // deshabilitados para no prometer lo que no hay.
+            { label: "New Remote…", disabled: true, onSelect: () => {} },
+            { label: "Add Submodule…", disabled: true, onSelect: () => {} },
+            { label: "Add/Link Subtree…", disabled: true, onSelect: () => {} },
+          ])
+        }
+      >
         {creating && (
           <div className="refs-inline">
             <input
@@ -191,9 +203,11 @@ export function RefsSidebar() {
                 <>
                   <button
                     type="button"
-                    className={`refs-name${current === short ? " current" : ""}`}
+                    className={`refs-name${current === short ? " current" : ""}${
+                      selectedRef === ref.name ? " selected" : ""
+                    }`}
                     title={ref.name}
-                    onClick={() => root && void checkout(root, ref)}
+                    onClick={() => setSelectedRef(ref.name)}
                     onContextMenu={(event) =>
                       refMenu.open(event, [
                         { label: "Checkout", onSelect: () => root && void checkout(root, ref) },
@@ -226,31 +240,15 @@ export function RefsSidebar() {
                     if (!track || (track.ahead === 0 && track.behind === 0)) {
                       return null;
                     }
+                    // Como SourceTree: contador primero y flecha después, en un
+                    // badge que se vea de un vistazo (12↓).
                     return (
                       <span className="refs-track">
-                        {track.ahead > 0 && <span>↑{track.ahead}</span>}
-                        {track.behind > 0 && <span>↓{track.behind}</span>}
+                        {track.ahead > 0 && <span>{track.ahead}↑</span>}
+                        {track.behind > 0 && <span>{track.behind}↓</span>}
                       </span>
                     );
                   })()}
-                  <span className="refs-actions">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setRenaming(short);
-                        setRenameValue(short);
-                      }}
-                    >
-                      Rename
-                    </button>
-                    <button
-                      type="button"
-                      className="danger"
-                      onClick={() => root && void remove(root, short)}
-                    >
-                      Delete
-                    </button>
-                  </span>
                 </>
               )}
               {pendingForceDelete === short && (
@@ -283,37 +281,43 @@ export function RefsSidebar() {
           ))}
           {locals.length === 0 && <li className="muted">No branches</li>}
         </ul>
-      </section>
+      </CollapsibleSection>
 
-      <section className="sidebar-section">
-        <h2>Remotes</h2>
+      <CollapsibleSection id="remotes" title="Remotes" icon="cloud">
         {remoteGroups.size === 0 && <p className="muted">No remote branches</p>}
         {[...remoteGroups.entries()].map(([remote, items]) => {
           const webUrl = remoteInfos.find((entry) => entry.name === remote)?.web_url ?? null;
           return (
-            <div key={remote}>
-              <p className="refs-group">
-                {remote}
-                {webUrl && (
-                  <button
-                    type="button"
-                    className="refs-open-remote"
-                    title={`Open ${webUrl} in the browser`}
-                    aria-label={`Open ${remote} in the browser`}
-                    onClick={() => void openExternal(webUrl)}
-                  >
-                    ↗
-                  </button>
-                )}
-              </p>
+            <CollapsibleSection
+              key={remote}
+              id={`remote:${remote}`}
+              title={remote}
+              nested
+              defaultCollapsed
+              extra={
+                <>
+                  {webUrl && (
+                    <button
+                      type="button"
+                      className="refs-open-remote"
+                      title={`Open ${webUrl} in the browser`}
+                      aria-label={`Open ${remote} in the browser`}
+                      onClick={() => void openExternal(webUrl)}
+                    >
+                      ↗
+                    </button>
+                  )}
+                </>
+              }
+            >
               <ul className="refs-list">
                 {items.map(({ ref, short }) => (
                   <li key={ref.name}>
                     <button
                       type="button"
-                      className="refs-name"
+                      className={`refs-name${selectedRef === ref.name ? " selected" : ""}`}
                       title={ref.name}
-                      onClick={() => root && void checkout(root, ref)}
+                      onClick={() => setSelectedRef(ref.name)}
                       onContextMenu={(event) =>
                         refMenu.open(event, [
                           { label: "Checkout", onSelect: () => root && void checkout(root, ref) },
@@ -326,12 +330,11 @@ export function RefsSidebar() {
                   </li>
                 ))}
               </ul>
-            </div>
+            </CollapsibleSection>
           );
         })}
-      </section>
-      <section className="sidebar-section">
-        <h2>Tags</h2>
+      </CollapsibleSection>
+      <CollapsibleSection id="tags" title="Tags" icon="tag">
         <div className="refs-toolbar">
           <button
             type="button"
@@ -412,7 +415,7 @@ export function RefsSidebar() {
           ))}
           {tags.length === 0 && <li className="muted">No tags</li>}
         </ul>
-      </section>
+      </CollapsibleSection>
       {error && (
         <p role="alert" className="refs-error">
           {error}
