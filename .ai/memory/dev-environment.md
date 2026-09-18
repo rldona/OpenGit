@@ -20,3 +20,10 @@
 - **Contexto:** `npm install` en el proyecto.
 - **Hallazgo:** npm avisa de que `fsevents` tiene un install script no aprobado (`allow-scripts`) y no lo ejecuta. No bloquea tests ni build.
 - **Implicación:** si el HMR de Vite se comporta raro en macOS, aprobar el script con `npm approve-scripts`; no es necesario por ahora.
+
+## El lock no puede apuntar al registry corporativo
+
+- **Fecha:** 2026-09-18
+- **Contexto:** primer CI en GitHub Actions; el job de frontend falló en 7 s con `npm error code E401`.
+- **Hallazgo:** el `~/.npmrc` de esta máquina configura un Artifactory corporativo, así que `npm install` escribió las 276 URLs `resolved` del lock contra ese host. GitHub no tiene (ni debe tener) esas credenciales.
+- **Implicación:** el `package-lock.json` debe resolver contra `https://registry.npmjs.org`. El `.npmrc` del repo fija `replace-registry-host=always` para que npm sustituya el host del lock por el registry configurado en cada máquina (CI → público; local → corporativo). Si un `npm install` vuelve a meter URLs del Artifactory, hay que regenerar el lock antes de pushear.

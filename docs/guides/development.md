@@ -81,3 +81,4 @@ Casos que conviene cubrir a mano al tocar parsers: repo vacío, detached HEAD, m
 - **Linux y WebKitGTK:** si la ventana sale en blanco, revisa las dependencias de sistema y los logs de `npm run tauri dev`; suele ser una versión de `webkit2gtk` desalineada.
 - **macOS tarda la primera compilación de Rust:** normal; a partir de ahí son incrementales.
 - **git que pide credenciales:** la app lanza con `GIT_TERMINAL_PROMPT=0`; si un comando falla por auth, configura el credential helper del sistema, no la app.
+- **`npm ci` falla con E401 en CI:** el lock quedó resuelto contra un registry privado. Debe apuntar a `https://registry.npmjs.org`; el `.npmrc` del repo fuerza la normalización del host, pero al añadir dependencias conviene revisar que el lock no vuelva a quedar con URLs corporativas.
