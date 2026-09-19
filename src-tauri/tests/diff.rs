@@ -8,7 +8,7 @@ fn runner() -> Runner {
 }
 
 #[test]
-fn diff_de_working_tree_staged_e_invertido() {
+fn diff_of_working_tree_staged_and_reversed() {
     let repo = TestRepo::init();
     repo.write("a.txt", b"uno\ndos\n");
     repo.git_ok(&["add", "."]);
@@ -30,7 +30,7 @@ fn diff_de_working_tree_staged_e_invertido() {
 }
 
 #[test]
-fn diff_de_commit_con_renombrado() {
+fn diff_of_commit_with_rename() {
     let repo = TestRepo::init();
     repo.write("viejo.txt", b"contenido\n");
     repo.git_ok(&["add", "."]);
@@ -39,11 +39,11 @@ fn diff_de_commit_con_renombrado() {
     repo.write("nuevo.txt", b"contenido\nmas\n");
     repo.git_ok(&["commit", "-q", "-am", "rename y cambio"]);
 
-    let files = commit_files(&runner(), repo.path(), "HEAD").expect("ficheros del commit");
+    let files = commit_files(&runner(), repo.path(), "HEAD").expect("commit files");
     let renamed = files
         .iter()
         .find(|file| file.path == "nuevo.txt")
-        .expect("renombrado");
+        .expect("renamed");
     assert_eq!(renamed.orig_path.as_deref(), Some("viejo.txt"));
 
     let patch = commit_file_diff(&runner(), repo.path(), "HEAD", "nuevo.txt", false).unwrap();
@@ -51,7 +51,7 @@ fn diff_de_commit_con_renombrado() {
 }
 
 #[test]
-fn diff_de_binarios_avisa() {
+fn diff_of_binaries_warns() {
     let repo = TestRepo::init();
     repo.write("bin.bin", b"\x00\x01\x02");
     repo.git_ok(&["add", "."]);
@@ -63,7 +63,7 @@ fn diff_de_binarios_avisa() {
 }
 
 #[test]
-fn numstat_del_working_tree() {
+fn numstat_of_working_tree() {
     let repo = TestRepo::init();
     repo.write("a.txt", b"uno\n");
     repo.git_ok(&["add", "."]);
@@ -74,7 +74,7 @@ fn numstat_del_working_tree() {
     let entry = diffs
         .iter()
         .find(|diff| diff.path == "a.txt")
-        .expect("entrada");
+        .expect("entry");
     assert_eq!(entry.added, Some(1));
     assert_eq!(entry.deleted, Some(0));
 }

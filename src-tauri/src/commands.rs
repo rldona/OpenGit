@@ -10,7 +10,7 @@ use crate::jobs::{JobKind, JobManager, RemoteJobEvent};
 use crate::repo::{self, ops, recents::Recents, RecentRepo};
 use crate::watch::{self, WatcherHandle};
 
-/// Estado compartido por los comandos: runner, recientes, watcher y jobs.
+/// State shared by the commands: runner, recents, watcher and jobs.
 pub struct AppState {
     pub runner: Runner,
     pub recents: Mutex<Recents>,
@@ -34,8 +34,8 @@ struct JobFinishedPayload {
     cancelled: bool,
 }
 
-/// Arranca fetch/pull/push en segundo plano; la salida llega por eventos
-/// `job://output` y `job://finished`. Devuelve el id del job para cancelarlo.
+/// Starts fetch/pull/push in the background; output arrives through
+/// `job://output` and `job://finished` events. Returns the job id to cancel it.
 #[tauri::command]
 pub fn start_remote_job(
     app: AppHandle,
@@ -115,8 +115,8 @@ impl AppState {
     }
 }
 
-/// Ejecuta una operación propia silenciando el watcher y emitiendo, como mucho,
-/// un refresco al terminar.
+/// Runs an operation of our own with the watcher silenced, emitting at most
+/// one refresh when it finishes.
 fn pause_while<T>(state: &AppState, action: impl FnOnce() -> T) -> T {
     state.pause_watcher();
     let result = action();
@@ -134,8 +134,8 @@ pub fn git_version(state: State<'_, AppState>) -> Result<GitVersion, GitError> {
     state.runner.version()
 }
 
-/// Valida la carpeta, devuelve la info del repo, lo añade a recientes y
-/// arranca la vigilancia de `.git` (parando la anterior).
+/// Validates the folder, returns the repo info, adds it to recents and
+/// starts watching `.git` (stopping the previous watcher).
 #[tauri::command]
 pub fn open_repo(
     app: AppHandle,
@@ -234,7 +234,7 @@ pub fn unstage_path(
     })
 }
 
-/// Destructivo: la UI debe confirmarlo antes de invocarlo.
+/// Destructive: the UI must confirm it before invoking it.
 #[tauri::command]
 pub fn discard_path(
     path: String,
@@ -252,7 +252,7 @@ pub fn discard_path(
     })
 }
 
-/// Stage/unstage parcial por hunk o por líneas (OG-006).
+/// Partial stage/unstage by hunk or by lines (OG-006).
 #[tauri::command]
 pub fn stage_selection(
     path: String,
@@ -274,7 +274,7 @@ pub fn stage_selection(
     })
 }
 
-/// Destructivo: descarta hunks/líneas del working tree (confirmado en la UI).
+/// Destructive: discards hunks/lines from the working tree (confirmed in the UI).
 #[tauri::command]
 pub fn discard_selection(
     path: String,
@@ -287,7 +287,7 @@ pub fn discard_selection(
     })
 }
 
-/// Destructivo: borra un fichero sin trackear (confirmado antes en la UI).
+/// Destructive: deletes an untracked file (confirmed in the UI beforehand).
 #[tauri::command]
 pub fn delete_untracked(
     path: String,
@@ -696,11 +696,11 @@ pub fn remove_recent_repo(path: String, state: State<'_, AppState>) -> Result<()
     state.recents.lock().map_err(lock_error)?.remove(&path)
 }
 
-/// Abre un terminal del sistema en `path`.
+/// Opens a system terminal at `path`.
 ///
-/// El programa y sus argumentos se pasan siempre como argv (regla 3 de
-/// AGENTS.md): nada de construir una orden de shell con la ruta interpolada,
-/// que en un repo llamado `foo; rm -rf ~` sería una inyección de libro.
+/// The program and its arguments are always passed as argv (rule 3 of
+/// AGENTS.md): no building a shell command with the path interpolated,
+/// which in a repo named `foo; rm -rf ~` would be a textbook injection.
 #[tauri::command]
 pub fn open_terminal(path: String) -> Result<(), GitError> {
     let dir = Path::new(&path);
@@ -719,7 +719,7 @@ pub fn open_terminal(path: String) -> Result<(), GitError> {
         .ok_or_else(|| GitError::invalid("no terminal emulator available".to_string()))
 }
 
-/// Candidatos por plataforma, en orden de preferencia.
+/// Candidates per platform, in order of preference.
 fn terminal_candidates(dir: &Path) -> Vec<(&'static str, Vec<std::ffi::OsString>)> {
     let path = dir.as_os_str().to_os_string();
     #[cfg(target_os = "macos")]
@@ -728,7 +728,7 @@ fn terminal_candidates(dir: &Path) -> Vec<(&'static str, Vec<std::ffi::OsString>
     }
     #[cfg(target_os = "windows")]
     {
-        // `wt` (Windows Terminal) si está; si no, la consola clásica.
+        // `wt` (Windows Terminal) when available; otherwise the classic console.
         vec![
             ("wt", vec!["-d".into(), path.clone()]),
             ("cmd", vec!["/c".into(), "start".into(), "cmd".into()]),

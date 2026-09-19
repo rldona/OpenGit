@@ -7,11 +7,11 @@ const FIELD_SEP: u8 = 0x1f;
 const RECORD_SEP: u8 = 0;
 const EXPECTED_FIELDS: usize = 8;
 
-/// Parsea `git log -z --format=%H%x1f%P%x1f%an%x1f%ae%x1f%at%x1f%D%x1f%s%x1f%b`.
+/// Parses `git log -z --format=%H%x1f%P%x1f%an%x1f%ae%x1f%at%x1f%D%x1f%s%x1f%b`.
 ///
-/// El cuerpo (`%b`) va el último a propósito: puede contener saltos de línea y,
-/// en teoría, el propio separador de campos, así que se trocea con `splitn` y
-/// todo lo que sobra se queda en el cuerpo en vez de romper el registro.
+/// The body (`%b`) goes last on purpose: it can contain line breaks and,
+/// in theory, the field separator itself, so it is split with `splitn` and
+/// everything left over stays in the body instead of breaking the record.
 pub fn parse_log(data: &[u8]) -> Result<Vec<Commit>, GitError> {
     let mut commits = Vec::new();
     for record in split_records(data, RECORD_SEP) {
@@ -47,8 +47,8 @@ pub fn parse_log(data: &[u8]) -> Result<Vec<Commit>, GitError> {
                 .map(str::to_owned)
                 .collect(),
             subject: text(fields[6]),
-            // git cierra `%b` con saltos de línea sobrantes; el cuerpo vacío
-            // debe quedar como cadena vacía, no como "\n\n".
+            // git closes `%b` with leftover line breaks; an empty body
+            // must remain an empty string, not "\n\n".
             body: text(fields[7]).trim_end().to_owned(),
         });
     }

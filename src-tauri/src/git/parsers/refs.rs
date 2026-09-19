@@ -7,7 +7,7 @@ const RECORD_SEP: u8 = b'\n';
 const FIELD_SEP: u8 = 0;
 const EXPECTED_FIELDS: usize = 6;
 
-/// Parsea `git for-each-ref --format=%refname%00%objectname%00%objecttype%00%upstream%00%upstream:track%00%(*objectname)`.
+/// Parses `git for-each-ref --format=%refname%00%objectname%00%objecttype%00%upstream%00%upstream:track%00%(*objectname)`.
 pub fn parse_refs(data: &[u8]) -> Result<Vec<Ref>, GitError> {
     let mut refs = Vec::new();
     for record in split_records(data, RECORD_SEP) {
@@ -22,8 +22,8 @@ pub fn parse_refs(data: &[u8]) -> Result<Vec<Ref>, GitError> {
             )));
         }
         let object_id = text(fields[1]);
-        // `*objectname` solo trae valor para tags anotados: es el commit al
-        // que apuntan. En el resto, el propio objeto es el destino.
+        // `*objectname` only has a value for annotated tags: it is the commit
+        // they point to. For the rest, the object itself is the target.
         let peeled = text(fields[5]);
         refs.push(Ref {
             name: text(fields[0]),

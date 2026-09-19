@@ -1,14 +1,14 @@
 #![allow(dead_code)]
-//! Utilidades compartidas por los tests de integración: repos temporales con
-//! git real, creados y destruidos por cada test (regla 8 de AGENTS.md).
+//! Helpers shared by the integration tests: temporary repos with real git,
+//! created and destroyed by each test (rule 8 of AGENTS.md).
 
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-/// Dos tests en paralelo no deben compartir carpeta aunque el reloj devuelva
-/// el mismo instante: el contador garantiza unicidad dentro del proceso.
+/// Two tests in parallel must not share a folder even if the clock returns
+/// the same instant: the counter guarantees uniqueness inside the process.
 static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
 pub struct TempDir {
@@ -41,13 +41,13 @@ impl Drop for TempDir {
     }
 }
 
-/// Repo git temporal con identidad y fechas fijas.
+/// Temporary git repo with fixed identity and dates.
 pub struct TestRepo {
     dir: TempDir,
 }
 
 impl TestRepo {
-    /// Envuelve un repo ya existente (por ejemplo, un clon local).
+    /// Wraps an existing repo (for example, a local clone).
     pub fn at(path: &Path) -> Self {
         Self {
             dir: TempDir {
@@ -88,7 +88,7 @@ impl TestRepo {
         let output = self.git(args);
         assert!(
             output.status.success(),
-            "git {args:?} falló: {}",
+            "git {args:?} failed: {}",
             String::from_utf8_lossy(&output.stderr)
         );
         output

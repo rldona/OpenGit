@@ -36,7 +36,7 @@ fn subjects(repo: &TestRepo, filter: &LogSearch) -> Vec<String> {
 }
 
 #[test]
-fn busca_por_mensaje_de_forma_literal_e_ignorando_mayusculas() {
+fn searches_by_message_literally_and_ignoring_case() {
     let repo = TestRepo::init();
     commit_as(
         &repo,
@@ -63,7 +63,7 @@ fn busca_por_mensaje_de_forma_literal_e_ignorando_mayusculas() {
 }
 
 #[test]
-fn busca_por_autor_por_nombre_o_correo() {
+fn searches_by_author_name_or_email() {
     let repo = TestRepo::init();
     commit_as(
         &repo,
@@ -93,7 +93,7 @@ fn busca_por_autor_por_nombre_o_correo() {
 }
 
 #[test]
-fn busca_por_fichero_y_combina_filtros() {
+fn searches_by_file_and_combines_filters() {
     let repo = TestRepo::init();
     commit_as(
         &repo,
@@ -130,7 +130,7 @@ fn busca_por_fichero_y_combina_filtros() {
 }
 
 #[test]
-fn pagina_los_resultados_filtrados() {
+fn paginates_filtered_results() {
     let repo = TestRepo::init();
     for index in 0..5 {
         commit_as(
@@ -154,7 +154,7 @@ fn pagina_los_resultados_filtrados() {
 }
 
 #[test]
-fn busqueda_vacia_no_filtra() {
+fn empty_search_does_not_filter() {
     let repo = TestRepo::init();
     commit_as(&repo, "Ana", "ana@example.com", "a.txt", "uno\n", "uno");
     commit_as(&repo, "Ana", "ana@example.com", "a.txt", "dos\n", "dos");

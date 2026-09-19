@@ -1,5 +1,5 @@
-//! Vigilancia de `.git` (OG-010): debounce de 250 ms, clasificación por tipo,
-//! pausa durante operaciones propias y fallback por polling lento.
+//! `.git` watching (OG-010): 250 ms debounce, classification by kind,
+//! pause during our own operations and a slow polling fallback.
 
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
@@ -56,7 +56,7 @@ impl RepoEventKind {
     }
 }
 
-/// Clasifica una ruta tocada en `.git` en su evento.
+/// Classifies a path touched inside `.git` into its event.
 pub fn classify(path: &Path) -> RepoEventKind {
     let name = path
         .file_name()
@@ -71,8 +71,8 @@ pub fn classify(path: &Path) -> RepoEventKind {
     RepoEventKind::WorktreeChanged
 }
 
-/// Acumula varios eventos en una ventana de debounce y los entrega una sola
-/// vez por tipo.
+/// Accumulates several events inside a debounce window and delivers them only
+/// once per kind.
 #[derive(Debug, Default)]
 struct Pending(u8);
 
@@ -108,12 +108,12 @@ pub struct WatcherHandle {
 }
 
 impl WatcherHandle {
-    /// Silencia los eventos mientras la app opera sobre el repo.
+    /// Silences events while the app operates on the repo.
     pub fn pause(&self) {
         self.paused.fetch_add(1, Ordering::SeqCst);
     }
 
-    /// Reanuda y, si hubo cambios durante la pausa, emite un único refresco.
+    /// Resumes and, if there were changes during the pause, emits a single refresh.
     pub fn resume(&self) {
         let previous = self
             .paused
@@ -134,7 +134,7 @@ impl WatcherHandle {
     }
 }
 
-/// Arranca la vigilancia de `.git`. Si el SO no entrega eventos, cae a polling.
+/// Starts watching `.git`. If the OS does not deliver events, it falls back to polling.
 pub fn start<F>(repo_root: PathBuf, emit: F) -> Result<WatcherHandle, GitError>
 where
     F: Fn(RepoEventKind) + Send + Sync + 'static,

@@ -1,4 +1,4 @@
-//! Apertura y validación de repositorios (OG-002) y persistencia de recientes.
+//! Repository opening and validation (OG-002) and persistence of recents.
 
 pub mod ops;
 pub mod recents;
@@ -14,23 +14,23 @@ use crate::git::{
 
 pub use recents::RecentRepo;
 
-/// Información de un repositorio abierto, lista para la UI.
+/// Information about an open repository, ready for the UI.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct RepoInfo {
-    /// Raíz del working tree (puede ser una carpeta superior a la elegida).
+    /// Working tree root (may be a folder above the one picked).
     pub root: String,
-    /// Nombre de la carpeta raíz.
+    /// Name of the root folder.
     pub name: String,
     pub has_commits: bool,
-    /// Rama actual; `None` en detached HEAD o repo sin commits.
+    /// Current branch; `None` on detached HEAD or a repo without commits.
     pub branch: Option<String>,
     pub detached: bool,
-    /// OID de HEAD; `None` si el repo aún no tiene commits.
+    /// HEAD OID; `None` if the repo has no commits yet.
     pub head: Option<String>,
     pub git_version: String,
 }
 
-/// Valida la ruta y devuelve la información del repositorio.
+/// Validates the path and returns the repository information.
 pub fn open(runner: &Runner, path: &Path) -> Result<RepoInfo, GitError> {
     if !path.is_dir() {
         return Err(GitError::PathNotFound {

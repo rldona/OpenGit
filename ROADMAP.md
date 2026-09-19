@@ -128,7 +128,7 @@ does not block M8 or new features.
 - [ ] Release notes of published releases.
 - [ ] Tickets and ADRs (`docs/tickets/`, `docs/decisions/`).
 - [ ] Guides, architecture and `.ai/`.
-- [ ] Code comments and test descriptions (frontend and Rust).
+- [x] Code comments and test descriptions (frontend and Rust).
 - [ ] Old PR and issue texts (optional: they are edited on GitHub).
 
 ## Out of scope

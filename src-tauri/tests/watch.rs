@@ -19,7 +19,7 @@ fn wait_for(rx: &mpsc::Receiver<RepoEventKind>, wanted: RepoEventKind, timeout: 
 }
 
 #[test]
-fn detecta_cambios_del_index() {
+fn detects_index_changes() {
     let repo = TestRepo::init();
     repo.write("a.txt", b"uno\n");
     repo.git_ok(&["add", "."]);
@@ -41,11 +41,11 @@ fn detecta_cambios_del_index() {
         Duration::from_secs(5),
     );
     watcher.stop();
-    assert!(detected, "no llegó el evento de index");
+    assert!(detected, "the index event did not arrive");
 }
 
 #[test]
-fn la_pausa_silencia_los_cambios_propios() {
+fn the_pause_silences_our_own_changes() {
     let repo = TestRepo::init();
     repo.write("a.txt", b"uno\n");
     repo.git_ok(&["add", "."]);
@@ -62,10 +62,10 @@ fn la_pausa_silencia_los_cambios_propios() {
     repo.write("a.txt", b"tres\n");
     repo.git_ok(&["add", "a.txt"]);
     std::thread::sleep(Duration::from_millis(500));
-    assert!(receiver.try_recv().is_err(), "no debe emitir en pausa");
+    assert!(receiver.try_recv().is_err(), "must not emit while paused");
 
     watcher.resume();
     let refreshed = wait_for(&receiver, RepoEventKind::Refreshed, Duration::from_secs(3));
     watcher.stop();
-    assert!(refreshed, "esperaba un refresco único al reanudar");
+    assert!(refreshed, "expected a single refresh on resume");
 }

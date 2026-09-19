@@ -2,41 +2,41 @@ use std::fmt;
 
 use serde::Serialize;
 
-/// Error del adaptador de git. Serializable para llegar a la UI con contexto.
+/// Git adapter error. Serializable so it can reach the UI with context.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum GitError {
-    /// No se encontró el binario de git.
+    /// The git binary was not found.
     NotFound { binary: String },
-    /// El proceso no se pudo lanzar o su salida no se pudo leer.
+    /// The process could not be spawned or its output could not be read.
     Spawn { message: String },
-    /// Git terminó con código distinto de cero.
+    /// Git exited with a non-zero code.
     CommandFailed {
         exit_code: i32,
-        /// Salida estándar (los hooks escriben aquí sus mensajes).
+        /// Standard output (hooks write their messages here).
         stdout: String,
         stderr: String,
         args: Vec<String>,
     },
-    /// El comando superó su timeout y fue terminado.
+    /// The command exceeded its timeout and was terminated.
     Timeout { timeout_ms: u64, args: Vec<String> },
-    /// El comando fue cancelado por el usuario.
+    /// The command was cancelled by the user.
     Cancelled { args: Vec<String> },
-    /// La salida de git no tiene el formato esperado.
+    /// Git output does not have the expected format.
     InvalidOutput { message: String },
-    /// La ruta indicada no existe o no es un directorio.
+    /// The given path does not exist or is not a directory.
     PathNotFound { path: String },
-    /// La carpeta no es un repositorio git.
+    /// The folder is not a git repository.
     NotARepository { path: String },
-    /// Es un repositorio bare: no hay working tree que abrir.
+    /// It is a bare repository: there is no working tree to open.
     NotAWorkTree { path: String },
-    /// HEAD no apunta a ninguna rama ni commit válidos.
+    /// HEAD does not point to any valid branch or commit.
     InvalidHead { path: String },
-    /// La versión de git instalada es anterior al mínimo soportado.
+    /// The installed git version is older than the supported minimum.
     GitTooOld { found: String, minimum: String },
-    /// No se pudo leer o escribir el estado persistido de la app.
+    /// The persisted app state could not be read or written.
     Store { message: String },
-    /// Error de sistema de ficheros fuera del alcance de git.
+    /// Filesystem error outside the scope of git.
     Io { message: String },
 }
 

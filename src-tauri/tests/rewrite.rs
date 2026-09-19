@@ -21,7 +21,7 @@ fn head(repo: &TestRepo) -> String {
 }
 
 #[test]
-fn cherry_pick_trae_el_commit_a_la_rama_actual() {
+fn cherry_pick_brings_the_commit_to_the_current_branch() {
     let repo = TestRepo::init();
     commit_file(&repo, "a.txt", "uno\n", "base");
     repo.git_ok(&["checkout", "-q", "-b", "feature"]);
@@ -39,7 +39,7 @@ fn cherry_pick_trae_el_commit_a_la_rama_actual() {
 }
 
 #[test]
-fn cherry_pick_en_conflicto_avisa_y_deja_estado() {
+fn cherry_pick_conflict_warns_and_leaves_state() {
     let repo = TestRepo::init();
     commit_file(&repo, "a.txt", "uno\n", "base");
     repo.git_ok(&["checkout", "-q", "-b", "feature"]);
@@ -55,14 +55,14 @@ fn cherry_pick_en_conflicto_avisa_y_deja_estado() {
     );
 
     let state = repo_op_state(&runner(), repo.path()).unwrap();
-    assert!(state.cherry_pick, "debe quedar en estado cherry-pick");
+    assert!(state.cherry_pick, "must stay in cherry-pick state");
 
     repo.git_ok(&["cherry-pick", "--abort"]);
     assert!(!repo_op_state(&runner(), repo.path()).unwrap().cherry_pick);
 }
 
 #[test]
-fn revert_crea_el_commit_de_reversion() {
+fn revert_creates_the_revert_commit() {
     let repo = TestRepo::init();
     commit_file(&repo, "a.txt", "uno\n", "base");
     commit_file(&repo, "a.txt", "dos\n", "cambio");
@@ -79,7 +79,7 @@ fn revert_crea_el_commit_de_reversion() {
 }
 
 #[test]
-fn reset_mixed_mueve_la_rama_y_conserva_los_ficheros() {
+fn reset_mixed_moves_the_branch_and_keeps_files() {
     let repo = TestRepo::init();
     commit_file(&repo, "a.txt", "uno\n", "base");
     let base = head(&repo);
@@ -100,11 +100,11 @@ fn reset_mixed_mueve_la_rama_y_conserva_los_ficheros() {
 }
 
 #[test]
-fn hash_invalido_falla() {
+fn invalid_hash_fails() {
     let repo = TestRepo::init();
     commit_file(&repo, "a.txt", "uno\n", "base");
 
-    let error = cherry_pick(&runner(), repo.path(), "--help").expect_err("hash inválido");
+    let error = cherry_pick(&runner(), repo.path(), "--help").expect_err("invalid hash");
     assert!(
         format!("{error}").contains("invalid commit hash"),
         "{error}"
