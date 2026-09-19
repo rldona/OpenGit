@@ -4,6 +4,7 @@ import { confirmDestructive } from "../lib/bridge/dialog";
 import { openExternal } from "../lib/bridge/opener";
 import type { RefEntry } from "../lib/bridge/types";
 import { parseTrack } from "../lib/format";
+import { DEFAULT_MERGE_OPTIONS } from "../lib/merge";
 import { useMergeBranch } from "../lib/hooks/useMergeBranch";
 import { useExtrasStore } from "../lib/stores/extras";
 import { useLogStore } from "../lib/stores/log";
@@ -72,11 +73,11 @@ export function RefsSidebar() {
   const confirmMerge = async (rev: string) => {
     const target = current ?? "HEAD";
     if (await confirmDestructive(`Merge ${rev} into ${target}?`)) {
-      await runMerge(rev, false);
+      await runMerge(rev, DEFAULT_MERGE_OPTIONS);
     }
   };
 
-  // Clicking a tag locates its commit in the history and selects it.
+  // Clicking a branch or a tag locates its commit in the history and selects it.
   const reveal = (ref: RefEntry) => {
     if (!root) {
       return;
@@ -230,7 +231,7 @@ export function RefsSidebar() {
                       selectedRef === ref.name ? " selected" : ""
                     }`}
                     title={ref.name}
-                    onClick={() => setSelectedRef(ref.name)}
+                    onClick={() => reveal(ref)}
                     onContextMenu={(event) =>
                       refMenu.open(event, [
                         { label: "Checkout", onSelect: () => root && void checkout(root, ref) },
@@ -345,7 +346,7 @@ export function RefsSidebar() {
                       type="button"
                       className={`refs-name${selectedRef === ref.name ? " selected" : ""}`}
                       title={ref.name}
-                      onClick={() => setSelectedRef(ref.name)}
+                      onClick={() => reveal(ref)}
                       onContextMenu={(event) =>
                         refMenu.open(event, [
                           { label: "Checkout", onSelect: () => root && void checkout(root, ref) },
