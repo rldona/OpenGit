@@ -79,7 +79,7 @@ describe("StatusView", () => {
     useUiStore.setState({ fileTree: true });
   });
 
-  it("muestra las dos secciones con sus ficheros", async () => {
+  it("shows both sections with their files", async () => {
     render(<StatusView />);
 
     expect(await screen.findByRole("heading", { name: /Staged files/ })).toBeInTheDocument();
@@ -88,7 +88,7 @@ describe("StatusView", () => {
     expect(screen.getByText("nuevo.txt")).toBeInTheDocument();
   });
 
-  it("hace stage de un fichero modificado con su checkbox", async () => {
+  it("stages a modified file with its checkbox", async () => {
     const user = userEvent.setup();
     render(<StatusView />);
 
@@ -97,7 +97,7 @@ describe("StatusView", () => {
     expect(stagePath).toHaveBeenCalledWith("/tmp/repo", "modificado.txt", null);
   });
 
-  it("hace unstage desde el checkbox de un fichero staged", async () => {
+  it("unstages from the checkbox of a staged file", async () => {
     const user = userEvent.setup();
     render(<StatusView />);
 
@@ -106,7 +106,7 @@ describe("StatusView", () => {
     expect(unstagePath).toHaveBeenCalledWith("/tmp/repo", "staged.txt", null);
   });
 
-  it("solo descarta si se confirma", async () => {
+  it("only discards if confirmed", async () => {
     const user = userEvent.setup();
     render(<StatusView />);
 
@@ -121,7 +121,7 @@ describe("StatusView", () => {
     expect(discardPath).toHaveBeenCalledWith("/tmp/repo", "modificado.txt", null);
   });
 
-  it("permite redimensionar el área de commit", async () => {
+  it("allows resizing the commit area", async () => {
     render(<StatusView />);
 
     await screen.findByLabelText("Commit message");
@@ -129,7 +129,7 @@ describe("StatusView", () => {
     expect(screen.getByRole("separator", { name: "Resize pending files" })).toBeInTheDocument();
   });
 
-  it("avisa si el repo usa LFS y git-lfs no está instalado", async () => {
+  it("warns if the repo uses LFS and git-lfs is not installed", async () => {
     useExtrasStore.setState({ lfs: { installed: false, version: null, configured: true } });
     render(<StatusView />);
 
@@ -138,7 +138,7 @@ describe("StatusView", () => {
     );
   });
 
-  it("abre el menú contextual de un fichero", async () => {
+  it("opens a file context menu", async () => {
     render(<StatusView />);
     fireEvent.contextMenu(await screen.findByText("modificado.txt"), { clientX: 10, clientY: 10 });
 
@@ -147,7 +147,7 @@ describe("StatusView", () => {
     expect(screen.getByRole("menuitem", { name: "Copy path" })).toBeInTheDocument();
   });
 
-  it("agrupa por directorios en modo árbol y cambia a lista", async () => {
+  it("groups by directories in tree mode and switches to list", async () => {
     const user = userEvent.setup();
     vi.mocked(statusRepo).mockResolvedValue({
       ...REPORT,
@@ -164,7 +164,7 @@ describe("StatusView", () => {
     expect(screen.queryByRole("button", { name: /src\/$/ })).not.toBeInTheDocument();
   });
 
-  it("no avisa si Git LFS está instalado", async () => {
+  it("does not warn if Git LFS is installed", async () => {
     useExtrasStore.setState({
       lfs: { installed: true, version: "git-lfs/3.5.1", configured: true },
     });

@@ -14,7 +14,7 @@ import { useUiStore } from "./ui";
 
 const PAGE_SIZE = 200;
 
-/** Valor de `selected` para la fila sintética "Uncommitted changes". */
+/** Value of `selected` for the synthetic "Uncommitted changes" row. */
 export const WORKTREE_SELECTION = "__worktree__";
 
 type LogState = {
@@ -27,14 +27,14 @@ type LogState = {
   loading: boolean;
   hasMore: boolean;
   error: string | null;
-  /** Se incrementa al pedir localizar un commit (sidebar): dispara el scroll. */
+  /** Incremented when asking to locate a commit (sidebar): triggers the scroll. */
   revealRequest: number;
   load: (root: string) => Promise<void>;
   reload: (root: string) => Promise<void>;
   loadMore: () => Promise<void>;
   setFilter: (root: string, rev: string | null) => Promise<void>;
   select: (hash: string | null) => void;
-  /** Carga páginas hasta encontrar el commit, lo selecciona y pide el scroll. */
+  /** Loads pages until the commit is found, selects it and requests the scroll. */
   revealCommit: (root: string, hash: string) => Promise<void>;
   cherryPick: (root: string, hash: string) => Promise<void>;
   revert: (root: string, hash: string) => Promise<void>;
@@ -72,9 +72,9 @@ export const useLogStore = create<LogState>((set, get) => ({
   error: null,
 
   load: async (root) => {
-    // Entrar en un proyecto (root nuevo) selecciona HEAD para que el panel de
-    // detalle muestre algo sin tener que pulsar una fila. Al filtrar o buscar
-    // dentro del mismo repositorio la selección se limpia, como antes.
+    // Entering a project (new root) selects HEAD so the detail panel
+    // shows something without having to click a row. When filtering or searching
+    // within the same repository the selection is cleared, as before.
     const entering = get().root !== root;
     set({
       root,
@@ -105,7 +105,7 @@ export const useLogStore = create<LogState>((set, get) => ({
     }
   },
 
-  /// Refresco silencioso tras el watcher: conserva selección y filtro.
+  /// Silent refresh after the watcher: keeps selection and filter.
   reload: async (root) => {
     try {
       const { filter } = get();
@@ -152,7 +152,7 @@ export const useLogStore = create<LogState>((set, get) => ({
 
   revealCommit: async (root, hash) => {
     const found = () => get().commits.some((commit) => commit.hash === hash);
-    // Con un filtro de rama activo el commit puede no estar en el log.
+    // With an active branch filter the commit may not be in the log.
     if (get().filter !== null && !found()) {
       set({ filter: null });
       await get().load(root);

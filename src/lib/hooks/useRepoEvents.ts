@@ -6,7 +6,7 @@ import { useRefsStore } from "../stores/refs";
 import { useStashStore } from "../stores/stash";
 import { useStatusStore } from "../stores/status";
 
-/** Conecta los eventos del watcher con los stores (OG-010). */
+/** Connects watcher events to the stores (OG-010). */
 export function useRepoEvents(root: string | null): void {
   useEffect(() => {
     if (!root) {
@@ -55,7 +55,7 @@ export function useRepoEvents(root: string | null): void {
         }
       })
       .catch(() => {
-        // Sin eventos, la UI sigue funcionando con datos bajo demanda.
+        // Without events, the UI keeps working with on-demand data.
       });
     return () => {
       disposed = true;

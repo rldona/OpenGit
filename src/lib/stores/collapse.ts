@@ -3,9 +3,9 @@ import { create } from "zustand";
 const STORAGE_KEY = "opengit.sidebar.collapsed";
 
 /**
- * Secciones que arrancan plegadas la primera vez. Los remotos se pliegan por
- * defecto porque un repo con muchas ramas remotas expulsa de la vista todo lo
- * que hay debajo (tags, stashes, submódulos).
+ * Sections that start collapsed the first time. Remotes collapse by
+ * default because a repo with many remote branches pushes everything
+ * below them (tags, stashes, submodules) out of view.
  */
 const DEFAULT_COLLAPSED = ["recents"];
 
@@ -32,7 +32,7 @@ function save(collapsed: Record<string, boolean>): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(collapsed));
   } catch {
-    // Sin almacenamiento el plegado vive solo en memoria.
+    // Without storage the collapsed state lives only in memory.
   }
 }
 

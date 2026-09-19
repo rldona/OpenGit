@@ -58,14 +58,14 @@ describe("Toolbar", () => {
     useUiStore.setState({ newBranchRequest: 0, newStashRequest: 0 });
   });
 
-  it("muestra el nombre del repo, no la ruta completa", () => {
+  it("shows the repo name, not the full path", () => {
     render(<Toolbar {...handlers} />);
 
     expect(screen.getByText("mi-repo")).toBeInTheDocument();
     expect(screen.queryByText("/tmp/mi-repo")).not.toBeInTheDocument();
   });
 
-  it("pone en el badge de Commit el número de cambios", () => {
+  it("puts the number of changes in the Commit badge", () => {
     useStatusStore.setState({
       report: {
         head: "aaaa0000",
@@ -82,24 +82,24 @@ describe("Toolbar", () => {
     expect(screen.getByRole("button", { name: /Commit/ })).toHaveTextContent("3");
   });
 
-  it("oculta el badge cuando no hay cambios", () => {
+  it("hides the badge when there are no changes", () => {
     render(<Toolbar {...handlers} />);
 
     expect(screen.getByRole("button", { name: /Commit/ })).not.toHaveTextContent("0");
   });
 
-  it("deshabilita las acciones de red mientras hay una operación en curso", () => {
+  it("disables network actions while an operation is in progress", () => {
     useRemoteStore.setState({ running: true });
     render(<Toolbar {...handlers} />);
 
     expect(screen.getByRole("button", { name: /Pull/ })).toBeDisabled();
     expect(screen.getByRole("button", { name: /Push/ })).toBeDisabled();
     expect(screen.getByRole("button", { name: /Fetch/ })).toBeDisabled();
-    // Cancelar vive en la ventana de progreso, no en la barra.
+    // Cancel lives in the progress window, not in the toolbar.
     expect(screen.queryByRole("button", { name: /Cancel/ })).not.toBeInTheDocument();
   });
 
-  it("sin repo abierto solo ofrece abrir", () => {
+  it("with no repo open it only offers Open", () => {
     useRepoStore.setState({ repo: null });
     render(<Toolbar {...handlers} />);
 
@@ -108,7 +108,7 @@ describe("Toolbar", () => {
     expect(screen.getByText("No repository open")).toBeInTheDocument();
   });
 
-  it("Branch y Stash piden abrir sus formularios en la sidebar", async () => {
+  it("Branch and Stash request opening their forms in the sidebar", async () => {
     const user = userEvent.setup();
     render(<Toolbar {...handlers} />);
 
@@ -119,7 +119,7 @@ describe("Toolbar", () => {
     expect(useUiStore.getState().newStashRequest).toBe(1);
   });
 
-  it("abre Finder y el terminal en la raíz del repo", async () => {
+  it("opens Finder and the terminal at the repo root", async () => {
     const user = userEvent.setup();
     render(<Toolbar {...handlers} />);
 
@@ -130,7 +130,7 @@ describe("Toolbar", () => {
     expect(openTerminal).toHaveBeenCalledWith("/tmp/mi-repo");
   });
 
-  it("deshabilita View Remote sin URL web y la abre cuando la hay", async () => {
+  it("disables View Remote without a web URL and opens it when there is one", async () => {
     const user = userEvent.setup();
     const { rerender } = render(<Toolbar {...handlers} />);
 
@@ -145,7 +145,7 @@ describe("Toolbar", () => {
     expect(openExternal).toHaveBeenCalledWith("https://x/y");
   });
 
-  it("cierra el popover de Settings con Escape", async () => {
+  it("closes the Settings popover with Escape", async () => {
     const user = userEvent.setup();
     render(<Toolbar {...handlers} />);
 

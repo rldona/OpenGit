@@ -24,7 +24,7 @@ function Harness({ onSelect }: { onSelect: () => void }) {
 }
 
 describe("ContextMenu", () => {
-  it("abre, ejecuta la acción y se cierra", async () => {
+  it("opens, runs the action and closes", async () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();
     render(<Harness onSelect={onSelect} />);
@@ -38,7 +38,7 @@ describe("ContextMenu", () => {
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();
   });
 
-  it("se cierra con Escape", () => {
+  it("closes with Escape", () => {
     render(<Harness onSelect={vi.fn()} />);
 
     fireEvent.click(screen.getByRole("button", { name: "open" }));
@@ -47,7 +47,7 @@ describe("ContextMenu", () => {
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();
   });
 
-  it("se cierra con un click fuera", () => {
+  it("closes with an outside click", () => {
     render(<Harness onSelect={vi.fn()} />);
 
     fireEvent.click(screen.getByRole("button", { name: "open" }));

@@ -42,7 +42,7 @@ describe("ImageDiffPanel", () => {
     });
   });
 
-  it("compara antes y después en modo side by side", async () => {
+  it("compares before and after in side by side mode", async () => {
     render(<ImageDiffPanel />);
 
     expect(await screen.findByAltText("Before")).toBeInTheDocument();
@@ -56,7 +56,7 @@ describe("ImageDiffPanel", () => {
     });
   });
 
-  it("en modo unificado muestra solo el resultado", async () => {
+  it("in unified mode shows only the result", async () => {
     useDiffStore.setState({ mode: "unified" });
     render(<ImageDiffPanel />);
 
@@ -64,7 +64,7 @@ describe("ImageDiffPanel", () => {
     expect(screen.queryByAltText("Before")).not.toBeInTheDocument();
   });
 
-  it("un fichero nuevo solo tiene después", async () => {
+  it("a new file only has an after", async () => {
     vi.mocked(imagePair).mockResolvedValue({ before: null, after: "image/png" });
     render(<ImageDiffPanel />);
 
@@ -72,7 +72,7 @@ describe("ImageDiffPanel", () => {
     expect(screen.getByText("New binary file")).toBeInTheDocument();
   });
 
-  it("un fichero borrado solo tiene antes", async () => {
+  it("a deleted file only has a before", async () => {
     vi.mocked(imagePair).mockResolvedValue({ before: "image/png", after: null });
     render(<ImageDiffPanel />);
 
@@ -80,7 +80,7 @@ describe("ImageDiffPanel", () => {
     expect(screen.getByText("Deleted binary file")).toBeInTheDocument();
   });
 
-  it("expone el error si no se pueden leer las imágenes", async () => {
+  it("exposes the error if the images cannot be read", async () => {
     vi.mocked(imagePair).mockRejectedValue(new Error("boom"));
     render(<ImageDiffPanel />);
 

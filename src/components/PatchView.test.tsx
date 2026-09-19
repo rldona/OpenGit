@@ -31,7 +31,7 @@ function renderPatch(overrides: Partial<Parameters<typeof PatchView>[0]> = {}) {
 }
 
 describe("PatchView", () => {
-  it("muestra el hunk y permite stagearlo", async () => {
+  it("shows the hunk and allows staging it", async () => {
     const user = userEvent.setup();
     const props = renderPatch();
 
@@ -41,20 +41,20 @@ describe("PatchView", () => {
     expect(props.onApply).toHaveBeenCalledWith({ kind: "hunk", index: 0 });
   });
 
-  it("numera las líneas antiguas y nuevas", () => {
+  it("numbers the old and new lines", () => {
     renderPatch();
 
-    // contexto (1/1), borrada (2) y añadida (2) dejan dos "1" y dos "2" visibles
+    // context (1/1), deleted (2) and added (2) leave two "1"s and two "2"s visible
     expect(screen.getAllByText("1").length).toBeGreaterThanOrEqual(2);
     expect(screen.getAllByText("2").length).toBeGreaterThanOrEqual(2);
   });
 
-  it("etiqueta unstage cuando el parche viene del index", () => {
+  it("labels unstage when the patch comes from the index", () => {
     renderPatch({ stagedSide: true });
     expect(screen.getByRole("button", { name: "Unstage hunk" })).toBeInTheDocument();
   });
 
-  it("ofrece descartar el hunk en el lado unstaged", async () => {
+  it("offers discarding the hunk on the unstaged side", async () => {
     const user = userEvent.setup();
     const props = renderPatch({ onDiscard: vi.fn() });
 
@@ -63,13 +63,13 @@ describe("PatchView", () => {
     expect(props.onDiscard).toHaveBeenCalledWith({ kind: "hunk", index: 0 });
   });
 
-  it("no ofrece descartar en el lado del index", () => {
+  it("does not offer discarding on the index side", () => {
     renderPatch({ stagedSide: true, onDiscard: vi.fn() });
 
     expect(screen.queryByRole("button", { name: "Discard hunk" })).not.toBeInTheDocument();
   });
 
-  it("permite seleccionar líneas + y -", async () => {
+  it("allows selecting + and - lines", async () => {
     const user = userEvent.setup();
     const props = renderPatch();
 
@@ -80,12 +80,12 @@ describe("PatchView", () => {
     expect(props.onToggleLine).toHaveBeenNthCalledWith(2, 7);
   });
 
-  it("marca las líneas seleccionadas", () => {
+  it("marks the selected lines", () => {
     renderPatch({ selectedLines: [7] });
     expect(screen.getByText("+DOS").closest(".patch-line")).toHaveClass("selected");
   });
 
-  it("sin staging no muestra acciones ni permite seleccionar", () => {
+  it("without staging it shows no actions and does not allow selecting", () => {
     const props = renderPatch({ staging: false });
     expect(screen.queryByRole("button", { name: "Stage hunk" })).not.toBeInTheDocument();
     expect(screen.getByText("-dos")).not.toHaveClass("selectable");

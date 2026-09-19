@@ -3,7 +3,7 @@ import { ContextMenu, type ContextMenuItem } from "../../components/ContextMenu"
 
 type OpenEvent = { clientX: number; clientY: number; preventDefault: () => void };
 
-/** Estado del menú contextual: `open` en el evento, `menu` renderizado una vez. */
+/** Context menu state: `open` at the event, `menu` rendered once. */
 export function useContextMenu(): {
   open: (event: OpenEvent, items: ContextMenuItem[]) => void;
   close: () => void;

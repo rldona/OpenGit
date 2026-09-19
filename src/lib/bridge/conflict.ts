@@ -5,7 +5,7 @@ export function readConflictFile(path: string, file: string): Promise<ConflictFi
   return invoke<ConflictFile>("read_conflict_file", { path, file });
 }
 
-/** Escribe el contenido resuelto y hace stage del fichero. */
+/** Writes the resolved content and stages the file. */
 export function resolveConflict(path: string, file: string, content: string): Promise<void> {
   return invoke<void>("resolve_conflict", { path, file, content });
 }

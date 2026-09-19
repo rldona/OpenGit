@@ -61,7 +61,7 @@ describe("CommitDetailPanel", () => {
     vi.mocked(diffFile).mockResolvedValue("diff --git a/a.txt b/a.txt\n@@ -1 +1 @@\n-a\n+b\n");
   });
 
-  it("muestra autor, fecha y hash del commit", async () => {
+  it("shows the commit author, date and hash", async () => {
     render(<CommitDetailPanel commit={commit("aaaa1111")} />);
 
     expect(screen.getByText(/Ana <ana@example\.com>/)).toBeInTheDocument();
@@ -69,7 +69,7 @@ describe("CommitDetailPanel", () => {
     expect(await screen.findAllByText("a.txt")).not.toHaveLength(0);
   });
 
-  it("no repite aquí las acciones del commit: viven en el menú contextual", () => {
+  it("does not repeat the commit actions here: they live in the context menu", () => {
     render(<CommitDetailPanel commit={commit("aaaa1111")} />);
 
     expect(screen.queryByRole("button", { name: "Cherry-pick" })).not.toBeInTheDocument();
@@ -78,20 +78,20 @@ describe("CommitDetailPanel", () => {
     expect(screen.queryByRole("button", { name: "Rebase from here" })).not.toBeInTheDocument();
   });
 
-  it("muestra el cuerpo del mensaje cuando lo hay", async () => {
+  it("shows the message body when there is one", async () => {
     render(<CommitDetailPanel commit={commit("aaaa1111", "Primera línea.\nSegunda línea.")} />);
 
     const body = await screen.findByText(/Primera línea\./);
     expect(body).toHaveTextContent("Segunda línea.");
   });
 
-  it("omite el cuerpo cuando el commit solo tiene asunto", () => {
+  it("omits the body when the commit only has a subject", () => {
     const { container } = render(<CommitDetailPanel commit={commit("aaaa1111")} />);
 
     expect(container.querySelector(".commit-meta-body")).toBeNull();
   });
 
-  it("permite cambiar el modo del diff y la vista de ficheros", async () => {
+  it("allows changing the diff mode and the file view", async () => {
     const user = userEvent.setup();
     render(<CommitDetailPanel commit={commit("aaaa1111")} />);
 
@@ -102,7 +102,7 @@ describe("CommitDetailPanel", () => {
     expect(useUiStore.getState().fileTree).toBe(true);
   });
 
-  it("no pide el diff una vez por commit al navegar rápido", async () => {
+  it("does not request the diff once per commit when navigating quickly", async () => {
     vi.useFakeTimers();
     try {
       const { rerender } = render(<CommitDetailPanel commit={commit("aaaa0001")} />);

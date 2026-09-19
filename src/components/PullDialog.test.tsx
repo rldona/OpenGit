@@ -52,7 +52,7 @@ describe("PullDialog", () => {
     useRemoteStore.getState().reset();
   });
 
-  it("arranca con el remoto y la rama del upstream", () => {
+  it("starts with the upstream remote and branch", () => {
     render(<PullDialog onClose={() => {}} />);
 
     expect(screen.getByLabelText("Pull from repository")).toHaveValue("origin");
@@ -61,7 +61,7 @@ describe("PullDialog", () => {
     expect(screen.getByText("main", { selector: ".remote-value" })).toBeInTheDocument();
   });
 
-  it("lanza el pull con las opciones por defecto", async () => {
+  it("starts the pull with the default options", async () => {
     const user = userEvent.setup();
     const onClose = vi.fn();
     render(<PullDialog onClose={onClose} />);
@@ -80,7 +80,7 @@ describe("PullDialog", () => {
     expect(onClose).toHaveBeenCalled();
   });
 
-  it("traduce las casillas a flags de git", async () => {
+  it("translates the checkboxes into git flags", async () => {
     const user = userEvent.setup();
     render(<PullDialog onClose={() => {}} />);
 
@@ -100,7 +100,7 @@ describe("PullDialog", () => {
     );
   });
 
-  it("con rebase desactiva las opciones de merge", async () => {
+  it("with rebase it disables the merge options", async () => {
     const user = userEvent.setup();
     render(<PullDialog onClose={() => {}} />);
 
@@ -117,7 +117,7 @@ describe("PullDialog", () => {
     );
   });
 
-  it("cancelar cierra sin lanzar nada", async () => {
+  it("cancel closes without starting anything", async () => {
     const user = userEvent.setup();
     const onClose = vi.fn();
     render(<PullDialog onClose={onClose} />);

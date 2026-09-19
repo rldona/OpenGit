@@ -74,7 +74,7 @@ describe("ExtrasSidebar", () => {
     });
   });
 
-  it("lista submódulos con su estado y worktrees con su rama", async () => {
+  it("lists submodules with their state and worktrees with their branch", async () => {
     render(<ExtrasSidebar />);
 
     expect(screen.getByRole("button", { name: "Submodules" })).toBeInTheDocument();
@@ -87,7 +87,7 @@ describe("ExtrasSidebar", () => {
     expect(screen.getByRole("button", { name: /wt-topic/ })).toBeInTheDocument();
   });
 
-  it("marca el worktree actual y deshabilita el submódulo sin inicializar", () => {
+  it("marks the current worktree and disables the uninitialized submodule", () => {
     render(<ExtrasSidebar />);
 
     expect(screen.getByText("current").closest("button")).toBeDisabled();
@@ -95,7 +95,7 @@ describe("ExtrasSidebar", () => {
     expect(screen.getByText("Clean").closest("button")).toBeEnabled();
   });
 
-  it("abre el worktree y el submódulo al hacer click", async () => {
+  it("opens the worktree and the submodule on click", async () => {
     const user = userEvent.setup();
     render(<ExtrasSidebar />);
 
@@ -106,7 +106,7 @@ describe("ExtrasSidebar", () => {
     expect(openRepo).toHaveBeenCalledWith("/tmp/repo/vendor/lib");
   });
 
-  it("no se muestra sin submódulos ni worktrees extra", () => {
+  it("is not shown without submodules or extra worktrees", () => {
     vi.mocked(submoduleStatus).mockResolvedValue([]);
     vi.mocked(worktreeList).mockResolvedValue([WORKTREES[0]]);
     vi.mocked(lfsStatus).mockResolvedValue({
@@ -125,14 +125,14 @@ describe("ExtrasSidebar", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it("muestra la sección Git LFS con la versión instalada", async () => {
+  it("shows the Git LFS section with the installed version", async () => {
     render(<ExtrasSidebar />);
 
     expect(screen.getByRole("button", { name: "Git LFS" })).toBeInTheDocument();
     expect(screen.getByText("git-lfs/3.5.1")).toBeInTheDocument();
   });
 
-  it("avisa cuando LFS está configurado pero no instalado", () => {
+  it("warns when LFS is configured but not installed", () => {
     const missing: LfsStatus = { installed: false, version: null, configured: true };
     vi.mocked(lfsStatus).mockResolvedValue(missing);
     useExtrasStore.setState({ lfs: missing });

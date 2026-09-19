@@ -1,6 +1,6 @@
 /**
- * Parseo de marcadores de conflicto del fichero de trabajo. Funciones puras:
- * respetan el `merge.conflictStyle` del usuario (incluido `diff3` con base).
+ * Parsing of conflict markers in the working tree file. Pure functions:
+ * they respect the user's `merge.conflictStyle` (including `diff3` with base).
  */
 
 export type ConflictChoice = "ours" | "theirs" | "both";
@@ -93,7 +93,7 @@ export function conflictCount(blocks: ConflictBlock[]): number {
   return blocks.filter((block) => block.kind === "conflict").length;
 }
 
-/** Reconstruye el contenido eligiendo un lado por bloque. */
+/** Rebuilds the content by choosing one side per block. */
 export function resolvedContent(
   blocks: ConflictBlock[],
   choices: Record<number, ConflictChoice>,

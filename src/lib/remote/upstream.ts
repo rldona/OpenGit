@@ -1,4 +1,4 @@
-/** `origin/main` → `{ remote: "origin", branch: "main" }`; null si no hay upstream. */
+/** `origin/main` → `{ remote: "origin", branch: "main" }`; null if there is no upstream. */
 export function splitUpstream(upstream: string | null): { remote: string; branch: string } | null {
   if (!upstream) {
     return null;

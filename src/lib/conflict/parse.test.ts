@@ -24,13 +24,13 @@ const DIFF3 = [
 ].join("\n");
 
 describe("parseConflictBlocks", () => {
-  it("parsea un conflicto estilo merge", () => {
+  it("parses a merge-style conflict", () => {
     const blocks = parseConflictBlocks(MERGE_STYLE);
 
     expect(blocks).toHaveLength(3);
     expect(conflictCount(blocks)).toBe(1);
     const conflict = blocks[1];
-    if (conflict.kind !== "conflict") throw new Error("esperaba conflicto");
+    if (conflict.kind !== "conflict") throw new Error("expected a conflict");
     expect(conflict.ours).toEqual(["nuestra linea"]);
     expect(conflict.theirs).toEqual(["su linea"]);
     expect(conflict.base).toBeNull();
@@ -38,14 +38,14 @@ describe("parseConflictBlocks", () => {
     expect(conflict.theirsLabel).toBe("feature");
   });
 
-  it("parsea diff3 con base", () => {
+  it("parses diff3 with base", () => {
     const blocks = parseConflictBlocks(DIFF3);
     const conflict = blocks[0];
-    if (conflict.kind !== "conflict") throw new Error("esperaba conflicto");
+    if (conflict.kind !== "conflict") throw new Error("expected a conflict");
     expect(conflict.base).toEqual(["original"]);
   });
 
-  it("soporta varios conflictos y contenido sin marcadores", () => {
+  it("supports multiple conflicts and content without markers", () => {
     const content = `${MERGE_STYLE}\notra comun\n${DIFF3}`;
     const blocks = parseConflictBlocks(content);
     expect(conflictCount(blocks)).toBe(2);
@@ -53,7 +53,7 @@ describe("parseConflictBlocks", () => {
     expect(conflictCount(parseConflictBlocks("sin conflictos\n"))).toBe(0);
   });
 
-  it("conserva el estado de la última línea", () => {
+  it("preserves the state of the last line", () => {
     expect(resolvedContent(parseConflictBlocks(MERGE_STYLE), { 0: "ours" }).content).toBe(
       "linea comun\nnuestra linea\nfinal comun\n",
     );
@@ -61,7 +61,7 @@ describe("parseConflictBlocks", () => {
 });
 
 describe("resolvedContent", () => {
-  it("elige ours, theirs o ambos por bloque", () => {
+  it("chooses ours, theirs or both per block", () => {
     const blocks = parseConflictBlocks(MERGE_STYLE);
 
     expect(resolvedContent(blocks, { 0: "theirs" }).content).toBe(
@@ -72,7 +72,7 @@ describe("resolvedContent", () => {
     );
   });
 
-  it("cuenta los bloques sin resolver", () => {
+  it("counts unresolved blocks", () => {
     const blocks = parseConflictBlocks(`${MERGE_STYLE}\notra\n${DIFF3}`);
 
     const partial = resolvedContent(blocks, { 0: "ours" });

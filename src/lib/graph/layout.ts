@@ -1,7 +1,7 @@
 /**
- * Layout del grafo de commits (ADR-0004). Función pura e incremental:
- * los commits llegan en orden topológico inverso (nuevo → viejo) y el estado
- * de las lanes se reutiliza entre páginas para no recalcular lo ya pintado.
+ * Commit graph layout (ADR-0004). Pure and incremental function:
+ * commits arrive in reverse topological order (new → old) and lane state
+ * is reused between pages to avoid recomputing what is already painted.
  */
 
 export type GraphInput = {
@@ -25,13 +25,13 @@ export type GraphEdge = {
   kind: "parent" | "converge";
   from: number;
   to: number;
-  /** Lane cuyo color pinta la línea. */
+  /** Lane whose color paints the line. */
   laneId: number;
 };
 
 export type GraphRow = {
   hash: string;
-  /** Posición (columna) del nodo. */
+  /** Position (column) of the node. */
   lane: number;
   laneId: number;
   before: LaneSnapshot[];
@@ -49,18 +49,18 @@ export type GraphLayout = {
 export const LANE_WIDTH = 14;
 export const ROW_HEIGHT = 28;
 
-/** Tope de lanes pintadas: más allá el grafo se recorta en vez de empujar el texto. */
+/** Cap on painted lanes: beyond it the graph is clipped instead of pushing the text. */
 export const MAX_GRAPH_LANES = 12;
-/** El ancho se redondea a bloques para que el texto no tiemble al hacer scroll. */
+/** The width is rounded to blocks so the text does not shake while scrolling. */
 const LANE_BLOCK = 4;
 const GRAPH_PADDING = 16;
 
 /**
- * Lanes necesarias para pintar `rows[start..end)`.
+ * Lanes needed to paint `rows[start..end)`.
  *
- * Se mide sobre el rango visible, no sobre todo el historial: si en algún punto
- * del repo hay 27 ramas abiertas, calcularlo globalmente indentaría *todas* las
- * filas cientos de píxeles aunque en pantalla solo se vean cuatro lanes.
+ * Measured over the visible range, not over the whole history: if at some
+ * point the repo has 27 open branches, computing it globally would indent
+ * *all* rows by hundreds of pixels even if only four lanes are on screen.
  */
 export function visibleLaneCount(rows: GraphRow[], start: number, end: number): number {
   let max = 1;
@@ -72,9 +72,9 @@ export function visibleLaneCount(rows: GraphRow[], start: number, end: number): 
 }
 
 /**
- * Ancho de la columna del grafo, redondeado al alza a bloques de `LANE_BLOCK`.
- * El redondeo es la histéresis: sin él, cruzar un merge al hacer scroll movería
- * el texto de todas las filas en horizontal.
+ * Width of the graph column, rounded up to blocks of `LANE_BLOCK`.
+ * The rounding is the hysteresis: without it, crossing a merge while scrolling
+ * would move the text of all rows horizontally.
  */
 export function graphWidth(laneCount: number): number {
   const capped = Math.min(Math.max(laneCount, 1), MAX_GRAPH_LANES);
@@ -97,7 +97,7 @@ export function emptyLayout(): GraphLayout {
   return { rows: [], colors: {}, lanes: [], nextLaneId: 1 };
 }
 
-/** Color determinista para una clave estable (nombre de rama o hash). */
+/** Deterministic color for a stable key (branch name or hash). */
 export function colorForKey(key: string): string {
   let hash = 2166136261;
   for (let index = 0; index < key.length; index += 1) {
@@ -162,7 +162,7 @@ export function layoutPage(commits: GraphInput[], previous?: GraphLayout): Graph
     const laneId = lanes[position].id;
     const edges: GraphEdge[] = [];
 
-    // Otras lanes que esperaban este commit convergen en el nodo.
+    // Other lanes that were expecting this commit converge at the node.
     expected.slice(1).forEach((index) => {
       edges.push({ kind: "converge", from: index, to: position, laneId: lanes[index].id });
       lanes[index] = { ...lanes[index], expects: null };

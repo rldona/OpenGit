@@ -4,7 +4,7 @@ import { afterEach, vi } from "vitest";
 
 afterEach(cleanup);
 
-// jsdom no implementa canvas; el componente ya contempla getContext() === null.
+// jsdom has no canvas; the component already handles getContext() === null.
 HTMLCanvasElement.prototype.getContext = vi.fn(
   () => null,
 ) as unknown as typeof HTMLCanvasElement.prototype.getContext;
@@ -25,7 +25,7 @@ if (!("ResizeObserver" in globalThis)) {
   globalThis.ResizeObserver = ResizeObserverStub as unknown as typeof ResizeObserver;
 }
 
-// jsdom no implementa matchMedia; por defecto simulamos un SO en oscuro.
+// jsdom has no matchMedia; by default we simulate a dark OS.
 if (!("matchMedia" in globalThis)) {
   globalThis.matchMedia = ((query: string) => ({
     matches: query.includes("dark"),

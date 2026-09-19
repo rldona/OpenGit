@@ -86,13 +86,13 @@ describe("StashView", () => {
     useStashStore.setState({ root: REPO.root, stashes: [STASH] });
   });
 
-  it("sin selección pide elegir un stash", () => {
+  it("without a selection it asks to choose a stash", () => {
     render(<StashView />);
 
     expect(screen.getByText(/Select a stash/)).toBeInTheDocument();
   });
 
-  it("muestra la cabecera con mensaje y rama, y un bloque por fichero", () => {
+  it("shows the header with message and branch, and one block per file", () => {
     useStashStore.setState({ diffReference: STASH.reference, diffPatch: MULTI_PATCH });
     render(<StashView />);
 
@@ -102,11 +102,11 @@ describe("StashView", () => {
     expect(screen.getByText("dos.txt")).toBeInTheDocument();
     expect(screen.getAllByText("File contents")).toHaveLength(2);
     expect(screen.getByText("-viejo")).toBeInTheDocument();
-    // Un contador por fichero: los dos parches suman una línea.
+    // One counter per file: the two patches add up to one line.
     expect(screen.getAllByText("+1")).toHaveLength(2);
   });
 
-  it("pliega el parche de un fichero", async () => {
+  it("collapses a file's patch", async () => {
     const user = userEvent.setup();
     useStashStore.setState({ diffReference: STASH.reference, diffPatch: MULTI_PATCH });
     render(<StashView />);
@@ -117,7 +117,7 @@ describe("StashView", () => {
     expect(screen.getByText("-a")).toBeInTheDocument();
   });
 
-  it("drop pide confirmación antes de borrar", async () => {
+  it("drop asks for confirmation before deleting", async () => {
     const user = userEvent.setup();
     vi.mocked(confirmDestructive).mockResolvedValue(false);
     useStashStore.setState({ diffReference: STASH.reference, diffPatch: MULTI_PATCH });
@@ -131,7 +131,7 @@ describe("StashView", () => {
     expect(stashDrop).toHaveBeenCalledWith("/tmp/repo", "stash@{0}");
   });
 
-  it("apply y pop usan la referencia seleccionada", async () => {
+  it("apply and pop use the selected reference", async () => {
     const user = userEvent.setup();
     useStashStore.setState({ diffReference: STASH.reference, diffPatch: MULTI_PATCH });
     render(<StashView />);
@@ -143,7 +143,7 @@ describe("StashView", () => {
     expect(stashApply).toHaveBeenCalledWith("/tmp/repo", "stash@{0}", true);
   });
 
-  it("un stash sin cambios lo dice sin pintar ficheros", () => {
+  it("a stash without changes says so without rendering files", () => {
     useStashStore.setState({ diffReference: STASH.reference, diffPatch: "" });
     render(<StashView />);
 

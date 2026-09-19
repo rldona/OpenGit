@@ -7,8 +7,8 @@ import { ImageDiffPanel } from "./ImageDiffPanel";
 import { PatchView } from "./PatchView";
 
 /**
- * Panel del parche del fichero seleccionado. Las acciones de staging solo se
- * ofrecen sobre el working tree sin invertir: en un commit el diff es de lectura.
+ * Patch panel of the selected file. Staging actions are only offered on the
+ * non-reversed working tree: on a commit the diff is read-only.
  */
 export function DiffPatchPanel() {
   const target = useDiffStore((state) => state.target);
@@ -35,8 +35,8 @@ export function DiffPatchPanel() {
 
   return (
     <div className="diff-pane">
-      {/* Cabecera con la ruta del fichero, como SourceTree: sustituye a las
-          líneas `diff --git`/`index`/`---`/`+++` que ya no se pintan. */}
+      {/* Header with the file path, like SourceTree: it replaces the
+          `diff --git`/`index`/`---`/`+++` lines that are no longer rendered. */}
       {selected && (
         <div className="diff-pane-head" title={selected.path}>
           <span className="diff-pane-path">{selected.path}</span>

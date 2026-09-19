@@ -47,7 +47,7 @@ export const useStatusStore = create<StatusState>((set, get) => ({
     }
   },
 
-  /// Refresco silencioso tras el watcher: conserva filtro y selección.
+  /// Silent refresh after the watcher: keeps filter and selection.
   refresh: async (root) => {
     try {
       set({ root, report: await statusRepo(root) });

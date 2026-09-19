@@ -8,7 +8,7 @@ export type RepoEventHandlers = {
   onRefreshed: () => void;
 };
 
-/** Suscribe a los eventos del watcher; devuelve las funciones para limpiar. */
+/** Subscribes to watcher events; returns the cleanup functions. */
 export async function subscribeRepoEvents(handlers: RepoEventHandlers): Promise<UnlistenFn[]> {
   return Promise.all([
     listen("repo://refs-changed", handlers.onRefsChanged),
@@ -23,7 +23,7 @@ export type JobEventHandlers = {
   onFinished: (payload: JobFinishedEvent) => void;
 };
 
-/** Suscribe a la salida de fetch/pull/push; devuelve las funciones para limpiar. */
+/** Subscribes to fetch/pull/push output; returns the cleanup functions. */
 export async function subscribeJobEvents(handlers: JobEventHandlers): Promise<UnlistenFn[]> {
   return Promise.all([
     listen<JobOutputEvent>("job://output", (event) => handlers.onOutput(event.payload)),
@@ -31,7 +31,7 @@ export async function subscribeJobEvents(handlers: JobEventHandlers): Promise<Un
   ]);
 }
 
-/** Suscribe a los clics del menú nativo; devuelve la función para limpiar. */
+/** Subscribes to native menu clicks; returns the cleanup function. */
 export function subscribeMenuEvents(handler: (id: string) => void): Promise<UnlistenFn> {
   return listen<string>("menu-action", (event) => handler(event.payload));
 }

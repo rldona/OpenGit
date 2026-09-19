@@ -10,7 +10,7 @@ export type FileTreeDir<T> = {
   path: string;
   name: string;
   children: FileTreeNode<T>[];
-  /** Todos los ficheros descendientes, para agregar contadores. */
+  /** All descendant files, used to aggregate counters. */
   files: T[];
 };
 
@@ -23,7 +23,7 @@ function compareNodes<T>(left: FileTreeNode<T>, right: FileTreeNode<T>): number 
   return left.name.localeCompare(right.name);
 }
 
-/** Construye el árbol a partir de rutas git (`a/b/c.txt`); no toca disco. */
+/** Builds the tree from git paths (`a/b/c.txt`); does not touch disk. */
 export function buildFileTree<T>(items: T[], pathOf: (item: T) => string): FileTreeNode<T>[] {
   type DirBuilder = {
     path: string;
