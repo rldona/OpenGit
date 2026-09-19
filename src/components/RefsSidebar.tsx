@@ -4,6 +4,7 @@ import { confirmDestructive } from "../lib/bridge/dialog";
 import { openExternal } from "../lib/bridge/opener";
 import type { RefEntry } from "../lib/bridge/types";
 import { parseTrack } from "../lib/format";
+import { DEFAULT_MERGE_OPTIONS } from "../lib/merge";
 import { useMergeBranch } from "../lib/hooks/useMergeBranch";
 import { useExtrasStore } from "../lib/stores/extras";
 import { useLogStore } from "../lib/stores/log";
@@ -72,7 +73,7 @@ export function RefsSidebar() {
   const confirmMerge = async (rev: string) => {
     const target = current ?? "HEAD";
     if (await confirmDestructive(`Merge ${rev} into ${target}?`)) {
-      await runMerge(rev, false);
+      await runMerge(rev, DEFAULT_MERGE_OPTIONS);
     }
   };
 

@@ -347,7 +347,7 @@ describe("App", () => {
     expect(document.querySelector(".history-graph")).not.toBeNull();
   });
 
-  it("the Merge button opens the branches dialog", async () => {
+  it("the Merge button opens the merge window on the log tab", async () => {
     const user = userEvent.setup();
     render(<App />);
 
@@ -357,6 +357,11 @@ describe("App", () => {
     await user.click(screen.getByRole("button", { name: "Merge" }));
 
     expect(screen.getByRole("dialog", { name: "Merge" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Merge From Log" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(screen.getByRole("tab", { name: "Merge Fetched" })).toBeInTheDocument();
   });
 
   it("the Fetch button opens the options dialog", async () => {
