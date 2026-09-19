@@ -1,29 +1,29 @@
-# Contribuir
+# Contributing
 
-Proyecto personal, pero con reglas claras para que el trabajo (humano o agente) sea predecible.
+Personal project, but with clear rules so the work (human or agent) is predictable.
 
-## Flujo
+## Flow
 
-1. Todo cambio nace de un ticket en `docs/tickets/`. Si no existe, se crea primero.
-2. El ticket pasa a `in-progress` y se trabaja en una rama con su ID: `feat/OG-004-graph-log`.
-3. Commits en [Conventional Commits](https://www.conventionalcommits.org/): `feat(graph): añade lanes incrementales`.
-4. Antes de cerrar: lint, typecheck y tests en verde.
-5. PR contra `main` con el ID del ticket en el título. El PR cierra el ticket (`Closes OG-004`).
+1. Every change starts from a ticket in `docs/tickets/`. If it does not exist, create it first.
+2. The ticket moves to `in-progress` and work happens on a branch named after its ID: `feat/OG-004-graph-log`.
+3. Commits follow [Conventional Commits](https://www.conventionalcommits.org/): `feat(graph): add incremental lanes`.
+4. Before closing: lint, typecheck and tests green.
+5. PR against `main` with the ticket ID in the title. The PR closes the ticket (`Closes OG-004`).
 
-## Convenciones
+## Conventions
 
-- **Idioma:** documentación e issues en español; código, identificadores, ramas y mensajes de commit en inglés.
-- **Decisiones:** cualquier decisión que cueste revertir (dependencia pesada, modelo de datos, protocolo UI↔Rust) requiere un ADR en `docs/decisions/` usando `TEMPLATE.md`.
-- **Tickets:** un fichero por ticket, formato en `docs/tickets/README.md`. Estados: `backlog`, `ready`, `in-progress`, `blocked`, `done`.
-- **Commits atómicos:** un commit = un cambio con sentido propio. Nada de "wip" en `main`.
+- **Language:** documentation, code, comments and everything written to git in English (see `AGENTS.md`; the Spanish written before is translated in OG-062).
+- **Decisions:** any decision that is expensive to revert (heavy dependency, data model, UI↔Rust protocol) requires an ADR in `docs/decisions/` using `TEMPLATE.md`.
+- **Tickets:** one file per ticket, format in `docs/tickets/README.md`. States: `backlog`, `ready`, `in-progress`, `blocked`, `done`.
+- **Atomic commits:** one commit = one self-contained change. No "wip" on `main`.
 
-## Estilo de código
+## Code style
 
-- Rust: `cargo fmt` + `cargo clippy` (sin warnings nuevos).
-- TypeScript: `npm run lint` + `npm run typecheck`; componentes funcionales y hooks.
-- Sin comentarios que repitan el código. Los comentarios explican *por qué*, no *qué*.
-- Nada de secretos, tokens ni rutas personales en el repo.
+- Rust: `cargo fmt` + `cargo clippy` (no new warnings).
+- TypeScript: `npm run lint` + `npm run typecheck`; functional components and hooks.
+- No comments that restate the code. Comments explain *why*, not *what*.
+- No secrets, tokens or personal paths in the repository.
 
-## Operaciones git sensibles
+## Sensitive git operations
 
-La app no debe ejecutar operaciones destructivas sin confirmación explícita del usuario: `reset --hard`, `push --force`, `clean -fd`, `branch -D`, `stash drop`. En el repositorio de desarrollo, aplica la misma regla a los agentes.
+The app must not run destructive operations without explicit user confirmation: `reset --hard`, `push --force`, `clean -fd`, `branch -D`, `stash drop`. In the development repository, the same rule applies to agents.

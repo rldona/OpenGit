@@ -1,29 +1,29 @@
 # AGENTS.md
 
-Instrucciones para cualquier agente (opencode, Claude, Copilot, Codex) que trabaje en este repositorio. Es la fuente única: `CLAUDE.md` y `.github/copilot-instructions.md` solo apuntan aquí.
+Instructions for any agent (opencode, Claude, Copilot, Codex) working in this repository. This is the single source: `CLAUDE.md` and `.github/copilot-instructions.md` only point here.
 
-## Proyecto
+## Project
 
-OpenGit es un cliente de Git de escritorio multiplataforma (Windows, macOS, Linux) inspirado en SourceTree. Proyecto personal, sin usuarios externos todavía. El alcance y los hitos están en `ROADMAP.md`; el trabajo nace de tickets en `docs/tickets/`.
+OpenGit is a cross-platform desktop Git client (Windows, macOS, Linux) inspired by SourceTree. Personal project, no external users yet. Scope and milestones live in `ROADMAP.md`; work starts from tickets in `docs/tickets/`.
 
-## Arquitectura
+## Architecture
 
 ```
-React UI (WebView)  →  Tauri IPC (invoke/events)  →  Rust core  →  binario git
+React UI (WebView)  →  Tauri IPC (invoke/events)  →  Rust core  →  git binary
 ```
 
-- **UI (React + TS):** vistas de grafo/log, diff, staging, sidebar y panel de salida. Sin lógica de git.
-- **Rust core (`src-tauri`):** ejecuta git, parsea su salida, vigila `.git`, emite eventos a la UI.
-- **Motor:** el binario `git` del sistema. Nunca se reimplementa git.
-- Detalle completo en `docs/architecture/overview.md`; decisiones en `docs/decisions/`.
+- **UI (React + TS):** graph/log, diff, staging, sidebar and output panel views. No git logic.
+- **Rust core (`src-tauri`):** runs git, parses its output, watches `.git`, emits events to the UI.
+- **Engine:** the system `git` binary. Git is never reimplemented.
+- Full detail in `docs/architecture/overview.md`; decisions in `docs/decisions/`.
 
-## Desarrollo
+## Development
 
-Estado actual: **M7 completado** (2026-09-19) con la paridad con SourceTree (ventana de commit, detalle de stash embebido, remotos con diálogo y ventana de progreso, columnas ordenables y merge). **M8 planificado** (búsqueda, historial de fichero, comparar refs, blame y gestión de remotos, submódulos y worktrees). La firma/notarización queda descartada por coste (OG-028).
+Current state: **M7 completed** (2026-09-19) with SourceTree parity (commit window, embedded stash detail, remotes with dialog and progress window, sortable columns and merge). **M8 planned** (search, file history, compare refs, blame and management of remotes, submodules and worktrees). Signing and notarization are dropped for cost (OG-028).
 
 ```bash
 npm install
-npm run tauri dev                # app en desarrollo
+npm run tauri dev                # app in development
 npm run lint                     # ESLint
 npm run format:check             # Prettier
 npm run typecheck                # tsc --noEmit
@@ -33,32 +33,32 @@ cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings
 cargo fmt --manifest-path src-tauri/Cargo.toml --check
 ```
 
-Convenciones: **documentación, issues, código y comentarios en inglés** desde 2026-09-19 (los textos de UI ya iban en inglés; el multidioma de la interfaz se decidirá más adelante). **Todo lo que se escribe en git va en inglés**: mensajes de commit, títulos y descripciones de PR, comentarios de revisión y notas de issue. Lo escrito antes en español se traducirá en un proceso aparte, anotado en `ROADMAP.md`. Commits en Conventional Commits con scope del área (`feat(graph): ...`). Todo cambio nace de un ticket (`OG-NNN`).
+Conventions: **documentation, issues, code and comments in English** since 2026-09-19 (UI strings were already in English; UI internationalization will be decided later). **Everything written to git is in English**: commit messages, PR titles and descriptions, review comments and issue notes. Text written before in Spanish is translated in a separate process (OG-062), tracked in `ROADMAP.md`. Commits follow Conventional Commits with an area scope (`feat(graph): ...`). Every change starts from a ticket (`OG-NNN`).
 
-## Reglas
+## Rules
 
-1. **Nunca ejecutes operaciones destructivas sin confirmación explícita** del usuario: `reset --hard`, `push --force`, `clean -fd`, `branch -D`, `stash drop`.
-2. **Nunca hagas commit ni push** salvo que el usuario lo pida expresamente.
-3. **Invoca git con arrays de argumentos**, sin shell y sin interpolar entrada del usuario. Prohibido `sh -c "git ... $VAR"`.
-4. **Parseo robusto:** `-z`, `--porcelain=v2`, `--format` con separadores. Nunca parsear salida "humana" ni localizada.
-5. **No añadas dependencias** sin justificarlo en el ticket o en un ADR. Prefiere std y lo ya presente.
-6. **Decisiones reversibles con coste alto** → ADR nuevo. No se edita un ADR aceptado; se sustituye.
-7. **Sin secretos** en código, logs ni tests. Las credenciales las gestiona el credential helper del sistema.
-8. **Sin operaciones de red en tests.** Los tests de git usan repos temporales creados por el propio test.
-9. No dejes la UI bloqueada: nada de llamadas síncronas a git en el hilo de la interfaz.
-10. Si dudas entre "feature nueva" y "que no se rompa lo que hay": primero lo segundo.
-11. **Firma de commits:** siempre `Raúl López <rldona@users.noreply.github.com>` (noreply de GitHub). Nunca correos corporativos ni identidades ajenas; el repo fija `user.name`/`user.email` en su config local.
+1. **Never run destructive operations without explicit confirmation** from the user: `reset --hard`, `push --force`, `clean -fd`, `branch -D`, `stash drop`.
+2. **Never commit or push** unless the user explicitly asks.
+3. **Invoke git with argument arrays**, without a shell and without interpolating user input. `sh -c "git ... $VAR"` is forbidden.
+4. **Robust parsing:** `-z`, `--porcelain=v2`, `--format` with separators. Never parse "human" or localized output.
+5. **Do not add dependencies** without justifying it in the ticket or an ADR. Prefer std and what is already present.
+6. **High-cost reversible decisions** → a new ADR. An accepted ADR is not edited; it is superseded.
+7. **No secrets** in code, logs or tests. Credentials are handled by the system credential helper.
+8. **No network operations in tests.** Git tests use temporary repositories created by the test itself.
+9. Do not block the UI: no synchronous git calls on the interface thread.
+10. If in doubt between "new feature" and "do not break what works": the latter first.
+11. **Commit signing:** always `Raúl López <rldona@users.noreply.github.com>` (GitHub noreply). Never corporate emails or third-party identities; the repo sets `user.name`/`user.email` in its local config.
 
 ## Testing
 
-- **Parsers:** unit tests en Rust con fixtures de salida real (strings), sin tocar disco ni red.
-- **Integración git:** repos temporales (`git init` en `tempdir`) creados y destruidos por el test. Casos: repo vacío, detached HEAD, rename, modo binario, CRLF, sin newline final, non-ASCII.
-- **Frontend:** Vitest + Testing Library, con el bridge de Tauri mockeado.
-- **Rendimiento:** test de referencia con repo sintético de 10 000 commits; primera pintura < 500 ms y scroll fluido.
+- **Parsers:** Rust unit tests with real output fixtures (strings), without touching disk or network.
+- **Git integration:** temporary repositories (`git init` in `tempdir`) created and destroyed by the test. Cases: empty repo, detached HEAD, rename, binary mode, CRLF, missing trailing newline, non-ASCII.
+- **Frontend:** Vitest + Testing Library, with the Tauri bridge mocked.
+- **Performance:** reference test with a synthetic 10,000-commit repo; first paint < 500 ms and smooth scrolling.
 
-## Documentación y agentes
+## Documentation and agents
 
-- `docs/architecture/` visión de componentes; `docs/decisions/` ADRs; `docs/guides/` guías prácticas.
-- `.ai/agents/` roles especializados (git, diff, commit, stash, rebase, PR, CI...); `.ai/skills/` capacidades reutilizables; `.ai/workflows/` procesos; `.ai/memory/` conocimiento adquirido.
-- Al terminar una tarea, si descubres algo no obvio sobre git, la plataforma o el rendimiento, anótalo en `.ai/memory/`.
-- Las skills de `.ai/skills/` se cargan en opencode vía `opencode.json` (`skills.paths`).
+- `docs/architecture/` component view; `docs/decisions/` ADRs; `docs/guides/` practical guides.
+- `.ai/agents/` specialized roles (git, diff, commit, stash, rebase, PR, CI...); `.ai/skills/` reusable capabilities; `.ai/workflows/` processes; `.ai/memory/` acquired knowledge.
+- When you finish a task, if you discover something non-obvious about git, the platform or performance, note it in `.ai/memory/`.
+- Skills in `.ai/skills/` load into opencode via `opencode.json` (`skills.paths`).
