@@ -1,45 +1,47 @@
-# OG-057 · Gestión de submódulos
+# OG-057 · Submodule management
 
-- **Milestone:** M8 — Paridad SourceTree (fase 3)
-- **Estado:** ready
-- **Depende de:** OG-024, OG-009
-- **Referencias:** ROADMAP.md, OG-024
+- **Milestone:** M8 — SourceTree parity (phase 3)
+- **Status:** ready
+- **Depends on:** OG-024, OG-009
+- **References:** ROADMAP.md, OG-024
 
-## Contexto
+## Context
 
-M5 dejó los submódulos en **modo lectura** y el menú de Branches enseña
-`Add Submodule…` deshabilitado. Un submódulo sin inicializar no se puede
-arreglar desde la app (justo el caso más común al clonar), y añadir uno nuevo
-obliga al terminal.
+M5 left submodules in **read-only mode** and the Branches menu shows
+`Add Submodule…` disabled. An uninitialized submodule cannot be fixed from the
+app (exactly the most common case when cloning), and adding a new one requires
+the terminal.
 
-## Alcance
+## Scope
 
-- Comandos Rust: `submodule_update` (`--init --recursive`), `submodule_sync`
-  y `submodule_add` (URL + ruta), con argv y errores tipados.
-- Acciones por submódulo en la sidebar: Update (init incluido), Sync y Open
-  (ya existe) según su estado; el estado `uninitialized` gana una acción
-  destacada.
-- Diálogo "Add Submodule…" desde el menú contextual de Branches.
-- Salida de git al panel de Output y refresco de extras/status.
+- Rust commands: `submodule_update` (`--init --recursive`), `submodule_sync`
+  and `submodule_add` (URL + path), with argv and typed errors.
+- Per-submodule actions in the sidebar: Update (init included), Sync and Open
+  (already exists) depending on its state; the `uninitialized` state gains a
+  prominent action.
+- "Add Submodule…" dialog from the Branches context menu.
+- Git output to the Output panel and refresh of extras/status.
 
-## Criterios de aceptación
+## Acceptance criteria
 
-- [ ] Un submódulo `uninitialized` se inicializa desde la sidebar y pasa a
-      estado limpio.
-- [ ] Añadir un submódulo en un repo temporal lo registra, lo clona y lo lista.
-- [ ] Sync deja las URLs del `.gitmodules` aplicadas sin tocar el índice.
-- [ ] Un fallo de red o de URL se muestra como error accionable.
-- [ ] Tests de integración con repo temporal y submódulo local (`file://`).
+- [ ] An `uninitialized` submodule is initialized from the sidebar and becomes
+      clean.
+- [ ] Adding a submodule in a temporary repo registers, clones and lists it.
+- [ ] Sync applies the URLs from `.gitmodules` without touching the index.
+- [ ] A network or URL failure is shown as an actionable error.
+- [ ] Integration tests with a temporary repo and a local submodule
+      (`file://`).
 
-## Fuera de alcance
+## Out of scope
 
-- Editar `.gitmodules` a mano.
-- Submódulos anidados más allá de `--recursive`.
-- Deinit/absorber submódulos.
+- Editing `.gitmodules` by hand.
+- Nested submodules beyond `--recursive`.
+- Deinit/absorbing submodules.
 
-## Notas técnicas
+## Technical notes
 
-- `git submodule update --init --recursive` puede tardar: usar el patrón de
-  jobs si la salida es larga (o timeout amplio y salida al panel).
-- Tras cambiar un submódulo, el watcher del repo padre no siempre dispara:
-  refrescar extras explícitamente.
+- `git submodule update --init --recursive` can take a while: use the jobs
+  pattern if the output is long (or a generous timeout and output to the
+  panel).
+- After changing a submodule, the parent repo watcher does not always fire:
+  refresh extras explicitly.

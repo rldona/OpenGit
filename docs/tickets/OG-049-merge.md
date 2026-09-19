@@ -1,42 +1,42 @@
-# OG-049 · Merge de ramas
+# OG-049 · Branch merge
 
-- **Milestone:** M7 — Paridad SourceTree (fase 2)
-- **Estado:** done
-- **Depende de:** OG-019, OG-020
-- **Referencias:** ROADMAP.md, OG-041
+- **Milestone:** M7 — SourceTree parity (phase 2)
+- **Status:** done
+- **Depends on:** OG-019, OG-020
+- **References:** ROADMAP.md, OG-041
 
-## Contexto
+## Context
 
-OpenGit sabe detectar un merge en curso y abortarlo o continuarlo (OG-019), y resolver sus conflictos (OG-020), pero **no sabe iniciarlo**: no hay comando `merge` ni en `commands.rs` ni en `git/mod.rs`. Salió al montar la barra superior (OG-041), que preveía un botón Merge sin backend detrás.
+OpenGit knows how to detect an in-progress merge and abort or continue it (OG-019), and resolve its conflicts (OG-020), but it **does not know how to start one**: there is no `merge` command either in `commands.rs` or in `git/mod.rs`. It came up when building the top toolbar (OG-041), which envisioned a Merge button with no backend behind it.
 
-Es la última operación básica del ciclo diario que falta.
+It is the last basic operation of the daily cycle that is missing.
 
-## Alcance
+## Scope
 
-- Comando Rust `merge_branch(path, rev, no_ff)` que ejecuta `git merge` con argv.
-- Modos: fast-forward cuando se pueda y `--no-ff` opcional para forzar commit de merge.
-- Selección de la rama a fusionar desde la barra y desde el menú contextual de una rama en la sidebar ("Merge into <rama actual>").
-- Confirmación explícita antes de ejecutar, indicando qué se fusiona y sobre qué.
-- Un merge con conflictos debe terminar en el flujo que ya existe: banner de operación en curso (OG-019) y editor de conflictos (OG-020), no en un error suelto.
-- Salida del merge al panel de Output.
+- Rust command `merge_branch(path, rev, no_ff)` that runs `git merge` with argv.
+- Modes: fast-forward when possible and optional `--no-ff` to force a merge commit.
+- Selection of the branch to merge from the toolbar and from the context menu of a branch in the sidebar ("Merge into <current branch>").
+- Explicit confirmation before running, indicating what is merged and into what.
+- A merge with conflicts must end in the flow that already exists: in-progress operation banner (OG-019) and conflict editor (OG-020), not in a loose error.
+- Merge output to the Output panel.
 
-## Criterios de aceptación
+## Acceptance criteria
 
-- [x] Fusionar una rama sin conflictos crea el merge y refresca log, status y refs.
-- [x] Con `--no-ff` se crea commit de merge aunque el fast-forward fuera posible.
-- [x] Un merge con conflictos deja el repo en estado "merging", con el banner y los ficheros en conflicto listados.
-- [x] Abortar desde el banner deja el árbol como estaba.
-- [x] Fusionar una rama en sí misma o sin cambios se comunica sin parecer un error.
-- [x] Tests de integración con repo temporal: fast-forward, no-ff, conflicto y abort.
+- [x] Merging a branch without conflicts creates the merge and refreshes log, status and refs.
+- [x] With `--no-ff` a merge commit is created even if fast-forward was possible.
+- [x] A merge with conflicts leaves the repo in "merging" state, with the banner and the conflicting files listed.
+- [x] Aborting from the banner leaves the tree as it was.
+- [x] Merging a branch into itself or with no changes is communicated without looking like an error.
+- [x] Integration tests with a temporary repo: fast-forward, no-ff, conflict and abort.
 
-## Fuera de alcance
+## Out of scope
 
-- Estrategias de merge (`-X ours/theirs`, `--squash`).
-- Merge de más de una rama a la vez (octopus).
-- Resolución automática de conflictos.
+- Merge strategies (`-X ours/theirs`, `--squash`).
+- Merging more than one branch at a time (octopus).
+- Automatic conflict resolution.
 
-## Notas técnicas
+## Technical notes
 
-- `git merge` devuelve código distinto de cero también cuando hay conflictos, que **no** es un fallo: `merge_branch` mira `MERGE_HEAD` (`repo_op_state`) y solo trata como error los fallos sin conflicto.
-- La detección de operación en curso ya existe (`repo_op_state`); el hook `useMergeBranch` recarga `commit.opState` para que el banner de OG-019 aparezca y, si hay conflicto, abre la vista de conflictos.
-- Regla 1 de AGENTS.md: confirmación explícita antes de ejecutar (diálogo Merge o confirm al fusionar desde la sidebar).
+- `git merge` returns a non-zero code also when there are conflicts, which **is not** a failure: `merge_branch` looks at `MERGE_HEAD` (`repo_op_state`) and only treats conflict-free failures as errors.
+- Detection of an in-progress operation already exists (`repo_op_state`); the `useMergeBranch` hook reloads `commit.opState` so that the OG-019 banner appears and, if there is a conflict, opens the conflicts view.
+- Rule 1 of AGENTS.md: explicit confirmation before running (Merge dialog or confirm when merging from the sidebar).

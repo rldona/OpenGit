@@ -1,45 +1,47 @@
-# OG-058 · Worktrees gestionables
+# OG-058 · Manageable worktrees
 
-- **Milestone:** M8 — Paridad SourceTree (fase 3)
-- **Estado:** ready
-- **Depende de:** OG-024
-- **Referencias:** ROADMAP.md, OG-024
+- **Milestone:** M8 — SourceTree parity (phase 3)
+- **Status:** ready
+- **Depends on:** OG-024
+- **References:** ROADMAP.md, OG-024
 
-## Contexto
+## Context
 
-La sidebar lista worktrees y permite abrirlos, pero no crear ni eliminar: hoy
-es una lista informativa. Los worktrees son la alternativa barata a clonar
-para trabajar en dos ramas a la vez, y gestionarlos requiere terminal.
+The sidebar lists worktrees and allows opening them, but not creating or
+deleting: today it is an informational list. Worktrees are the cheap
+alternative to cloning in order to work on two branches at once, and managing
+them requires the terminal.
 
-## Alcance
+## Scope
 
-- Comandos Rust: `worktree_add` (ruta + rama nueva o existente) y
-  `worktree_remove` (con confirmación; `--force` solo tras aviso explícito de
-  que hay cambios sin commitear).
-- UI: marcar el worktree actual en la lista, acciones "New worktree…" y
-  "Remove" en el menú contextual de la sección y de cada entrada.
-- Abrir un worktree sigue funcionando como hoy (abre el repo hijo).
+- Rust commands: `worktree_add` (path + new or existing branch) and
+  `worktree_remove` (with confirmation; `--force` only after an explicit
+  warning that there are uncommitted changes).
+- UI: mark the current worktree in the list, "New worktree…" and "Remove"
+  actions in the context menu of the section and of each entry.
+- Opening a worktree keeps working as today (it opens the child repo).
 
-## Criterios de aceptación
+## Acceptance criteria
 
-- [ ] Crear un worktree con rama nueva lo lista marcado como no actual y se
-      puede abrir.
-- [ ] Crear un worktree sobre una rama existente falla con mensaje claro si ya
-      está en uso por otro worktree.
-- [ ] Remove pide confirmación; si hay cambios sin commitear avisa y solo
-      fuerza tras aceptar.
-- [ ] El worktree principal no se puede eliminar (lo impide git; mensaje claro).
-- [ ] Tests de integración en repo temporal.
+- [ ] Creating a worktree with a new branch lists it marked as not current and
+      it can be opened.
+- [ ] Creating a worktree on an existing branch fails with a clear message if
+      it is already in use by another worktree.
+- [ ] Remove asks for confirmation; if there are uncommitted changes it warns
+      and only forces after accepting.
+- [ ] The main worktree cannot be deleted (git prevents it; clear message).
+- [ ] Integration tests on a temporary repo.
 
-## Fuera de alcance
+## Out of scope
 
-- Mover worktrees existentes.
-- `worktree lock/unlock` y `prune`.
-- Abrir dos worktrees en pestañas (multi-repo queda fuera del hito).
+- Moving existing worktrees.
+- `worktree lock/unlock` and `prune`.
+- Opening two worktrees in tabs (multi-repo is out of the milestone).
 
-## Notas técnicas
+## Technical notes
 
-- `git worktree remove` sin `--force` ya falla si hay cambios: usar ese fallo
-  como señal, igual que el force-delete de ramas (OG-008).
-- La lista de worktrees vive en `useExtrasStore`; refrescarla tras cada
-  operación y al recibir eventos de refs.
+- `git worktree remove` without `--force` already fails if there are changes:
+  use that failure as a signal, just like the force-delete of branches
+  (OG-008).
+- The worktree list lives in `useExtrasStore`; refresh it after each operation
+  and when ref events arrive.

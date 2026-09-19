@@ -1,38 +1,38 @@
-# OG-028 · Distribución sin firma
+# OG-028 · Distribution without signing
 
-- **Milestone:** M5 — Pulido (decisión de distribución, tras OG-026/OG-027)
-- **Estado:** done
-- **Depende de:** OG-026
-- **Referencias:** ROADMAP.md, README.md
+- **Milestone:** M5 — Polish (distribution decision, after OG-026/OG-027)
+- **Status:** done
+- **Depends on:** OG-026
+- **References:** ROADMAP.md, README.md
 
-## Contexto
+## Context
 
-La primera release (`v0.1.0`) se publicó sin firmar. La firma/notarización exige certificados de pago (Apple Developer, Windows) y el proyecto no va a asumir ese coste: los instaladores se distribuyen sin firmar de forma permanente, no como una "fase 2" pendiente.
+The first release (`v0.1.0`) was published unsigned. Signing/notarization requires paid certificates (Apple Developer, Windows) and the project will not assume that cost: installers are distributed unsigned permanently, not as a pending "phase 2".
 
-## Alcance
+## Scope
 
-- Quitar de ROADMAP, README, guía de desarrollo y OG-026 cualquier mención a la firma como deuda pendiente.
-- Documentar la decisión y sus consecuencias en el README.
-- Añadir instrucciones de instalación para builds sin firmar:
-  - macOS: Gatekeeper bloquea el `.dmg`; abrir con clic derecho → Abrir o `xattr -cr /Applications/OpenGit.app`.
-  - Windows: SmartScreen avisa del `.exe`/`.msi`; "Más información" → "Ejecutar de todas formas".
-  - Linux: `.deb`/`.AppImage` sin cambios.
-- Actualizar las notas del release `v0.1.0` con esas instrucciones.
+- Remove from ROADMAP, README, development guide and OG-026 any mention of signing as pending debt.
+- Document the decision and its consequences in the README.
+- Add installation instructions for unsigned builds:
+  - macOS: Gatekeeper blocks the `.dmg`; open with right-click → Open or `xattr -cr /Applications/OpenGit.app`.
+  - Windows: SmartScreen warns about the `.exe`/`.msi`; "More information" → "Run anyway".
+  - Linux: `.deb`/`.AppImage` unchanged.
+- Update the release `v0.1.0` notes with those instructions.
 
-## Criterios de aceptación
+## Acceptance criteria
 
-- [x] Ninguna doc presenta la firma como trabajo pendiente; la decisión es explícita.
-- [x] El README explica cómo instalar los bundles sin firmar en los tres SO.
-- [x] El release `v0.1.0` incluye las notas de instalación.
-- [x] El updater y el empaquetado `.rpm` quedan como fuera de alcance, no como fase 2.
+- [x] No doc presents signing as pending work; the decision is explicit.
+- [x] The README explains how to install the unsigned bundles on the three OSes.
+- [x] The `v0.1.0` release includes the installation notes.
+- [x] The updater and `.rpm` packaging remain out of scope, not as phase 2.
 
-## Fuera de alcance
+## Out of scope
 
-- Firmar o notarizar (decisión tomada: no).
-- Auto-updater, rpm y canales beta.
+- Signing or notarizing (decision made: no).
+- Auto-updater, rpm and beta channels.
 
-## Notas de implementación (2026-09-18)
+## Implementation notes (2026-09-18)
 
-- ROADMAP (M5 y fuera de alcance), README (Estado + sección Instalación), guía de desarrollo y nota de actualización en OG-026.
-- Release `v0.1.0`: notas editadas con las instrucciones de macOS/Windows/Linux.
-- Cambio solo de documentación: CI no se dispara (`paths-ignore` incluye `**/*.md` y `docs/**`); el merge del PR es la única puerta.
+- ROADMAP (M5 and out of scope), README (Status + Installation section), development guide and update note in OG-026.
+- Release `v0.1.0`: notes edited with the macOS/Windows/Linux instructions.
+- Documentation-only change: CI does not trigger (`paths-ignore` includes `**/*.md` and `docs/**`); merging the PR is the only gate.

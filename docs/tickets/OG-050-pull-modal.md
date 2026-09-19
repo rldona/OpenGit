@@ -1,43 +1,43 @@
-# OG-050 · Pull con diálogo y ventana de progreso
+# OG-050 · Pull with dialog and progress window
 
-- **Milestone:** M7 — Paridad SourceTree (fase 2)
-- **Estado:** done
-- **Depende de:** OG-017, OG-041
-- **Referencias:** ROADMAP.md, OG-039
+- **Milestone:** M7 — SourceTree parity (phase 2)
+- **Status:** done
+- **Depends on:** OG-017, OG-041
+- **References:** ROADMAP.md, OG-039
 
-## Contexto
+## Context
 
-Pull arranca hoy el job directamente (`git pull --ff-only --progress`) y su salida
-va al panel de Output, que además arranca oculto. Un fallo solo deja un `error` en
-el store de remoto que **no se pinta en ninguna parte**: desde la UI parece que no
-pasa nada. Tampoco se puede elegir remoto ni rama, ni ver el progreso.
+Pull today starts the job directly (`git pull --ff-only --progress`) and its output
+goes to the Output panel, which also starts hidden. A failure only leaves an `error`
+in the remote store that **is not painted anywhere**: from the UI it looks like
+nothing happens. Nor can you choose remote or branch, or see the progress.
 
-SourceTree resuelve esto con tres ventanas encadenadas: opciones → progreso → error.
-Este ticket replica ese flujo para Pull.
+SourceTree solves this with three chained windows: options → progress → error.
+This ticket replicates that flow for Pull.
 
-## Alcance
+## Scope
 
-- Diálogo al pulsar Pull: remoto, URL del remoto, rama remota (con Refresh), rama
-  local de destino (la actual) y opciones:
-  - Commit merged changes immediately (por defecto activado) → `--no-commit` si se desmarca.
+- Dialog when pressing Pull: remote, remote URL, remote branch (with Refresh), local
+  destination branch (the current one) and options:
+  - Commit merged changes immediately (enabled by default) → `--no-commit` if unchecked.
   - Include messages from commits being merged in merge commit → `--log`.
   - Create new commit even if fast-forward merge → `--no-ff`.
   - Rebase instead of merge → `--rebase`.
-- Ventana de progreso con barra, salida en streaming, `Cancel` y `Show Full Output`.
-- Si falla, la misma ventana pasa a estado de error con la salida y un botón `Close`.
-- `JobKind::Pull` acepta remoto y rama explícitos; el título de la ventana es
-  `Pulling Branch "<rama>" From "<remoto>"`.
+- Progress window with a bar, streaming output, `Cancel` and `Show Full Output`.
+- If it fails, the same window switches to an error state with the output and a `Close` button.
+- `JobKind::Pull` accepts explicit remote and branch; the window title is
+  `Pulling Branch "<branch>" From "<remote>"`.
 
-## Criterios de aceptación
+## Acceptance criteria
 
-- [x] Pull abre el diálogo con remoto y rama por defecto (upstream si existe).
-- [x] OK lanza el job y se ve el progreso; Cancel lo aborta.
-- [x] Un fallo muestra la salida completa y no se queda sin mensaje.
-- [x] Las opciones del diálogo llegan a git (test de `command_for`).
-- [x] Tests de UI con el bridge mockeado.
+- [x] Pull opens the dialog with the default remote and branch (upstream if it exists).
+- [x] OK starts the job and progress is shown; Cancel aborts it.
+- [x] A failure shows the full output and does not leave us without a message.
+- [x] The dialog options reach git (test of `command_for`).
+- [x] UI tests with the mocked bridge.
 
-## Fuera de alcance
+## Out of scope
 
-- Diálogos equivalentes para Push y Fetch (comparten la ventana de progreso/error).
-- `--squash`, `--autostash` y rebase interactivo.
-- Resolver el conflicto de historias no relacionadas que git rechaza sin `--allow-unrelated-histories`.
+- Equivalent dialogs for Push and Fetch (they share the progress/error window).
+- `--squash`, `--autostash` and interactive rebase.
+- Resolving the unrelated-histories conflict that git rejects without `--allow-unrelated-histories`.

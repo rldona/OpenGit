@@ -1,46 +1,46 @@
-# OG-008 · Sidebar de branches/tags y checkout
+# OG-008 · Branches/tags sidebar and checkout
 
-- **Milestone:** M1 — MVP local
-- **Estado:** done
-- **Depende de:** OG-003, OG-010
-- **Referencias:** docs/architecture/overview.md
+- **Milestone:** M1 — Local MVP
+- **Status:** done
+- **Depends on:** OG-003, OG-010
+- **References:** docs/architecture/overview.md
 
-## Contexto
+## Context
 
-El panel lateral es el patrón de navegación de SourceTree: branches locales, remotas, tags y stashes, con acciones directas.
+The side panel is SourceTree's navigation pattern: local branches, remote branches, tags and stashes, with direct actions.
 
-## Alcance
+## Scope
 
-- Árbol de branches locales con su upstream y ahead/behind; branches remotas agrupadas por remoto; tags ordenados.
-- Checkout de branch local; checkout de branch remota creando la local con tracking.
-- Crear branch desde un commit, renombrar y borrar (con confirmación y sin `-D` por defecto).
-- Búsqueda/filtro en el árbol.
-- Indicador de branch actual.
+- Tree of local branches with their upstream and ahead/behind; remote branches grouped by remote; sorted tags.
+- Checkout of a local branch; checkout of a remote branch creating the local one with tracking.
+- Create branch from a commit, rename and delete (with confirmation and without `-D` by default).
+- Search/filter in the tree.
+- Current branch indicator.
 
-## Criterios de aceptación
+## Acceptance criteria
 
-- [x] Checkout actualiza grafo, status y sidebar tras el evento del watcher. _(además del watcher, el store refresca log, status y refs al terminar)_
-- [x] Checkout con working tree sucio muestra aviso previo con la lista de ficheros afectados y permite cancelar. _(aviso con el número de cambios y confirmación nativa; la lista detallada queda en File status)_
-- [x] Checkout de remota crea la local con `--track` y nombre por defecto correcto. _(test: `origin/remota` → rama `remota` con upstream)_
-- [x] Borrar branch no mergeada requiere confirmación explícita con la palabra de peligro. _(se teclea el nombre de la rama antes de usar `-D`)_
-- [x] Tags anotados y ligeros se distinguen. _(marcador distinto según `object_type`)_
+- [x] Checkout updates graph, status and sidebar after the watcher event. _(besides the watcher, the store refreshes log, status and refs when finished)_
+- [x] Checkout with a dirty working tree shows a prior notice with the list of affected files and allows cancelling. _(notice with the number of changes and native confirmation; the detailed list remains in File status)_
+- [x] Checkout of a remote creates the local one with `--track` and the correct default name. _(test: `origin/remota` → branch `remota` with upstream)_
+- [x] Deleting an unmerged branch requires explicit confirmation with the danger word. _(the branch name is typed before using `-D`)_
+- [x] Annotated and lightweight tags are distinguished. _(different marker depending on `object_type`)_
 
-## Fuera de alcance
+## Out of scope
 
-- Gestión de remotos (añadir/editar URL).
+- Remote management (add/edit URL).
 - Fetch/pull/push (OG-011).
-- Merge y rebase desde el sidebar (M3/M4).
+- Merge and rebase from the sidebar (M3/M4).
 
-## Notas técnicas
+## Technical notes
 
-- Refs con `git for-each-ref --format` (NUL) incluyendo `%(upstream)`, `%(upstream:track)` y `%(objecttype)`.
-- Ahead/behind con `git rev-list --left-right --count` solo para la branch actual, no para todo el árbol.
-- El borrado usa `-d` primero; `-D` solo tras confirmación explícita (regla 1 de AGENTS.md).
+- Refs with `git for-each-ref --format` (NUL) including `%(upstream)`, `%(upstream:track)` and `%(objecttype)`.
+- Ahead/behind with `git rev-list --left-right --count` only for the current branch, not for the whole tree.
+- Deletion uses `-d` first; `-D` only after explicit confirmation (rule 1 of AGENTS.md).
 
-## Notas de implementación (2026-09-18)
+## Implementation notes (2026-09-18)
 
-- Rust: `branch_tracking` (rama actual, upstream y ahead/behind con `rev-list --left-right --count`), `checkout_ref` (con `--track`), `create_branch`, `rename_branch` y `delete_branch`; los nombres se validan con `git check-ref-format --branch` antes de tocar nada y las escrituras pausan el watcher.
-- UI: `RefsSidebar` sustituye los placeholders del sidebar con Branches (indicador de actual, ahead/behind, crear/renombrar/borrar en línea), Remotes agrupados por remoto y Tags (anotado vs ligero). Filtro único para todo el árbol y confirmación por nombre para `-D`.
-- El checkout avisa si hay cambios sin commitear y permite cancelar; al terminar refresca refs, status y grafo.
-- Tests: 6 de Rust (tracking ahead/behind, checkout local y remoto, crear/renombrar/borrar, force delete, nombres inválidos) y 12 de frontend (store de refs y sidebar).
-- Cerrado el 2026-09-18 con CI verde (Frontend 30 s, Rust 1m22s) en el PR #10, junto con OG-014. Con esto queda completo M1.
+- Rust: `branch_tracking` (current branch, upstream and ahead/behind with `rev-list --left-right --count`), `checkout_ref` (with `--track`), `create_branch`, `rename_branch` and `delete_branch`; names are validated with `git check-ref-format --branch` before touching anything and writes pause the watcher.
+- UI: `RefsSidebar` replaces the sidebar placeholders with Branches (current indicator, ahead/behind, create/rename/delete inline), Remotes grouped by remote and Tags (annotated vs lightweight). Single filter for the whole tree and confirmation by name for `-D`.
+- Checkout warns if there are uncommitted changes and allows cancelling; when finished it refreshes refs, status and graph.
+- Tests: 6 Rust (ahead/behind tracking, local and remote checkout, create/rename/delete, force delete, invalid names) and 12 frontend (refs store and sidebar).
+- Closed on 2026-09-18 with green CI (Frontend 30 s, Rust 1m22s) in PR #10, together with OG-014. With this, M1 is complete.

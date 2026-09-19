@@ -1,54 +1,54 @@
-# OG-043 · Vista de commit dedicada
+# OG-043 · Dedicated commit view
 
-- **Milestone:** M7 — Paridad SourceTree (fase 2)
-- **Estado:** done
-- **Depende de:** OG-044
-- **Referencias:** ROADMAP.md, OG-007
+- **Milestone:** M7 — SourceTree parity (phase 2)
+- **Status:** done
+- **Depends on:** OG-044
+- **References:** ROADMAP.md, OG-007
 
-## Contexto
+## Context
 
-`CommitPanel` vive dentro de la vista de status, compartiendo espacio con la lista de ficheros. En SourceTree, Commit es una pantalla propia: staged y unstaged arriba, preview del fichero seleccionado a la derecha, y el editor de mensaje abajo con Cancel/Commit.
+`CommitPanel` lives inside the status view, sharing space with the file list. In SourceTree, Commit is a screen of its own: staged and unstaged on top, a preview of the selected file on the right, and the message editor at the bottom with Cancel/Commit.
 
-## Alcance
+## Scope
 
-- Nueva vista `commit` en `ViewName` (`ui.ts:5`).
-- Layout: arriba split con **Unstaged** | **Staged**; a la derecha preview del fichero seleccionado; abajo el editor de mensaje.
-- Pie con **Cancel** (vuelve a la vista anterior sin perder el mensaje escrito) y **Commit**.
-- Reutilizar `CommitPanel` (amend, hooks) y los componentes de staging existentes; no reimplementar stage/unstage.
-- El atajo de commit y la acción del menú nativo llevan a esta vista.
+- New `commit` view in `ViewName` (`ui.ts:5`).
+- Layout: top split with **Unstaged** | **Staged**; on the right a preview of the selected file; at the bottom the message editor.
+- Footer with **Cancel** (returns to the previous view without losing the written message) and **Commit**.
+- Reuse `CommitPanel` (amend, hooks) and the existing staging components; do not reimplement stage/unstage.
+- The commit shortcut and the native menu action lead to this view.
 
-## Criterios de aceptación
+## Acceptance criteria
 
-- [x] El botón Commit de la barra abre la ventana de commit (File status).
-- [x] Seleccionar un fichero en staged o unstaged muestra su diff en el preview.
-- [x] Stage/unstage desde esta vista actualiza ambas listas sin recargar toda la UI.
-- [x] Commit con mensaje vacío queda bloqueado y lo explica.
-- [x] Cancel limpia el borrador (ver nota de implementación).
-- [x] Tests: navegación, preview por selección, bloqueo por mensaje vacío.
+- [x] The Commit button in the toolbar opens the commit window (File status).
+- [x] Selecting a file in staged or unstaged shows its diff in the preview.
+- [x] Stage/unstage from this view updates both lists without reloading the whole UI.
+- [x] Commit with an empty message is blocked and explained.
+- [x] Cancel clears the draft (see implementation note).
+- [x] Tests: navigation, preview on selection, blocking on empty message.
 
-## Implementación (2026-09-19)
+## Implementation (2026-09-19)
 
-La disposición final no es la del boceto de este ticket sino la de **SourceTree
-real** (pantallas aportadas por el usuario al pedirlo): pending files con
-Staged/Unstaged apilados a la izquierda (checkbox por fila, glifo de estado y
-menú "⋯"), contenido del fichero a la derecha con staging por hunk, y abajo el
-panel de commit con identidad de git, `Commit Options…` (amend), push
-inmediato y Cancel/Commit. No hay una vista `commit` aparte de `status`: en
-SourceTree la ventana de commit es esa pantalla, así que el botón Commit de la
-barra lleva a File status.
+The final layout is not the one from the sketch in this ticket but that of **real
+SourceTree** (screens provided by the user when requesting it): pending files with
+Staged/Unstaged stacked on the left (checkbox per row, status glyph and "⋯"
+menu), file content on the right with per-hunk staging, and at the bottom the
+commit panel with git identity, `Commit Options…` (amend), immediate push and
+Cancel/Commit. There is no separate `commit` view from `status`: in SourceTree
+the commit window is that screen, so the Commit button in the toolbar leads to
+File status.
 
-Desviación: **Cancel limpia el borrador** en vez de volver a una vista previa,
-porque no hay vista previa a la que volver; el mensaje vive en el store y el
-usuario puede seguir escribiendo. Si algún día hay una vista anterior, ese
-criterio se puede recuperar cambiando solo el handler del botón.
+Deviation: **Cancel clears the draft** instead of returning to a preview view,
+because there is no preview view to return to; the message lives in the store and
+the user can keep typing. If there is ever a previous view, that criterion can be
+recovered by changing only the button handler.
 
-## Fuera de alcance
+## Out of scope
 
-- Cambiar el flujo de hooks o amend (OG-007 ya lo cubre).
-- Plantillas de mensaje de commit.
-- Co-authors y trailers asistidos.
+- Changing the hooks or amend flow (OG-007 already covers it).
+- Commit message templates.
+- Assisted co-authors and trailers.
 
-## Notas técnicas
+## Technical notes
 
-- El borrador del mensaje ya vive en `useCommitStore`; Cancel solo debe cambiar de vista, nunca limpiarlo.
-- La vista de status sigue existiendo: esta vista no la sustituye, la complementa.
+- The message draft already lives in `useCommitStore`; Cancel should only change the view, never clear it.
+- The status view still exists: this view does not replace it, it complements it.

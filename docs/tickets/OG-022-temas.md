@@ -1,49 +1,49 @@
-# OG-022 · Tema claro/oscuro
+# OG-022 · Light/dark theme
 
-- **Milestone:** M5 — Pulido
-- **Estado:** done
-- **Depende de:** —
-- **Referencias:** ROADMAP.md
+- **Milestone:** M5 — Polish
+- **Status:** done
+- **Depends on:** —
+- **References:** ROADMAP.md
 
-## Contexto
+## Context
 
-La UI nació con un único tema oscuro. Los tokens están centralizados en `:root` (`global.css`), pero quedan restos fuera de tokens: estados semánticos (aviso, error, añadido, borrado, badge), la paleta del grafo y el tema `oneDark` de CodeMirror. No hay selector ni persistencia.
+The UI was born with a single dark theme. The tokens are centralized in `:root` (`global.css`), but there are leftovers outside tokens: semantic states (warning, error, added, deleted, badge), the graph palette and CodeMirror's `oneDark` theme. There is no selector or persistence.
 
-## Alcance (v1)
+## Scope (v1)
 
-- Preferencia de tema: **system** (por defecto), **light** y **dark**.
-- `system` sigue `prefers-color-scheme` y reacciona en caliente a los cambios del SO.
-- Selector "Theme" en la toolbar.
-- Persistencia en `localStorage` (preferencia de UI, sin IPC, para no retrasar la primera pintura).
-- `data-theme` en `<html>` con script inline en `index.html` para evitar el flash de tema al arrancar.
-- Tokens semánticos por tema: superficies, borde, texto, hover, aviso, peligro, añadido/borrado, badge de tag, `--accent-fg` y anillo de selección del grafo.
-- Diff (CodeMirror): `oneDark` en oscuro y resaltado claro (`defaultHighlightStyle`) en claro; se reconstruye al cambiar de tema.
-- `color-scheme` por tema para scrollbars nativos.
+- Theme preference: **system** (default), **light** and **dark**.
+- `system` follows `prefers-color-scheme` and reacts live to OS changes.
+- "Theme" selector in the toolbar.
+- Persistence in `localStorage` (UI preference, no IPC, so as not to delay the first paint).
+- `data-theme` on `<html>` with an inline script in `index.html` to avoid the theme flash on startup.
+- Semantic tokens per theme: surfaces, border, text, hover, warning, danger, added/deleted, tag badge, `--accent-fg` and graph selection ring.
+- Diff (CodeMirror): `oneDark` in dark and light highlighting (`defaultHighlightStyle`) in light; it is rebuilt when the theme changes.
+- `color-scheme` per theme for native scrollbars.
 
-## Criterios de aceptación
+## Acceptance criteria
 
-- [x] Cambiar el selector aplica el tema al instante en toda la UI (incluidos diff y grafo) sin recargar.
-- [x] La preferencia sobrevive al reinicio; `system` sigue al SO y reacciona en caliente.
-- [x] Sin flash de tema incorrecto al arrancar (script previo a React).
-- [x] Tests: resolución system/light/dark, persistencia, listener de `matchMedia` y selector en App.
-- [x] Ningún estado semántico usa colores solo pensados para fondo oscuro; todos pasan por token con variante clara.
+- [x] Changing the selector applies the theme instantly across the whole UI (including diff and graph) without reloading.
+- [x] The preference survives a restart; `system` follows the OS and reacts live.
+- [x] No flash of the wrong theme on startup (script before React).
+- [x] Tests: system/light/dark resolution, persistence, `matchMedia` listener and selector in App.
+- [x] No semantic state uses colors only meant for a dark background; all of them go through a token with a light variant.
 
-## Fuera de alcance
+## Out of scope
 
-- Temas personalizados, alto contraste o más de una paleta clara/oscura.
-- Sincronización de la preferencia entre equipos.
-- Cambiar el tema nativo de la ventana de Tauri.
+- Custom themes, high contrast or more than one light/dark palette.
+- Syncing the preference across machines.
+- Changing the native Tauri window theme.
 
-## Notas técnicas
+## Technical notes
 
-- `src/lib/theme.ts` (tipos, `resolveTheme`, persistencia, `systemPrefersDark`) + `src/lib/stores/theme.ts` (zustand) + efecto en `App` para `data-theme` y listener de `matchMedia`.
-- Tokens nuevos en `global.css`: `--warning-*`, `--danger*`, `--add`, `--del`, `--add-bg`, `--del-bg`, `--tag-annotated`, `--accent-fg`.
-- El grafo usa su propia paleta (`layout.ts`); v1 la mantiene y añade el color del anillo de selección según el tema.
+- `src/lib/theme.ts` (types, `resolveTheme`, persistence, `systemPrefersDark`) + `src/lib/stores/theme.ts` (zustand) + effect in `App` for `data-theme` and `matchMedia` listener.
+- New tokens in `global.css`: `--warning-*`, `--danger*`, `--add`, `--del`, `--add-bg`, `--del-bg`, `--tag-annotated`, `--accent-fg`.
+- The graph uses its own palette (`layout.ts`); v1 keeps it and adds the selection ring color according to the theme.
 
-## Notas de implementación (2026-09-18)
+## Implementation notes (2026-09-18)
 
-- Backend sin cambios: la preferencia vive en localStorage y un script inline en `index.html` fija `data-theme` antes de montar React.
-- Los 32 colores hardcodeados de `global.css` pasan a tokens; `[data-theme="light"]` redefine paleta y `color-scheme`.
-- `DiffEditor` elige `oneDark` o `syntaxHighlighting(defaultHighlightStyle)` y se reconstruye al cambiar de tema; `GraphCanvas` usa `selectionRingColor`.
-- Tests: 147 frontend (12 nuevos de tema, store y selector), 97 Rust intactos.
-- Cerrado el 2026-09-18 con CI verde (Frontend 32 s, Rust 1m35s) en el PR #18.
+- Backend unchanged: the preference lives in localStorage and an inline script in `index.html` sets `data-theme` before mounting React.
+- The 32 hardcoded colors of `global.css` become tokens; `[data-theme="light"]` redefines the palette and `color-scheme`.
+- `DiffEditor` chooses `oneDark` or `syntaxHighlighting(defaultHighlightStyle)` and is rebuilt when the theme changes; `GraphCanvas` uses `selectionRingColor`.
+- Tests: 147 frontend (12 new for theme, store and selector), 97 Rust untouched.
+- Closed on 2026-09-18 with green CI (Frontend 32 s, Rust 1m35s) in PR #18.

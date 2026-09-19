@@ -1,40 +1,40 @@
-# OG-051 · Tags clicables y bordes de la tabla
+# OG-051 · Clickable tags and table borders
 
-- **Milestone:** M7 — Paridad SourceTree (fase 2)
-- **Estado:** done
-- **Depende de:** OG-045, OG-048
-- **Referencias:** ROADMAP.md, OG-038
+- **Milestone:** M7 — SourceTree parity (phase 2)
+- **Status:** done
+- **Depends on:** OG-045, OG-048
+- **References:** ROADMAP.md, OG-038
 
-## Contexto
+## Context
 
-Tres remates de paridad detectados comparando con SourceTree:
+Three parity touch-ups detected when comparing with SourceTree:
 
-- Los tags no hacían nada al pulsarlos; en SourceTree llevan al commit.
-- Los separadores de paneles eran de 4px y se teñían al pasar el ratón.
-- Los tiradores de columna vivían fuera de su columna: al ser ítems flex
-  solo en la cabecera, la desplazaban respecto a las filas (22px en Commit,
-  11px en Author) y arrastrar acentuaba el desajuste.
+- Tags did nothing when clicked; in SourceTree they lead to the commit.
+- The panel separators were 4px and got tinted when hovering.
+- The column handles lived outside their column: being flex items
+  only in the header, they shifted it relative to the rows (22px in Commit,
+  11px in Author) and dragging accentuated the mismatch.
 
-## Alcance
+## Scope
 
-- `Ref` expone `target` (objeto pelado de `%(*objectname)`): en un tag
-  anotado es el commit, no el objeto tag.
-- Pulsar un tag carga páginas del log hasta encontrar el commit (quitando el
-  filtro de rama si estorba), lo selecciona y la lista virtualizada hace
-  scroll hasta él.
-- Separadores de paneles de 1px sin hover de color, con área sensible ancha.
-- Tiradores de columna posicionados absolutos sobre el borde de su columna.
-- La sección Tags pierde el `+` (crear tag vive en el menú contextual) y sus
-  filas pierden los botones Push/Delete de hover.
+- `Ref` exposes `target` (bare object of `%(*objectname)`): on an annotated tag
+  it is the commit, not the tag object.
+- Clicking a tag loads log pages until the commit is found (removing the
+  branch filter if it gets in the way), selects it and the virtualized list
+  scrolls to it.
+- Panel separators of 1px with no hover color, with a wide hit area.
+- Column handles absolutely positioned over the border of their column.
+- The Tags section loses the `+` (creating a tag lives in the context menu) and
+  its rows lose the hover Push/Delete buttons.
 
-## Criterios de aceptación
+## Acceptance criteria
 
-- [x] Pulsar un tag selecciona su commit en el historial y lo trae a la vista.
-- [x] Un tag anotado resuelve a su commit (test del parser con fixture).
-- [x] Cabecera y filas de la tabla coinciden al píxel en las tres columnas.
-- [x] Los separadores se ven como una línea y no cambian de color al pasar.
+- [x] Clicking a tag selects its commit in the history and brings it into view.
+- [x] An annotated tag resolves to its commit (parser test with fixture).
+- [x] Table header and rows match pixel-perfect in the three columns.
+- [x] The separators look like a line and do not change color on hover.
 
-## Fuera de alcance
+## Out of scope
 
-- Ordenar la tabla por columnas (OG-045).
-- Mostrar los tags como columna propia en la fila de commit.
+- Sorting the table by columns (OG-045).
+- Showing tags as their own column in the commit row.

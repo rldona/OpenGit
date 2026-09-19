@@ -1,48 +1,48 @@
-# OG-038 · Menús contextuales
+# OG-038 · Context menus
 
-- **Milestone:** M6 — Paridad visual con SourceTree
-- **Estado:** done
-- **Depende de:** OG-037
-- **Referencias:** ROADMAP.md
+- **Milestone:** M6 — Visual parity with SourceTree
+- **Status:** done
+- **Depends on:** OG-037
+- **References:** ROADMAP.md
 
-## Contexto
+## Context
 
-Todas las acciones exigen botones visibles o el panel de detalle. SourceTree concentra las acciones por elemento en menús de click derecho (commits, ramas, tags, ficheros).
+All actions require visible buttons or the detail panel. SourceTree concentrates per-element actions in right-click menus (commits, branches, tags, files).
 
-## Alcance
+## Scope
 
-- Componente `ContextMenu` + hook `useContextMenu`: se abre en la posición del cursor, se cierra con click fuera, Escape o al elegir; `role="menu"`/`menuitem`, ítems con variante `danger`, posición limitada al viewport y renderizado en portal.
-- **Commits** (historial): View diff, Cherry-pick, Revert, Reset to here, Interactive rebase from here, Copy hash. Las acciones se extraen a un hook `useCommitActions` compartido con el panel de detalle (sin duplicar lógica ni confirmaciones).
-- **Refs**: ramas (Checkout, Rename, Delete, Copy name), tags (Push, Delete, Copy name) y ramas remotas (Checkout, Copy name).
-- **File status**: Open diff, Stage/Unstage, Discard (con confirmación), Delete untracked (con confirmación), Copy path.
-- **Diff**: lista de ficheros con Select, Stage/Unstage file y Copy path.
-- `copyText` sin dependencias nuevas: `navigator.clipboard` con fallback a `document.execCommand`.
+- `ContextMenu` component + `useContextMenu` hook: opens at the cursor position, closes on click outside, Escape or when choosing; `role="menu"`/`menuitem`, items with a `danger` variant, position clamped to the viewport and rendered in a portal.
+- **Commits** (history): View diff, Cherry-pick, Revert, Reset to here, Interactive rebase from here, Copy hash. The actions are extracted into a `useCommitActions` hook shared with the detail panel (without duplicating logic or confirmations).
+- **Refs**: branches (Checkout, Rename, Delete, Copy name), tags (Push, Delete, Copy name) and remote branches (Checkout, Copy name).
+- **File status**: Open diff, Stage/Unstage, Discard (with confirmation), Delete untracked (with confirmation), Copy path.
+- **Diff**: file list with Select, Stage/Unstage file and Copy path.
+- `copyText` without new dependencies: `navigator.clipboard` with fallback to `document.execCommand`.
 
-## Criterios de aceptación
+## Acceptance criteria
 
-- [x] Click derecho en un commit abre el menú con las seis acciones y cada una ejecuta lo mismo que el panel de detalle.
-- [x] Click derecho en ramas/tags/remotes abre su menú y las acciones destructivas siguen pidiendo confirmación.
-- [x] Click derecho en filas de status/diff ofrece las acciones del elemento y Copy path copia la ruta.
-- [x] El menú se cierra con Escape, con click fuera y tras elegir un ítem.
-- [x] Tests: componente, acciones de commit, refs y status.
+- [x] Right click on a commit opens the menu with the six actions and each one runs the same as the detail panel.
+- [x] Right click on branches/tags/remotes opens their menu and destructive actions still ask for confirmation.
+- [x] Right click on status/diff rows offers the element's actions and Copy path copies the path.
+- [x] The menu closes with Escape, with a click outside and after choosing an item.
+- [x] Tests: component, commit actions, refs and status.
 
-## Fuera de alcance
+## Out of scope
 
-- Submenús anidados, atajos mostrados en el menú e iconos por ítem.
-- Menú nativo del sistema para el click derecho (se usa HTML en el WebView).
-- Selección múltiple o acciones por lote.
+- Nested submenus, shortcuts shown in the menu and per-item icons.
+- Native system menu for right click (HTML is used inside the WebView).
+- Multi-selection or batch actions.
 
-## Notas técnicas
+## Technical notes
 
-- `useCommitActions` centraliza showDiff/cherry-pick/revert/reset/rebase con sus confirmaciones; `CommitDetail` pasa a usarlo.
-- El menú vive en un portal al `body` con `position: fixed`; el hook devuelve `{ open, close, menu }` y cada vista pinta `menu` una vez.
-- El menú no roba el foco al abrirse (los ítems son botones); Escape cierra y el click en un ítem cierra antes de ejecutar.
+- `useCommitActions` centralizes showDiff/cherry-pick/revert/reset/rebase with their confirmations; `CommitDetail` switches to using it.
+- The menu lives in a portal to `body` with `position: fixed`; the hook returns `{ open, close, menu }` and each view renders `menu` once.
+- The menu does not steal focus when opening (the items are buttons); Escape closes and clicking an item closes before running.
 
-## Notas de implementación (2026-09-18)
+## Implementation notes (2026-09-18)
 
-- `ContextMenu` (portal, `position: fixed` con clamp al viewport) y hook `useContextMenu` en `lib/hooks/` (separado para respetar `react-refresh/only-export-components`).
-- `useCommitActions` centraliza show diff, cherry-pick, revert, reset y rebase con sus confirmaciones; `CommitDetail` y el menú del historial comparten el hook.
-- `copyText` sin plugins: `navigator.clipboard` con fallback a `document.execCommand`.
-- Menús: commits (6 acciones), ramas (Checkout/Rename/Delete/Copy name, Delete deshabilitado en la rama actual), tags (Push/Delete/Copy name), ramas remotas (Checkout/Copy name), status (Open diff/Stage o Unstage/Discard/Delete/Copy path) y diff (Select/Copy path).
-- Tests: 224 frontend (3 del menú, 3 de integración) y 120 Rust intactos.
-- Cerrado el 2026-09-18 con CI verde (Frontend 36 s, Rust 2m16s) en el PR #35.
+- `ContextMenu` (portal, `position: fixed` with viewport clamp) and `useContextMenu` hook in `lib/hooks/` (separated to respect `react-refresh/only-export-components`).
+- `useCommitActions` centralizes show diff, cherry-pick, revert, reset and rebase with their confirmations; `CommitDetail` and the history menu share the hook.
+- `copyText` without plugins: `navigator.clipboard` with fallback to `document.execCommand`.
+- Menus: commits (6 actions), branches (Checkout/Rename/Delete/Copy name, Delete disabled on the current branch), tags (Push/Delete/Copy name), remote branches (Checkout/Copy name), status (Open diff/Stage or Unstage/Discard/Delete/Copy path) and diff (Select/Copy path).
+- Tests: 224 frontend (3 menu, 3 integration) and 120 Rust untouched.
+- Closed on 2026-09-18 with green CI (Frontend 36 s, Rust 2m16s) in PR #35.

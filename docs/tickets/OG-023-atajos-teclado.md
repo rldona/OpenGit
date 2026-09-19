@@ -1,52 +1,52 @@
-# OG-023 · Atajos de teclado
+# OG-023 · Keyboard shortcuts
 
-- **Milestone:** M5 — Pulido
-- **Estado:** done
-- **Depende de:** —
-- **Referencias:** ROADMAP.md
+- **Milestone:** M5 — Polish
+- **Status:** done
+- **Depends on:** —
+- **References:** ROADMAP.md
 
-## Contexto
+## Context
 
-Todas las acciones exigen ratón y no hay forma de descubrir atajos. M5 incluye atajos de teclado como parte del pulido.
+All actions require a mouse and there is no way to discover shortcuts. M5 includes keyboard shortcuts as part of the polish.
 
-## Alcance (v1)
+## Scope (v1)
 
-- Mapa global de atajos (`mod` = Cmd en macOS, Ctrl en el resto):
-  - `mod+O` abrir repositorio; `mod+R` refrescar status, refs e historial.
-  - `mod+Enter` commit (con mensaje y staged, misma validación que el panel).
-  - `mod+F` buscar en el historial (cambia a History y enfoca el campo Message).
+- Global shortcut map (`mod` = Cmd on macOS, Ctrl elsewhere):
+  - `mod+O` open repository; `mod+R` refresh status, refs and history.
+  - `mod+Enter` commit (with message and staged files, same validation as the panel).
+  - `mod+F` search history (switches to History and focuses the Message field).
   - `mod+1` File status, `mod+2` History, `mod+3` Diff.
-  - `?` ayuda de atajos; `Esc` cierra la ayuda o limpia la selección.
-- Ayuda integrada: diálogo con los atajos agrupados y agrupaciones por contexto; botón `?` en la toolbar como entrada visible.
-- Los atajos no se disparan al escribir en `input`, `textarea` o `select`; solo los que llevan `mod` atraviesan campos de texto.
-- `preventDefault()` en los atajos capturados (p. ej. `mod+R` no recarga el WebView).
+  - `?` shortcut help; `Esc` closes the help or clears the selection.
+- Built-in help: dialog with the shortcuts grouped by context; `?` button in the toolbar as a visible entry point.
+- Shortcuts do not fire while typing in `input`, `textarea` or `select`; only those with `mod` go through text fields.
+- `preventDefault()` on captured shortcuts (e.g. `mod+R` does not reload the WebView).
 
-## Criterios de aceptación
+## Acceptance criteria
 
-- [x] `mod+O`, `mod+R`, `mod+Enter`, `mod+F`, `mod+1/2/3` ejecutan su acción con el repositorio abierto.
-- [x] `?` abre y `Esc` cierra la ayuda; `Esc` sin ayuda limpia el commit seleccionado.
-- [x] El diálogo de ayuda lista todos los atajos con la etiqueta correcta de plataforma (⌘/Ctrl) y se cierra con el botón.
-- [x] Tests del matcher (mod por plataforma, `?`, `Esc`, ignorar `Alt`), de la ayuda y de las acciones en App.
-- [x] Teclear en un campo de texto con un carácter que coincide con un atajo no ejecuta nada.
+- [x] `mod+O`, `mod+R`, `mod+Enter`, `mod+F`, `mod+1/2/3` execute their action with the repository open.
+- [x] `?` opens and `Esc` closes the help; `Esc` without help clears the selected commit.
+- [x] The help dialog lists all the shortcuts with the correct platform label (⌘/Ctrl) and closes with the button.
+- [x] Tests of the matcher (mod per platform, `?`, `Esc`, ignoring `Alt`), of the help and of the actions in App.
+- [x] Typing a character that matches a shortcut in a text field executes nothing.
 
-## Fuera de alcance
+## Out of scope
 
-- Personalizar o reasignar atajos; importar keybindings de otros clientes.
-- Command palette y atajos de navegación del grafo (flechas, siguiente/padre).
-- Atajos con estado intermedio (leader keys o secuencias).
+- Customizing or reassigning shortcuts; importing keybindings from other clients.
+- Command palette and graph navigation shortcuts (arrows, next/parent).
+- Shortcuts with an intermediate state (leader keys or sequences).
 
-## Notas técnicas
+## Technical notes
 
-- `src/lib/shortcuts.ts` puro: definición de `SHORTCUTS`, `matchesShortcut` y `formatKeys`; `src/lib/hooks/useShortcuts.ts` registra un único listener global con guard de campos editables y handlers en un ref.
-- La ayuda es `src/components/ShortcutsHelp.tsx` y se controla desde el store `ui` (`shortcutsOpen`), con un contador `searchFocusRequest` para el foco de `mod+F` sin acoplar componentes por DOM.
-- Commit: el recuento de staged se comparte con `CommitPanel` (`stagedEntries` y `hasActiveOperation` exportados desde `stores/commit.ts`).
-- Refresco: `reload` de log + `refresh` de status y refs.
+- `src/lib/shortcuts.ts` pure: definition of `SHORTCUTS`, `matchesShortcut` and `formatKeys`; `src/lib/hooks/useShortcuts.ts` registers a single global listener with an editable-field guard and handlers in a ref.
+- The help is `src/components/ShortcutsHelp.tsx` and is controlled from the `ui` store (`shortcutsOpen`), with a `searchFocusRequest` counter for the `mod+F` focus without coupling components through the DOM.
+- Commit: the staged count is shared with `CommitPanel` (`stagedEntries` and `hasActiveOperation` exported from `stores/commit.ts`).
+- Refresh: log `reload` + status and refs `refresh`.
 
-## Notas de implementación (2026-09-18)
+## Implementation notes (2026-09-18)
 
-- `shortcuts.ts` define el mapa completo (`SHORTCUTS`), `matchesShortcut` (mod según plataforma, ignora `Alt`) y `formatKeys` (⌘ en macOS, Ctrl en el resto); se usa `navigator.platform`.
-- `useShortcuts` registra un solo listener en `document` con los handlers en un ref para no re-suscribirse; en campos editables solo pasan los atajos con `mod`.
-- La ayuda es `ShortcutsHelp` sobre `ui.shortcutsOpen`; `mod+F` usa `searchFocusRequest` para que `HistoryView` enfoque el campo sin acoplarse por DOM.
-- De paso, `CommitPanel` reutiliza `stagedEntries`/`hasActiveOperation` en vez de duplicar el filtro.
-- Tests: 161 frontend (7 del matcher y formateo, 7 de acciones y ayuda en App), 97 Rust intactos.
-- Cerrado el 2026-09-18 con CI verde (Frontend 27 s, Rust 1m44s) en el PR #19.
+- `shortcuts.ts` defines the full map (`SHORTCUTS`), `matchesShortcut` (mod per platform, ignores `Alt`) and `formatKeys` (⌘ on macOS, Ctrl elsewhere); `navigator.platform` is used.
+- `useShortcuts` registers a single listener on `document` with the handlers in a ref so as not to re-subscribe; in editable fields only shortcuts with `mod` pass.
+- The help is `ShortcutsHelp` on top of `ui.shortcutsOpen`; `mod+F` uses `searchFocusRequest` so that `HistoryView` focuses the field without coupling through the DOM.
+- While at it, `CommitPanel` reuses `stagedEntries`/`hasActiveOperation` instead of duplicating the filter.
+- Tests: 161 frontend (7 for the matcher and formatting, 7 for the actions and help in App), 97 Rust untouched.
+- Closed on 2026-09-18 with green CI (Frontend 27 s, Rust 1m44s) in PR #19.

@@ -1,46 +1,46 @@
-# OG-001 · Esqueleto Tauri 2 + React
+# OG-001 · Tauri 2 + React skeleton
 
-- **Milestone:** M0 — Fundación
-- **Estado:** done
-- **Depende de:** —
-- **Referencias:** ADR-0001, ADR-0002, ADR-0005
+- **Milestone:** M0 — Foundation
+- **Status:** done
+- **Depends on:** —
+- **References:** ADR-0001, ADR-0002, ADR-0005
 
-## Contexto
+## Context
 
-No existe código. Antes de implementar vistas hace falta una app que compile en los tres SO y un mínimo de calidad automatizada.
+There is no code yet. Before implementing views, an app that compiles on the three OSes and a minimum of automated quality are needed.
 
-## Alcance
+## Scope
 
-- Proyecto Tauri 2 con frontend React + TypeScript y Vite.
-- Layout base de la ventana: sidebar izquierdo, zona central (grafo/log) y panel inferior (salida), sin funcionalidad.
-- Scripts npm: `dev`, `tauri`, `lint`, `typecheck`, `test`.
-- ESLint + Prettier para frontend; `rustfmt` + `clippy` para Rust.
-- Vitest configurado con un test de humo del componente raíz.
-- GitHub Actions: matriz macOS/Windows/Linux con lint, typecheck, tests de Rust y build de la app.
+- Tauri 2 project with a React + TypeScript and Vite frontend.
+- Base window layout: left sidebar, central area (graph/log) and bottom panel (output), without functionality.
+- npm scripts: `dev`, `tauri`, `lint`, `typecheck`, `test`.
+- ESLint + Prettier for the frontend; `rustfmt` + `clippy` for Rust.
+- Vitest configured with a smoke test of the root component.
+- GitHub Actions: macOS/Windows/Linux matrix with lint, typecheck, Rust tests and app build.
 
-## Criterios de aceptación
+## Acceptance criteria
 
-- [x] `npm run tauri dev` abre una ventana con el layout base en macOS. _(verificado arrancando el binario debug con el layout embebido)_
-- [x] `npm run lint`, `npm run typecheck` y `npm run test` pasan.
-- [x] `cargo test` y `cargo clippy -- -D warnings` pasan en `src-tauri`.
-- [x] CI verde en los tres SO. _(run 35319968720: Frontend 15 s, Rust 2m44s, builds macOS 5m20s, Ubuntu 3m56s, Windows 7m29s)_
-- [x] Decidida la librería de estado global (Zustand) y registrada en ADR-0005.
+- [x] `npm run tauri dev` opens a window with the base layout on macOS. _(verified by starting the debug binary with the embedded layout)_
+- [x] `npm run lint`, `npm run typecheck` and `npm run test` pass.
+- [x] `cargo test` and `cargo clippy -- -D warnings` pass in `src-tauri`.
+- [x] CI green on the three OSes. _(run 35319968720: Frontend 15 s, Rust 2m44s, macOS builds 5m20s, Ubuntu 3m56s, Windows 7m29s)_
+- [x] Global state library decided (Zustand) and recorded in ADR-0005.
 
-## Fuera de alcance
+## Out of scope
 
-- Cualquier llamada real a git.
-- Diseño visual definitivo, temas y atajos.
+- Any real git call.
+- Definitive visual design, themes and shortcuts.
 
-## Notas técnicas
+## Technical notes
 
-- Estructura prevista: `src/` (React) y `src-tauri/` (Rust), descrita en `docs/guides/development.md`.
-- Mantener la configuración de Tauri 2 con capacidades mínimas; los permisos se amplían cuando haga falta.
-- No añadir dependencias de UI pesadas todavía.
+- Planned structure: `src/` (React) and `src-tauri/` (Rust), described in `docs/guides/development.md`.
+- Keep the Tauri 2 configuration with minimal capabilities; permissions are broadened when needed.
+- Do not add heavy UI dependencies yet.
 
-## Notas de cierre (2026-09-18)
+## Closing notes (2026-09-18)
 
-- Versiones: Tauri 2.11.5, React 19.1, Vite 8.3, TypeScript 6.0, Vitest 5, ESLint 10, Zustand 5.0, Rust 1.98.1.
-- El único comando de núcleo es `app_version`, que alimenta el indicador "núcleo vX.Y.Z" del toolbar; sirve de prueba de extremo a extremo del bridge.
-- Se eliminaron del template `tauri-plugin-opener` y `serde`/`serde_json` por no usarse (regla 5 de AGENTS.md); volverán cuando haga falta.
-- El primer CI falló con E401 porque el lock apuntaba al Artifactory corporativo; resuelto en `fix(ci): resolve package-lock against the public npm registry` (ver `.ai/memory/dev-environment.md`).
-- Avisos de deprecación de Node 20 en las actions y migración de `ubuntu-latest`: resueltos con `actions/checkout@v7`, `actions/setup-node@v7` y pin a `ubuntu-24.04`.
+- Versions: Tauri 2.11.5, React 19.1, Vite 8.3, TypeScript 6.0, Vitest 5, ESLint 10, Zustand 5.0, Rust 1.98.1.
+- The only core command is `app_version`, which feeds the "core vX.Y.Z" indicator in the toolbar; it serves as an end-to-end test of the bridge.
+- `tauri-plugin-opener` and `serde`/`serde_json` were removed from the template for being unused (rule 5 of AGENTS.md); they will come back when needed.
+- The first CI failed with E401 because the lock pointed to the corporate Artifactory; fixed in `fix(ci): resolve package-lock against the public npm registry` (see `.ai/memory/dev-environment.md`).
+- Node 20 deprecation warnings in the actions and migration of `ubuntu-latest`: fixed with `actions/checkout@v7`, `actions/setup-node@v7` and pinning to `ubuntu-24.04`.

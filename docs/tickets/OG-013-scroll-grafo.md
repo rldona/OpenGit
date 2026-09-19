@@ -1,39 +1,39 @@
-# OG-013 · Scroll fluido del grafo (sin parpadeo)
+# OG-013 · Smooth graph scrolling (no flicker)
 
-- **Milestone:** M1 — MVP local
-- **Estado:** done
-- **Depende de:** OG-004
-- **Referencias:** ADR-0004, .ai/memory/performance.md
+- **Milestone:** M1 — Local MVP
+- **Status:** done
+- **Depends on:** OG-004
+- **References:** ADR-0004, .ai/memory/performance.md
 
-## Contexto
+## Context
 
-Al hacer scroll rápido en el historial, el grafo parpadea y va a saltos respecto a las filas. El canvas se movía con `style.top = scrollTop` y se redibujaba en un `useEffect` (después del paint), reasignando además el buffer (`canvas.width`) en cada evento de scroll. SourceTree no presenta este problema.
+When scrolling fast in the history, the graph flickers and jumps relative to the rows. The canvas moved with `style.top = scrollTop` and was redrawn in a `useEffect` (after paint), also reassigning the buffer (`canvas.width`) on every scroll event. SourceTree does not present this problem.
 
-## Alcance
+## Scope
 
-- Canvas como capa fija (overlay) dentro del contenedor de la lista, sin reposicionarlo con el scroll.
-- Redibujo sincronizado con el scroll vía `requestAnimationFrame` (coalescido), antes del paint.
-- Reasignar el buffer del canvas solo cuando cambian tamaño o `devicePixelRatio`.
-- Actualizar el DOM de filas solo al cruzar límites de fila (no en cada píxel de scroll).
+- Canvas as a fixed layer (overlay) inside the list container, without repositioning it with the scroll.
+- Redraw synchronized with the scroll via `requestAnimationFrame` (coalesced), before paint.
+- Reassign the canvas buffer only when size or `devicePixelRatio` changes.
+- Update the rows DOM only when crossing row boundaries (not on every scroll pixel).
 
-## Criterios de aceptación
+## Acceptance criteria
 
-- [ ] Scroll rápido sin parpadeo ni desincronía entre el grafo y las filas.
-- [ ] Sin renders de React por evento de scroll (solo al cambiar la ventana visible).
-- [ ] Sin reasignación del buffer del canvas por frame.
+- [ ] Fast scrolling without flicker or desync between the graph and the rows.
+- [ ] No React renders per scroll event (only when the visible window changes).
+- [ ] No canvas buffer reassignment per frame.
 
-## Fuera de alcance
+## Out of scope
 
-- Cambiar el algoritmo de layout (OG-004) o el motor de render (canvas).
+- Changing the layout algorithm (OG-004) or the render engine (canvas).
 
-## Notas técnicas
+## Technical notes
 
-- Función pura `visibleRange(scrollTop, viewportHeight, rowCount, overscan)` con tests.
-- El canvas pasa a ser hijo de un contenedor `position: relative` y la lista scrolleable se superpone con `z-index: 1`.
+- Pure function `visibleRange(scrollTop, viewportHeight, rowCount, overscan)` with tests.
+- The canvas becomes a child of a `position: relative` container and the scrollable list is overlaid with `z-index: 1`.
 
-## Notas de implementación (2026-09-18)
+## Implementation notes (2026-09-18)
 
-- `GraphCanvas` ya no recibe `scrollTop`/`viewportHeight`: observa el scroller (`scroll` pasivo + `ResizeObserver`), lee `scrollTop` en el momento del dibujo y repinta en el siguiente `requestAnimationFrame`.
-- El buffer se redimensiona solo si cambia el tamaño o el DPR; el resto de frames solo cambian `ctx` y pintan filas visibles.
-- `HistoryView` calcula la ventana visible con `visibleRange` y solo actualiza estado al cruzar una fila; las filas se posicionan en `index * ROW_HEIGHT` (sin aritmética por píxel).
-- Cerrado el 2026-09-18 con CI verde (Frontend 28 s, Rust 2m9s) en el PR #7.
+- `GraphCanvas` no longer receives `scrollTop`/`viewportHeight`: it observes the scroller (passive `scroll` + `ResizeObserver`), reads `scrollTop` at draw time and repaints on the next `requestAnimationFrame`.
+- The buffer is resized only if the size or the DPR changes; the rest of the frames only change `ctx` and paint visible rows.
+- `HistoryView` computes the visible window with `visibleRange` and only updates state when crossing a row; rows are positioned at `index * ROW_HEIGHT` (no per-pixel arithmetic).
+- Closed on 2026-09-18 with green CI (Frontend 28 s, Rust 2m9s) in PR #7.

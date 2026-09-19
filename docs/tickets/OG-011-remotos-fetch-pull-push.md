@@ -1,49 +1,49 @@
-# OG-011 · Fetch, pull y push
+# OG-011 · Fetch, pull and push
 
-- **Milestone:** M2 — Remotos
-- **Estado:** done
-- **Depende de:** OG-007, OG-008, OG-010
-- **Referencias:** ADR-0003, docs/architecture/overview.md
+- **Milestone:** M2 — Remotes
+- **Status:** done
+- **Depends on:** OG-007, OG-008, OG-010
+- **References:** ADR-0003, docs/architecture/overview.md
 
-## Contexto
+## Context
 
-Cierra el ciclo diario: sincronizar con el remoto sin abrir el terminal, con la salida del proceso visible y sin colgar la app.
+It closes the daily cycle: synchronize with the remote without opening the terminal, with the process output visible and without hanging the app.
 
-## Alcance
+## Scope
 
-- Fetch (todas las ramas y con prune opcional), pull (ff-only por defecto) y push.
-- Progreso en streaming al panel de salida (porcentajes de transferencia, fases de git).
-- Operaciones cancelables; cancelar deja el repo en estado consistente.
-- Credenciales vía credential helper del sistema; `GIT_TERMINAL_PROMPT=0` para fallar rápido.
-- Errores accionables: non-fast-forward (sugerir pull/rebase), auth fallida, remoto inexistente, rama sin upstream (ofrecer `--set-upstream`).
-- Aviso de subida accidental a `main` no deseado (confirmación extra, configurable).
+- Fetch (all branches and with optional prune), pull (ff-only by default) and push.
+- Progress in streaming to the output panel (transfer percentages, git phases).
+- Cancellable operations; cancelling leaves the repo in a consistent state.
+- Credentials via the system credential helper; `GIT_TERMINAL_PROMPT=0` to fail fast.
+- Actionable errors: non-fast-forward (suggest pull/rebase), failed auth, nonexistent remote, branch without upstream (offer `--set-upstream`).
+- Notice of accidental push to an unwanted `main` (extra confirmation, configurable).
 
-## Criterios de aceptación
+## Acceptance criteria
 
-- [x] Push a un repo de prueba local (path, sin red) transmite la salida en tiempo real. _(test con bare local y eventos en streaming)_
-- [x] Cancelar a mitad de fetch no deja procesos huérfanos ni locks en `.git`. _(test con hook `pre-receive` que duerme: cancela y el job muere en <1 s)_
-- [x] Un push rechazado por non-fast-forward muestra causa y siguiente paso. _(mapeo a "Pull first" + test)_
-- [x] Sin credenciales configuradas, el error explica cómo configurar el helper, sin pedir password en la app. _(`GIT_TERMINAL_PROMPT=0` y consejo de auth en el mapeo)_
-- [x] Tras push/pull, grafo y sidebar se refrescan vía watcher. _(además, el store refresca refs/status/grafo al terminar)_
+- [x] Push to a local test repo (path, no network) streams the output in real time. _(test with local bare and streaming events)_
+- [x] Cancelling halfway through a fetch leaves no orphan processes or locks in `.git`. _(test with a `pre-receive` hook that sleeps: it cancels and the job dies in <1 s)_
+- [x] A push rejected by non-fast-forward shows the cause and next step. _(mapping to "Pull first" + test)_
+- [x] Without configured credentials, the error explains how to configure the helper, without asking for a password in the app. _(`GIT_TERMINAL_PROMPT=0` and auth advice in the mapping)_
+- [x] After push/pull, graph and sidebar refresh via watcher. _(in addition, the store refreshes refs/status/graph when finished)_
 
-## Fuera de alcance
+## Out of scope
 
-- Gestión de tokens/SSH desde la app.
-- PRs y revisiones (M5 como mucho, abrir URL).
-- Force push (nunca por defecto; si algún día existe, con la palabra de peligro).
+- Token/SSH management from the app.
+- PRs and reviews (M5 at most, open URL).
+- Force push (never by default; if it ever exists, with the danger word).
 
-## Notas técnicas
+## Technical notes
 
-- `GIT_PROGRESS_DELAY=0` y `--progress` para forzar progreso en stderr cuando no hay TTY.
-- El parseo de progreso es best-effort y nunca bloqueante: la verdad es el exit code.
-- Tests con remoto local (`git init --bare` en tempdir), sin red (regla 8 de AGENTS.md).
+- `GIT_PROGRESS_DELAY=0` and `--progress` to force progress on stderr when there is no TTY.
+- Progress parsing is best-effort and never blocking: the truth is the exit code.
+- Tests with a local remote (`git init --bare` in tempdir), without network (rule 8 of AGENTS.md).
 
-## Notas de implementación (2026-09-18)
+## Implementation notes (2026-09-18)
 
-- Runner: `spawn_streaming` con `StreamSink`; el lector separa por `\n` o `\r` (el progreso usa CR) y lo acumula para el resultado. **Sin sink no toca ni un byte** (los parches CRLF deben sobrevivir). La cancelación llega por un token compartido (`Arc<AtomicBool>`) que `wait` revisa cada 100 ms y mata el árbol.
-- `src/jobs/`: `JobKind` (fetch/pull/push con prune, remoto y `set_upstream`), `JobManager` (ids y tokens), `start` con eventos `Output`/`Finished`. Comandos `start_remote_job` / `cancel_remote_job`; eventos `job://output` y `job://finished`.
-- Push con `set_upstream` resuelve la rama actual y usa `origin` por defecto; pull siempre `--ff-only`; fetch `--all` con `--prune` opcional.
-- UI: botones Fetch/Pull/Push y Cancel en la toolbar; confirmación extra al pushear `main`/`master`; push sin upstream activa `--set-upstream` automáticamente.
-- `describeRemoteError` mapea la salida a causas accionables (non-fast-forward, auth, remoto inexistente, sin upstream, ref inexistente) con tests.
-- Tests: 4 de Rust con remotos locales (push+upstream, fetch, non-ff, cancelación con hook bloqueante) y 11 de frontend (mapeo de errores y store remoto).
-- Cerrado el 2026-09-18 con CI verde (Frontend 28 s, Rust 1m27s) en el PR #11. Con esto queda completo M2. De paso el CI destapó que sin `init.defaultBranch` el bare de test quedaba en `master`; los remotos de test fijan `main` explícitamente.
+- Runner: `spawn_streaming` with `StreamSink`; the reader separates by `\n` or `\r` (progress uses CR) and accumulates it for the result. **Without a sink it does not touch a single byte** (CRLF patches must survive). Cancellation arrives via a shared token (`Arc<AtomicBool>`) that `wait` checks every 100 ms and kills the tree.
+- `src/jobs/`: `JobKind` (fetch/pull/push with prune, remote and `set_upstream`), `JobManager` (ids and tokens), `start` with `Output`/`Finished` events. Commands `start_remote_job` / `cancel_remote_job`; events `job://output` and `job://finished`.
+- Push with `set_upstream` resolves the current branch and uses `origin` by default; pull always `--ff-only`; fetch `--all` with optional `--prune`.
+- UI: Fetch/Pull/Push and Cancel buttons in the toolbar; extra confirmation when pushing `main`/`master`; push without upstream activates `--set-upstream` automatically.
+- `describeRemoteError` maps the output to actionable causes (non-fast-forward, auth, nonexistent remote, no upstream, nonexistent ref) with tests.
+- Tests: 4 Rust with local remotes (push+upstream, fetch, non-ff, cancellation with blocking hook) and 11 frontend (error mapping and remote store).
+- Closed on 2026-09-18 with green CI (Frontend 28 s, Rust 1m27s) in PR #11. With this, M2 is complete. Along the way CI revealed that without `init.defaultBranch` the test bare was left on `master`; the test remotes explicitly set `main`.
