@@ -121,6 +121,23 @@ plus the merge loose ends and drag gestures.
 **Exit:** search and navigate history without touching the terminal, and run a
 repository with remotes, submodules and worktrees from the app. ✅
 
+## M9 — Repository tabs and live working tree
+
+First pass over multi-repository handling and working-tree freshness, the two
+rough edges reported against daily use after M8.
+
+- [x] Repository tabs replacing the Recents block: fixed-order session tabs
+  between the toolbar and the content, hidden with no repo (OG-069).
+- [x] Tab strip `+` button, `mod+shift+[` / `mod+shift+]` to switch tabs,
+  accent highlight and header integration (OG-070).
+- [x] Preview untracked files in the diff view without staging first,
+  read-only, in both modes (OG-071).
+- [x] Live worktree file list: watcher events refresh the badge and the
+  file list together, keeping the selection (OG-072).
+
+**Exit:** open several repositories in tabs and see every edit land in the
+badge and the file list within the watcher latency. ✅
+
 ## Translating documentation and comments to English
 
 Since 2026-09-19 the convention is **English for documentation, code and
