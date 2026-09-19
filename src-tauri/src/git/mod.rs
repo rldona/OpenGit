@@ -681,8 +681,18 @@ pub fn config_unset(
 
 /// Absolute path of the repository-specific ignore file (`info/exclude`).
 pub fn ignore_exclude_path(runner: &Runner, repo: &Path) -> Result<String, GitError> {
-    let output = runner
-        .run_checked(&GitCommand::new(["rev-parse", "--git-path", "info/exclude"]).cwd(repo))?;
+    resolve_git_path(runner, repo, "info/exclude")
+}
+
+/// Absolute path of the repository git config file (`<gitdir>/config`).
+pub fn git_config_path(runner: &Runner, repo: &Path) -> Result<String, GitError> {
+    resolve_git_path(runner, repo, "config")
+}
+
+/// Resolves a `--git-path` name against the repository (worktrees included).
+fn resolve_git_path(runner: &Runner, repo: &Path, name: &str) -> Result<String, GitError> {
+    let output =
+        runner.run_checked(&GitCommand::new(["rev-parse", "--git-path", name]).cwd(repo))?;
     let path = output.stdout_lossy().trim().to_string();
     let path = if Path::new(&path).is_absolute() {
         PathBuf::from(path)
@@ -690,6 +700,76 @@ pub fn ignore_exclude_path(runner: &Runner, repo: &Path) -> Result<String, GitEr
         repo.join(path)
     };
     Ok(path.to_string_lossy().into_owned())
+}
+
+fn validate_remote_name(name: &str) -> Result<(), GitError> {
+    let valid = !name.is_empty()
+        && name.len() <= 128
+        && name
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || matches!(c, '.' | '_' | '-'));
+    if !valid {
+        return Err(GitError::invalid(format!("invalid remote name: {name}")));
+    }
+    Ok(())
+}
+
+fn validate_remote_url(url: &str) -> Result<(), GitError> {
+    if url.trim().is_empty() {
+        return Err(GitError::invalid("the remote URL cannot be empty"));
+    }
+    Ok(())
+}
+
+/// Adds a remote (`git remote add`); name and URL go as argv.
+pub fn remote_add(runner: &Runner, repo: &Path, name: &str, url: &str) -> Result<(), GitError> {
+    validate_remote_name(name)?;
+    validate_remote_url(url)?;
+    runner
+        .run_checked(
+            &GitCommand::new(["remote", "add", name, url])
+                .cwd(repo)
+                .write(),
+        )
+        .map(|_| ())
+}
+
+/// Changes a remote URL (`git remote set-url`).
+pub fn remote_set_url(runner: &Runner, repo: &Path, name: &str, url: &str) -> Result<(), GitError> {
+    validate_remote_name(name)?;
+    validate_remote_url(url)?;
+    runner
+        .run_checked(
+            &GitCommand::new(["remote", "set-url", name, url])
+                .cwd(repo)
+                .write(),
+        )
+        .map(|_| ())
+}
+
+/// Renames a remote (`git remote rename`).
+pub fn remote_rename(runner: &Runner, repo: &Path, old: &str, new: &str) -> Result<(), GitError> {
+    validate_remote_name(old)?;
+    validate_remote_name(new)?;
+    runner
+        .run_checked(
+            &GitCommand::new(["remote", "rename", old, new])
+                .cwd(repo)
+                .write(),
+        )
+        .map(|_| ())
+}
+
+/// Removes a remote (`git remote remove`); local branches are untouched.
+pub fn remote_remove(runner: &Runner, repo: &Path, name: &str) -> Result<(), GitError> {
+    validate_remote_name(name)?;
+    runner
+        .run_checked(
+            &GitCommand::new(["remote", "remove", name])
+                .cwd(repo)
+                .write(),
+        )
+        .map(|_| ())
 }
 
 fn rev_list(runner: &Runner, repo: &Path, range: &str) -> Result<Vec<String>, GitError> {

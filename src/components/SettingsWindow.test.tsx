@@ -1,6 +1,15 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { confirmDestructive } from "../lib/bridge/dialog";
+import {
+  gitConfigPath,
+  remoteAdd,
+  remoteRemove,
+  remoteRename,
+  remoteSetUrl,
+  remoteUrls,
+} from "../lib/bridge/repo";
 import {
   configGet,
   configSet,
@@ -9,7 +18,8 @@ import {
   openPath,
   setAutoRefresh,
 } from "../lib/bridge/settings";
-import type { RepoInfo } from "../lib/bridge/types";
+import type { Remote, RepoInfo } from "../lib/bridge/types";
+import { useExtrasStore } from "../lib/stores/extras";
 import { useRepoStore } from "../lib/stores/repo";
 import { AUTO_REFRESH_STORAGE_KEY, useSettingsStore } from "../lib/stores/settings";
 import { useThemeStore } from "../lib/stores/theme";
@@ -23,6 +33,30 @@ vi.mock("../lib/bridge/settings", () => ({
   openPath: vi.fn().mockResolvedValue(undefined),
   setAutoRefresh: vi.fn().mockResolvedValue(undefined),
 }));
+
+vi.mock("../lib/bridge/repo", () => ({
+  remoteUrls: vi.fn().mockResolvedValue([]),
+  remoteAdd: vi.fn().mockResolvedValue(undefined),
+  remoteSetUrl: vi.fn().mockResolvedValue(undefined),
+  remoteRename: vi.fn().mockResolvedValue(undefined),
+  remoteRemove: vi.fn().mockResolvedValue(undefined),
+  gitConfigPath: vi.fn().mockResolvedValue("/tmp/repo/.git/config"),
+  submoduleStatus: vi.fn().mockResolvedValue([]),
+  worktreeList: vi.fn().mockResolvedValue([]),
+  lfsStatus: vi
+    .fn()
+    .mockResolvedValue({ installed: true, version: "git-lfs/3.5.1", configured: false }),
+}));
+
+vi.mock("../lib/bridge/dialog", () => ({
+  pickDirectory: vi.fn(),
+  confirmDestructive: vi.fn().mockResolvedValue(true),
+}));
+
+const REMOTES: Remote[] = [
+  { name: "origin", url: "git@example.com:a.git", web_url: "https://example.com/a" },
+  { name: "upstream", url: "https://example.com/b.git", web_url: "https://example.com/b" },
+];
 
 const REPO: RepoInfo = {
   root: "/tmp/repo",
@@ -39,6 +73,9 @@ describe("SettingsWindow", () => {
     vi.clearAllMocks();
     localStorage.clear();
     useRepoStore.setState({ repo: REPO, recents: [], loading: false, error: null });
+    useExtrasStore.setState({ remotes: REMOTES });
+    vi.mocked(remoteUrls).mockResolvedValue(REMOTES);
+    vi.mocked(confirmDestructive).mockResolvedValue(true);
     useSettingsStore.setState({ autoRefresh: true });
     useThemeStore.setState({ preference: "system", systemDark: true, resolved: "dark" });
     vi.mocked(configGet).mockImplementation(async (_path, key, scope) => {
@@ -127,6 +164,77 @@ describe("SettingsWindow", () => {
     await user.click(screen.getByRole("button", { name: "OK" }));
 
     expect(useThemeStore.getState().preference).toBe("light");
+  });
+
+  it("lists the remotes and adds a new one", async () => {
+    const user = userEvent.setup();
+    render(<SettingsWindow onClose={() => {}} />);
+
+    await user.click(screen.getByRole("tab", { name: "Remotes" }));
+    expect(await screen.findByRole("button", { name: /origin/ })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Add" }));
+    await user.type(screen.getByLabelText("Remote name"), "fork");
+    await user.type(screen.getByLabelText("Remote URL"), "https://example.com/fork.git");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(remoteAdd).toHaveBeenCalledWith("/tmp/repo", "fork", "https://example.com/fork.git");
+  });
+
+  it("edits a remote URL", async () => {
+    const user = userEvent.setup();
+    render(<SettingsWindow onClose={() => {}} />);
+
+    await user.click(screen.getByRole("tab", { name: "Remotes" }));
+    await user.click(await screen.findByRole("button", { name: /origin/ }));
+    await user.click(screen.getByRole("button", { name: "Edit" }));
+
+    const url = screen.getByLabelText("Remote URL");
+    await user.clear(url);
+    await user.type(url, "git@example.com:new.git");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(remoteSetUrl).toHaveBeenCalledWith("/tmp/repo", "origin", "git@example.com:new.git");
+  });
+
+  it("renames a remote and updates its URL", async () => {
+    const user = userEvent.setup();
+    render(<SettingsWindow onClose={() => {}} />);
+
+    await user.click(screen.getByRole("tab", { name: "Remotes" }));
+    await user.click(await screen.findByRole("button", { name: /origin/ }));
+    await user.click(screen.getByRole("button", { name: "Edit" }));
+
+    const name = screen.getByLabelText("Remote name");
+    await user.clear(name);
+    await user.type(name, "fork");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(remoteRename).toHaveBeenCalledWith("/tmp/repo", "origin", "fork");
+    expect(remoteSetUrl).toHaveBeenCalledWith("/tmp/repo", "fork", "git@example.com:a.git");
+  });
+
+  it("removes a remote only after confirming", async () => {
+    const user = userEvent.setup();
+    render(<SettingsWindow onClose={() => {}} />);
+
+    await user.click(screen.getByRole("tab", { name: "Remotes" }));
+    await user.click(await screen.findByRole("button", { name: /origin/ }));
+    await user.click(screen.getByRole("button", { name: "Remove" }));
+
+    expect(confirmDestructive).toHaveBeenCalled();
+    expect(remoteRemove).toHaveBeenCalledWith("/tmp/repo", "origin");
+  });
+
+  it("opens the repository config file", async () => {
+    const user = userEvent.setup();
+    render(<SettingsWindow onClose={() => {}} />);
+
+    await user.click(screen.getByRole("tab", { name: "Remotes" }));
+    await user.click(screen.getByRole("button", { name: "Edit Config File…" }));
+
+    expect(gitConfigPath).toHaveBeenCalledWith("/tmp/repo");
+    expect(openPath).toHaveBeenCalledWith("/tmp/repo/.git/config");
   });
 
   it("Cancel discards the changes", async () => {

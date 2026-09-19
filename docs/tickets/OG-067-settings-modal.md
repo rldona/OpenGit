@@ -82,7 +82,7 @@ with a tab bar (icon + label), a title and Cancel/OK.
 Phased, small reviewable PRs with CI green between them:
 - [x] Modal shell + Appearance + Advanced (config commands, ignore path,
       watcher switch).
-- [ ] Remotes (OG-056 backend).
+- [x] Remotes (OG-056 backend).
 - [ ] Commit Template.
 - [ ] Security (GPG).
 
@@ -92,3 +92,11 @@ The modal opens from the gear with the tabs implemented so far (Advanced and
 Appearance). Advanced round-trips the repository-local identity, shows and
 opens `info/exclude`, and toggles the watcher; Appearance applies the theme on
 OK. The remaining tabs are added in the next phases, in the requested order.
+
+### Phase 2 (done)
+
+Remotes tab between Advanced and Appearance: Name/Path table with Add, Edit
+(name and URL), Remove (confirmed) and `Edit Config File…`, applied
+immediately and refreshing the sidebar. The OG-056 backend landed here
+(`remote_add`, `remote_set_url`, `remote_rename`, `remote_remove`,
+`git_config_path`); wiring the sidebar menus to it is still pending in OG-056.
