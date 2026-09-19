@@ -1,24 +1,24 @@
-# ADR-NNNN · Título corto en imperativo
+# ADR-NNNN · Short title in the imperative
 
-- **Estado:** propuesto | aceptado | rechazado | sustituido por ADR-NNNN
-- **Fecha:** AAAA-MM-DD
-- **Decisores:** Raúl López
+- **Status:** proposed | accepted | rejected | superseded by ADR-NNNN
+- **Date:** YYYY-MM-DD
+- **Deciders:** Raúl López
 
-## Contexto
+## Context
 
-Qué problema hay que resolver, qué restricciones existen y qué fuerza la decisión ahora.
+What problem must be solved, what constraints exist and what forces the decision now.
 
-## Decisión
+## Decision
 
-La opción elegida, en una o dos frases, y el porqué principal.
+The chosen option, in one or two sentences, and the main reason why.
 
-## Alternativas consideradas
+## Alternatives considered
 
-- **Alternativa A** — por qué se descarta.
-- **Alternativa B** — por qué se descarta.
+- **Alternative A** — why it is discarded.
+- **Alternative B** — why it is discarded.
 
-## Consecuencias
+## Consequences
 
-- Positivas.
-- Negativas o costes asumidos.
-- Qué habría que revisar si cambian las circunstancias.
+- Positive.
+- Negative or accepted costs.
+- What would need to be revisited if circumstances change.

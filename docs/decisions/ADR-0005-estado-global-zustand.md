@@ -1,27 +1,38 @@
-# ADR-0005 · Estado global con Zustand
+# ADR-0005 · Global state with Zustand
 
-- **Estado:** aceptado
-- **Fecha:** 2026-09-18
-- **Decisores:** Raúl López
+- **Status:** accepted
+- **Date:** 2026-09-18
+- **Deciders:** Raúl López
 
-## Contexto
+## Context
 
-La UI necesita estado compartido entre vistas: repositorio abierto, refs, status, selección de commit y preferencias de layout. El estado local de React no llega para eso, y un Context + `useReducer` provoca re-renders masivos cuando cambia cualquier parte del árbol.
+The UI needs state shared across views: open repository, refs, status, commit
+selection and layout preferences. React local state is not enough for that, and
+a Context + `useReducer` causes massive re-renders when any part of the tree
+changes.
 
-## Decisión
+## Decision
 
-Usar **Zustand** con stores pequeños por dominio (`ui`, y en el futuro `repo`, `refs`, `staging`) y selectores atómicos en los componentes.
+Use **Zustand** with small per-domain stores (`ui`, and later `repo`, `refs`,
+`staging`) and atomic selectors in the components.
 
-## Alternativas consideradas
+## Alternatives considered
 
-- **Redux Toolkit** — robusto y con devtools excelentes, pero mucho boilerplate para un proyecto personal y penaliza la velocidad de iteración.
-- **Jotai** — modelo de átomos elegante y buen rendimiento, pero fragmenta el estado en muchos átomos y complica las consultas derivadas sobre el repo.
-- **Context + `useReducer`** — sin dependencias, pero cualquier cambio re-renderiza a todos los consumidores, justo lo que hay que evitar en listas de 10 000 commits.
+- **Redux Toolkit** — robust and with excellent devtools, but a lot of
+  boilerplate for a personal project and it hurts iteration speed.
+- **Jotai** — elegant atom model and good performance, but it fragments state
+  into many atoms and complicates derived queries over the repository.
+- **Context + `useReducer`** — no dependencies, but any change re-renders every
+  consumer, exactly what must be avoided in 10,000-commit lists.
 
-## Consecuencias
+## Consequences
 
-- Re-renders selectivos por selector, sin `Provider`: los stores se importan donde hagan falta.
-- Test muy simple: `useUiStore.getState()` / `setState()` sin montar componentes.
-- Dependencia pequeña (~1 KB) y sin acoplamiento al framework.
-- Disciplina necesaria: cada componente selecciona solo lo que usa; suscribirse al store entero anula la ventaja.
-- El estado por repositorio se modelará en el ticket OG-002; aquí solo se adopta la librería.
+- Selective re-renders per selector, no `Provider`: stores are imported wherever
+  they are needed.
+- Very simple testing: `useUiStore.getState()` / `setState()` without mounting
+  components.
+- Small dependency (~1 KB) and no coupling to the framework.
+- Discipline required: each component selects only what it uses; subscribing to
+  the whole store cancels the advantage.
+- Per-repository state will be modelled in ticket OG-002; here only the library
+  is adopted.

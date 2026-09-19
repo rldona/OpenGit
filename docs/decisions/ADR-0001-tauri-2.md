@@ -1,26 +1,38 @@
-# ADR-0001 · Shell de escritorio basado en Tauri 2
+# ADR-0001 · Desktop shell based on Tauri 2
 
-- **Estado:** aceptado
-- **Fecha:** 2026-09-18
-- **Decisores:** Raúl López
+- **Status:** accepted
+- **Date:** 2026-09-18
+- **Deciders:** Raúl López
 
-## Contexto
+## Context
 
-OpenGit debe funcionar en Windows, macOS y Linux desde un único código. El núcleo (ejecución de git, parseo, watcher de `.git`) se quiere en Rust. Es un proyecto personal: el coste de distribución importa menos que la velocidad de iteración, pero se busca algo ligero y sin runtime empaquetado.
+OpenGit must run on Windows, macOS and Linux from a single codebase. The core
+(running git, parsing, watching `.git`) is wanted in Rust. It is a personal
+project: distribution cost matters less than iteration speed, but something
+lightweight with no bundled runtime is desired.
 
-## Decisión
+## Decision
 
-Usar **Tauri 2** como shell: webview del sistema para la UI y proceso Rust para el core, comunicados por IPC (`invoke` y eventos).
+Use **Tauri 2** as the shell: the system webview for the UI and a Rust process
+for the core, communicating through IPC (`invoke` and events).
 
-## Alternativas consideradas
+## Alternatives considered
 
-- **Electron** — ecosistema maduro y cero sorpresas, pero empaqueta Chromium y Node: binarios de >100 MB y consumo de RAM alto para una app que pasa el día abierta.
-- **Qt / C++ o Python** — máximo control, pero UI más lenta de iterar y dos lenguajes; el ecosistema de componentes para diff/editores es pobre comparado con la web.
-- **Flutter desktop** — buen rendimiento, pero integración con Rust y con editores de código web es peor; toolchain menos probada para este caso.
+- **Electron** — mature ecosystem and no surprises, but it bundles Chromium and
+  Node: >100 MB binaries and high RAM usage for an app that stays open all day.
+- **Qt / C++ or Python** — maximum control, but a UI that is slower to iterate
+  and two languages; the component ecosystem for diff/editors is poor compared
+  to the web.
+- **Flutter desktop** — good performance, but integration with Rust and with
+  web code editors is worse; a less proven toolchain for this case.
 
-## Consecuencias
+## Consequences
 
-- Binarios del orden de 10–20 MB y arranque rápido.
-- El webview es distinto en cada SO (WebView2 en Windows, WebKitGTK en Linux, WKWebView en macOS): **hay que verificar la UI en los tres**, especialmente rendering de canvas y atajos.
-- Permisos y capacidades de Tauri 2 se declaran explícitamente: superficie de ataque pequeña, pero más ceremonia al añadir plugins.
-- Depuración mixta (DevTools del webview + logs de Rust) y CI con matriz de tres sistemas desde M0.
+- Binaries in the 10–20 MB range and fast startup.
+- The webview differs per OS (WebView2 on Windows, WebKitGTK on Linux, WKWebView
+  on macOS): **the UI must be verified on all three**, especially canvas
+  rendering and shortcuts.
+- Tauri 2 permissions and capabilities are declared explicitly: small attack
+  surface, but more ceremony when adding plugins.
+- Mixed debugging (webview DevTools + Rust logs) and a three-OS CI matrix from
+  M0.

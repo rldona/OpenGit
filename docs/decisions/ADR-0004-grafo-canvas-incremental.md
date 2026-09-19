@@ -1,26 +1,37 @@
-# ADR-0004 · Grafo de commits en canvas con carga incremental
+# ADR-0004 · Canvas commit graph with incremental loading
 
-- **Estado:** aceptado
-- **Fecha:** 2026-09-18
-- **Decisores:** Raúl López
+- **Status:** accepted
+- **Date:** 2026-09-18
+- **Deciders:** Raúl López
 
-## Contexto
+## Context
 
-La vista de grafo es la seña de identidad de SourceTree y su punto más débil en repos grandes. Un commit con SVG/DOM por nodo y por segmento no escala: a partir de unos miles de commits el scroll se degrada y el layout bloquea el hilo principal.
+The graph view is SourceTree's hallmark and its weakest point in large
+repositories. One SVG/DOM node per commit and per segment does not scale: from a
+few thousand commits on, scrolling degrades and layout blocks the main thread.
 
-## Decisión
+## Decision
 
-Renderizar **lanes y conexiones en `<canvas>` 2D** con las filas de commits virtualizadas en DOM. El historial se carga por páginas (`git log --topo-order` con `--max-count`/`--skip`) y el layout de lanes se calcula incrementalmente al vuelo.
+Render **lanes and connections on 2D `<canvas>`** with the commit rows
+virtualized in DOM. History is loaded in pages (`git log --topo-order` with
+`--max-count`/`--skip`) and the lane layout is computed incrementally on the
+fly.
 
-## Alternativas consideradas
+## Alternatives considered
 
-- **SVG/DOM por commit** — selección, hit-testing y accesibilidad gratis, pero coste de nodos inasumible con 10 000+ commits.
-- **WebGL** — capacity de sobra, pero complejidad innecesaria para 10 000–100 000 segmentos.
+- **SVG/DOM per commit** — selection, hit testing and accessibility for free,
+  but a node cost that is unacceptable with 10,000+ commits.
+- **WebGL** — plenty of capacity, but unnecessary complexity for 10,000–100,000
+  segments.
 
-## Consecuencias
+## Consequences
 
-- Scroll fluido con historial largo; solo se dibuja el viewport (+ margen).
-- Hit-testing, hover y selección se implementan a mano sobre el layout calculado (coordenadas commit ↔ x/y).
-- La accesibilidad se garantiza con la lista virtualizada en DOM: el canvas es decorativo (`aria-hidden`) y la selección vive en las filas.
-- El layout debe ser una función pura y testeable (`commits -> lanes`), sin depender del canvas, para poder cubrirlo con unit tests.
-- Cuidado con `devicePixelRatio` (canvas nítido en pantallas HiDPI) y con el color de las lanes en tema claro/oscuro.
+- Smooth scrolling with long history; only the viewport (+ margin) is drawn.
+- Hit testing, hover and selection are implemented by hand on top of the
+  computed layout (commit ↔ x/y coordinates).
+- Accessibility is guaranteed by the virtualized DOM list: the canvas is
+  decorative (`aria-hidden`) and selection lives in the rows.
+- The layout must be a pure, testable function (`commits -> lanes`),
+  independent from the canvas, so it can be covered with unit tests.
+- Careful with `devicePixelRatio` (crisp canvas on HiDPI screens) and with lane
+  colours in the light/dark theme.
