@@ -68,6 +68,15 @@ describe("Toolbar", () => {
     expect(screen.queryByText("/tmp/mi-repo")).not.toBeInTheDocument();
   });
 
+  it("hides the repo name while tabs are visible", () => {
+    useRepoStore.setState({
+      openTabs: [{ path: REPO.root, name: REPO.name, opened_at: 1 }],
+    });
+    render(<Toolbar {...handlers} />);
+
+    expect(screen.queryByText("mi-repo")).not.toBeInTheDocument();
+  });
+
   it("puts the number of changes in the Commit badge", () => {
     useStatusStore.setState({
       report: {

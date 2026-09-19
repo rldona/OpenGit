@@ -53,6 +53,9 @@ export function Toolbar({
 }: Props) {
   const repo = useRepoStore((state) => state.repo);
   const loading = useRepoStore((state) => state.loading);
+  // The active tab already names the repo: hide the header title while
+  // tabs are visible to avoid showing it twice (OG-070).
+  const showTabs = useRepoStore((state) => state.openTabs.length > 0);
   const pickAndOpen = useRepoStore((state) => state.pickAndOpen);
   const remoteRunning = useRemoteStore((state) => state.running);
   const merging = useRefsStore((state) => state.merging);
@@ -92,7 +95,7 @@ export function Toolbar({
     <>
       {overlayTitle && (
         <div className="titlebar" data-tauri-drag-region>
-          {title}
+          {!showTabs && title}
         </div>
       )}
       <header className="toolbar" data-tauri-drag-region>
@@ -139,7 +142,7 @@ export function Toolbar({
           )}
         </div>
 
-        {!overlayTitle && title}
+        {!overlayTitle && !showTabs && title}
 
         <div className="toolbar-group toolbar-right">
           <ToolButton
