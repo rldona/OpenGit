@@ -231,6 +231,7 @@ export function RefsSidebar() {
                       selectedRef === ref.name ? " selected" : ""
                     }`}
                     title={ref.name}
+                    aria-current={current === short ? "true" : undefined}
                     onClick={() => reveal(ref)}
                     onContextMenu={(event) =>
                       refMenu.open(event, [
@@ -257,11 +258,6 @@ export function RefsSidebar() {
                       ])
                     }
                   >
-                    {current === short && (
-                      <span className="refs-dot" aria-label="Current branch">
-                        ●
-                      </span>
-                    )}
                     {short}
                   </button>
                   {(() => {
