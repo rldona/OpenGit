@@ -73,12 +73,23 @@ Un fichero por ticket, nombrado `OG-NNN-slug.md`. Todo cambio del repositorio na
 | [OG-038](OG-038-context-menus.md) | Menús contextuales | M6 | done |
 | [OG-039](OG-039-paneles-diff.md) | Paneles de status/diff estilo SourceTree | M6 | done |
 | [OG-040](OG-040-incoming-outgoing.md) | Commits entrantes/salientes con badges | M6 | done |
-| [OG-041](OG-041-barra-superior.md) | Barra superior de ventana | M7 | in-progress |
+| [OG-041](OG-041-barra-superior.md) | Barra superior de ventana | M7 | done |
 | [OG-042](OG-042-sidebar-colapsable.md) | Sidebar con secciones colapsables | M7 | done |
-| [OG-043](OG-043-vista-commit.md) | Vista de commit dedicada | M7 | backlog |
-| [OG-044](OG-044-layout-3-zonas.md) | Layout de 3 zonas en el historial | M7 | in-progress |
-| [OG-045](OG-045-columnas-ordenables.md) | Columnas ordenables en la tabla | M7 | backlog |
-| [OG-046](OG-046-detalle-stash.md) | Detalle de stash como vista | M7 | backlog |
+| [OG-043](OG-043-vista-commit.md) | Vista de commit dedicada | M7 | done |
+| [OG-044](OG-044-layout-3-zonas.md) | Layout de 3 zonas en el historial | M7 | done |
+| [OG-045](OG-045-columnas-ordenables.md) | Columnas ordenables en la tabla | M7 | done |
+| [OG-046](OG-046-detalle-stash.md) | Detalle de stash como vista | M7 | done |
 | [OG-047](OG-047-ancho-grafo.md) | Ancho del grafo por rango visible | M7 | done |
 | [OG-048](OG-048-identidad-visual.md) | Identidad visual (badges, iconos, fechas) | M7 | done |
-| [OG-049](OG-049-merge.md) | Merge de ramas | M7 | ready |
+| [OG-049](OG-049-merge.md) | Merge de ramas | M7 | done |
+| [OG-050](OG-050-pull-modal.md) | Pull y Fetch con diálogo y progreso | M7 | done |
+| [OG-051](OG-051-tags-y-tabla.md) | Tags clicables y bordes de tabla | M7 | done |
+| [OG-052](OG-052-busqueda-commits-v2.md) | Búsqueda de commits (v2) | M8 | ready |
+| [OG-053](OG-053-historial-fichero.md) | Historial de un fichero | M8 | ready |
+| [OG-054](OG-054-comparar-refs.md) | Comparar commits y ramas | M8 | ready |
+| [OG-055](OG-055-blame.md) | Blame por línea | M8 | ready |
+| [OG-056](OG-056-gestion-remotos.md) | Gestión de remotos | M8 | ready |
+| [OG-057](OG-057-gestion-submodulos.md) | Gestión de submódulos | M8 | ready |
+| [OG-058](OG-058-worktrees.md) | Worktrees gestionables | M8 | ready |
+| [OG-059](OG-059-merge-estrategias.md) | Estrategias de merge y menú nativo | M8 | ready |
+| [OG-060](OG-060-drag-and-drop.md) | Drag & drop para merge y staging | M8 | ready |

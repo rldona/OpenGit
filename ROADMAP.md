@@ -95,6 +95,26 @@ Segunda pasada sobre el chasis. Ordenado por cuánto pesa en la percepción al a
 
 **Salida:** abrir la app junto a SourceTree y que la diferencia esté en el detalle, no en el primer vistazo. ✅
 
+## M8 — Paridad SourceTree (fase 3): el historial como herramienta y el repo con extras
+
+M6/M7 cerraron el chasis visual. Lo que queda frente a SourceTree no es
+pintura sino capacidad: buscar y navegar el historial (fichero, blame,
+comparar refs) y gestionar desde la UI lo que hoy es solo lectura (remotos,
+submódulos, worktrees), más los remates de merge y los gestos de arrastre.
+
+- [ ] Búsqueda de commits por mensaje, autor y ruta, con UI propia (OG-052).
+- [ ] Historial de un fichero ("Log selected") desde status y diff (OG-053).
+- [ ] Comparar commits y ramas: diff entre dos refs (OG-054).
+- [ ] Blame por línea con salto al commit (OG-055).
+- [ ] Gestión de remotos: añadir, editar y borrar (OG-056).
+- [ ] Gestión de submódulos: init, update, sync y add (OG-057).
+- [ ] Worktrees gestionables: crear, abrir y eliminar (OG-058).
+- [ ] Estrategias de merge (`--squash`, `-X ours/theirs`) y Merge en el menú nativo (OG-059).
+- [ ] Drag & drop: rama para merge y ficheros entre staged/unstaged (OG-060).
+
+**Salida:** buscar y navegar el historial sin tocar el terminal, y operar un
+repo con remotos, submódulos y worktrees desde la app.
+
 ## Fuera de alcance
 
 - Reimplementar git (nunca).
