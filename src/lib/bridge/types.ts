@@ -43,6 +43,8 @@ export type LogSearch = {
   grep: string;
   author: string;
   path: string;
+  /** Follow the path across renames (file history, OG-053). */
+  follow?: boolean;
 };
 
 export type Commit = {
@@ -53,8 +55,17 @@ export type Commit = {
   author_time: number;
   refs: string[];
   subject: string;
-  /** Message body (`%b`), without the subject. Empty string if there is none. */
   body: string;
+};
+
+/** One line of `git blame` (OG-055). */
+export type BlameLine = {
+  line: number;
+  hash: string;
+  author_name: string;
+  author_email: string;
+  author_time: number;
+  content: string;
 };
 
 export type JobKind =
@@ -97,11 +108,16 @@ export type MergeResult = {
   output: string;
 };
 
-/** Checkboxes of the merge window (OG-063). */
+/** Content-conflict resolution strategy for a merge (`-X`). */
+export type MergeStrategy = "ours" | "theirs";
+
+/** Checkboxes of the merge window (OG-063, OG-059). */
 export type MergeOptions = {
   noFf: boolean;
   noCommit: boolean;
   includeMessages: boolean;
+  squash: boolean;
+  strategy: MergeStrategy | null;
   rebase: boolean;
 };
 

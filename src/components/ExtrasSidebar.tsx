@@ -1,9 +1,16 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import type { SubmoduleState } from "../lib/bridge/types";
+import { confirmDestructive } from "../lib/bridge/dialog";
+import { formatGitError } from "../lib/bridge/errors";
+import { worktreeRemove, submoduleSync, submoduleUpdate } from "../lib/bridge/repo";
 import { shortRefName } from "../lib/format";
-import { CollapsibleSection } from "./CollapsibleSection";
 import { useExtrasStore } from "../lib/stores/extras";
 import { useRepoStore } from "../lib/stores/repo";
+import { useStatusStore } from "../lib/stores/status";
+import { useUiStore } from "../lib/stores/ui";
+import { useContextMenu } from "../lib/hooks/useContextMenu";
+import { CollapsibleSection } from "./CollapsibleSection";
+import { WorktreeDialog } from "./WorktreeDialog";
 
 const STATE_LABELS: Record<SubmoduleState, string> = {
   clean: "Clean",
@@ -30,6 +37,10 @@ export function ExtrasSidebar() {
   const lfs = useExtrasStore((state) => state.lfs);
   const error = useExtrasStore((state) => state.error);
   const load = useExtrasStore((state) => state.load);
+  const sectionMenu = useContextMenu();
+  const [worktreeDialog, setWorktreeDialog] = useState(false);
+  const [worktreeError, setWorktreeError] = useState<string | null>(null);
+  const [submoduleError, setSubmoduleError] = useState<string | null>(null);
 
   useEffect(() => {
     if (root) {
@@ -37,11 +48,63 @@ export function ExtrasSidebar() {
     }
   }, [root, load]);
 
+  const runSubmodule = async (action: "update" | "sync", path: string) => {
+    if (!root) {
+      return;
+    }
+    setSubmoduleError(null);
+    try {
+      const output =
+        action === "update" ? await submoduleUpdate(root, true, true) : await submoduleSync(root);
+      for (const line of output.split("\n")) {
+        if (line.trim() !== "") {
+          useUiStore.getState().appendOutput(line);
+        }
+      }
+      await useExtrasStore.getState().refresh(root);
+      await useStatusStore.getState().refresh(root);
+      useUiStore
+        .getState()
+        .appendOutput(`Submodule ${path} ${action === "update" ? "updated" : "synced"}`);
+    } catch (err) {
+      setSubmoduleError(formatGitError(err));
+    }
+  };
+
+  const removeWorktree = async (path: string) => {
+    if (!root) {
+      return;
+    }
+    if (!(await confirmDestructive(`Remove worktree ${baseName(path)}?`))) {
+      return;
+    }
+    setWorktreeError(null);
+    try {
+      await worktreeRemove(root, path, false);
+    } catch (err) {
+      const confirmed = await confirmDestructive(
+        "The worktree has uncommitted changes. Remove it anyway? This cannot be undone.",
+      );
+      if (!confirmed) {
+        setWorktreeError(formatGitError(err));
+        return;
+      }
+      try {
+        await worktreeRemove(root, path, true);
+      } catch (forceError) {
+        setWorktreeError(formatGitError(forceError));
+        return;
+      }
+    }
+    await useExtrasStore.getState().refresh(root);
+    useUiStore.getState().appendOutput(`Worktree removed: ${path}`);
+  };
+
   if (!root) {
     return null;
   }
   const showSubmodules = submodules.length > 0;
-  const showWorktrees = worktrees.length > 1;
+  const showWorktrees = worktrees.length >= 1;
   const showLfs = lfs?.configured === true;
   if (!showSubmodules && !showWorktrees && !showLfs && !error) {
     return null;
@@ -60,12 +123,36 @@ export function ExtrasSidebar() {
                   title={`${submodule.path} @ ${submodule.head.slice(0, 7)}`}
                   disabled={submodule.state === "uninitialized"}
                   onClick={() => void open(`${root.replace(/[\\/]+$/, "")}/${submodule.path}`)}
+                  onContextMenu={(event) =>
+                    sectionMenu.open(event, [
+                      {
+                        label: "Update (init included)",
+                        onSelect: () => void runSubmodule("update", submodule.path),
+                      },
+                      { label: "Sync", onSelect: () => void runSubmodule("sync", submodule.path) },
+                      {
+                        label: "Open",
+                        disabled: submodule.state === "uninitialized",
+                        onSelect: () =>
+                          void open(`${root.replace(/[\\/]+$/, "")}/${submodule.path}`),
+                      },
+                    ])
+                  }
                 >
                   <span className="extra-name">{submodule.path}</span>
                   <span className={`extra-state ${submodule.state}`}>
                     {STATE_LABELS[submodule.state]}
                   </span>
                 </button>
+                {submodule.state === "uninitialized" && (
+                  <button
+                    type="button"
+                    className="extra-action"
+                    onClick={() => void runSubmodule("update", submodule.path)}
+                  >
+                    Update
+                  </button>
+                )}
               </li>
             ))}
           </ul>
@@ -73,7 +160,16 @@ export function ExtrasSidebar() {
       )}
 
       {showWorktrees && (
-        <CollapsibleSection id="worktrees" title="Worktrees" icon="folder">
+        <CollapsibleSection
+          id="worktrees"
+          title="Worktrees"
+          icon="folder"
+          onContextMenu={(event) =>
+            sectionMenu.open(event, [
+              { label: "New worktree…", onSelect: () => setWorktreeDialog(true) },
+            ])
+          }
+        >
           <ul className="refs-list">
             {worktrees.map((worktree) => {
               const current = pathsEqual(worktree.path, root);
@@ -85,6 +181,21 @@ export function ExtrasSidebar() {
                     title={worktree.path}
                     disabled={current || worktree.bare}
                     onClick={() => void open(worktree.path)}
+                    onContextMenu={(event) =>
+                      sectionMenu.open(event, [
+                        {
+                          label: "Open",
+                          disabled: current || worktree.bare,
+                          onSelect: () => void open(worktree.path),
+                        },
+                        {
+                          label: "Remove",
+                          danger: true,
+                          disabled: current || worktree.bare,
+                          onSelect: () => void removeWorktree(worktree.path),
+                        },
+                      ])
+                    }
                   >
                     <span className="extra-name">{baseName(worktree.path)}</span>
                     {current && <span className="extra-flag">current</span>}
@@ -118,6 +229,25 @@ export function ExtrasSidebar() {
           </p>
         </section>
       )}
+
+      {worktreeError && (
+        <section className="sidebar-section">
+          <p role="alert" className="refs-error">
+            {worktreeError}
+          </p>
+        </section>
+      )}
+
+      {submoduleError && (
+        <section className="sidebar-section">
+          <p role="alert" className="refs-error">
+            {submoduleError}
+          </p>
+        </section>
+      )}
+
+      {worktreeDialog && <WorktreeDialog onClose={() => setWorktreeDialog(false)} />}
+      {sectionMenu.menu}
     </>
   );
 }

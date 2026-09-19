@@ -95,7 +95,7 @@ Second pass over the shell. Ordered by how much it weighs on first impression, n
 
 **Exit:** open the app next to SourceTree and have the difference be in the detail, not in the first glance. ✅
 
-## M8 — SourceTree parity (phase 3): history as a tool and repositories with extras
+## M8 — SourceTree parity (phase 3): history as a tool and repositories with extras ✅ _(closed 2026-09-19)_
 
 M6/M7 closed the visual shell. What is left against SourceTree is not paint but
 capability: searching and navigating history (file, blame, compare refs) and
@@ -103,23 +103,23 @@ managing from the UI what is read-only today (remotes, submodules, worktrees),
 plus the merge loose ends and drag gestures.
 
 - [x] Commit search by message, author and path, with its own UI (OG-052).
-- [ ] File history ("Log selected") from status and diff (OG-053).
-- [ ] Compare commits and branches: diff between two refs (OG-054).
-- [ ] Per-line blame with a jump to the commit (OG-055).
-- [ ] Remote management: add, edit and delete (OG-056).
-- [ ] Submodule management: init, update, sync and add (OG-057).
-- [ ] Manageable worktrees: create, open and remove (OG-058).
-- [ ] Merge strategies (`--squash`, `-X ours/theirs`) and Merge in the native menu (OG-059).
-- [ ] Drag & drop: branch to merge and files between staged/unstaged (OG-060).
+- [x] File history ("Log selected") from status and diff (OG-053).
+- [x] Compare commits and branches: diff between two refs (OG-054).
+- [x] Per-line blame with a jump to the commit (OG-055).
+- [x] Remote management: add, edit and delete (OG-056).
+- [x] Submodule management: init, update, sync and add (OG-057).
+- [x] Manageable worktrees: create, open and remove (OG-058).
+- [x] Merge strategies (`--squash`, `-X ours/theirs`) and Merge in the native menu (OG-059).
+- [x] Drag & drop: branch to merge and files between staged/unstaged (OG-060).
 - [x] Image preview and comparison (before/after) (OG-061).
 - [x] Merge window with the log picker ("Merge From Log") (OG-063).
 - [x] Clicking a branch selects its commit in the history (OG-064).
 - [x] Refresh button: include stashes and give feedback (OG-065).
 - [x] Settings modal (SourceTree-style) with tabs (OG-067).
-- [ ] Merge indicator: busy while running, banner only if unfinished (OG-066).
+- [x] Merge indicator: busy while running, banner only if unfinished (OG-066).
 
 **Exit:** search and navigate history without touching the terminal, and run a
-repository with remotes, submodules and worktrees from the app.
+repository with remotes, submodules and worktrees from the app. ✅
 
 ## Translating documentation and comments to English
 

@@ -24,6 +24,7 @@ fn search(grep: Option<&str>, author: Option<&str>, path: Option<&str>) -> LogSe
         grep: grep.map(str::to_string),
         author: author.map(str::to_string),
         path: path.map(str::to_string),
+        follow: false,
     }
 }
 
@@ -162,4 +163,40 @@ fn empty_search_does_not_filter() {
     assert!(search(None, None, None).is_empty());
     assert!(search(Some("  "), None, None).is_empty());
     assert_eq!(subjects(&repo, &search(None, None, None)).len(), 2);
+}
+
+#[test]
+fn follows_a_file_across_renames() {
+    let repo = TestRepo::init();
+    commit_as(
+        &repo,
+        "Ana",
+        "ana@example.com",
+        "old.txt",
+        "uno\n",
+        "crea old",
+    );
+    repo.git_ok(&["mv", "old.txt", "new.txt"]);
+    repo.git_ok(&["commit", "-q", "-m", "renombra"]);
+    commit_as(
+        &repo,
+        "Ana",
+        "ana@example.com",
+        "new.txt",
+        "dos\n",
+        "edita new",
+    );
+
+    // Without `--follow` the rename breaks the trail: only the new name counts.
+    assert_eq!(
+        subjects(&repo, &search(None, None, Some("new.txt"))),
+        vec!["edita new", "renombra"]
+    );
+
+    let mut filter = search(None, None, Some("new.txt"));
+    filter.follow = true;
+    assert_eq!(
+        subjects(&repo, &filter),
+        vec!["edita new", "renombra", "crea old"]
+    );
 }

@@ -1,7 +1,7 @@
 # OG-053 · File history
 
 - **Milestone:** M8 — SourceTree parity (phase 3)
-- **Status:** ready
+- **Status:** done
 - **Depends on:** OG-009, OG-044
 - **References:** ROADMAP.md, OG-018
 
@@ -22,13 +22,13 @@ commit by commit.
 
 ## Acceptance criteria
 
-- [ ] From a modified file, "Show file history" opens the history with only
+- [x] From a modified file, "Show file history" opens the history with only
       the commits that touched it, including renames (`--follow` or
       documented equivalent).
-- [ ] The band indicates the path and allows returning to the full history.
-- [ ] It works the same from a file of the commit detail and of the diff.
-- [ ] Selection and scroll behave as in the normal history.
-- [ ] Store and UI tests with the mocked bridge.
+- [x] The band indicates the path and allows returning to the full history.
+- [x] It works the same from a file of the commit detail and of the diff.
+- [x] Selection and scroll behave as in the normal history.
+- [x] Store and UI tests with the mocked bridge.
 
 ## Out of scope
 

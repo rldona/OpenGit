@@ -1,3 +1,4 @@
+mod blame;
 mod lfs;
 mod log;
 mod numstat;
@@ -7,6 +8,7 @@ mod status;
 mod submodules;
 mod worktrees;
 
+pub use blame::parse_blame;
 pub use lfs::{parse_gitattributes_paths, parse_gitattributes_uses_lfs};
 pub use log::parse_log;
 pub use numstat::parse_numstat;

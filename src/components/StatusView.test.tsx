@@ -2,9 +2,11 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { confirmDestructive } from "../lib/bridge/dialog";
+import { logPage } from "../lib/bridge/log";
 import { discardPath, stagePath, statusRepo, unstagePath } from "../lib/bridge/status";
 import type { RepoInfo, StatusReport } from "../lib/bridge/types";
 import { useExtrasStore } from "../lib/stores/extras";
+import { useLogStore } from "../lib/stores/log";
 import { useRepoStore } from "../lib/stores/repo";
 import { useStatusStore } from "../lib/stores/status";
 import { useUiStore } from "../lib/stores/ui";
@@ -69,12 +71,24 @@ const REPORT: StatusReport = {
   ],
 };
 
+/** jsdom has no hit testing: the drop target is faked for the pointer drag. */
+function stubDropTarget(drop: string) {
+  const element = document.createElement("div");
+  element.dataset.drop = drop;
+  Object.defineProperty(document, "elementFromPoint", {
+    configurable: true,
+    value: () => element,
+  });
+}
+
 describe("StatusView", () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     vi.mocked(statusRepo).mockResolvedValue(REPORT);
     vi.mocked(confirmDestructive).mockResolvedValue(true);
     useRepoStore.setState({ repo: REPO, recents: [], loading: false, error: null });
     useStatusStore.getState().reset();
+    useLogStore.getState().reset();
     useExtrasStore.setState({ lfs: null });
     useUiStore.setState({ fileTree: true });
   });
@@ -144,7 +158,48 @@ describe("StatusView", () => {
 
     expect(screen.getByRole("menuitem", { name: "Stage" })).toBeInTheDocument();
     expect(screen.getByRole("menuitem", { name: "Discard" })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "Blame" })).toBeInTheDocument();
     expect(screen.getByRole("menuitem", { name: "Copy path" })).toBeInTheDocument();
+  });
+
+  it("opens the file history from the context menu", async () => {
+    const user = userEvent.setup();
+    render(<StatusView />);
+    fireEvent.contextMenu(await screen.findByText("modificado.txt"), { clientX: 10, clientY: 10 });
+
+    await user.click(screen.getByRole("menuitem", { name: "Show file history" }));
+
+    expect(logPage).toHaveBeenLastCalledWith("/tmp/repo", 0, 200, null, {
+      grep: "",
+      author: "",
+      path: "modificado.txt",
+      follow: true,
+    });
+  });
+
+  it("stages a file dragged into the Staged section", async () => {
+    stubDropTarget("status-staged");
+    render(<StatusView />);
+    const row = await screen.findByText("modificado.txt");
+
+    fireEvent.pointerDown(row, { button: 0, clientX: 0, clientY: 0 });
+    fireEvent.pointerMove(document, { clientX: 30, clientY: 30 });
+    fireEvent.pointerUp(document, { clientX: 30, clientY: 30 });
+
+    expect(stagePath).toHaveBeenCalledWith("/tmp/repo", "modificado.txt", null);
+  });
+
+  it("cancels a file drag with Escape", async () => {
+    stubDropTarget("status-staged");
+    render(<StatusView />);
+    const row = await screen.findByText("modificado.txt");
+
+    fireEvent.pointerDown(row, { button: 0, clientX: 0, clientY: 0 });
+    fireEvent.pointerMove(document, { clientX: 30, clientY: 30 });
+    fireEvent.keyDown(window, { key: "Escape" });
+    fireEvent.pointerUp(document, { clientX: 30, clientY: 30 });
+
+    expect(stagePath).not.toHaveBeenCalled();
   });
 
   it("groups by directories in tree mode and switches to list", async () => {

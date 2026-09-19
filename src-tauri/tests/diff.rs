@@ -1,6 +1,9 @@
 mod support;
 
-use opengit_lib::git::{commit_file_diff, commit_files, diff_numstat, worktree_file_diff, Runner};
+use opengit_lib::git::{
+    commit_file_diff, commit_files, compare_file_diff, compare_numstat, diff_numstat,
+    worktree_file_diff, Runner,
+};
 use support::TestRepo;
 
 fn runner() -> Runner {
@@ -77,4 +80,42 @@ fn numstat_of_working_tree() {
         .expect("entry");
     assert_eq!(entry.added, Some(1));
     assert_eq!(entry.deleted, Some(0));
+}
+
+#[test]
+fn compares_two_revisions_with_added_deleted_and_renamed_files() {
+    let repo = TestRepo::init();
+    repo.write("keep.txt", b"uno\n");
+    repo.write("gone.txt", b"adios\n");
+    repo.write("viejo.txt", b"contenido\n");
+    repo.git_ok(&["add", "."]);
+    repo.git_ok(&["commit", "-q", "-m", "base"]);
+    let base = String::from_utf8(repo.git_ok(&["rev-parse", "HEAD"]).stdout)
+        .unwrap()
+        .trim()
+        .to_string();
+
+    repo.git_ok(&["rm", "-q", "gone.txt"]);
+    repo.git_ok(&["mv", "viejo.txt", "nuevo.txt"]);
+    repo.write("añadido.txt", b"nuevo\n");
+    repo.git_ok(&["add", "."]);
+    repo.git_ok(&["commit", "-q", "-m", "cambios"]);
+
+    let files = compare_numstat(&runner(), repo.path(), &base, "HEAD").expect("compare numstat");
+    let paths: Vec<&str> = files.iter().map(|file| file.path.as_str()).collect();
+    assert!(paths.contains(&"gone.txt"), "{paths:?}");
+    assert!(paths.contains(&"añadido.txt"), "{paths:?}");
+    let renamed = files
+        .iter()
+        .find(|file| file.path == "nuevo.txt")
+        .expect("renamed");
+    assert_eq!(renamed.orig_path.as_deref(), Some("viejo.txt"));
+
+    let patch =
+        compare_file_diff(&runner(), repo.path(), &base, "HEAD", "añadido.txt", false).unwrap();
+    assert!(patch.contains("+nuevo"), "{patch}");
+
+    let reversed =
+        compare_file_diff(&runner(), repo.path(), &base, "HEAD", "añadido.txt", true).unwrap();
+    assert!(reversed.contains("-nuevo"), "{reversed}");
 }

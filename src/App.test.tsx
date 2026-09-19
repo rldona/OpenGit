@@ -12,7 +12,7 @@ import { repoOpAbort } from "./lib/bridge/ops";
 import { commitRepo, repoOpState } from "./lib/bridge/commit";
 import { listRefs, logPage } from "./lib/bridge/log";
 import { openRepo, recentRepos } from "./lib/bridge/repo";
-import { commitFiles, diffFile, diffNumstat } from "./lib/bridge/diff";
+import { commitFiles, compareNumstat, diffFile, diffNumstat } from "./lib/bridge/diff";
 import { statusRepo } from "./lib/bridge/status";
 import { stashList } from "./lib/bridge/stash";
 import type { Commit, RepoInfo, StatusReport } from "./lib/bridge/types";
@@ -65,6 +65,10 @@ vi.mock("./lib/bridge/repo", () => ({
     .fn()
     .mockResolvedValue({ installed: true, version: "git-lfs/3.5.1", configured: false }),
   remoteUrls: vi.fn().mockResolvedValue([]),
+  remoteAdd: vi.fn().mockResolvedValue(undefined),
+  remoteSetUrl: vi.fn().mockResolvedValue(undefined),
+  remoteRename: vi.fn().mockResolvedValue(undefined),
+  remoteRemove: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("./lib/bridge/log", () => ({
@@ -103,6 +107,8 @@ vi.mock("./lib/bridge/jobs", () => ({
 vi.mock("./lib/bridge/diff", () => ({
   diffFile: vi.fn(),
   commitFiles: vi.fn(),
+  compareNumstat: vi.fn().mockResolvedValue([]),
+  compareFile: vi.fn().mockResolvedValue(""),
   diffNumstat: vi.fn(),
   stageSelection: vi.fn(),
 }));
@@ -242,6 +248,11 @@ describe("App", () => {
 
     expect(openRepo).toHaveBeenCalledWith("/tmp/mi-repo");
     expect(await screen.findAllByText("commit de prueba")).not.toHaveLength(0);
+    // The pending changes must show up without pressing Refresh (status loads
+    // when the repo opens, not only when the Status view mounts).
+    expect(await screen.findByText("Uncommitted changes")).toBeInTheDocument();
+    // With changes, the working tree row is preselected and its panels show.
+    expect(await screen.findByRole("region", { name: "Uncommitted changes" })).toBeInTheDocument();
     expect(subscribeRepoEvents).toHaveBeenCalled();
     expect(await screen.findByText(/Repository opened: mi-repo/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Fetch" })).toBeInTheDocument();
@@ -330,7 +341,8 @@ describe("App", () => {
 
     await user.click(screen.getByRole("button", { name: "Choose folder" }));
     await user.click(await screen.findByRole("button", { name: "File status" }));
-    await user.click(await screen.findByText("conflicto.txt"));
+    const statusFiles = document.querySelector(".status-files") as HTMLElement;
+    await user.click(await within(statusFiles).findByText("conflicto.txt"));
 
     expect(await screen.findByRole("button", { name: "Take ours" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Conflicts (1)" })).toBeInTheDocument();
@@ -513,7 +525,9 @@ describe("App", () => {
     expect(commitFiles).toHaveBeenCalledWith("/tmp/mi-repo", "aaaa0000");
     // It is still the history view: the commit row does not disappear.
     expect(useUiStore.getState().activeView).toBe("history");
-    expect(document.querySelector(".commit-subject")).toHaveTextContent("commit de prueba");
+    expect(
+      document.querySelector(".commit-row:not(.worktree-row) .commit-subject"),
+    ).toHaveTextContent("commit de prueba");
   });
 
   it("the branch dropdown only lists local branches, not remote ones", async () => {
@@ -769,5 +783,58 @@ describe("App", () => {
 
     act(() => menuMock.handler?.("toggle-output"));
     expect(screen.getByRole("region", { name: "Output" })).toBeInTheDocument();
+  });
+
+  it("opens the Merge window from the native menu", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Choose folder" }));
+    await findCommitRow();
+
+    act(() => menuMock.handler?.("merge"));
+
+    expect(screen.getByRole("dialog", { name: "Merge" })).toBeInTheDocument();
+  });
+
+  it("shows the file history band and returns to the full log", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Choose folder" }));
+    await findCommitRow();
+
+    act(() => useLogStore.setState({ historyPath: "src/a.ts" }));
+
+    expect(screen.getByText("File history:")).toBeInTheDocument();
+    expect(screen.getByText("src/a.ts")).toBeInTheDocument();
+
+    vi.mocked(logPage).mockClear();
+    await user.click(screen.getByRole("button", { name: "Show full history" }));
+
+    expect(logPage).toHaveBeenLastCalledWith("/tmp/mi-repo", 0, 200, null, null);
+  });
+
+  it("compares two commits selected with Ctrl+click", async () => {
+    const user = userEvent.setup();
+    vi.mocked(logPage).mockResolvedValue([
+      { ...COMMIT, hash: "aaaa0000", subject: "segundo" },
+      { ...COMMIT, hash: "bbbb0000", subject: "primero" },
+    ]);
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Choose folder" }));
+    await screen.findAllByText("segundo");
+
+    const rows = document.querySelectorAll<HTMLElement>(".commit-row:not(.worktree-row)");
+    expect(rows).toHaveLength(2);
+    fireEvent.click(rows[0], { ctrlKey: true });
+    fireEvent.click(rows[1], { ctrlKey: true });
+
+    fireEvent.contextMenu(rows[0]);
+    await user.click(screen.getByRole("menuitem", { name: "Compare selected" }));
+
+    expect(compareNumstat).toHaveBeenCalledWith("/tmp/mi-repo", "aaaa0000", "bbbb0000");
+    expect(useUiStore.getState().activeView).toBe("diff");
   });
 });

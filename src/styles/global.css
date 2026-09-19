@@ -838,6 +838,134 @@ body {
   border-bottom: 1px solid var(--border);
 }
 
+.history-scope {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-elevated);
+  font-size: 12px;
+}
+
+.history-scope-path {
+  overflow: hidden;
+  color: var(--text);
+  font-family: var(--font-mono);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-scope-clear {
+  flex-shrink: 0;
+  margin-left: auto;
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.history-scope-clear:hover {
+  border-color: var(--accent);
+}
+
+.blame {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.blame-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-panel);
+  font-size: 12px;
+}
+
+.blame-path {
+  overflow: hidden;
+  font-family: var(--font-mono);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.blame-list {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.blame-inner {
+  position: relative;
+}
+
+.blame-row {
+  position: absolute;
+  right: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 20px;
+  padding: 0 12px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.blame-row:hover {
+  background: var(--bg-elevated);
+}
+
+.blame-line-no {
+  flex-shrink: 0;
+  width: 48px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  text-align: right;
+}
+
+.blame-hash {
+  flex-shrink: 0;
+  width: 72px;
+  color: var(--accent);
+  font-family: var(--font-mono);
+}
+
+.blame-author {
+  flex-shrink: 0;
+  width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.blame-date {
+  flex-shrink: 0;
+  width: 150px;
+  color: var(--text-muted);
+}
+
+.blame-content {
+  flex: 1;
+  overflow: hidden;
+  font-family: var(--font-mono);
+  text-overflow: ellipsis;
+}
+
 .history-filter {
   display: flex;
   align-items: center;
@@ -2568,9 +2696,10 @@ body {
 
 .extra-open {
   display: flex;
+  flex: 1;
   align-items: center;
   gap: 6px;
-  width: 100%;
+  min-width: 0;
   padding: 2px 0;
   border: none;
   background: transparent;
@@ -2578,6 +2707,22 @@ body {
   font: inherit;
   text-align: left;
   cursor: pointer;
+}
+
+.extra-action {
+  flex-shrink: 0;
+  padding: 1px 8px;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.extra-action:hover {
+  background: rgb(59 130 246 / 18%);
 }
 
 .extra-open:disabled {
@@ -2781,6 +2926,12 @@ body {
   font-size: 14px;
 }
 
+.remote-dialog-subtitle {
+  margin: -4px 0 2px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
 .remote-field {
   display: flex;
   align-items: center;
@@ -2803,6 +2954,22 @@ body {
   color: var(--text);
   font: inherit;
   font-size: 12px;
+}
+
+.remote-field input {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-elevated);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+}
+
+.remote-field input:read-only {
+  opacity: 0.6;
 }
 
 .remote-field select:disabled {
@@ -3374,4 +3541,44 @@ body {
   font-family: var(--font-mono);
   font-size: 11px;
   word-break: break-all;
+}
+
+/* Comparison selection (OG-054): the order marker says base vs compared. */
+.commit-row.compare-selected,
+.refs-name.compare-selected {
+  background: rgb(59 130 246 / 18%);
+}
+
+.commit-compare {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--bg-panel);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.compare-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  height: 100%;
+  padding: 12px;
+}
+
+.compare-hint p {
+  margin: 0;
+}
+
+/* Pointer drag & drop (OG-060): the target under the cursor is highlighted. */
+.drop-target {
+  outline: 2px dashed var(--accent);
+  outline-offset: -2px;
+  background: rgb(59 130 246 / 8%);
 }

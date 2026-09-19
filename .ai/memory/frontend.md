@@ -20,3 +20,10 @@
 - **Context:** persisting the theme without IPC and without seeing a dark frame before React mounts.
 - **Finding:** in Tauri the WebView persists localStorage per origin (in dev, `http://localhost:1420`). An inline script in `index.html` can read the key and set `data-theme` before the bundle loads; the zustand store reads the same value when it initializes.
 - **Implication:** UI preferences go to localStorage; shared state with the core (recents) stays in `app_data_dir`. Keep both scripts in sync (`THEME_STORAGE_KEY`).
+
+## Custom pointer drag instead of native DnD in the WebView
+
+- **Date:** 2026-09-19
+- **Context:** OG-060, dragging a branch to merge and files between staged/unstaged.
+- **Finding:** HTML5 drag & drop is inconsistent inside the Tauri WebView. The gesture is rebuilt with Pointer Events: `pointerdown` records the origin, a move beyond a 5 px threshold starts the drag, `document.elementFromPoint(x, y).closest("[data-drop]")` resolves the target, and `Escape`/`pointercancel` abort. The active payload lives in `useDragStore` only so the target can highlight itself.
+- **Implication:** every drop zone needs `data-drop="<id>"`; tests stub `document.elementFromPoint` because jsdom has no hit testing (PointerEvent itself does work with `fireEvent.pointer*`).

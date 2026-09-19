@@ -32,7 +32,12 @@ export function DiffView() {
     }
   }, [root, storeRoot, target, openWorktree]);
 
-  const label = target?.kind === "commit" ? `commit ${target.rev.slice(0, 7)}` : "Working tree";
+  const label =
+    target?.kind === "commit"
+      ? `commit ${target.rev.slice(0, 7)}`
+      : target?.kind === "compare"
+        ? `${target.base.slice(0, 7)}..${target.rev.slice(0, 7)}`
+        : "Working tree";
   // With the patch reversed the hunk/line indices do not match the diff the
   // backend re-reads, so no patch actions are offered.
   const patchActions = target?.kind === "worktree" && !reversed;
@@ -47,6 +52,11 @@ export function DiffView() {
     <div className="diff-view">
       <div className="diff-toolbar">
         <span className="muted">{label}</span>
+        {target?.kind === "compare" && root && (
+          <button type="button" onClick={() => void openWorktree(root)}>
+            Exit comparison
+          </button>
+        )}
         <div className="diff-modes">
           <button
             type="button"

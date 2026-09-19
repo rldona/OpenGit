@@ -7,6 +7,10 @@ import { useRepoStore } from "../lib/stores/repo";
 import { useConflictStore } from "../lib/stores/conflict";
 import { useDiffStore } from "../lib/stores/diff";
 import { useExtrasStore } from "../lib/stores/extras";
+import { useBlameStore } from "../lib/stores/blame";
+import { useLogStore } from "../lib/stores/log";
+import { useDragStore } from "../lib/stores/drag";
+import { useDragSource } from "../lib/hooks/useDragSource";
 import { useStatusStore } from "../lib/stores/status";
 import { useUiStore } from "../lib/stores/ui";
 import { CommitPanel } from "./CommitPanel";
@@ -68,12 +72,27 @@ export function StatusView() {
   const removeUntracked = useStatusStore((state) => state.removeUntracked);
   const openWorktreeFile = useDiffStore((state) => state.openWorktreeFile);
   const openConflict = useConflictStore((state) => state.open);
+  const showFileHistory = useLogStore((state) => state.showFileHistory);
+  const openBlame = useBlameStore((state) => state.open);
   const setActiveView = useUiStore((state) => state.setActiveView);
   const lfs = useExtrasStore((state) => state.lfs);
   const fileTree = useUiStore((state) => state.fileTree);
   const setFileTree = useUiStore((state) => state.setFileTree);
   const fileMenu = useContextMenu();
   const [sort, setSort] = useState<SortMode>("path");
+
+  const drag = useDragSource((payload, target) => {
+    if (payload.kind !== "file") {
+      return;
+    }
+    if (target === "status-staged" && !payload.staged) {
+      void stage(payload.path, payload.origPath);
+    } else if (target === "status-unstaged" && payload.staged) {
+      void unstage(payload.path, payload.origPath);
+    }
+  });
+  const dragPayload = useDragStore((state) => state.drag);
+  const dragOver = useDragStore((state) => state.over);
 
   const root = repo?.root ?? null;
 
@@ -116,6 +135,13 @@ export function StatusView() {
 
   const menuItems = (entry: FileStatus, staged: boolean) => [
     { label: "Open diff", onSelect: () => void openDiff(entry, staged) },
+    {
+      label: "Show file history",
+      onSelect: () => root && void showFileHistory(root, entry.path),
+    },
+    ...(entry.kind === "untracked"
+      ? []
+      : [{ label: "Blame", onSelect: () => root && void openBlame(root, entry.path) }]),
     staged
       ? { label: "Unstage", onSelect: () => void unstage(entry.path, entry.orig_path) }
       : { label: "Stage", onSelect: () => void stage(entry.path, entry.orig_path) },
@@ -140,6 +166,14 @@ export function StatusView() {
         className={`status-row${selected === entry.path ? " selected" : ""}`}
         onClick={() => void openDiff(entry, staged)}
         onContextMenu={(event) => fileMenu.open(event, menuItems(entry, staged))}
+        onPointerDown={(event) =>
+          drag.start(event, {
+            kind: "file",
+            path: entry.path,
+            origPath: entry.orig_path,
+            staged,
+          })
+        }
       >
         <input
           type="checkbox"
@@ -259,7 +293,12 @@ export function StatusView() {
         >
           <div className="status-files">
             {report && total === 0 && <p className="muted status-empty">No changes</p>}
-            <section className="status-section">
+            <section
+              className={`status-section${
+                dragOver === "status-staged" && dragPayload?.kind === "file" ? " drop-target" : ""
+              }`}
+              data-drop="status-staged"
+            >
               <div className="status-section-head">
                 <input
                   type="checkbox"
@@ -282,7 +321,12 @@ export function StatusView() {
                 staged.map((entry) => renderRow(entry, true))
               )}
             </section>
-            <section className="status-section">
+            <section
+              className={`status-section${
+                dragOver === "status-unstaged" && dragPayload?.kind === "file" ? " drop-target" : ""
+              }`}
+              data-drop="status-unstaged"
+            >
               <div className="status-section-head">
                 <input
                   type="checkbox"

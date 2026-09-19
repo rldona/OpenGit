@@ -45,6 +45,22 @@ export function diffNumstat(path: string, cached: boolean): Promise<FileDiff[]> 
   return invoke<FileDiff[]>("diff_numstat", { path, cached });
 }
 
+/** Files that differ between two revisions (OG-054). */
+export function compareNumstat(path: string, base: string, rev: string): Promise<FileDiff[]> {
+  return invoke<FileDiff[]>("compare_numstat", { path, base, rev });
+}
+
+/** Patch of a file between two revisions (OG-054). */
+export function compareFile(request: {
+  path: string;
+  base: string;
+  rev: string;
+  file: string;
+  reversed: boolean;
+}): Promise<string> {
+  return invoke<string>("compare_file", request);
+}
+
 export type HunkSelection =
   { kind: "file" } | { kind: "hunk"; index: number } | { kind: "lines"; indices: number[] };
 

@@ -2,7 +2,10 @@ mod support;
 
 use std::path::Path;
 
-use opengit_lib::git::{submodule_status, worktree_list, Runner, SubmoduleState};
+use opengit_lib::git::{
+    submodule_add, submodule_status, submodule_sync, submodule_update, worktree_add, worktree_list,
+    worktree_remove, Runner, SubmoduleState,
+};
 use support::{git, TempDir, TestRepo};
 
 fn runner() -> Runner {
@@ -153,4 +156,147 @@ fn submodule_state_clean_modified_and_uninitialized() {
     assert_eq!(submodules[0].state, SubmoduleState::Uninitialized);
     assert_eq!(submodules[0].head, recorded);
     assert_eq!(submodules[0].describe, None);
+}
+
+#[test]
+fn adds_and_removes_worktrees() {
+    let repo = TestRepo::init();
+    commit_file(&repo, "a.txt", "uno\n", "base");
+
+    let dir = TempDir::new("worktree-manage");
+    let new_path = dir.path().join("nueva");
+    let reused_path = dir.path().join("reusada");
+
+    worktree_add(
+        &runner(),
+        repo.path(),
+        new_path.to_str().unwrap(),
+        "feature",
+        true,
+        Some("HEAD"),
+    )
+    .expect("worktree add con rama nueva");
+
+    let worktrees = worktree_list(&runner(), repo.path()).expect("listar");
+    assert!(
+        worktrees
+            .iter()
+            .any(|entry| same_path(&entry.path, &new_path)
+                && entry.branch.as_deref() == Some("refs/heads/feature")),
+        "{worktrees:?}"
+    );
+
+    let error = worktree_add(
+        &runner(),
+        repo.path(),
+        reused_path.to_str().unwrap(),
+        "feature",
+        false,
+        None,
+    )
+    .expect_err("la rama ya está en uso");
+    assert!(
+        format!("{error}").to_lowercase().contains("already"),
+        "{error}"
+    );
+
+    let error = worktree_remove(&runner(), repo.path(), repo.path().to_str().unwrap(), false)
+        .expect_err("no se puede borrar el principal");
+    assert!(
+        format!("{error}")
+            .to_lowercase()
+            .contains("main working tree"),
+        "{error}"
+    );
+
+    worktree_remove(&runner(), repo.path(), new_path.to_str().unwrap(), false).expect("remove");
+
+    let worktrees = worktree_list(&runner(), repo.path()).expect("listar tras borrar");
+    assert!(!worktrees
+        .iter()
+        .any(|entry| same_path(&entry.path, &new_path)));
+}
+
+#[test]
+fn manages_submodules_add_init_and_sync() {
+    // Local submodule clones require the file protocol. The app command does
+    // not force it (security), so the test process enables it through git's
+    // config environment, which the child clone inherits.
+    std::env::set_var("GIT_CONFIG_COUNT", "1");
+    std::env::set_var("GIT_CONFIG_KEY_0", "protocol.file.allow");
+    std::env::set_var("GIT_CONFIG_VALUE_0", "always");
+
+    let source = TestRepo::init();
+    commit_file(&source, "lib.txt", "lib\n", "sub base");
+
+    let super_repo = TestRepo::init();
+    commit_file(&super_repo, "x.txt", "x\n", "base");
+
+    submodule_add(
+        &runner(),
+        super_repo.path(),
+        source.path().to_str().unwrap(),
+        "vendor/lib",
+    )
+    .expect("submodule add");
+
+    let submodules = submodule_status(&runner(), super_repo.path()).expect("status");
+    assert_eq!(submodules.len(), 1, "{submodules:?}");
+    assert_eq!(submodules[0].path, "vendor/lib");
+    assert_eq!(submodules[0].state, SubmoduleState::Clean);
+
+    let deinit = git(
+        super_repo.path(),
+        &["submodule", "deinit", "-f", "-q", "vendor/lib"],
+    );
+    assert!(deinit.status.success(), "{deinit:?}");
+    assert_eq!(
+        submodule_status(&runner(), super_repo.path()).expect("status")[0].state,
+        SubmoduleState::Uninitialized
+    );
+
+    submodule_update(&runner(), super_repo.path(), true, true).expect("submodule update --init");
+    assert_eq!(
+        submodule_status(&runner(), super_repo.path()).expect("status")[0].state,
+        SubmoduleState::Clean
+    );
+
+    submodule_sync(&runner(), super_repo.path()).expect("submodule sync");
+}
+
+#[test]
+fn adding_a_submodule_validates_url_and_path() {
+    let repo = TestRepo::init();
+    commit_file(&repo, "x.txt", "x\n", "base");
+
+    assert!(submodule_add(&runner(), repo.path(), "", "vendor/lib").is_err());
+    assert!(submodule_add(&runner(), repo.path(), "https://example.com/x.git", "").is_err());
+}
+
+#[test]
+fn removes_a_worktree_only_with_force_when_dirty() {
+    let repo = TestRepo::init();
+    commit_file(&repo, "a.txt", "uno\n", "base");
+
+    let dir = TempDir::new("worktree-force");
+    let path = dir.path().join("sucia");
+    worktree_add(
+        &runner(),
+        repo.path(),
+        path.to_str().unwrap(),
+        "sucia",
+        true,
+        Some("HEAD"),
+    )
+    .expect("worktree add");
+    std::fs::write(path.join("a.txt"), b"cambio\n").expect("escribir");
+
+    let error = worktree_remove(&runner(), repo.path(), path.to_str().unwrap(), false)
+        .expect_err("necesita force");
+    assert!(
+        format!("{error}").to_lowercase().contains("--force"),
+        "{error}"
+    );
+
+    worktree_remove(&runner(), repo.path(), path.to_str().unwrap(), true).expect("force");
 }

@@ -55,6 +55,8 @@ fn build_menu(app: &tauri::App) -> tauri::Result<()> {
         .item(&MenuItemBuilder::with_id("pull", "Pull").build(app)?)
         .item(&MenuItemBuilder::with_id("push", "Push").build(app)?)
         .separator()
+        .item(&MenuItemBuilder::with_id("merge", "Merge…").build(app)?)
+        .separator()
         .item(&MenuItemBuilder::with_id("refresh", "Refresh").build(app)?)
         .build()?;
 
@@ -105,10 +107,13 @@ pub fn run() {
             commands::close_repo,
             commands::log_page,
             commands::list_refs,
+            commands::blame_file,
             commands::status_repo,
             commands::diff_file,
             commands::commit_files,
             commands::diff_numstat,
+            commands::compare_numstat,
+            commands::compare_file,
             commands::stage_path,
             commands::unstage_path,
             commands::stage_selection,
@@ -149,7 +154,12 @@ pub fn run() {
             commands::remove_recent_repo,
             commands::open_terminal,
             commands::submodule_status,
+            commands::submodule_update,
+            commands::submodule_sync,
+            commands::submodule_add,
             commands::worktree_list,
+            commands::worktree_add,
+            commands::worktree_remove,
             commands::lfs_status,
             commands::remote_urls,
             commands::tracking_commits,

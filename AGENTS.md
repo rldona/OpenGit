@@ -19,7 +19,7 @@ React UI (WebView)  →  Tauri IPC (invoke/events)  →  Rust core  →  git bin
 
 ## Development
 
-Current state: **M8 in progress** (M7 completed on 2026-09-19 with SourceTree parity: commit window, embedded stash detail, remotes with dialog and progress window, sortable columns and merge; OG-052 commit search done). Pending in M8: file history, compare refs, blame and management of remotes, submodules and worktrees. Signing and notarization are dropped for cost (OG-028).
+Current state: **M8 completed** (2026-09-19) with SourceTree parity phase 3: file history, compare refs, per-line blame, remote/submodule/worktree management, merge strategies with a native Merge entry, and pointer-based drag & drop. There is no active milestone yet; scope for the next one starts from `ROADMAP.md`. Signing and notarization are dropped for cost (OG-028).
 
 ```bash
 npm install

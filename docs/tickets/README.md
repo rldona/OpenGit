@@ -85,14 +85,14 @@ One file per ticket, named `OG-NNN-slug.md`. Every change in the repository star
 | [OG-050](OG-050-pull-modal.md) | Pull with dialog and progress window | M7 | done |
 | [OG-051](OG-051-tags-y-tabla.md) | Clickable tags and table borders | M7 | done |
 | [OG-052](OG-052-busqueda-commits-v2.md) | Commit search (v2) | M8 | done |
-| [OG-053](OG-053-historial-fichero.md) | File history | M8 | ready |
-| [OG-054](OG-054-comparar-refs.md) | Compare commits and branches | M8 | ready |
-| [OG-055](OG-055-blame.md) | Per-line blame | M8 | ready |
-| [OG-056](OG-056-gestion-remotos.md) | Remote management | M8 | ready |
-| [OG-057](OG-057-gestion-submodulos.md) | Submodule management | M8 | ready |
-| [OG-058](OG-058-worktrees.md) | Manageable worktrees | M8 | ready |
-| [OG-059](OG-059-merge-estrategias.md) | Merge strategies and Merge in the native menu | M8 | ready |
-| [OG-060](OG-060-drag-and-drop.md) | Drag & drop for merge and staging | M8 | ready |
+| [OG-053](OG-053-historial-fichero.md) | File history | M8 | done |
+| [OG-054](OG-054-comparar-refs.md) | Compare commits and branches | M8 | done |
+| [OG-055](OG-055-blame.md) | Per-line blame | M8 | done |
+| [OG-056](OG-056-gestion-remotos.md) | Remote management | M8 | done |
+| [OG-057](OG-057-gestion-submodulos.md) | Submodule management | M8 | done |
+| [OG-058](OG-058-worktrees.md) | Manageable worktrees | M8 | done |
+| [OG-059](OG-059-merge-estrategias.md) | Merge strategies and Merge in the native menu | M8 | done |
+| [OG-060](OG-060-drag-and-drop.md) | Drag & drop for merge and staging | M8 | done |
 | [OG-061](OG-061-image-preview.md) | Image preview and comparison | M8 | done |
 | [OG-062](OG-062-english-translation.md) | Translate the project to English | M8 | done |
 | [OG-063](OG-063-merge-from-log.md) | Merge window (Merge From Log) | M8 | done |

@@ -1,7 +1,7 @@
 # OG-056 · Remote management
 
 - **Milestone:** M8 — SourceTree parity (phase 3)
-- **Status:** ready
+- **Status:** done
 - **Depends on:** OG-011, OG-041
 - **References:** ROADMAP.md, OG-034
 
@@ -25,13 +25,13 @@ the UI.
 
 ## Acceptance criteria
 
-- [ ] Adding a remote with a valid URL appears in the sidebar and in the Pull
+- [x] Adding a remote with a valid URL appears in the sidebar and in the Pull
       dialog without restarting.
-- [ ] Editing the URL and renaming work and refresh refs.
-- [ ] Remove asks for confirmation and explains the effect.
-- [ ] Duplicate or invalid name and empty URL are reported without a raw
+- [x] Editing the URL and renaming work and refresh refs.
+- [x] Remove asks for confirmation and explains the effect.
+- [x] Duplicate or invalid name and empty URL are reported without a raw
       error.
-- [ ] Integration tests on a temporary repo (add/rename/set-url/remove).
+- [x] Integration tests on a temporary repo (add/rename/set-url/remove).
 
 ## Out of scope
 

@@ -2,7 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { cherryPick, resetMixed, revertCommit } from "../bridge/history";
 import { listRefs, logPage } from "../bridge/log";
 import type { Commit } from "../bridge/types";
-import { useLogStore } from "./log";
+import { WORKTREE_SELECTION, useLogStore } from "./log";
+import { useStatusStore } from "./status";
 import { useUiStore } from "./ui";
 
 vi.mock("../bridge/log", () => ({
@@ -64,6 +65,7 @@ function page(size: number, prefix: string): Commit[] {
 describe("useLogStore", () => {
   beforeEach(() => {
     useLogStore.getState().reset();
+    useStatusStore.getState().reset();
     vi.mocked(listRefs).mockResolvedValue([]);
     vi.mocked(logPage).mockResolvedValue([]);
   });
@@ -91,6 +93,25 @@ describe("useLogStore", () => {
     await useLogStore.getState().load("/tmp/repo");
 
     expect(useLogStore.getState().selected).toBeNull();
+  });
+
+  it("preselects the uncommitted row when there are pending changes", async () => {
+    useStatusStore.setState({
+      report: {
+        head: "aaaa0000",
+        branch: "main",
+        detached: false,
+        upstream: null,
+        ahead: 0,
+        behind: 0,
+        entries: [{ kind: "ordinary", xy: ".M", path: "a.txt", orig_path: null }],
+      },
+    });
+    vi.mocked(logPage).mockResolvedValue(page(2, "p"));
+
+    await useLogStore.getState().load("/tmp/repo");
+
+    expect(useLogStore.getState().selected).toBe(WORKTREE_SELECTION);
   });
 
   it("when filtering within the same repository it does not reselect", async () => {
@@ -255,5 +276,80 @@ describe("useLogStore", () => {
 
     expect(useLogStore.getState().error).toContain("git failed with code 128");
     expect(useLogStore.getState().commits).toHaveLength(0);
+  });
+
+  it("ignores a late log response from a previous repository", async () => {
+    let resolveOld: ((commits: Commit[]) => void) | null = null;
+    vi.mocked(logPage).mockImplementationOnce(
+      () =>
+        new Promise<Commit[]>((resolve) => {
+          resolveOld = resolve;
+        }),
+    );
+    const slow = useLogStore.getState().load("/tmp/a");
+
+    vi.mocked(logPage).mockResolvedValueOnce(page(1, "b"));
+    await useLogStore.getState().load("/tmp/b");
+
+    resolveOld!(page(3, "a"));
+    await slow;
+
+    expect(useLogStore.getState().root).toBe("/tmp/b");
+    expect(useLogStore.getState().commits.map((commit) => commit.hash)).toEqual(["b0"]);
+  });
+
+  it("shows a file history with follow and survives reload", async () => {
+    vi.mocked(logPage).mockResolvedValue([COMMIT]);
+
+    await useLogStore.getState().showFileHistory("/tmp/repo", "src/a.ts");
+
+    expect(useLogStore.getState().historyPath).toBe("src/a.ts");
+    expect(useLogStore.getState().search).toBeNull();
+    expect(useUiStore.getState().activeView).toBe("history");
+    expect(logPage).toHaveBeenLastCalledWith("/tmp/repo", 0, 200, null, {
+      grep: "",
+      author: "",
+      path: "src/a.ts",
+      follow: true,
+    });
+
+    vi.mocked(logPage).mockClear();
+    useLogStore.setState({ filter: "refs/heads/main" });
+    await useLogStore.getState().reload("/tmp/repo");
+
+    expect(logPage).toHaveBeenCalledWith("/tmp/repo", 0, 200, "refs/heads/main", {
+      grep: "",
+      author: "",
+      path: "src/a.ts",
+      follow: true,
+    });
+
+    await useLogStore.getState().clearFileHistory("/tmp/repo");
+
+    expect(useLogStore.getState().historyPath).toBeNull();
+    expect(logPage).toHaveBeenLastCalledWith("/tmp/repo", 0, 200, "refs/heads/main", null);
+  });
+
+  it("a commit search clears the file history", async () => {
+    await useLogStore.getState().showFileHistory("/tmp/repo", "src/a.ts");
+
+    await useLogStore.getState().applySearch("/tmp/repo", { grep: "fix", author: "", path: "" });
+
+    expect(useLogStore.getState().historyPath).toBeNull();
+    expect(useLogStore.getState().search).toEqual({ grep: "fix", author: "", path: "" });
+  });
+
+  it("keeps at most two commits for comparison, in click order", () => {
+    const { toggleCompareSelection } = useLogStore.getState();
+
+    toggleCompareSelection("a");
+    toggleCompareSelection("b");
+    expect(useLogStore.getState().compareSelection).toEqual(["a", "b"]);
+
+    toggleCompareSelection("c");
+    expect(useLogStore.getState().compareSelection).toEqual(["b", "c"]);
+
+    toggleCompareSelection("b");
+    expect(useLogStore.getState().compareSelection).toEqual(["c"]);
   });
 });

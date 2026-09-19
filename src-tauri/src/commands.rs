@@ -245,6 +245,15 @@ pub fn list_refs(path: String, state: State<'_, AppState>) -> Result<Vec<Ref>, G
 }
 
 #[tauri::command]
+pub fn blame_file(
+    path: String,
+    file: String,
+    state: State<'_, AppState>,
+) -> Result<Vec<crate::git::BlameLine>, GitError> {
+    crate::git::blame_file(&state.runner, Path::new(&path), &file)
+}
+
+#[tauri::command]
 pub fn status_repo(path: String, state: State<'_, AppState>) -> Result<StatusReport, GitError> {
     crate::git::status(&state.runner, Path::new(&path))
 }
@@ -381,6 +390,35 @@ pub fn diff_numstat(
     state: State<'_, AppState>,
 ) -> Result<Vec<crate::git::FileDiff>, GitError> {
     crate::git::diff_numstat(&state.runner, Path::new(&path), cached)
+}
+
+#[tauri::command]
+pub fn compare_numstat(
+    path: String,
+    base: String,
+    rev: String,
+    state: State<'_, AppState>,
+) -> Result<Vec<crate::git::FileDiff>, GitError> {
+    crate::git::compare_numstat(&state.runner, Path::new(&path), &base, &rev)
+}
+
+#[tauri::command]
+pub fn compare_file(
+    path: String,
+    base: String,
+    rev: String,
+    file: String,
+    reversed: bool,
+    state: State<'_, AppState>,
+) -> Result<String, GitError> {
+    crate::git::compare_file_diff(
+        &state.runner,
+        Path::new(&path),
+        &base,
+        &rev,
+        &file,
+        reversed,
+    )
 }
 
 #[tauri::command]
@@ -708,11 +746,75 @@ pub fn submodule_status(
 }
 
 #[tauri::command]
+pub fn submodule_update(
+    path: String,
+    init: bool,
+    recursive: bool,
+    state: State<'_, AppState>,
+) -> Result<String, GitError> {
+    pause_while(&state, || {
+        crate::git::submodule_update(&state.runner, Path::new(&path), init, recursive)
+    })
+}
+
+#[tauri::command]
+pub fn submodule_sync(path: String, state: State<'_, AppState>) -> Result<String, GitError> {
+    pause_while(&state, || {
+        crate::git::submodule_sync(&state.runner, Path::new(&path))
+    })
+}
+
+#[tauri::command]
+pub fn submodule_add(
+    path: String,
+    url: String,
+    subpath: String,
+    state: State<'_, AppState>,
+) -> Result<String, GitError> {
+    pause_while(&state, || {
+        crate::git::submodule_add(&state.runner, Path::new(&path), &url, &subpath)
+    })
+}
+
+#[tauri::command]
 pub fn worktree_list(
     path: String,
     state: State<'_, AppState>,
 ) -> Result<Vec<crate::git::Worktree>, GitError> {
     crate::git::worktree_list(&state.runner, Path::new(&path))
+}
+
+#[tauri::command]
+pub fn worktree_add(
+    path: String,
+    worktree: String,
+    branch: String,
+    create: bool,
+    start_point: Option<String>,
+    state: State<'_, AppState>,
+) -> Result<(), GitError> {
+    pause_while(&state, || {
+        crate::git::worktree_add(
+            &state.runner,
+            Path::new(&path),
+            &worktree,
+            &branch,
+            create,
+            start_point.as_deref(),
+        )
+    })
+}
+
+#[tauri::command]
+pub fn worktree_remove(
+    path: String,
+    worktree: String,
+    force: bool,
+    state: State<'_, AppState>,
+) -> Result<(), GitError> {
+    pause_while(&state, || {
+        crate::git::worktree_remove(&state.runner, Path::new(&path), &worktree, force)
+    })
 }
 
 #[tauri::command]

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { CollapsibleSection } from "./components/CollapsibleSection";
+import { BlameView } from "./components/BlameView";
 import { ConflictView } from "./components/ConflictView";
 import { DiffView } from "./components/DiffView";
 import { ExtrasSidebar } from "./components/ExtrasSidebar";
@@ -225,6 +226,9 @@ function App() {
       case "push":
         void runPush();
         break;
+      case "merge":
+        runMerge();
+        break;
       case "refresh":
         void refreshAll();
         break;
@@ -427,6 +431,8 @@ function App() {
                 <RebaseView />
               ) : activeView === "stash" ? (
                 <StashView />
+              ) : activeView === "blame" ? (
+                <BlameView />
               ) : (
                 <HistoryView />
               )

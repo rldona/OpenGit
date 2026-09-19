@@ -1,7 +1,7 @@
 # OG-058 · Manageable worktrees
 
 - **Milestone:** M8 — SourceTree parity (phase 3)
-- **Status:** ready
+- **Status:** done
 - **Depends on:** OG-024
 - **References:** ROADMAP.md, OG-024
 
@@ -23,14 +23,14 @@ them requires the terminal.
 
 ## Acceptance criteria
 
-- [ ] Creating a worktree with a new branch lists it marked as not current and
+- [x] Creating a worktree with a new branch lists it marked as not current and
       it can be opened.
-- [ ] Creating a worktree on an existing branch fails with a clear message if
+- [x] Creating a worktree on an existing branch fails with a clear message if
       it is already in use by another worktree.
-- [ ] Remove asks for confirmation; if there are uncommitted changes it warns
+- [x] Remove asks for confirmation; if there are uncommitted changes it warns
       and only forces after accepting.
-- [ ] The main worktree cannot be deleted (git prevents it; clear message).
-- [ ] Integration tests on a temporary repo.
+- [x] The main worktree cannot be deleted (git prevents it; clear message).
+- [x] Integration tests on a temporary repo.
 
 ## Out of scope
 

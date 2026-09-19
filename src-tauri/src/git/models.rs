@@ -157,3 +157,16 @@ pub struct TrackingCommits {
     /// `upstream..HEAD`.
     pub outgoing: Vec<String>,
 }
+
+/// One line of `git blame --line-porcelain` (OG-055).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct BlameLine {
+    /// Line number in the current file.
+    pub line: u32,
+    /// Commit that last touched the line; all zeros if not committed yet.
+    pub hash: String,
+    pub author_name: String,
+    pub author_email: String,
+    pub author_time: i64,
+    pub content: String,
+}
