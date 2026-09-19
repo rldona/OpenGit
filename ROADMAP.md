@@ -149,6 +149,20 @@ Small follow-ups reported against daily use right after v0.3.0.
 
 **Exit:** green CI and previews that fit. ✅
 
+## M11 — Updates and external files
+
+First features beyond daily-use fixes: learning about releases from
+inside the app, and opening worktree files in the machine's
+applications.
+
+- [x] Update check on startup with a download notice, plus a manual
+  native menu item (OG-077).
+- [x] Open working-tree files in the default app, VS Code and the file
+  manager, including commit entries (OG-078).
+
+**Exit:** get notified of v0.4.0 from v0.3.1, and open any listed file
+outside the app. ✅
+
 ## Translating documentation and comments to English
 
 Since 2026-09-19 the convention is **English for documentation, code and
