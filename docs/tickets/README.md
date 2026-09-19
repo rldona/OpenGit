@@ -97,3 +97,4 @@ One file per ticket, named `OG-NNN-slug.md`. Every change in the repository star
 | [OG-062](OG-062-english-translation.md) | Translate the project to English | M8 | done |
 | [OG-063](OG-063-merge-from-log.md) | Merge window (Merge From Log) | M8 | done |
 | [OG-064](OG-064-branch-reveal.md) | Clicking a branch selects its commit | M8 | done |
+| [OG-065](OG-065-refresh-button.md) | Refresh button: stashes and feedback | M8 | done |
