@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { confirmDestructive } from "../lib/bridge/dialog";
+import { confirmDestructive, pickFile } from "../lib/bridge/dialog";
 import {
   gitConfigPath,
   remoteAdd,
@@ -8,11 +8,14 @@ import {
   remoteSetUrl,
 } from "../lib/bridge/repo";
 import {
+  commitTemplateRead,
+  commitTemplateWrite,
   configGet,
   configSet,
   configUnset,
   ignoreExcludePath,
   openPath,
+  readTextFile,
 } from "../lib/bridge/settings";
 import { useExtrasStore } from "../lib/stores/extras";
 import { useRepoStore } from "../lib/stores/repo";
@@ -21,7 +24,8 @@ import { useThemeStore } from "../lib/stores/theme";
 import type { ThemePreference } from "../lib/theme";
 import { Icon, type IconName } from "./Icon";
 
-type Tab = "advanced" | "remotes" | "appearance";
+type Tab = "advanced" | "remotes" | "template" | "appearance";
+type TemplateMode = "none" | "default" | "custom";
 
 type UserInfo = {
   /** Use the global identity instead of a repository-local one. */
@@ -52,6 +56,7 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
   const tabs: Array<{ id: Tab; label: string; icon: IconName }> = [
     ...(root ? [{ id: "advanced" as const, label: "Advanced", icon: "settings" as const }] : []),
     ...(root ? [{ id: "remotes" as const, label: "Remotes", icon: "cloud" as const }] : []),
+    ...(root ? [{ id: "template" as const, label: "Commit Template", icon: "file" as const }] : []),
     { id: "appearance", label: "Appearance", icon: "theme" },
   ];
   const [tab, setTab] = useState<Tab>(root ? "advanced" : "appearance");
@@ -63,6 +68,9 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
   const [selectedRemote, setSelectedRemote] = useState<string | null>(null);
   const [remoteDraft, setRemoteDraft] = useState<{ name: string; url: string } | null>(null);
   const [editingRemote, setEditingRemote] = useState<string | null>(null);
+  const [templateMode, setTemplateMode] = useState<TemplateMode>("none");
+  const [templateContent, setTemplateContent] = useState("");
+  const [templateGlobalSet, setTemplateGlobalSet] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -88,6 +96,19 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
           globalEmail: globalEmail ?? "",
         }),
       )
+      .catch((err: unknown) => setError(errorMessage(err)));
+    void Promise.all([
+      configGet(root, "commit.template", "local"),
+      configGet(root, "commit.template", "global"),
+      commitTemplateRead(root),
+    ])
+      .then(([localTemplate, globalTemplate, content]) => {
+        setTemplateGlobalSet(globalTemplate !== null);
+        setTemplateMode(
+          localTemplate !== null ? "custom" : globalTemplate !== null ? "default" : "none",
+        );
+        setTemplateContent(content);
+      })
       .catch((err: unknown) => setError(errorMessage(err)));
   }, [root]);
 
@@ -182,6 +203,19 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
     }
   };
 
+  const importTemplate = async () => {
+    const file = await pickFile("Import commit template");
+    if (file === null) {
+      return;
+    }
+    try {
+      setTemplateContent(await readTextFile(file));
+      setTemplateMode("custom");
+    } catch (err) {
+      setError(errorMessage(err));
+    }
+  };
+
   const submit = async () => {
     setBusy(true);
     setError(null);
@@ -193,6 +227,13 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
         } else {
           await setLocal(root, "user.name", user.localName);
           await setLocal(root, "user.email", user.localEmail);
+        }
+      }
+      if (root) {
+        if (templateMode === "custom") {
+          await commitTemplateWrite(root, templateContent);
+        } else {
+          await configUnset(root, "commit.template", "local");
         }
       }
       if (draftAutoRefresh !== autoRefresh) {
@@ -379,6 +420,55 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
                   onClick={() => void removeRemote()}
                 >
                   Remove
+                </button>
+              </div>
+            </section>
+          )}
+
+          {tab === "template" && root && (
+            <section className="settings-section">
+              <p className="settings-help">
+                This message template is a customizable text block that automatically populates the
+                message editor for this repository.
+              </p>
+              <label className="settings-check">
+                <input
+                  type="radio"
+                  name="template-mode"
+                  checked={templateMode === "none"}
+                  onChange={() => setTemplateMode("none")}
+                />
+                None
+              </label>
+              <label className="settings-check">
+                <input
+                  type="radio"
+                  name="template-mode"
+                  checked={templateMode === "default"}
+                  onChange={() => setTemplateMode("default")}
+                />
+                Default (Preferences → Commit Template)
+                {!templateGlobalSet && <span className="muted"> — no global template set</span>}
+              </label>
+              <label className="settings-check">
+                <input
+                  type="radio"
+                  name="template-mode"
+                  checked={templateMode === "custom"}
+                  onChange={() => setTemplateMode("custom")}
+                />
+                Custom (This Repository Only)
+              </label>
+              <textarea
+                className="settings-template"
+                aria-label="Commit template"
+                value={templateContent}
+                disabled={templateMode !== "custom"}
+                onChange={(event) => setTemplateContent(event.target.value)}
+              />
+              <div className="remote-dialog-actions">
+                <button type="button" onClick={() => void importTemplate()}>
+                  Import…
                 </button>
               </div>
             </section>
