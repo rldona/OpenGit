@@ -1,4 +1,5 @@
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -17,6 +18,8 @@ pub struct AppState {
     pub watcher: Mutex<Option<WatcherHandle>>,
     pub jobs: Arc<JobManager>,
     pub data_dir: PathBuf,
+    /// Whether the watcher events reach the UI (OG-067 "Automatically refresh").
+    pub auto_refresh: Arc<AtomicBool>,
 }
 
 #[derive(Clone, Serialize)]
@@ -97,6 +100,49 @@ pub fn author_ident(
     crate::git::author_ident(&state.runner, Path::new(&path))
 }
 
+#[tauri::command]
+pub fn config_get(
+    path: String,
+    key: String,
+    scope: crate::git::ConfigScope,
+    state: State<'_, AppState>,
+) -> Result<Option<String>, GitError> {
+    crate::git::config_get(&state.runner, Path::new(&path), &key, scope)
+}
+
+#[tauri::command]
+pub fn config_set(
+    path: String,
+    key: String,
+    value: String,
+    scope: crate::git::ConfigScope,
+    state: State<'_, AppState>,
+) -> Result<(), GitError> {
+    crate::git::config_set(&state.runner, Path::new(&path), &key, &value, scope)
+}
+
+#[tauri::command]
+pub fn config_unset(
+    path: String,
+    key: String,
+    scope: crate::git::ConfigScope,
+    state: State<'_, AppState>,
+) -> Result<(), GitError> {
+    crate::git::config_unset(&state.runner, Path::new(&path), &key, scope)
+}
+
+/// Repository-specific ignore file (`info/exclude`), so the UI can open it.
+#[tauri::command]
+pub fn ignore_exclude_path(path: String, state: State<'_, AppState>) -> Result<String, GitError> {
+    crate::git::ignore_exclude_path(&state.runner, Path::new(&path))
+}
+
+/// Turns the watcher events on or off for the open repository.
+#[tauri::command]
+pub fn set_auto_refresh(enabled: bool, state: State<'_, AppState>) {
+    state.auto_refresh.store(enabled, Ordering::SeqCst);
+}
+
 impl AppState {
     fn pause_watcher(&self) {
         if let Ok(watcher) = self.watcher.lock() {
@@ -155,8 +201,11 @@ pub fn open_repo(
     if let Some(previous) = guard.take() {
         previous.stop();
     }
+    let auto_refresh = Arc::clone(&state.auto_refresh);
     if let Ok(handle) = watch::start(PathBuf::from(&info.root), move |kind| {
-        let _ = app.emit(kind.event_name(), event_root.clone());
+        if auto_refresh.load(Ordering::SeqCst) {
+            let _ = app.emit(kind.event_name(), event_root.clone());
+        }
     }) {
         *guard = Some(handle);
     }
@@ -717,6 +766,48 @@ pub fn open_terminal(path: String) -> Result<(), GitError> {
                 .map(|_| ())
         })
         .ok_or_else(|| GitError::invalid("no terminal emulator available".to_string()))
+}
+
+/// Opens a file or folder with the system default application.
+///
+/// Same argv rule as `open_terminal`: the path is never interpolated into a
+/// shell command.
+#[tauri::command]
+pub fn open_path(path: String) -> Result<(), GitError> {
+    let target = Path::new(&path);
+    if !target.exists() {
+        return Err(GitError::invalid(format!("path does not exist: {path}")));
+    }
+    open_candidates(target)
+        .into_iter()
+        .find_map(|(program, args)| {
+            std::process::Command::new(program)
+                .args(&args)
+                .spawn()
+                .ok()
+                .map(|_| ())
+        })
+        .ok_or_else(|| GitError::invalid("no application available to open the file".to_string()))
+}
+
+/// Candidates per platform, in order of preference.
+fn open_candidates(path: &Path) -> Vec<(&'static str, Vec<std::ffi::OsString>)> {
+    let target = path.as_os_str().to_os_string();
+    #[cfg(target_os = "macos")]
+    {
+        vec![("open", vec![target])]
+    }
+    #[cfg(target_os = "windows")]
+    {
+        vec![(
+            "cmd",
+            vec!["/c".into(), "start".into(), "".into(), target],
+        )]
+    }
+    #[cfg(all(unix, not(target_os = "macos")))]
+    {
+        vec![("xdg-open", vec![target])]
+    }
 }
 
 /// Candidates per platform, in order of preference.
