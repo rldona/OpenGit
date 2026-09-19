@@ -108,6 +108,16 @@ describe("Toolbar", () => {
     expect(screen.getByText("No repository open")).toBeInTheDocument();
   });
 
+  it("shows Refresh busy while a refresh is running", () => {
+    const { rerender } = render(<Toolbar {...handlers} refreshing />);
+
+    const button = screen.getByRole("button", { name: /Refreshing/ });
+    expect(button).toBeDisabled();
+
+    rerender(<Toolbar {...handlers} refreshing={false} />);
+    expect(screen.getByRole("button", { name: /Refresh/ })).toBeEnabled();
+  });
+
   it("Branch and Stash request opening their forms in the sidebar", async () => {
     const user = userEvent.setup();
     render(<Toolbar {...handlers} />);

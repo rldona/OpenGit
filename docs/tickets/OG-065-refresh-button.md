@@ -1,7 +1,7 @@
 # OG-065 · Refresh button: include stashes and give feedback
 
 - **Milestone:** M8 — SourceTree parity (phase 3)
-- **Status:** ready
+- **Status:** done
 - **Depends on:** OG-010, OG-050
 - **References:** ROADMAP.md
 
@@ -32,10 +32,10 @@ SourceTree's Refresh does reload everything and gives a sign that it ran.
 
 ## Acceptance criteria
 
-- [ ] Refresh reloads log, status, refs, extras and stashes.
-- [ ] Pressing Refresh gives visible feedback (Output line and/or busy button).
-- [ ] The button path and the watcher path share one refresh helper.
-- [ ] Tests cover that stashes are refreshed and that feedback appears.
+- [x] Refresh reloads log, status, refs, extras and stashes.
+- [x] Pressing Refresh gives visible feedback (Output line and/or busy button).
+- [x] The button path and the watcher path share one refresh helper.
+- [x] Tests cover that stashes are refreshed and that feedback appears.
 
 ## Out of scope
 
