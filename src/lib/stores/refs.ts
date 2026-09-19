@@ -12,7 +12,7 @@ import {
   trackingCommits,
 } from "../bridge/refs";
 import { tagCreate, tagDelete } from "../bridge/tags";
-import type { MergeResult, RefEntry, TrackingCommits } from "../bridge/types";
+import type { MergeOptions, MergeResult, RefEntry, TrackingCommits } from "../bridge/types";
 import { useLogStore } from "./log";
 import { useStatusStore } from "./status";
 
@@ -57,7 +57,7 @@ type RefsState = {
   refresh: (root: string) => Promise<void>;
   checkout: (root: string, ref: RefEntry) => Promise<void>;
   /** Merges `rev` into the current branch; `null` if git failed. */
-  merge: (root: string, rev: string, noFf: boolean) => Promise<MergeResult | null>;
+  merge: (root: string, rev: string, options: MergeOptions) => Promise<MergeResult | null>;
   create: (root: string, name: string, startPoint: string) => Promise<boolean>;
   rename: (root: string, oldName: string, newName: string) => Promise<boolean>;
   remove: (root: string, name: string) => Promise<void>;
@@ -151,16 +151,23 @@ export const useRefsStore = create<RefsState>((set, get) => ({
     }
   },
 
-  merge: async (root, rev, noFf) => {
+  merge: async (root, rev, options) => {
     set({ error: null });
     try {
-      const result = await mergeBranch(root, rev, noFf);
+      const result = await mergeBranch(root, rev, options);
       for (const line of result.output.split("\n")) {
         if (line.trim() !== "") {
           output(line);
         }
       }
-      output(result.conflicted ? `Merge conflicts from ${rev}` : `Merged ${rev}`);
+      const done = result.conflicted
+        ? `Merge conflicts from ${rev}`
+        : options.rebase
+          ? `Rebased onto ${rev}`
+          : options.noCommit
+            ? `Merged ${rev} (not committed)`
+            : `Merged ${rev}`;
+      output(done);
       await get().refresh(root);
       await useStatusStore.getState().refresh(root);
       await useLogStore.getState().reload(root);

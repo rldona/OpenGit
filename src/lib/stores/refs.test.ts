@@ -10,6 +10,7 @@ import {
 } from "../bridge/refs";
 import { statusRepo } from "../bridge/status";
 import type { RefEntry, StatusReport } from "../bridge/types";
+import { DEFAULT_MERGE_OPTIONS } from "../merge";
 import { useRefsStore } from "./refs";
 import { useStatusStore } from "./status";
 import { useUiStore } from "./ui";
@@ -156,9 +157,11 @@ describe("useRefsStore", () => {
     vi.mocked(mergeBranch).mockResolvedValue({ conflicted: false, output: "Fast-forward\n" });
     await useRefsStore.getState().load("/tmp/repo");
 
-    const result = await useRefsStore.getState().merge("/tmp/repo", "feature", false);
+    const result = await useRefsStore
+      .getState()
+      .merge("/tmp/repo", "feature", DEFAULT_MERGE_OPTIONS);
 
-    expect(mergeBranch).toHaveBeenCalledWith("/tmp/repo", "feature", false);
+    expect(mergeBranch).toHaveBeenCalledWith("/tmp/repo", "feature", DEFAULT_MERGE_OPTIONS);
     expect(result?.conflicted).toBe(false);
     expect(useUiStore.getState().outputLines.join("\n")).toContain("Merged feature");
   });
@@ -170,9 +173,14 @@ describe("useRefsStore", () => {
     });
     await useRefsStore.getState().load("/tmp/repo");
 
-    const result = await useRefsStore.getState().merge("/tmp/repo", "feature", true);
+    const result = await useRefsStore
+      .getState()
+      .merge("/tmp/repo", "feature", { ...DEFAULT_MERGE_OPTIONS, noFf: true });
 
-    expect(mergeBranch).toHaveBeenCalledWith("/tmp/repo", "feature", true);
+    expect(mergeBranch).toHaveBeenCalledWith("/tmp/repo", "feature", {
+      ...DEFAULT_MERGE_OPTIONS,
+      noFf: true,
+    });
     expect(result?.conflicted).toBe(true);
     expect(useRefsStore.getState().error).toBeNull();
     expect(useUiStore.getState().outputLines.join("\n")).toContain("Merge conflicts from feature");
@@ -188,7 +196,7 @@ describe("useRefsStore", () => {
     });
     await useRefsStore.getState().load("/tmp/repo");
 
-    const result = await useRefsStore.getState().merge("/tmp/repo", "otra", false);
+    const result = await useRefsStore.getState().merge("/tmp/repo", "otra", DEFAULT_MERGE_OPTIONS);
 
     expect(result).toBeNull();
     expect(useRefsStore.getState().error).toContain("not something we can merge");
