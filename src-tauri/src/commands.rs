@@ -777,6 +777,27 @@ pub fn git_config_path(path: String, state: State<'_, AppState>) -> Result<Strin
 }
 
 #[tauri::command]
+pub fn commit_template_read(path: String, state: State<'_, AppState>) -> Result<String, GitError> {
+    crate::git::commit_template_read(&state.runner, Path::new(&path))
+}
+
+/// Writes the template and points `commit.template` at it; returns the path.
+#[tauri::command]
+pub fn commit_template_write(
+    path: String,
+    contents: String,
+    state: State<'_, AppState>,
+) -> Result<String, GitError> {
+    crate::git::commit_template_write(&state.runner, Path::new(&path), &contents)
+}
+
+/// Reads a small UTF-8 file for the template "Import…".
+#[tauri::command]
+pub fn read_text_file(path: String) -> Result<String, GitError> {
+    crate::git::read_text_file(&path)
+}
+
+#[tauri::command]
 pub fn tracking_commits(
     path: String,
     upstream: String,

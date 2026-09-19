@@ -3253,3 +3253,29 @@ body {
 .settings-footer-left {
   margin-right: auto;
 }
+
+/* Commit Template tab of the Settings modal (OG-067 phase 3). */
+.settings-help {
+  margin: 0 0 12px;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.settings-template {
+  width: 100%;
+  min-height: 180px;
+  margin-top: 4px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-elevated);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  resize: vertical;
+}
+
+.settings-template:disabled {
+  opacity: 0.5;
+}
