@@ -1,7 +1,7 @@
 # OG-045 · Columnas ordenables en la tabla de commits
 
 - **Milestone:** M7 — Paridad SourceTree (fase 2)
-- **Estado:** backlog
+- **Estado:** done
 - **Depende de:** OG-037, OG-044
 - **Referencias:** ROADMAP.md, OG-037
 
@@ -17,11 +17,11 @@ OG-037 dejó la cabecera (Graph, Description, Commit, Author, Date) pero es deco
 
 ## Criterios de aceptación
 
-- [ ] Clic en una cabecera ordena y el indicador señala columna y sentido.
-- [ ] Los anchos se ajustan por arrastre y sobreviven al reinicio.
-- [ ] Se puede volver al orden topológico original.
-- [ ] Ordenar por una columna **no** rompe el alineamiento del grafo (ver notas).
-- [ ] Tests: ciclo de ordenación, reset y persistencia de anchos.
+- [x] Clic en una cabecera ordena y el indicador señala columna y sentido.
+- [x] Los anchos se ajustan por arrastre y sobreviven al reinicio.
+- [x] Se puede volver al orden topológico original.
+- [x] Ordenar por una columna **no** rompe el alineamiento del grafo (ver notas).
+- [x] Tests: ciclo de ordenación, reset y persistencia de anchos.
 
 ## Fuera de alcance
 
@@ -30,5 +30,6 @@ OG-037 dejó la cabecera (Graph, Description, Commit, Author, Date) pero es deco
 
 ## Notas técnicas
 
-- **Riesgo principal:** el grafo solo tiene sentido en orden topológico. Al ordenar por otra columna las aristas no se pueden dibujar coherentemente. La decisión previsible es ocultar o atenuar la columna Graph mientras haya una ordenación distinta a la de por defecto; conviene confirmarla antes de implementar.
-- La ordenación debe hacerse sobre los commits ya cargados sin romper el virtualizado ni la carga incremental (`loadMore` sigue añadiendo al final del orden de git, no del orden mostrado).
+- **Riesgo principal:** el grafo solo tiene sentido en orden topológico. Al ordenar por otra columna las aristas no se pueden dibujar coherentemente. **Decisión tomada:** mientras haya orden por columna se oculta la columna Graph (canvas y cabecera) y el ancho lo aprovecha Description; al volver al topológico reaparece.
+- El ciclo de la cabecera es ascendente → descendente → topológico, así el orden de git se recupera con un clic más (no hizo falta un botón Reset).
+- La ordenación se hace sobre los commits ya cargados sin romper el virtualizado ni la carga incremental (`loadMore` sigue añadiendo en orden de git y la vista reordena).

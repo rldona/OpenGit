@@ -1,7 +1,7 @@
 # OG-049 · Merge de ramas
 
 - **Milestone:** M7 — Paridad SourceTree (fase 2)
-- **Estado:** ready
+- **Estado:** done
 - **Depende de:** OG-019, OG-020
 - **Referencias:** ROADMAP.md, OG-041
 
@@ -22,12 +22,12 @@ Es la última operación básica del ciclo diario que falta.
 
 ## Criterios de aceptación
 
-- [ ] Fusionar una rama sin conflictos crea el merge y refresca log, status y refs.
-- [ ] Con `--no-ff` se crea commit de merge aunque el fast-forward fuera posible.
-- [ ] Un merge con conflictos deja el repo en estado "merging", con el banner y los ficheros en conflicto listados.
-- [ ] Abortar desde el banner deja el árbol como estaba.
-- [ ] Fusionar una rama en sí misma o sin cambios se comunica sin parecer un error.
-- [ ] Tests de integración con repo temporal: fast-forward, no-ff, conflicto y abort.
+- [x] Fusionar una rama sin conflictos crea el merge y refresca log, status y refs.
+- [x] Con `--no-ff` se crea commit de merge aunque el fast-forward fuera posible.
+- [x] Un merge con conflictos deja el repo en estado "merging", con el banner y los ficheros en conflicto listados.
+- [x] Abortar desde el banner deja el árbol como estaba.
+- [x] Fusionar una rama en sí misma o sin cambios se comunica sin parecer un error.
+- [x] Tests de integración con repo temporal: fast-forward, no-ff, conflicto y abort.
 
 ## Fuera de alcance
 
@@ -37,6 +37,6 @@ Es la última operación básica del ciclo diario que falta.
 
 ## Notas técnicas
 
-- `git merge` devuelve código distinto de cero también cuando hay conflictos, que **no** es un fallo: hay que distinguir "conflicto" de "error real" leyendo el estado del repo, no solo el exit code.
-- La detección de operación en curso ya existe (`repo_op_state`); el merge debe apoyarse en ella en vez de llevar su propio estado.
-- Regla 1 de AGENTS.md: confirmación explícita antes de ejecutar.
+- `git merge` devuelve código distinto de cero también cuando hay conflictos, que **no** es un fallo: `merge_branch` mira `MERGE_HEAD` (`repo_op_state`) y solo trata como error los fallos sin conflicto.
+- La detección de operación en curso ya existe (`repo_op_state`); el hook `useMergeBranch` recarga `commit.opState` para que el banner de OG-019 aparezca y, si hay conflicto, abre la vista de conflictos.
+- Regla 1 de AGENTS.md: confirmación explícita antes de ejecutar (diálogo Merge o confirm al fusionar desde la sidebar).

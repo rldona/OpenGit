@@ -1,6 +1,15 @@
+import type { Commit } from "./bridge/types";
 import { clampSize } from "./layout";
 
 export type ColumnName = "hash" | "author" | "date";
+
+/** Columnas por las que se puede ordenar (Description no es redimensionable). */
+export type SortColumn = "description" | ColumnName;
+
+export type SortOrder = {
+  column: SortColumn;
+  direction: "asc" | "desc";
+};
 
 export type ColumnWidths = Record<ColumnName, number>;
 
@@ -57,4 +66,44 @@ export function saveColumnWidths(widths: ColumnWidths): void {
  */
 export function widthAfterDrag(startWidth: number, deltaX: number): number {
   return clampSize(startWidth - deltaX, COLUMN_MIN, COLUMN_MAX);
+}
+
+function sortKey(commit: Commit, column: SortColumn): string | number {
+  switch (column) {
+    case "description":
+      return commit.subject;
+    case "hash":
+      return commit.hash;
+    case "author":
+      return `${commit.author_name} <${commit.author_email}>`;
+    case "date":
+      return commit.author_time;
+  }
+}
+
+/**
+ * Orden de presentación de la tabla. Con `order = null` se devuelve el orden
+ * de git (topológico), que es el único en el que el grafo tiene sentido.
+ */
+export function sortCommits(commits: Commit[], order: SortOrder | null): Commit[] {
+  if (order === null) {
+    return commits;
+  }
+  const factor = order.direction === "asc" ? 1 : -1;
+  return [...commits].sort((a, b) => {
+    const left = sortKey(a, order.column);
+    const right = sortKey(b, order.column);
+    if (typeof left === "number" && typeof right === "number") {
+      return (left - right) * factor;
+    }
+    return String(left).localeCompare(String(right)) * factor;
+  });
+}
+
+/** Ciclo al pulsar una cabecera: ascendente → descendente → topológico. */
+export function nextSort(current: SortOrder | null, column: SortColumn): SortOrder | null {
+  if (current?.column !== column) {
+    return { column, direction: "asc" };
+  }
+  return current.direction === "asc" ? { column, direction: "desc" } : null;
 }

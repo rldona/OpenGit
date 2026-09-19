@@ -7,11 +7,12 @@ import {
   checkoutRef,
   createBranch,
   deleteBranch,
+  mergeBranch,
   renameBranch,
   trackingCommits,
 } from "../bridge/refs";
 import { tagCreate, tagDelete } from "../bridge/tags";
-import type { RefEntry, TrackingCommits } from "../bridge/types";
+import type { MergeResult, RefEntry, TrackingCommits } from "../bridge/types";
 import { useLogStore } from "./log";
 import { useStatusStore } from "./status";
 
@@ -55,6 +56,8 @@ type RefsState = {
   load: (root: string) => Promise<void>;
   refresh: (root: string) => Promise<void>;
   checkout: (root: string, ref: RefEntry) => Promise<void>;
+  /** Fusiona `rev` en la rama actual; `null` si git falló. */
+  merge: (root: string, rev: string, noFf: boolean) => Promise<MergeResult | null>;
   create: (root: string, name: string, startPoint: string) => Promise<boolean>;
   rename: (root: string, oldName: string, newName: string) => Promise<boolean>;
   remove: (root: string, name: string) => Promise<void>;
@@ -145,6 +148,28 @@ export const useRefsStore = create<RefsState>((set, get) => ({
       await useLogStore.getState().reload(root);
     } catch (error) {
       set({ error: formatGitError(error) });
+    }
+  },
+
+  merge: async (root, rev, noFf) => {
+    set({ error: null });
+    try {
+      const result = await mergeBranch(root, rev, noFf);
+      for (const line of result.output.split("\n")) {
+        if (line.trim() !== "") {
+          output(line);
+        }
+      }
+      output(result.conflicted ? `Merge conflicts from ${rev}` : `Merged ${rev}`);
+      await get().refresh(root);
+      await useStatusStore.getState().refresh(root);
+      await useLogStore.getState().reload(root);
+      return result;
+    } catch (error) {
+      const message = formatGitError(error);
+      set({ error: message });
+      output(`Merge failed: ${message}`);
+      return null;
     }
   },
 

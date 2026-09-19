@@ -14,6 +14,7 @@ type Props = {
   onFetch: () => void;
   onPull: () => void;
   onPush: () => void;
+  onMerge: () => void;
   onRefresh: () => void;
 };
 
@@ -41,7 +42,7 @@ function ToolButton({
   );
 }
 
-export function Toolbar({ onFetch, onPull, onPush, onRefresh }: Props) {
+export function Toolbar({ onFetch, onPull, onPush, onMerge, onRefresh }: Props) {
   const repo = useRepoStore((state) => state.repo);
   const loading = useRepoStore((state) => state.loading);
   const pickAndOpen = useRepoStore((state) => state.pickAndOpen);
@@ -111,6 +112,7 @@ export function Toolbar({ onFetch, onPull, onPush, onRefresh }: Props) {
             <ToolButton icon="download" label="Fetch" disabled={busy} onClick={onFetch} />
             <span className="toolbar-divider" />
             <ToolButton icon="branch" label="Branch" onClick={requestNewBranch} />
+            <ToolButton icon="merge" label="Merge" onClick={onMerge} />
             <ToolButton icon="stash" label="Stash" onClick={requestNewStash} />
             <ToolButton icon="refresh" label="Refresh" onClick={onRefresh} />
           </>

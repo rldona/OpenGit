@@ -1,7 +1,7 @@
 # OG-044 · Layout de 3 zonas en el historial
 
 - **Milestone:** M7 — Paridad SourceTree (fase 2)
-- **Estado:** in-progress
+- **Estado:** done
 - **Depende de:** OG-036, OG-037, OG-039
 - **Referencias:** ROADMAP.md, docs/architecture/overview.md
 

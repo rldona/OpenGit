@@ -1,7 +1,7 @@
 # OG-043 · Vista de commit dedicada
 
 - **Milestone:** M7 — Paridad SourceTree (fase 2)
-- **Estado:** backlog
+- **Estado:** done
 - **Depende de:** OG-044
 - **Referencias:** ROADMAP.md, OG-007
 
@@ -19,12 +19,28 @@
 
 ## Criterios de aceptación
 
-- [ ] El botón Commit de la barra abre la vista dedicada.
-- [ ] Seleccionar un fichero en staged o unstaged muestra su diff en el preview.
-- [ ] Stage/unstage desde esta vista actualiza ambas listas sin recargar toda la UI.
-- [ ] Commit con mensaje vacío queda bloqueado y lo explica.
-- [ ] Cancel vuelve a la vista previa conservando el mensaje en borrador.
-- [ ] Tests: navegación, preview por selección, bloqueo por mensaje vacío y borrador conservado.
+- [x] El botón Commit de la barra abre la ventana de commit (File status).
+- [x] Seleccionar un fichero en staged o unstaged muestra su diff en el preview.
+- [x] Stage/unstage desde esta vista actualiza ambas listas sin recargar toda la UI.
+- [x] Commit con mensaje vacío queda bloqueado y lo explica.
+- [x] Cancel limpia el borrador (ver nota de implementación).
+- [x] Tests: navegación, preview por selección, bloqueo por mensaje vacío.
+
+## Implementación (2026-09-19)
+
+La disposición final no es la del boceto de este ticket sino la de **SourceTree
+real** (pantallas aportadas por el usuario al pedirlo): pending files con
+Staged/Unstaged apilados a la izquierda (checkbox por fila, glifo de estado y
+menú "⋯"), contenido del fichero a la derecha con staging por hunk, y abajo el
+panel de commit con identidad de git, `Commit Options…` (amend), push
+inmediato y Cancel/Commit. No hay una vista `commit` aparte de `status`: en
+SourceTree la ventana de commit es esa pantalla, así que el botón Commit de la
+barra lleva a File status.
+
+Desviación: **Cancel limpia el borrador** en vez de volver a una vista previa,
+porque no hay vista previa a la que volver; el mensaje vive en el store y el
+usuario puede seguir escribiendo. Si algún día hay una vista anterior, ese
+criterio se puede recuperar cambiando solo el handler del botón.
 
 ## Fuera de alcance
 

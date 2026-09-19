@@ -1,7 +1,7 @@
 # OG-042 · Sidebar estilo SourceTree
 
 - **Milestone:** M7 — Paridad SourceTree (fase 2)
-- **Estado:** backlog
+- **Estado:** done
 - **Depende de:** OG-040
 - **Referencias:** ROADMAP.md, OG-040
 
