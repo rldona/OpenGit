@@ -222,9 +222,15 @@ fn manages_submodules_add_init_and_sync() {
     // Local submodule clones require the file protocol. The app command does
     // not force it (security), so the test process enables it through git's
     // config environment, which the child clone inherits.
-    std::env::set_var("GIT_CONFIG_COUNT", "1");
+    //
+    // The trio must never be observable partially: tests share one process
+    // and run on parallel threads, and a `git` spawn landing between
+    // `COUNT` and `VALUE_0` fails with "missing config value
+    // GIT_CONFIG_VALUE_0" (CI flake, OG-073). Without `COUNT`, git ignores
+    // the key and value, so `COUNT` goes last here and first on teardown.
     std::env::set_var("GIT_CONFIG_KEY_0", "protocol.file.allow");
     std::env::set_var("GIT_CONFIG_VALUE_0", "always");
+    std::env::set_var("GIT_CONFIG_COUNT", "1");
 
     let source = TestRepo::init();
     commit_file(&source, "lib.txt", "lib\n", "sub base");
@@ -262,6 +268,12 @@ fn manages_submodules_add_init_and_sync() {
     );
 
     submodule_sync(&runner(), super_repo.path()).expect("submodule sync");
+
+    // Teardown in reverse order (see above): dropping `COUNT` first returns
+    // every concurrent `git` spawn to the ignore-the-rest state.
+    std::env::remove_var("GIT_CONFIG_COUNT");
+    std::env::remove_var("GIT_CONFIG_KEY_0");
+    std::env::remove_var("GIT_CONFIG_VALUE_0");
 }
 
 #[test]
