@@ -77,13 +77,13 @@ describe("DiffView", () => {
     useUiStore.setState({ fileTree: false });
   });
 
-  it("arranca en Unified y en modo lista, no en side by side ni en árbol", async () => {
+  it("starts in Unified and list mode, not side by side or tree", async () => {
     const user = userEvent.setup();
     render(<DiffView />);
 
     expect(await screen.findAllByText("a.txt")).not.toHaveLength(0);
     expect(screen.getByText("bin.bin")).toBeInTheDocument();
-    // La ruta sale también en la cabecera del panel derecho (estilo SourceTree).
+    // The path also appears in the header of the right pane (SourceTree style).
     expect(document.querySelector(".diff-pane-path")).toHaveTextContent("a.txt");
     expect(screen.getByRole("button", { name: "Unified" })).toHaveClass("active");
     expect(screen.getByRole("button", { name: "List" })).toHaveClass("active");
@@ -94,7 +94,7 @@ describe("DiffView", () => {
     expect(await screen.findByTestId("diff-editor")).toBeInTheDocument();
   });
 
-  it("encabeza el panel del parche con la ruta del fichero y sus contadores", async () => {
+  it("heads the patch panel with the file path and its counters", async () => {
     render(<DiffView />);
     await screen.findAllByText("a.txt");
 
@@ -104,7 +104,7 @@ describe("DiffView", () => {
     expect(head).toHaveTextContent("-1");
   });
 
-  it("previsualiza imágenes binarias en vez del aviso de binario", async () => {
+  it("previews binary images instead of the binary notice", async () => {
     Object.defineProperty(URL, "createObjectURL", {
       value: vi.fn(() => "blob:mock"),
       writable: true,
@@ -125,16 +125,16 @@ describe("DiffView", () => {
     expect(screen.queryByText(/Binary file/)).not.toBeInTheDocument();
   });
 
-  it("no pinta las cabeceras del parche sobre el primer hunk", async () => {
+  it("does not render the patch headers above the first hunk", async () => {
     render(<DiffView />);
     await screen.findAllByText("a.txt");
 
-    // `diff --git`, `index`, `---` y `+++` se ocultan: la ruta ya está arriba.
+    // `diff --git`, `index`, `---` and `+++` are hidden: the path is already above.
     expect(screen.queryByText(/^diff --git/)).not.toBeInTheDocument();
     expect(screen.queryByText(/^index /)).not.toBeInTheDocument();
   });
 
-  it("agrupa en árbol, agrega contadores y pliega directorios", async () => {
+  it("groups in a tree, aggregates counters and collapses directories", async () => {
     const user = userEvent.setup();
     useUiStore.setState({ fileTree: true });
     vi.mocked(diffNumstat).mockResolvedValue([
@@ -159,7 +159,7 @@ describe("DiffView", () => {
     expect(screen.queryByText("a.ts")).not.toBeInTheDocument();
   });
 
-  it("avisa de ficheros binarios sin editor", async () => {
+  it("warns about binary files without an editor", async () => {
     const user = userEvent.setup();
     render(<DiffView />);
 
@@ -169,7 +169,7 @@ describe("DiffView", () => {
     expect(screen.queryByTestId("diff-editor")).not.toBeInTheDocument();
   });
 
-  it("cambia a modo unificado con acciones de staging", async () => {
+  it("switches to unified mode with staging actions", async () => {
     const user = userEvent.setup();
     render(<DiffView />);
 
@@ -180,7 +180,7 @@ describe("DiffView", () => {
     expect(screen.getByRole("button", { name: "Stage file" })).toBeInTheDocument();
   });
 
-  it("avisa cuando el parche es un puntero LFS", async () => {
+  it("warns when the patch is an LFS pointer", async () => {
     vi.mocked(diffFile).mockResolvedValue(
       [
         "diff --git a/a.txt b/a.txt",
@@ -195,7 +195,7 @@ describe("DiffView", () => {
     expect(await screen.findByText(/Git LFS pointer/)).toHaveTextContent("4096 bytes");
   });
 
-  it("descarta un hunk tras confirmar", async () => {
+  it("discards a hunk after confirming", async () => {
     const user = userEvent.setup();
     vi.mocked(discardSelection).mockResolvedValue(undefined);
     vi.mocked(confirmDestructive).mockResolvedValue(true);
@@ -212,7 +212,7 @@ describe("DiffView", () => {
     });
   });
 
-  it("no descarta si se cancela la confirmación", async () => {
+  it("does not discard if the confirmation is cancelled", async () => {
     const user = userEvent.setup();
     vi.mocked(confirmDestructive).mockResolvedValue(false);
     render(<DiffView />);
@@ -223,7 +223,7 @@ describe("DiffView", () => {
     expect(discardSelection).not.toHaveBeenCalled();
   });
 
-  it("oculta stage y discard con el diff invertido", async () => {
+  it("hides stage and discard with the reversed diff", async () => {
     const user = userEvent.setup();
     render(<DiffView />);
 

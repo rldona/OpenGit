@@ -20,7 +20,7 @@ type StashState = {
   apply: (root: string, reference: string) => Promise<void>;
   pop: (root: string, reference: string) => Promise<void>;
   drop: (root: string, reference: string) => Promise<void>;
-  /** Carga el parche del stash para la vista embebida (OG-046). */
+  /** Loads the stash patch for the embedded view (OG-046). */
   select: (root: string, reference: string) => Promise<void>;
   clearSelection: () => void;
   reset: () => void;
@@ -88,8 +88,8 @@ export const useStashStore = create<StashState>((set, get) => ({
     try {
       await stashApply(root, reference, true);
       output(`Popped ${reference}`);
-      // Al hacer pop (o drop) los `stash@{n}` se renumeran: la referencia
-      // seleccionada deja de ser fiable.
+      // On pop (or drop) `stash@{n}` entries are renumbered: the selected
+      // reference stops being reliable.
       get().clearSelection();
       await get().refresh(root);
       await useStatusStore.getState().refresh(root);

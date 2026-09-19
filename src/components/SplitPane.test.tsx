@@ -25,7 +25,7 @@ describe("SplitPane", () => {
     localStorage.clear();
   });
 
-  it("renderiza ambos paneles y el divisor", () => {
+  it("renders both panes and the divider", () => {
     renderPane();
 
     expect(screen.getByText("first")).toBeInTheDocument();
@@ -36,7 +36,7 @@ describe("SplitPane", () => {
     );
   });
 
-  it("ajusta el tamaño con las flechas y lo persiste", () => {
+  it("adjusts the size with the arrow keys and persists it", () => {
     renderPane();
     const separator = screen.getByRole("separator", { name: "Resize sidebar" });
 
@@ -49,7 +49,7 @@ describe("SplitPane", () => {
     expect(localStorage.getItem("test.size")).toBe("210");
   });
 
-  it("con el panel al final invierte la dirección", () => {
+  it("with the pane at the end it inverts the direction", () => {
     renderPane({ side: "end" });
     const separator = screen.getByRole("separator", { name: "Resize sidebar" });
 
@@ -58,7 +58,7 @@ describe("SplitPane", () => {
     expect(separator).toHaveAttribute("aria-valuenow", "230");
   });
 
-  it("respeta los límites", () => {
+  it("respects the limits", () => {
     renderPane({ defaultSize: 110 });
     const separator = screen.getByRole("separator", { name: "Resize sidebar" });
 
@@ -76,7 +76,7 @@ describe("SplitPane", () => {
     expect(separator).toHaveAttribute("aria-valuenow", "400");
   });
 
-  it("carga el tamaño guardado", () => {
+  it("loads the saved size", () => {
     localStorage.setItem("test.size", "320");
     renderPane();
 
@@ -86,7 +86,7 @@ describe("SplitPane", () => {
     );
   });
 
-  it("plegado oculta el panel final y el divisor", () => {
+  it("collapsed hides the end pane and the divider", () => {
     renderPane({ side: "end", collapsed: true });
 
     expect(screen.getByText("first")).toBeInTheDocument();

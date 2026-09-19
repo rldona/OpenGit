@@ -41,14 +41,14 @@ describe("useConflictStore", () => {
     vi.mocked(statusRepo).mockResolvedValue(CLEAN);
   });
 
-  it("abre el fichero y parsea sus bloques", async () => {
+  it("opens the file and parses its blocks", async () => {
     await useConflictStore.getState().open("/tmp/repo", "a.txt");
 
     expect(useConflictStore.getState().blocks).toHaveLength(3);
     expect(useConflictStore.getState().file).toBe("a.txt");
   });
 
-  it("detecta binarios sin bloques", async () => {
+  it("detects binaries with no blocks", async () => {
     vi.mocked(readConflictFile).mockResolvedValue({ content: "", binary: true });
 
     await useConflictStore.getState().open("/tmp/repo", "bin.dat");
@@ -57,7 +57,7 @@ describe("useConflictStore", () => {
     expect(useConflictStore.getState().blocks).toHaveLength(0);
   });
 
-  it("rechaza guardar con bloques sin resolver", async () => {
+  it("rejects saving with unresolved blocks", async () => {
     await useConflictStore.getState().open("/tmp/repo", "a.txt");
 
     const ok = await useConflictStore.getState().save("/tmp/repo");
@@ -67,7 +67,7 @@ describe("useConflictStore", () => {
     expect(resolveConflict).not.toHaveBeenCalled();
   });
 
-  it("guarda el contenido resuelto y refresca el status", async () => {
+  it("saves the resolved content and refreshes the status", async () => {
     await useConflictStore.getState().open("/tmp/repo", "a.txt");
     useConflictStore.getState().choose(0, "theirs");
 
@@ -80,7 +80,7 @@ describe("useConflictStore", () => {
     expect(useUiStore.getState().outputLines.join("\n")).toContain("All conflicts resolved");
   });
 
-  it("avisa si no hay marcadores de conflicto", async () => {
+  it("warns if there are no conflict markers", async () => {
     vi.mocked(readConflictFile).mockResolvedValue({ content: "sin marcadores\n", binary: false });
     await useConflictStore.getState().open("/tmp/repo", "a.txt");
 
@@ -90,7 +90,7 @@ describe("useConflictStore", () => {
     expect(useConflictStore.getState().error).toContain("No conflict markers");
   });
 
-  it("permite deshacer una elección", async () => {
+  it("allows undoing a choice", async () => {
     await useConflictStore.getState().open("/tmp/repo", "a.txt");
     useConflictStore.getState().choose(0, "ours");
 

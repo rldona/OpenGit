@@ -177,7 +177,7 @@ const REPORT: StatusReport = {
   entries: [{ kind: "ordinary", xy: "M.", path: "staged.txt", orig_path: null }],
 };
 
-/** La fila de la lista: el asunto se repite en el panel de detalle. */
+/** The list row: the subject is repeated in the detail panel. */
 async function findCommitRow(): Promise<HTMLElement> {
   await screen.findAllByText("commit de prueba");
   return document.querySelector(".commit-row:not(.worktree-row) .commit-subject") as HTMLElement;
@@ -224,14 +224,14 @@ describe("App", () => {
     useThemeStore.setState({ preference: "system", systemDark: true, resolved: "dark" });
   });
 
-  it("muestra el estado vacío con el panel de Output oculto por defecto", async () => {
+  it("shows the empty state with the Output panel hidden by default", async () => {
     render(<App />);
 
     expect(screen.getByRole("heading", { name: "No repository open" })).toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Output" })).not.toBeInTheDocument();
   });
 
-  it("abre el repositorio elegido y muestra el historial", async () => {
+  it("opens the chosen repository and shows the history", async () => {
     const user = userEvent.setup();
     useUiStore.setState({ outputOpen: true });
     render(<App />);
@@ -253,7 +253,7 @@ describe("App", () => {
     expect(within(header).getByText("Date")).toBeInTheDocument();
   });
 
-  it("abre el editor de conflictos desde File status", async () => {
+  it("opens the conflict editor from File status", async () => {
     const user = userEvent.setup();
     const conflictContent = [
       "comun",
@@ -279,7 +279,7 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: "Conflicts (1)" })).toBeInTheDocument();
   });
 
-  it("muestra el banner de operación con Abort y Continue", async () => {
+  it("shows the operation banner with Abort and Continue", async () => {
     const user = userEvent.setup();
     vi.mocked(repoOpState).mockResolvedValue({
       merge: true,
@@ -299,7 +299,7 @@ describe("App", () => {
     expect(repoOpAbort).toHaveBeenCalledWith("/tmp/mi-repo");
   });
 
-  it("el botón Pull abre el diálogo de opciones sin lanzar el job", async () => {
+  it("the Pull button opens the options dialog without starting the job", async () => {
     const user = userEvent.setup();
     render(<App />);
 
@@ -312,7 +312,7 @@ describe("App", () => {
     expect(startRemoteJob).not.toHaveBeenCalled();
   });
 
-  it("ordena la tabla por columnas y vuelve al orden topológico", async () => {
+  it("sorts the table by columns and returns to topological order", async () => {
     const user = userEvent.setup();
     vi.mocked(logPage).mockResolvedValue([
       { ...COMMIT, hash: "cccc0001", subject: "c commit", author_time: 100 },
@@ -332,22 +332,22 @@ describe("App", () => {
     expect(subjects()).toEqual(["c commit", "a commit", "b commit"]);
     expect(document.querySelector(".history-graph")).not.toBeNull();
 
-    // Ascendente por descripción: el grafo se oculta.
+    // Ascending by description: the graph is hidden.
     await user.click(screen.getByRole("button", { name: "Sort by Description" }));
     expect(subjects()).toEqual(["a commit", "b commit", "c commit"]);
     expect(document.querySelector(".history-graph")).toBeNull();
 
-    // Descendente.
+    // Descending.
     await user.click(screen.getByRole("button", { name: "Sort by Description" }));
     expect(subjects()).toEqual(["c commit", "b commit", "a commit"]);
 
-    // Tercer clic: vuelve el topológico y el grafo.
+    // Third click: topological order and the graph come back.
     await user.click(screen.getByRole("button", { name: "Sort by Description" }));
     expect(subjects()).toEqual(["c commit", "a commit", "b commit"]);
     expect(document.querySelector(".history-graph")).not.toBeNull();
   });
 
-  it("el botón Merge abre el diálogo de ramas", async () => {
+  it("the Merge button opens the branches dialog", async () => {
     const user = userEvent.setup();
     render(<App />);
 
@@ -359,7 +359,7 @@ describe("App", () => {
     expect(screen.getByRole("dialog", { name: "Merge" })).toBeInTheDocument();
   });
 
-  it("el botón Fetch abre el diálogo de opciones", async () => {
+  it("the Fetch button opens the options dialog", async () => {
     const user = userEvent.setup();
     render(<App />);
 
@@ -371,7 +371,7 @@ describe("App", () => {
     expect(screen.getByRole("dialog", { name: "Fetch" })).toBeInTheDocument();
   });
 
-  it("muestra la fila Uncommitted changes y abre su diff", async () => {
+  it("shows the Uncommitted changes row and opens its diff", async () => {
     const user = userEvent.setup();
     render(<App />);
 
@@ -396,7 +396,7 @@ describe("App", () => {
     expect(row).toHaveClass("selected");
   });
 
-  it("cambia a la vista File status y muestra los cambios", async () => {
+  it("switches to the File status view and shows the changes", async () => {
     const user = userEvent.setup();
     render(<App />);
 
@@ -408,7 +408,7 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: "Commit" })).toBeInTheDocument();
   });
 
-  it("selecciona un commit y muestra su detalle", async () => {
+  it("selects a commit and shows its details", async () => {
     const user = userEvent.setup();
     render(<App />);
 
@@ -420,7 +420,7 @@ describe("App", () => {
     expect(screen.getByText(/Cuerpo del commit\./)).toHaveTextContent("Segunda línea.");
   });
 
-  it("ofrece cherry-pick, revert y reset en el menú contextual del commit", async () => {
+  it("offers cherry-pick, revert and reset in the commit context menu", async () => {
     const user = userEvent.setup();
     render(<App />);
 
@@ -440,7 +440,7 @@ describe("App", () => {
     expect(cherryPick).toHaveBeenCalledWith("/tmp/mi-repo", "aaaa0000");
   });
 
-  it("muestra el diff del commit en la zona inferior sin salir del historial", async () => {
+  it("shows the commit diff in the lower area without leaving the history", async () => {
     const user = userEvent.setup();
     render(<App />);
 
@@ -449,12 +449,12 @@ describe("App", () => {
 
     expect(await screen.findAllByText("a.txt")).not.toHaveLength(0);
     expect(commitFiles).toHaveBeenCalledWith("/tmp/mi-repo", "aaaa0000");
-    // Sigue siendo la vista de historial: la fila del commit no desaparece.
+    // It is still the history view: the commit row does not disappear.
     expect(useUiStore.getState().activeView).toBe("history");
     expect(document.querySelector(".commit-subject")).toHaveTextContent("commit de prueba");
   });
 
-  it("el desplegable de rama solo lista ramas locales, no las del remoto", async () => {
+  it("the branch dropdown only lists local branches, not remote ones", async () => {
     const user = userEvent.setup();
     const ref = (name: string) => ({
       name,
@@ -476,32 +476,32 @@ describe("App", () => {
     await user.click(screen.getByRole("button", { name: "Choose folder" }));
     const select = await screen.findByRole("combobox", { name: /Branch/i });
 
-    // Un repo real tiene miles de ramas remotas: volcarlas aquí inutiliza el
-    // desplegable.
+    // A real repo has thousands of remote branches: dumping them here renders the
+    // dropdown useless.
     expect(within(select).getByRole("option", { name: "main" })).toBeInTheDocument();
     expect(within(select).getByRole("option", { name: "feature" })).toBeInTheDocument();
     expect(within(select).queryByRole("option", { name: /origin\// })).not.toBeInTheDocument();
     expect(within(select).queryByRole("option", { name: "v1.0.0" })).not.toBeInTheDocument();
   });
 
-  it("no reserva columna de refs en los commits que no tienen ninguna", async () => {
+  it("does not reserve a refs column for commits that have none", async () => {
     const user = userEvent.setup();
     render(<App />);
 
     await user.click(screen.getByRole("button", { name: "Choose folder" }));
     await findCommitRow();
 
-    // COMMIT lleva "HEAD -> main", así que sí debe pintarse el bloque de refs.
+    // COMMIT has "HEAD -> main", so the refs block must be rendered.
     expect(document.querySelector(".commit-refs")).not.toBeNull();
 
     vi.mocked(logPage).mockResolvedValue([{ ...COMMIT, refs: [] }]);
     await user.click(screen.getByRole("button", { name: /Refresh/ }));
 
-    // Sin refs no se pinta el hueco: el asunto pega con el grafo.
+    // Without refs the gap is not rendered: the subject sits next to the graph.
     await waitFor(() => expect(document.querySelector(".commit-refs")).toBeNull());
   });
 
-  it("redimensiona las columnas de la tabla y guarda el ancho", async () => {
+  it("resizes the table columns and saves the width", async () => {
     const user = userEvent.setup();
     render(<App />);
 
@@ -512,7 +512,7 @@ describe("App", () => {
     const author = document.querySelector(".commit-author") as HTMLElement;
     const inicial = author.style.width;
 
-    // Con el teclado, que en jsdom no hay arrastre de puntero de verdad.
+    // With the keyboard, since jsdom has no real pointer dragging.
     resizer.focus();
     await user.keyboard("{ArrowLeft}");
 
@@ -520,7 +520,7 @@ describe("App", () => {
     expect(localStorage.getItem("opengit.columns.commit-table")).toContain("author");
   });
 
-  it("marca los commits entrantes en el historial", async () => {
+  it("marks incoming commits in the history", async () => {
     const user = userEvent.setup();
     render(<App />);
 
@@ -532,7 +532,7 @@ describe("App", () => {
     expect(screen.getByTitle("Incoming commit")).toBeInTheDocument();
   });
 
-  it("abre el menú contextual de un commit y ejecuta la acción", async () => {
+  it("opens a commit context menu and runs the action", async () => {
     const user = userEvent.setup();
     render(<App />);
 
@@ -549,7 +549,7 @@ describe("App", () => {
     expect(commitFiles).toHaveBeenCalledWith("/tmp/mi-repo", "aaaa0000");
   });
 
-  it("alterna el panel de salida desde Settings", async () => {
+  it("toggles the output panel from Settings", async () => {
     const user = userEvent.setup();
     render(<App />);
 
@@ -563,7 +563,7 @@ describe("App", () => {
     expect(screen.queryByRole("region", { name: "Output" })).not.toBeInTheDocument();
   });
 
-  it("cambia el tema y lo aplica al documento", async () => {
+  it("changes the theme and applies it to the document", async () => {
     const user = userEvent.setup();
     render(<App />);
 
@@ -582,7 +582,7 @@ describe("App", () => {
     expect(document.documentElement.dataset.theme).toBe("dark");
   });
 
-  it("abre la ayuda de atajos con ? y la cierra con Esc", async () => {
+  it("opens the shortcuts help with ? and closes it with Esc", async () => {
     const user = userEvent.setup();
     render(<App />);
 
@@ -596,7 +596,7 @@ describe("App", () => {
     expect(screen.queryByRole("dialog", { name: "Keyboard shortcuts" })).not.toBeInTheDocument();
   });
 
-  it("abre y cierra la ayuda desde Settings", async () => {
+  it("opens and closes the help from Settings", async () => {
     const user = userEvent.setup();
     render(<App />);
 
@@ -608,7 +608,7 @@ describe("App", () => {
     expect(screen.queryByRole("dialog", { name: "Keyboard shortcuts" })).not.toBeInTheDocument();
   });
 
-  it("abre el selector de repositorio con Ctrl+O", async () => {
+  it("opens the repository picker with Ctrl+O", async () => {
     const user = userEvent.setup();
     render(<App />);
 
@@ -617,7 +617,7 @@ describe("App", () => {
     expect(pickDirectory).toHaveBeenCalled();
   });
 
-  it("refresca status, refs e historial con Ctrl+R", async () => {
+  it("refreshes status, refs and history with Ctrl+R", async () => {
     const user = userEvent.setup();
     render(<App />);
 
@@ -631,7 +631,7 @@ describe("App", () => {
     expect(logPage).toHaveBeenCalled();
   });
 
-  it("hace commit con Ctrl+Enter", async () => {
+  it("commits with Ctrl+Enter", async () => {
     const user = userEvent.setup();
     vi.mocked(commitRepo).mockResolvedValue({ hash: "bbbb0000", subject: "mi mensaje" });
     render(<App />);
@@ -644,7 +644,7 @@ describe("App", () => {
     expect(commitRepo).toHaveBeenCalledWith("/tmp/mi-repo", "mi mensaje", false);
   });
 
-  it("no dispara atajos mientras se escribe en un campo", async () => {
+  it("does not trigger shortcuts while typing in a field", async () => {
     const user = userEvent.setup();
     render(<App />);
 
@@ -657,7 +657,7 @@ describe("App", () => {
     expect(screen.queryByRole("dialog", { name: "Keyboard shortcuts" })).not.toBeInTheDocument();
   });
 
-  it("fija el título de la ventana con la ruta del repo", async () => {
+  it("sets the window title with the repo path", async () => {
     const user = userEvent.setup();
     render(<App />);
 
@@ -668,9 +668,9 @@ describe("App", () => {
     expect(setWindowTitle).toHaveBeenLastCalledWith("/tmp/mi-repo");
   });
 
-  it("avisa en Output si no se puede fijar el título", async () => {
-    // Regresión: faltaba el permiso core:window:allow-set-title y el error
-    // se tragaba en silencio, así que el título nunca se fijaba de verdad.
+  it("warns in Output if the title cannot be set", async () => {
+    // Regression: the core:window:allow-set-title permission was missing and the
+    // error was swallowed silently, so the title was never actually set.
     vi.mocked(setWindowTitle).mockRejectedValueOnce(new Error("window.set_title not allowed"));
     useUiStore.setState({ outputOpen: true });
     render(<App />);
@@ -678,7 +678,7 @@ describe("App", () => {
     expect(await screen.findByText(/Could not set the window title/)).toBeInTheDocument();
   });
 
-  it("el recuento de cambios vive en el badge de Commit", async () => {
+  it("the change count lives in the Commit badge", async () => {
     const user = userEvent.setup();
     render(<App />);
 
@@ -689,7 +689,7 @@ describe("App", () => {
     expect(within(toolbar).getByRole("button", { name: /Commit/ })).toHaveTextContent("1");
   });
 
-  it("enruta los clics del menú nativo a sus acciones", async () => {
+  it("routes native menu clicks to their actions", async () => {
     const user = userEvent.setup();
     render(<App />);
 

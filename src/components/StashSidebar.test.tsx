@@ -62,13 +62,13 @@ describe("StashSidebar", () => {
     useStashStore.setState({ root: REPO.root, stashes: STASHES });
   });
 
-  it("lista los stashes con su mensaje", async () => {
+  it("lists the stashes with their message", async () => {
     render(<StashSidebar />);
 
     expect(await screen.findByText("WIP on main: cambios")).toBeInTheDocument();
   });
 
-  it("crea un stash con mensaje e untracked", async () => {
+  it("creates a stash with a message and untracked files", async () => {
     const user = userEvent.setup();
     render(<StashSidebar />);
 
@@ -81,7 +81,7 @@ describe("StashSidebar", () => {
     expect(stashPush).toHaveBeenCalledWith("/tmp/repo", "trabajo a medias", true);
   });
 
-  it("selecciona el stash y abre la vista al pulsarlo", async () => {
+  it("selects the stash and opens the view when clicked", async () => {
     const user = userEvent.setup();
     render(<StashSidebar />);
 
@@ -94,7 +94,7 @@ describe("StashSidebar", () => {
     expect(row).toHaveClass("selected");
   });
 
-  it("pop desde el menú contextual aplica y borra", async () => {
+  it("pop from the context menu applies and deletes", async () => {
     const user = userEvent.setup();
     render(<StashSidebar />);
     await screen.findByText("WIP on main: cambios");
@@ -105,7 +105,7 @@ describe("StashSidebar", () => {
     expect(stashApply).toHaveBeenCalledWith("/tmp/repo", "stash@{0}", true);
   });
 
-  it("solo borra si se confirma", async () => {
+  it("only deletes if confirmed", async () => {
     const user = userEvent.setup();
     vi.mocked(confirmDestructive).mockResolvedValue(false);
     render(<StashSidebar />);

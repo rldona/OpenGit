@@ -16,16 +16,16 @@ function pull(overrides: Partial<Extract<JobKind, { kind: "pull" }>> = {}): JobK
 }
 
 describe("describeRemoteJob", () => {
-  it("titula el pull como SourceTree", () => {
+  it("titles the pull like SourceTree", () => {
     expect(describeRemoteJob(pull())).toBe('Pulling Branch "main" From "origin"');
   });
 
-  it("sin rama remota no la nombra", () => {
+  it("without a remote branch it does not name it", () => {
     expect(describeRemoteJob(pull({ branch: null }))).toBe('Pulling From "origin"');
     expect(describeRemoteJob(pull({ remote: null }))).toBe('Pulling Branch "main" From "upstream"');
   });
 
-  it("distingue fetch de todos los remotos", () => {
+  it("distinguishes fetching from all remotes", () => {
     expect(describeRemoteJob({ kind: "fetch", prune: false, remote: "origin" })).toBe(
       "Fetching from origin",
     );

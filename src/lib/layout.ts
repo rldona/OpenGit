@@ -36,6 +36,6 @@ export function saveSize(key: string, size: number): void {
   try {
     localStorage.setItem(key, String(Math.round(size)));
   } catch {
-    // Sin almacenamiento el tamaño vive solo en memoria.
+    // Without storage the size lives only in memory.
   }
 }

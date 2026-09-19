@@ -6,7 +6,7 @@ describe("useUiStore", () => {
     useUiStore.setState({ outputOpen: true, outputLines: [] });
   });
 
-  it("alterna el panel de salida", () => {
+  it("toggles the output panel", () => {
     useUiStore.getState().toggleOutput();
     expect(useUiStore.getState().outputOpen).toBe(false);
 
@@ -14,7 +14,7 @@ describe("useUiStore", () => {
     expect(useUiStore.getState().outputOpen).toBe(true);
   });
 
-  it("acumula líneas de salida", () => {
+  it("accumulates output lines", () => {
     useUiStore.getState().appendOutput("primera");
     useUiStore.getState().appendOutput("segunda");
     expect(useUiStore.getState().outputLines).toEqual(["primera", "segunda"]);

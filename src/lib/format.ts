@@ -27,11 +27,11 @@ function startOfDay(date: Date): number {
 }
 
 /**
- * Fecha de un commit al estilo SourceTree: relativa cuando es reciente y
- * absoluta a partir de ahí.
+ * Commit date SourceTree style: relative when recent and
+ * absolute from there on.
  *
- * `now` se inyecta a propósito: sin eso los tests dependerían del reloj y
- * fallarían justo al cruzar la medianoche.
+ * `now` is injected on purpose: without it the tests would depend on the
+ * clock and would fail right when crossing midnight.
  */
 export function formatCommitDate(timestamp: number, now: Date = new Date()): string {
   const date = new Date(timestamp * 1000);
@@ -49,7 +49,7 @@ export function formatCommitDate(timestamp: number, now: Date = new Date()): str
   return dateTime.format(date);
 }
 
-/** `Nombre <email>`, o solo el nombre si no hay email. */
+/** `Name <email>`, or just the name if there is no email. */
 export function formatAuthor(name: string, email: string): string {
   return email === "" ? name : `${name} <${email}>`;
 }
@@ -79,8 +79,8 @@ export function parseTrack(track: string | null): { ahead: number; behind: numbe
 export type RefBadgeKind = "head" | "branch" | "remote" | "tag";
 
 /**
- * Clasifica una ref decorada por `%D` para pintarla. Separado del componente
- * para poder probar el reparto de tipos sin montar el árbol de React.
+ * Classifies a ref decorated by `%D` to paint it. Separated from the component
+ * so the type mapping can be tested without mounting the React tree.
  */
 export function classifyRef(value: string): { kind: RefBadgeKind; label: string } {
   if (value === "HEAD") {
@@ -92,7 +92,7 @@ export function classifyRef(value: string): { kind: RefBadgeKind; label: string 
   if (value.startsWith("tag: ")) {
     return { kind: "tag", label: value.slice("tag: ".length) };
   }
-  // `%D` da las remotas ya como `origin/rama`; una rama local no lleva barra.
+  // `%D` gives remotes already as `origin/branch`; a local branch has no slash.
   if (value.includes("/")) {
     return { kind: "remote", label: value };
   }

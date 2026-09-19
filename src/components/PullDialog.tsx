@@ -6,8 +6,8 @@ import { useRemoteStore } from "../lib/stores/remote";
 import { useRepoStore } from "../lib/stores/repo";
 
 /**
- * Diálogo de opciones del pull, al estilo SourceTree: remoto, rama remota,
- * rama local de destino y las opciones que se traducen a flags de git.
+ * Pull options dialog, SourceTree style: remote, remote branch,
+ * local target branch and the options that map to git flags.
  */
 export function PullDialog({ onClose }: { onClose: () => void }) {
   const root = useRepoStore((state) => state.repo?.root ?? null);
@@ -48,8 +48,8 @@ export function PullDialog({ onClose }: { onClose: () => void }) {
     [refs, remote],
   );
 
-  // Al cambiar de remoto, o al refrescar sus ramas, la rama elegida deja de
-  // existir: caemos en la del upstream, luego main y luego la primera.
+  // When switching remotes, or refreshing their branches, the chosen branch
+  // stops existing: we fall back to the upstream one, then main, then the first.
   useEffect(() => {
     setBranch((chosen) => {
       if (branches.includes(chosen)) {

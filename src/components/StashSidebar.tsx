@@ -36,7 +36,7 @@ export function StashSidebar() {
     }
   }, [root, load]);
 
-  // El botón Stash de la barra reutiliza este formulario (ver RefsSidebar).
+  // The Stash button in the toolbar reuses this form (see RefsSidebar).
   useEffect(() => {
     if (newStashRequest > 0) {
       setForm(true);

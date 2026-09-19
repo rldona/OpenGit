@@ -14,16 +14,16 @@ const MAX_RECENT_LINES = 200;
 type RemoteState = {
   jobId: string | null;
   kind: JobKind["kind"] | null;
-  /** Título de la ventana de progreso/error (p. ej. Pulling Branch "main" From "origin"). */
+  /** Progress/error window title (e.g. Pulling Branch "main" From "origin"). */
   title: string | null;
   running: boolean;
   error: string | null;
   recentLines: string[];
-  /** Cancel pulsado antes de conocer el id del job. */
+  /** Cancel pressed before the job id is known. */
   cancelRequested: boolean;
   start: (root: string, kind: JobKind) => Promise<void>;
   cancel: () => Promise<void>;
-  /** Cierra la ventana de error y limpia su salida. */
+  /** Closes the error window and clears its output. */
   dismiss: () => void;
   handleOutput: (payload: JobOutputEvent) => void;
   handleFinished: (payload: JobFinishedEvent) => void;
@@ -58,7 +58,7 @@ export const useRemoteStore = create<RemoteState>((set, get) => ({
     try {
       const jobId = await startRemoteJob(root, kind);
       if (!get().running) {
-        // El evento de fin llegó antes que la respuesta del invoke.
+        // The finished event arrived before the invoke response.
         return;
       }
       set({ jobId });
@@ -75,7 +75,7 @@ export const useRemoteStore = create<RemoteState>((set, get) => ({
   cancel: async () => {
     const { jobId, running } = get();
     if (!jobId) {
-      // El invoke aún no ha devuelto el id: se cancela en cuanto llegue.
+      // The invoke has not returned the id yet: it is cancelled as soon as it arrives.
       if (running) {
         set({ cancelRequested: true });
       }
@@ -96,8 +96,8 @@ export const useRemoteStore = create<RemoteState>((set, get) => ({
     if (!running || (jobId !== null && payload.job_id !== jobId)) {
       return;
     }
-    // El job puede empezar a emitir antes de que el invoke devuelva su id:
-    // el primer evento lo adopta para no perder salida.
+    // The job may start emitting before the invoke returns its id:
+    // the first event adopts it so no output is lost.
     if (jobId === null) {
       set({ jobId: payload.job_id });
     }
@@ -122,14 +122,14 @@ export const useRemoteStore = create<RemoteState>((set, get) => ({
       set({ title: null });
       output(`${kind ?? "job"} cancelled`);
     } else {
-      // El título se conserva: encabeza la ventana de error hasta que se cierre.
+      // The title is kept: it heads the error window until it is closed.
       const hint = describeRemoteError(recentLines);
       const message = hint ?? `${kind ?? "job"} failed (exit code ${payload.exit_code})`;
       set({ error: message });
       output(`${kind ?? "job"} failed: ${message}`);
     }
 
-    // El watcher también reacciona, pero refrescamos ya para no depender de él.
+    // The watcher also reacts, but we refresh now so as not to depend on it.
     const log = useLogStore.getState();
     const refs = useRefsStore.getState();
     if (refs.root) {

@@ -3,24 +3,24 @@ import { useCollapseStore } from "../lib/stores/collapse";
 import { Icon, type IconName } from "./Icon";
 
 type Props = {
-  /** Identificador estable: con él se persiste el plegado. */
+  /** Stable identifier: the collapsed state is persisted with it. */
   id: string;
   title: string;
   icon?: IconName;
-  /** Contenido a la derecha del título (contadores, botones). */
+  /** Content to the right of the title (counters, buttons). */
   extra?: ReactNode;
-  /** Plegada la primera vez, si el usuario no ha tocado nada. */
+  /** Collapsed the first time, if the user has not touched anything. */
   defaultCollapsed?: boolean;
-  /** Nivel visual: las secciones anidadas (un remoto) van con sangría. */
+  /** Visual level: nested sections (a remote) are indented. */
   nested?: boolean;
-  /** Menú contextual de la cabecera (botón derecho), como SourceTree. */
+  /** Header context menu (right click), like SourceTree. */
   onContextMenu?: (event: MouseEvent<HTMLElement>) => void;
   children: ReactNode;
 };
 
 /**
- * Sección plegable de la sidebar. El estado se guarda por `id`, así que
- * sobrevive a recargas y no depende del orden en que se pinten las secciones.
+ * Collapsible sidebar section. The state is stored by `id`, so it survives
+ * reloads and does not depend on the order in which the sections are rendered.
  */
 export function CollapsibleSection({
   id,

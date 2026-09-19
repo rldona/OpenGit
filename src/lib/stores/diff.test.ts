@@ -54,7 +54,7 @@ describe("useDiffStore", () => {
     ]);
   });
 
-  it("construye la lista del working tree y carga el primer parche", async () => {
+  it("builds the working tree list and loads the first patch", async () => {
     await useDiffStore.getState().openWorktree("/tmp/repo");
 
     const state = useDiffStore.getState();
@@ -71,7 +71,7 @@ describe("useDiffStore", () => {
     });
   });
 
-  it("abre las imágenes en side by side y el texto en unified", async () => {
+  it("opens images side by side and text in unified", async () => {
     vi.mocked(diffNumstat).mockResolvedValue([
       { path: "a.txt", orig_path: null, binary: false, added: 1, deleted: 1 },
       { path: "logo.png", orig_path: null, binary: true, added: null, deleted: null },
@@ -93,7 +93,7 @@ describe("useDiffStore", () => {
     expect(useDiffStore.getState().mode).toBe("side");
   });
 
-  it("respeta el modo elegido a mano para ese fichero", async () => {
+  it("respects the mode chosen by hand for that file", async () => {
     vi.mocked(diffNumstat).mockResolvedValue([
       { path: "a.txt", orig_path: null, binary: false, added: 1, deleted: 1 },
       { path: "logo.png", orig_path: null, binary: true, added: null, deleted: null },
@@ -119,7 +119,7 @@ describe("useDiffStore", () => {
     expect(useDiffStore.getState().mode).toBe("unified");
   });
 
-  it("no pide parche para ficheros sin trackear", async () => {
+  it("does not request a patch for untracked files", async () => {
     await useDiffStore.getState().openWorktree("/tmp/repo");
     const untracked = useDiffStore.getState().files.find((file) => file.untracked);
     vi.mocked(diffFile).mockClear();
@@ -130,7 +130,7 @@ describe("useDiffStore", () => {
     expect(useDiffStore.getState().patch).toBe("");
   });
 
-  it("invierte el diff volviendo a pedirlo", async () => {
+  it("reverses the diff by requesting it again", async () => {
     await useDiffStore.getState().openWorktree("/tmp/repo");
     vi.mocked(diffFile).mockClear();
 
@@ -140,7 +140,7 @@ describe("useDiffStore", () => {
     expect(diffFile).toHaveBeenCalledWith(expect.objectContaining({ reversed: true }));
   });
 
-  it("aplica stage de un hunk y limpia la selección", async () => {
+  it("stages a hunk and clears the selection", async () => {
     await useDiffStore.getState().openWorktree("/tmp/repo");
     useDiffStore.getState().toggleLine(6);
     vi.mocked(stageSelection).mockResolvedValue(undefined);
@@ -157,7 +157,7 @@ describe("useDiffStore", () => {
     expect(useDiffStore.getState().selectedLines).toEqual([]);
   });
 
-  it("hace unstage usando el diff del index", async () => {
+  it("unstages using the index diff", async () => {
     vi.mocked(statusRepo).mockResolvedValue({
       ...REPORT,
       entries: [{ kind: "ordinary", xy: "M.", path: "a.txt", orig_path: null }],
@@ -171,7 +171,7 @@ describe("useDiffStore", () => {
     );
   });
 
-  it("no permite staging en el diff de un commit", async () => {
+  it("does not allow staging in a commit diff", async () => {
     await useDiffStore.getState().openCommit("/tmp/repo", "abc1234");
 
     await useDiffStore.getState().applySelection({ kind: "file" });
@@ -179,7 +179,7 @@ describe("useDiffStore", () => {
     expect(stageSelection).not.toHaveBeenCalled();
   });
 
-  it("descarta hunks del lado unstaged y refresca", async () => {
+  it("discards hunks from the unstaged side and refreshes", async () => {
     vi.mocked(discardSelection).mockResolvedValue(undefined);
     await useDiffStore.getState().openWorktree("/tmp/repo");
     useDiffStore.setState({ selectedLines: [6] });
@@ -195,7 +195,7 @@ describe("useDiffStore", () => {
     expect(statusRepo).toHaveBeenCalled();
   });
 
-  it("no descarta desde el index ni desde un commit", async () => {
+  it("does not discard from the index nor from a commit", async () => {
     vi.mocked(statusRepo).mockResolvedValue({
       ...REPORT,
       entries: [{ kind: "ordinary", xy: "M.", path: "a.txt", orig_path: null }],
@@ -210,7 +210,7 @@ describe("useDiffStore", () => {
     expect(discardSelection).not.toHaveBeenCalled();
   });
 
-  it("abre el diff de un commit", async () => {
+  it("opens a commit diff", async () => {
     await useDiffStore.getState().openCommit("/tmp/repo", "abc1234");
 
     expect(commitFiles).toHaveBeenCalledWith("/tmp/repo", "abc1234");
@@ -218,8 +218,8 @@ describe("useDiffStore", () => {
     expect(diffFile).toHaveBeenCalledWith(expect.objectContaining({ rev: "abc1234" }));
   });
 
-  it("descarta la respuesta de un commit que ya no es el seleccionado", async () => {
-    // El primero tarda más que el segundo: sin guard, su respuesta pisaría la buena.
+  it("discards the response of a commit that is no longer selected", async () => {
+    // The first one takes longer than the second: without a guard, its response would overwrite the good one.
     let resolveSlow: ((value: never[]) => void) | null = null;
     vi.mocked(commitFiles)
       .mockImplementationOnce(

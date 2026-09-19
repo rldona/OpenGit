@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { clampSize, loadSize, saveSize } from "./layout";
 
 describe("clampSize", () => {
-  it("limita al rango y tolera valores no finitos", () => {
+  it("clamps to the range and tolerates non-finite values", () => {
     expect(clampSize(240, 100, 400)).toBe(240);
     expect(clampSize(50, 100, 400)).toBe(100);
     expect(clampSize(900, 100, 400)).toBe(400);
@@ -10,27 +10,27 @@ describe("clampSize", () => {
   });
 });
 
-describe("loadSize y saveSize", () => {
+describe("loadSize and saveSize", () => {
   beforeEach(() => {
     localStorage.clear();
   });
 
-  it("sin valor guardado devuelve el fallback", () => {
+  it("without a saved value returns the fallback", () => {
     expect(loadSize("test.size", 240, 100, 400)).toBe(240);
   });
 
-  it("guarda y recupera el tamaño", () => {
+  it("saves and restores the size", () => {
     saveSize("test.size", 320.6);
     expect(localStorage.getItem("test.size")).toBe("321");
     expect(loadSize("test.size", 240, 100, 400)).toBe(321);
   });
 
-  it("un valor corrupto cae al fallback", () => {
+  it("a corrupt value falls back", () => {
     localStorage.setItem("test.size", "mucho");
     expect(loadSize("test.size", 240, 100, 400)).toBe(240);
   });
 
-  it("un valor fuera de rango se limita", () => {
+  it("an out-of-range value is clamped", () => {
     localStorage.setItem("test.size", "5000");
     expect(loadSize("test.size", 240, 100, 400)).toBe(400);
   });

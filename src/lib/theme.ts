@@ -22,7 +22,7 @@ export function saveThemePreference(preference: ThemePreference): void {
   try {
     localStorage.setItem(THEME_STORAGE_KEY, preference);
   } catch {
-    // Sin almacenamiento la preferencia vive solo en memoria.
+    // Without storage the preference lives only in memory.
   }
 }
 
@@ -39,7 +39,7 @@ export function systemPrefersDark(): boolean {
     : true;
 }
 
-/** Color del anillo de selección del grafo; el canvas no hereda variables CSS. */
+/** Color of the graph selection ring; the canvas does not inherit CSS variables. */
 export function selectionRingColor(theme: ResolvedTheme): string {
   return theme === "dark" ? "#ffffff" : "#1f2328";
 }

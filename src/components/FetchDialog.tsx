@@ -5,7 +5,7 @@ import { useRefsStore } from "../lib/stores/refs";
 import { useRemoteStore } from "../lib/stores/remote";
 import { useRepoStore } from "../lib/stores/repo";
 
-/** Diálogo de fetch, hermano del de pull: remoto (o todos) y prune. */
+/** Fetch dialog, sibling of the pull one: remote (or all) and prune. */
 export function FetchDialog({ onClose }: { onClose: () => void }) {
   const root = useRepoStore((state) => state.repo?.root ?? null);
   const remotes = useExtrasStore((state) => state.remotes);

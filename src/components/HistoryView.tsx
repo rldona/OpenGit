@@ -43,7 +43,7 @@ export function HistoryView() {
   const [widths, setWidths] = useState(loadColumnWidths);
   const setWidth = (column: ColumnName, width: number) =>
     setWidths((current) => ({ ...current, [column]: width }));
-  // `null` = orden topológico de git, el único donde el grafo encaja (OG-045).
+  // `null` = git's topological order, the only one where the graph fits (OG-045).
   const [sort, setSort] = useState<SortOrder | null>(null);
 
   useEffect(() => {
@@ -61,10 +61,10 @@ export function HistoryView() {
 
   const root = repo?.root ?? null;
   const rows = layout.rows;
-  // Orden de presentación: topológico de git o el elegido en la cabecera (OG-045).
+  // Presentation order: git's topological one or the one chosen in the header (OG-045).
   const displayed = useMemo(() => sortCommits(commits, sort), [commits, sort]);
   const changes = useStatusStore((state) => state.report?.entries.length ?? 0);
-  // La fila "Uncommitted changes" solo tiene sentido con cambios pendientes.
+  // The "Uncommitted changes" row only makes sense with pending changes.
   const showWorktree = changes > 0;
   const worktreeSelected = selected === WORKTREE_SELECTION;
   const totalRows = rows.length + (showWorktree ? 1 : 0);
@@ -92,8 +92,8 @@ export function HistoryView() {
     updateRange();
   }, [updateRange]);
 
-  // El panel inferior cambia la altura del scroller: sin esto el virtualizado
-  // seguiría pintando el número de filas de la altura anterior.
+  // The bottom panel changes the scroller height: without this the virtualized
+  // list would keep painting the row count of the previous height.
   useEffect(() => {
     const scroller = scrollRef.current;
     if (!scroller || typeof ResizeObserver === "undefined") {
@@ -104,8 +104,8 @@ export function HistoryView() {
     return () => observer.disconnect();
   }, [updateRange]);
 
-  // Localiza en la lista virtualizada el commit pedido desde la sidebar
-  // (una tag, por ejemplo): lo selecciona el store y aquí lo traemos a la vista.
+  // Locates in the virtualized list the commit requested from the sidebar
+  // (a tag, for example): the store selects it and here we bring it into view.
   const revealRequest = useLogStore((state) => state.revealRequest);
   const handledReveal = useRef(0);
   useEffect(() => {
@@ -129,14 +129,14 @@ export function HistoryView() {
     updateRange();
   }, [revealRequest, displayed, commitOffset, updateRange]);
 
-  // Medido sobre el rango visible, no sobre todo el historial: ver OG-047.
+  // Measured over the visible range, not over the whole history: see OG-047.
   const laneCount = visibleLaneCount(
     rows,
     Math.max(0, range.start - commitOffset),
     Math.max(0, range.end - commitOffset),
   );
-  // Ordenar por columna rompe la coherencia del grafo: se oculta y Description
-  // aprovecha el ancho (decisión anotada en OG-045).
+  // Sorting by column breaks the coherence of the graph: it is hidden and
+  // Description uses the width (decision noted in OG-045).
   const sorted = sort !== null;
   const graphWidth = sorted ? 0 : graphWidthFor(laneCount);
 
@@ -157,8 +157,8 @@ export function HistoryView() {
     selected && !worktreeSelected
       ? (displayed.find((commit) => commit.hash === selected) ?? null)
       : null;
-  // Solo ramas locales: incluir `refs/remotes/` volcaba aquí las miles de
-  // ramas del remoto y dejaba el desplegable inservible.
+  // Local branches only: including `refs/remotes/` dumped the thousands of
+  // remote branches here and left the dropdown unusable.
   const branchRefs = refs.filter((ref) => ref.name.startsWith("refs/heads/"));
 
   return (

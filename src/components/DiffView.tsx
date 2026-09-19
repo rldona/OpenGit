@@ -26,15 +26,15 @@ export function DiffView() {
   const setFileTree = useUiStore((state) => state.setFileTree);
 
   useEffect(() => {
-    // Solo carga el working tree si no hay un objetivo previo (p. ej. un commit).
+    // Only loads the working tree if there is no previous target (e.g. a commit).
     if (root && (storeRoot !== root || target === null)) {
       void openWorktree(root);
     }
   }, [root, storeRoot, target, openWorktree]);
 
   const label = target?.kind === "commit" ? `commit ${target.rev.slice(0, 7)}` : "Working tree";
-  // Con el parche invertido los índices de hunk/línea no corresponden al diff
-  // que el backend vuelve a leer, así que no se ofrecen acciones de parche.
+  // With the patch reversed the hunk/line indices do not match the diff the
+  // backend re-reads, so no patch actions are offered.
   const patchActions = target?.kind === "worktree" && !reversed;
 
   const confirmDiscard = async (selection: Parameters<typeof discardSelection>[0]) => {

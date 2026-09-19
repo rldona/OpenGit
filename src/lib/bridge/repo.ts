@@ -26,7 +26,7 @@ export function removeRecentRepo(path: string): Promise<void> {
   return invoke<void>("remove_recent_repo", { path });
 }
 
-/** Detiene el watcher del repo abierto. */
+/** Stops the watcher of the open repo. */
 export function closeRepo(): Promise<void> {
   return invoke<void>("close_repo");
 }
@@ -47,7 +47,7 @@ export function remoteUrls(path: string): Promise<Remote[]> {
   return invoke<Remote[]>("remote_urls", { path });
 }
 
-/** Identidad efectiva con la que se firmarán los commits. */
+/** Effective identity the commits will be signed with. */
 export function authorIdent(path: string): Promise<AuthorIdent> {
   return invoke<AuthorIdent>("author_ident", { path });
 }

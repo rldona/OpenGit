@@ -67,7 +67,7 @@ describe("useCommitStore", () => {
     vi.mocked(commitMessage).mockResolvedValue("mensaje anterior");
   });
 
-  it("rechaza un mensaje vacío", async () => {
+  it("rejects an empty message", async () => {
     await useCommitStore.getState().load("/tmp/repo");
 
     const ok = await useCommitStore.getState().submit(1);
@@ -77,7 +77,7 @@ describe("useCommitStore", () => {
     expect(commitRepo).not.toHaveBeenCalled();
   });
 
-  it("rechaza commitear sin cambios en el index", async () => {
+  it("rejects committing with no changes in the index", async () => {
     await useCommitStore.getState().load("/tmp/repo");
     useCommitStore.getState().setMessage("feat: algo");
 
@@ -88,7 +88,7 @@ describe("useCommitStore", () => {
     expect(commitRepo).not.toHaveBeenCalled();
   });
 
-  it("commitea, limpia el mensaje y refresca status y grafo", async () => {
+  it("commits, clears the message and refreshes status and graph", async () => {
     vi.mocked(commitRepo).mockResolvedValue({ hash: "abc1234", subject: "feat: algo" });
     await useCommitStore.getState().load("/tmp/repo");
     useCommitStore.getState().setMessage("feat: algo");
@@ -103,7 +103,7 @@ describe("useCommitStore", () => {
     expect(logPage).toHaveBeenCalledWith("/tmp/repo", 0, 200, null, null);
   });
 
-  it("el amend pide confirmación y precarga el mensaje anterior", async () => {
+  it("amend asks for confirmation and preloads the previous message", async () => {
     await useCommitStore.getState().load("/tmp/repo");
 
     await useCommitStore.getState().setAmend(true);
@@ -113,7 +113,7 @@ describe("useCommitStore", () => {
     expect(useCommitStore.getState().message).toBe("mensaje anterior");
   });
 
-  it("si se cancela el amend no cambia nada", async () => {
+  it("if amend is cancelled nothing changes", async () => {
     vi.mocked(confirmDestructive).mockResolvedValue(false);
     await useCommitStore.getState().load("/tmp/repo");
 
@@ -123,7 +123,7 @@ describe("useCommitStore", () => {
     expect(useCommitStore.getState().message).toBe("");
   });
 
-  it("aborta la operación en curso y refresca", async () => {
+  it("aborts the current operation and refreshes", async () => {
     vi.mocked(repoOpAbort).mockResolvedValue(undefined);
     await useCommitStore.getState().load("/tmp/repo");
 
@@ -134,7 +134,7 @@ describe("useCommitStore", () => {
     expect(useUiStore.getState().outputLines.join("\n")).toContain("Operation aborted");
   });
 
-  it("continúa la operación en curso y refresca", async () => {
+  it("continues the current operation and refreshes", async () => {
     vi.mocked(repoOpContinue).mockResolvedValue(undefined);
     await useCommitStore.getState().load("/tmp/repo");
 
@@ -144,7 +144,7 @@ describe("useCommitStore", () => {
     expect(useUiStore.getState().outputLines.join("\n")).toContain("Operation continued");
   });
 
-  it("salta la operación en curso y refresca", async () => {
+  it("skips the current operation and refreshes", async () => {
     vi.mocked(repoOpSkip).mockResolvedValue(undefined);
     await useCommitStore.getState().load("/tmp/repo");
 
@@ -155,7 +155,7 @@ describe("useCommitStore", () => {
     expect(useUiStore.getState().outputLines.join("\n")).toContain("Operation skipped");
   });
 
-  it("muestra la salida del hook cuando el commit falla", async () => {
+  it("shows the hook output when the commit fails", async () => {
     vi.mocked(commitRepo).mockRejectedValue({
       kind: "command_failed",
       exit_code: 1,

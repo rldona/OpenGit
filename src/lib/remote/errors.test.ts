@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { describeRemoteError } from "./errors";
 
 describe("describeRemoteError", () => {
-  it("detecta un push rechazado por non-fast-forward", () => {
+  it("detects a push rejected as non-fast-forward", () => {
     const hint = describeRemoteError([
       "To /tmp/remote",
       " ! [rejected]        main -> main (non-fast-forward)",
@@ -11,14 +11,14 @@ describe("describeRemoteError", () => {
     expect(hint).toContain("Pull first");
   });
 
-  it("detecta fallos de autenticación", () => {
+  it("detects authentication failures", () => {
     const hint = describeRemoteError([
       "fatal: Authentication failed for 'https://example.com/repo.git/'",
     ]);
     expect(hint).toContain("credential helper");
   });
 
-  it("detecta remoto inexistente", () => {
+  it("detects a missing remote", () => {
     expect(
       describeRemoteError(["fatal: repository 'https://example.com/nope.git/' not found"]),
     ).toContain("not found or unreachable");
@@ -27,12 +27,12 @@ describe("describeRemoteError", () => {
     ).toContain("not found or unreachable");
   });
 
-  it("detecta una rama sin upstream", () => {
+  it("detects a branch with no upstream", () => {
     const hint = describeRemoteError(["fatal: The current branch feature has no upstream branch"]);
     expect(hint).toContain("no upstream");
   });
 
-  it("devuelve null cuando no reconoce la causa", () => {
+  it("returns null when it does not recognize the cause", () => {
     expect(describeRemoteError(["everything is fine"])).toBeNull();
   });
 });

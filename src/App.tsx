@@ -234,7 +234,7 @@ function App() {
         }
       })
       .catch(() => {
-        // Sin menú nativo la UI sigue funcionando con la toolbar y los atajos.
+        // Without a native menu the UI keeps working with the toolbar and shortcuts.
       });
     return () => {
       disposed = true;
@@ -243,9 +243,9 @@ function App() {
   }, []);
 
   useEffect(() => {
-    // Si esto falla suele ser por un permiso que falta en capabilities/default.json.
-    // Tragarse el error en silencio escondió durante todo M6 que el título nunca
-    // se llegaba a fijar: ahora se ve en el panel de Output.
+    // If this fails it is usually because a permission is missing in
+    // capabilities/default.json. Silently swallowing the error hid for all of M6
+    // that the title was never set: now it shows up in the Output panel.
     void setWindowTitle(repo ? repo.root : "OpenGit").catch((error: unknown) => {
       useUiStore
         .getState()
