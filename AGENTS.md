@@ -33,7 +33,7 @@ cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings
 cargo fmt --manifest-path src-tauri/Cargo.toml --check
 ```
 
-Convenciones: **documentación, issues, código y comentarios en inglés** desde 2026-09-19 (los textos de UI ya iban en inglés; el multidioma de la interfaz se decidirá más adelante). La documentación y los comentarios escritos antes en español se traducirán en un proceso aparte, anotado en `ROADMAP.md`. Commits en Conventional Commits con scope del área (`feat(graph): ...`). Todo cambio nace de un ticket (`OG-NNN`).
+Convenciones: **documentación, issues, código y comentarios en inglés** desde 2026-09-19 (los textos de UI ya iban en inglés; el multidioma de la interfaz se decidirá más adelante). **Todo lo que se escribe en git va en inglés**: mensajes de commit, títulos y descripciones de PR, comentarios de revisión y notas de issue. Lo escrito antes en español se traducirá en un proceso aparte, anotado en `ROADMAP.md`. Commits en Conventional Commits con scope del área (`feat(graph): ...`). Todo cambio nace de un ticket (`OG-NNN`).
 
 ## Reglas
 
