@@ -6,6 +6,8 @@ export type ShortcutId =
   | "viewStatus"
   | "viewHistory"
   | "viewDiff"
+  | "prevTab"
+  | "nextTab"
   | "help"
   | "close";
 
@@ -26,6 +28,8 @@ export const SHORTCUTS: Shortcut[] = [
   { id: "viewStatus", keys: "mod+1", label: "File status", group: "Navigation" },
   { id: "viewHistory", keys: "mod+2", label: "History", group: "Navigation" },
   { id: "viewDiff", keys: "mod+3", label: "Diff", group: "Navigation" },
+  { id: "prevTab", keys: "mod+shift+[", label: "Previous repository tab", group: "Navigation" },
+  { id: "nextTab", keys: "mod+shift+]", label: "Next repository tab", group: "Navigation" },
   { id: "help", keys: "?", label: "Keyboard shortcuts", group: "Help" },
   { id: "close", keys: "escape", label: "Close dialog or clear selection", group: "Help" },
 ];
@@ -37,18 +41,27 @@ export function isMacPlatform(): boolean {
   return /mac/i.test(navigator.platform || navigator.userAgent);
 }
 
-export function parseKeys(keys: string): { mod: boolean; key: string } {
+export function parseKeys(keys: string): { mod: boolean; shift: boolean; key: string } {
   const parts = keys.toLowerCase().split("+");
-  return { mod: parts.includes("mod"), key: parts[parts.length - 1] };
+  return {
+    mod: parts.includes("mod"),
+    shift: parts.includes("shift"),
+    key: parts[parts.length - 1],
+  };
 }
 
 export function matchesShortcut(event: KeyboardEvent, keys: string): boolean {
   if (event.altKey) {
     return false;
   }
-  const { mod, key } = parseKeys(keys);
+  const { mod, shift, key } = parseKeys(keys);
   const primary = isMacPlatform() ? event.metaKey : event.ctrlKey;
   if (mod !== primary) {
+    return false;
+  }
+  // Definitions with `shift` require it; without it Shift is ignored as
+  // before (backwards compatible, and `?` keeps its special case below).
+  if (shift && !event.shiftKey) {
     return false;
   }
   const pressed = event.key.toLowerCase();
@@ -59,12 +72,13 @@ export function matchesShortcut(event: KeyboardEvent, keys: string): boolean {
 }
 
 export function formatKeys(keys: string): string {
-  const { mod, key } = parseKeys(keys);
+  const { mod, shift, key } = parseKeys(keys);
   const base = key === "enter" ? "Enter" : key === "escape" ? "Esc" : key.toUpperCase();
-  if (!mod) {
-    return base;
+  if (isMacPlatform()) {
+    return `${mod ? "⌘" : ""}${shift ? "⇧" : ""}${base}`;
   }
-  return isMacPlatform() ? `⌘${base}` : `Ctrl+${base}`;
+  const prefix = [mod ? "Ctrl" : null, shift ? "Shift" : null].filter(Boolean).join("+");
+  return prefix ? `${prefix}+${base}` : base;
 }
 
 export function isEditableTarget(target: EventTarget | null): boolean {

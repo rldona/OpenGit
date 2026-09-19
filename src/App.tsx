@@ -188,6 +188,8 @@ function App() {
     },
     help: toggleShortcuts,
     close: closeOverlayOrSelection,
+    prevTab: () => void useRepoStore.getState().switchTab(-1),
+    nextTab: () => void useRepoStore.getState().switchTab(1),
   };
 
   useShortcuts(actions);

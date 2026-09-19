@@ -772,6 +772,26 @@ body {
   color: var(--text);
 }
 
+.repo-tab-add {
+  flex-shrink: 0;
+  align-self: center;
+  padding: 2px 9px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 15px;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.repo-tab-add:hover {
+  border-color: var(--border);
+  background: var(--hover);
+  color: var(--text);
+}
+
 .error-banner {
   max-width: 560px;
   margin: 12px 12px 0;
