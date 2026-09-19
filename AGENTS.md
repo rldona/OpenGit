@@ -19,7 +19,7 @@ React UI (WebView)  →  Tauri IPC (invoke/events)  →  Rust core  →  binario
 
 ## Desarrollo
 
-Estado actual: **M6 completado** (2026-09-18). MVP local + remotos + historial avanzado + rebase/conflictos + pulido y paridad visual con SourceTree (menú nativo, toolbar con iconos, splits, tabla de commits, menús contextuales, paneles con numeración y badges de tracking). La firma/notarización queda descartada por coste (OG-028); siguiente: lo que se priorice del roadmap.
+Estado actual: **M7 completado** (2026-09-19) con la paridad con SourceTree (ventana de commit, detalle de stash embebido, remotos con diálogo y ventana de progreso, columnas ordenables y merge). **M8 planificado** (búsqueda, historial de fichero, comparar refs, blame y gestión de remotos, submódulos y worktrees). La firma/notarización queda descartada por coste (OG-028).
 
 ```bash
 npm install
@@ -33,7 +33,7 @@ cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings
 cargo fmt --manifest-path src-tauri/Cargo.toml --check
 ```
 
-Convenciones: documentación e issues en español; código, ramas, commits y **textos de UI** en inglés (el multidioma se decidirá más adelante). Commits en Conventional Commits con scope del área (`feat(graph): ...`). Todo cambio nace de un ticket (`OG-NNN`).
+Convenciones: **documentación, issues, código y comentarios en inglés** desde 2026-09-19 (los textos de UI ya iban en inglés; el multidioma de la interfaz se decidirá más adelante). La documentación y los comentarios escritos antes en español se traducirán en un proceso aparte, anotado en `ROADMAP.md`. Commits en Conventional Commits con scope del área (`feat(graph): ...`). Todo cambio nace de un ticket (`OG-NNN`).
 
 ## Reglas
 
