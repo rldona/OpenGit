@@ -13,10 +13,13 @@ import {
   configGet,
   configSet,
   configUnset,
+  gpgSecretKeys,
   ignoreExcludePath,
   openPath,
   readTextFile,
 } from "../lib/bridge/settings";
+import type { GpgKey } from "../lib/bridge/types";
+import { formatCommitDate } from "../lib/format";
 import { useExtrasStore } from "../lib/stores/extras";
 import { useRepoStore } from "../lib/stores/repo";
 import { useSettingsStore } from "../lib/stores/settings";
@@ -24,7 +27,7 @@ import { useThemeStore } from "../lib/stores/theme";
 import type { ThemePreference } from "../lib/theme";
 import { Icon, type IconName } from "./Icon";
 
-type Tab = "advanced" | "remotes" | "template" | "appearance";
+type Tab = "advanced" | "remotes" | "security" | "template" | "appearance";
 type TemplateMode = "none" | "default" | "custom";
 
 type UserInfo = {
@@ -56,6 +59,7 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
   const tabs: Array<{ id: Tab; label: string; icon: IconName }> = [
     ...(root ? [{ id: "advanced" as const, label: "Advanced", icon: "settings" as const }] : []),
     ...(root ? [{ id: "remotes" as const, label: "Remotes", icon: "cloud" as const }] : []),
+    ...(root ? [{ id: "security" as const, label: "Security", icon: "lock" as const }] : []),
     ...(root ? [{ id: "template" as const, label: "Commit Template", icon: "file" as const }] : []),
     { id: "appearance", label: "Appearance", icon: "theme" },
   ];
@@ -71,6 +75,9 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
   const [templateMode, setTemplateMode] = useState<TemplateMode>("none");
   const [templateContent, setTemplateContent] = useState("");
   const [templateGlobalSet, setTemplateGlobalSet] = useState(false);
+  const [signEnabled, setSignEnabled] = useState(false);
+  const [signingKey, setSigningKey] = useState("");
+  const [gpgKeys, setGpgKeys] = useState<GpgKey[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -108,6 +115,17 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
           localTemplate !== null ? "custom" : globalTemplate !== null ? "default" : "none",
         );
         setTemplateContent(content);
+      })
+      .catch((err: unknown) => setError(errorMessage(err)));
+    void Promise.all([
+      configGet(root, "commit.gpgsign", "local"),
+      configGet(root, "user.signingkey", "local"),
+      gpgSecretKeys(),
+    ])
+      .then(([sign, key, keys]) => {
+        setSignEnabled(sign === "true");
+        setSigningKey(key ?? "");
+        setGpgKeys(keys);
       })
       .catch((err: unknown) => setError(errorMessage(err)));
   }, [root]);
@@ -235,6 +253,15 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
         } else {
           await configUnset(root, "commit.template", "local");
         }
+        if (signEnabled) {
+          await configSet(root, "commit.gpgsign", "true", "local");
+          if (signingKey !== "") {
+            await configSet(root, "user.signingkey", signingKey, "local");
+          }
+        } else {
+          await configUnset(root, "commit.gpgsign", "local");
+          await configUnset(root, "user.signingkey", "local");
+        }
       }
       if (draftAutoRefresh !== autoRefresh) {
         setAutoRefresh(draftAutoRefresh);
@@ -249,6 +276,7 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
 
   const shownName = user?.useGlobal ? user.globalName : (user?.localName ?? "");
   const shownEmail = user?.useGlobal ? user.globalEmail : (user?.localEmail ?? "");
+  const selectedKey = gpgKeys.find((key) => key.id === signingKey) ?? null;
 
   return (
     <div className="modal-overlay">
@@ -421,6 +449,62 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
                 >
                   Remove
                 </button>
+              </div>
+            </section>
+          )}
+
+          {tab === "security" && root && (
+            <section className="settings-section">
+              <label className="settings-check">
+                <input
+                  type="checkbox"
+                  checked={signEnabled}
+                  onChange={(event) => setSignEnabled(event.target.checked)}
+                />
+                Enable GPG key signing for commits
+              </label>
+              <label className="settings-field">
+                <span>Key:</span>
+                <select
+                  aria-label="Signing key"
+                  value={signingKey}
+                  disabled={!signEnabled || gpgKeys.length === 0}
+                  onChange={(event) => setSigningKey(event.target.value)}
+                >
+                  <option value="">Select a key</option>
+                  {gpgKeys.map((key) => (
+                    <option key={key.id} value={key.id}>
+                      {key.user || key.id}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {gpgKeys.length === 0 && <p className="muted">No GPG secret keys found</p>}
+
+              <div className="settings-key">
+                <h3>Commit signing GPG key</h3>
+                <dl>
+                  <div>
+                    <dt>User:</dt>
+                    <dd>{selectedKey?.user || "—"}</dd>
+                  </div>
+                  <div>
+                    <dt>Type:</dt>
+                    <dd>{selectedKey?.algo || "—"}</dd>
+                  </div>
+                  <div>
+                    <dt>Key:</dt>
+                    <dd className="settings-key-fingerprint">{selectedKey?.fingerprint || "—"}</dd>
+                  </div>
+                  <div>
+                    <dt>Created:</dt>
+                    <dd>{selectedKey?.created ? formatCommitDate(selectedKey.created) : "—"}</dd>
+                  </div>
+                  <div>
+                    <dt>Expires:</dt>
+                    <dd>{selectedKey?.expires ? formatCommitDate(selectedKey.expires) : "—"}</dd>
+                  </div>
+                </dl>
               </div>
             </section>
           )}

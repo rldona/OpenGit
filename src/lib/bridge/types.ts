@@ -204,6 +204,16 @@ export type RefEntry = {
   target: string;
 };
 
+/** Secret GPG key available for commit signing. */
+export type GpgKey = {
+  id: string;
+  fingerprint: string;
+  user: string;
+  algo: string;
+  created: number | null;
+  expires: number | null;
+};
+
 /** Error serialized by the Rust core (discriminant `kind` field). */
 export type GitErrorPayload = {
   kind: string;
