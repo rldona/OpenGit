@@ -11,6 +11,7 @@ import { formatGitError } from "../bridge/errors";
 import { statusRepo } from "../bridge/status";
 import type { FileDiff } from "../bridge/types";
 import { isBinaryPatch } from "../diff/patch";
+import { isImagePath } from "../images";
 import { useStatusStore } from "./status";
 
 export type DiffTarget = { kind: "worktree" } | { kind: "commit"; rev: string };
@@ -35,6 +36,8 @@ type DiffState = {
   patch: string;
   binary: boolean;
   mode: DiffMode;
+  /** Mode picked by hand per file; the rest use the automatic one. */
+  modeByFile: Record<string, DiffMode>;
   reversed: boolean;
   selectedLines: number[];
   loading: boolean;
@@ -51,6 +54,11 @@ type DiffState = {
   discardSelection: (selection: HunkSelection) => Promise<void>;
   reset: () => void;
 };
+
+/** Images read better side by side; text keeps the unified default. */
+function autoMode(entry: DiffFileEntry): DiffMode {
+  return isImagePath(entry.path) ? "side" : "unified";
+}
 
 function indexByPath(diffs: FileDiff[]): Map<string, FileDiff> {
   const map = new Map<string, FileDiff>();
@@ -78,6 +86,7 @@ export const useDiffStore = create<DiffState>((set, get) => ({
   patch: "",
   binary: false,
   mode: "unified",
+  modeByFile: {},
   reversed: false,
   selectedLines: [],
   loading: false,
@@ -196,7 +205,8 @@ export const useDiffStore = create<DiffState>((set, get) => ({
   selectFile: async (entry) => {
     const { root, target, reversed } = get();
     if (!root || !target) return;
-    set({ selectedLines: [] });
+    const mode = get().modeByFile[entry.key] ?? autoMode(entry);
+    set({ selectedLines: [], mode });
     if (entry.untracked) {
       set({ selected: entry, patch: "", binary: false });
       return;
@@ -216,7 +226,14 @@ export const useDiffStore = create<DiffState>((set, get) => ({
     }
   },
 
-  setMode: (mode) => set({ mode }),
+  setMode: (mode) =>
+    set((state) => ({
+      mode,
+      // La elección a mano manda para ese fichero; el resto sigue el automático.
+      modeByFile: state.selected
+        ? { ...state.modeByFile, [state.selected.key]: mode }
+        : state.modeByFile,
+    })),
 
   toggleReverse: async () => {
     set({ reversed: !get().reversed });
@@ -291,6 +308,7 @@ export const useDiffStore = create<DiffState>((set, get) => ({
       patch: "",
       binary: false,
       mode: "unified",
+      modeByFile: {},
       reversed: false,
       selectedLines: [],
       loading: false,
