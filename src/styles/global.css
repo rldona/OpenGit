@@ -711,6 +711,12 @@ body {
   font-size: 12px;
 }
 
+/* The tab strip continues the header: hide the toolbar separator line
+   while tabs are shown, so both read as a single block. */
+.toolbar:has(~ .repo-tabs) {
+  border-bottom-color: transparent;
+}
+
 .repo-tabs {
   display: flex;
   align-items: stretch;
