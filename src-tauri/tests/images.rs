@@ -59,6 +59,21 @@ fn a_new_image_file_only_has_an_after_side() {
 }
 
 #[test]
+fn an_untracked_image_has_only_an_after_side_from_disk() {
+    let repo = TestRepo::init();
+    repo.write("nuevo.png", TINY_PNG);
+
+    let pair = image_pair(&runner(), repo.path(), "nuevo.png", None, false).expect("pair");
+    assert_eq!(pair.before, None);
+    assert_eq!(pair.after.as_deref(), Some("image/png"));
+    assert_eq!(
+        image_bytes(&runner(), repo.path(), "nuevo.png", None, false, "after").unwrap(),
+        TINY_PNG
+    );
+    assert!(image_bytes(&runner(), repo.path(), "nuevo.png", None, false, "before").is_err());
+}
+
+#[test]
 fn a_commit_with_modified_image_returns_both_sides() {
     let repo = TestRepo::init();
     commit_file(&repo, "logo.png", TINY_PNG, "logo");

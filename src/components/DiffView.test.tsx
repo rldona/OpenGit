@@ -273,4 +273,36 @@ describe("DiffView", () => {
     expect(screen.queryByRole("button", { name: "Stage hunk" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Stage file" })).not.toBeInTheDocument();
   });
+
+  it("previews an untracked image with only an after side", async () => {
+    Object.defineProperty(URL, "createObjectURL", {
+      value: vi.fn(() => "blob:mock"),
+      writable: true,
+    });
+    vi.mocked(statusRepo).mockResolvedValue({
+      ...REPORT,
+      entries: [{ kind: "untracked", xy: "?", path: "nuevo.png", orig_path: null }],
+    });
+    vi.mocked(untrackedFileDiff).mockResolvedValue(
+      [
+        "diff --git a/nuevo.png b/nuevo.png",
+        "new file mode 100644",
+        "index 0000000..8352675",
+        "Binary files /dev/null and b/nuevo.png differ",
+      ].join("\n"),
+    );
+    vi.mocked(imagePair).mockResolvedValue({ before: null, after: "image/png" });
+    vi.mocked(imageBlob).mockResolvedValue(new ArrayBuffer(8));
+    render(<DiffView />);
+
+    expect(await screen.findByAltText("After")).toBeInTheDocument();
+    expect(screen.getByText("New binary file")).toBeInTheDocument();
+    expect(screen.queryByText(/Binary file: no text/)).not.toBeInTheDocument();
+    expect(imagePair).toHaveBeenCalledWith({
+      path: "/tmp/repo",
+      file: "nuevo.png",
+      rev: null,
+      staged: false,
+    });
+  });
 });
