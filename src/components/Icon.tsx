@@ -18,7 +18,8 @@ export type IconName =
   | "theme"
   | "file"
   | "lock"
-  | "merge";
+  | "merge"
+  | "plus";
 
 const PATHS: Record<IconName, string> = {
   folder: "M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z",
@@ -43,6 +44,7 @@ const PATHS: Record<IconName, string> = {
   file: "M6 3h8l4 4v14H6zM14 3v4h4",
   lock: "M6 11h12v9H6zM9 11V8a3 3 0 0 1 6 0v3",
   merge: "M6 4v12m0 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4M18 8a2 2 0 1 0 0-.01M6 8c0 4 6 2 6 6",
+  plus: "M12 5v14M5 12h14",
 };
 
 export function Icon({ name, size = 14 }: { name: IconName; size?: number }) {

@@ -785,14 +785,13 @@ body {
   display: inline-flex;
   flex-shrink: 0;
   align-items: center;
+  justify-content: center;
   padding: 2px 9px;
   border: 1px solid var(--border);
   border-radius: 6px;
   background: transparent;
   color: var(--text-muted);
   font: inherit;
-  font-size: 15px;
-  line-height: 1.2;
   cursor: pointer;
 }
 
