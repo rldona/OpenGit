@@ -495,6 +495,44 @@ pub fn cherry_pick(path: String, hash: String, state: State<'_, AppState>) -> Re
 }
 
 #[tauri::command]
+pub fn image_pair(
+    path: String,
+    file: String,
+    rev: Option<String>,
+    staged: bool,
+    state: State<'_, AppState>,
+) -> Result<crate::git::ImagePair, GitError> {
+    crate::git::image_pair(
+        &state.runner,
+        Path::new(&path),
+        &file,
+        rev.as_deref(),
+        staged,
+    )
+}
+
+/// Raw image bytes; the webview receives an ArrayBuffer (Tauri `Response`).
+#[tauri::command]
+pub fn image_blob(
+    path: String,
+    file: String,
+    rev: Option<String>,
+    staged: bool,
+    side: String,
+    state: State<'_, AppState>,
+) -> Result<tauri::ipc::Response, GitError> {
+    let bytes = crate::git::image_bytes(
+        &state.runner,
+        Path::new(&path),
+        &file,
+        rev.as_deref(),
+        staged,
+        &side,
+    )?;
+    Ok(tauri::ipc::Response::new(bytes))
+}
+
+#[tauri::command]
 pub fn merge_branch(
     path: String,
     rev: String,

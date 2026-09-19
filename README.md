@@ -41,6 +41,7 @@ The binaries are **not signed or notarized** (certificates cost money and this p
 
 - **Canvas commit graph** with incremental loading: smooth in repositories with tens of thousands of commits.
 - **Diff with hunk, line and selection staging**, plus discard without leaving the app.
+- **Image preview and comparison**: before/after for image changes over a transparency checkerboard (PNG, JPEG, GIF, WebP and friends).
 - **SourceTree-style commit window**: pending files with staged/unstaged sections, file preview, `Commit Options…` (amend) and optional push immediately.
 - **Complete sidebar**: branches, remotes, tags, stashes, submodules and worktrees, with context menus.
 - **History operations**: merge, cherry-pick, revert, reset and interactive rebase with plan preview.

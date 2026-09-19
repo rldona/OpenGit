@@ -1632,6 +1632,91 @@ body {
   height: 100%;
 }
 
+/* Image preview: checkerboard so transparency reads, Before/After labels. */
+.image-diff {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  padding: 10px 12px 16px;
+}
+
+.image-diff-note {
+  margin: 0 0 8px;
+  font-size: 12px;
+}
+
+.image-compare {
+  display: grid;
+  flex: 1;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  min-height: 0;
+}
+
+.image-side {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+}
+
+.image-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.image-label.before {
+  color: var(--del);
+}
+
+.image-label.after {
+  color: var(--add);
+}
+
+.image-frame {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+  min-height: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(
+      45deg,
+      rgb(128 128 128 / 18%) 25%,
+      transparent 25%,
+      transparent 75%,
+      rgb(128 128 128 / 18%) 75%
+    ),
+    linear-gradient(
+      45deg,
+      rgb(128 128 128 / 18%) 25%,
+      transparent 25%,
+      transparent 75%,
+      rgb(128 128 128 / 18%) 75%
+    );
+  background-size: 16px 16px;
+  background-position:
+    0 0,
+    8px 8px;
+}
+
+.image-frame img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
 .diff-line-add {
   background: var(--add-bg);
 }
