@@ -1,3 +1,4 @@
+import { useCommitStore } from "./stores/commit";
 import { useExtrasStore } from "./stores/extras";
 import { useLogStore } from "./stores/log";
 import { useRefsStore } from "./stores/refs";
@@ -18,5 +19,7 @@ export async function refreshRepo(root: string): Promise<void> {
     useRefsStore.getState().refresh(root),
     useExtrasStore.getState().refresh(root),
     useStashStore.getState().refresh(root),
+    // An operation may have finished outside the app: keep the banner honest.
+    useCommitStore.getState().refreshOpState(root),
   ]);
 }
