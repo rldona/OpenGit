@@ -51,7 +51,7 @@ describe("ConflictView", () => {
     vi.mocked(readConflictFile).mockResolvedValue({ content: CONTENT, binary: false });
     vi.mocked(resolveConflict).mockResolvedValue(undefined);
     vi.mocked(statusRepo).mockResolvedValue(REPORT);
-    useRepoStore.setState({ repo: REPO, recents: [], loading: false, error: null });
+    useRepoStore.setState({ repo: REPO, recents: [], openTabs: [], loading: false, error: null });
     useConflictStore.getState().reset();
     useStatusStore.getState().reset();
     useStatusStore.setState({ root: REPO.root, report: REPORT });

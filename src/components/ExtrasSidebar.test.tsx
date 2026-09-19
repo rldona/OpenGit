@@ -84,7 +84,7 @@ describe("ExtrasSidebar", () => {
     vi.mocked(lfsStatus).mockResolvedValue(LFS);
     vi.mocked(remoteUrls).mockResolvedValue([]);
     vi.mocked(openRepo).mockResolvedValue(REPO);
-    useRepoStore.setState({ repo: REPO, recents: [], loading: false, error: null });
+    useRepoStore.setState({ repo: REPO, recents: [], openTabs: [], loading: false, error: null });
     useExtrasStore.setState({
       root: REPO.root,
       submodules: SUBMODULES,

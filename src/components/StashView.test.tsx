@@ -81,7 +81,7 @@ describe("StashView", () => {
     vi.mocked(stashList).mockResolvedValue([STASH]);
     vi.mocked(statusRepo).mockResolvedValue(CLEAN);
     vi.mocked(confirmDestructive).mockResolvedValue(true);
-    useRepoStore.setState({ repo: REPO, recents: [], loading: false, error: null });
+    useRepoStore.setState({ repo: REPO, recents: [], openTabs: [], loading: false, error: null });
     useStashStore.getState().reset();
     useStashStore.setState({ root: REPO.root, stashes: [STASH] });
   });

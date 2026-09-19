@@ -72,7 +72,7 @@ const CLEAN = {
 
 describe("OpBanner", () => {
   beforeEach(() => {
-    useRepoStore.setState({ repo: REPO, recents: [], loading: false, error: null });
+    useRepoStore.setState({ repo: REPO, recents: [], openTabs: [], loading: false, error: null });
     useCommitStore.getState().reset();
     vi.mocked(repoOpState).mockResolvedValue(CLEAN);
   });

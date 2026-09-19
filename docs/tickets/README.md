@@ -101,3 +101,4 @@ One file per ticket, named `OG-NNN-slug.md`. Every change in the repository star
 | [OG-066](OG-066-merge-indicator.md) | Merge indicator: busy and banner | M8 | done |
 | [OG-067](OG-067-settings-modal.md) | Settings modal (SourceTree-style) | M8 | done |
 | [OG-068](OG-068-macos-adhoc-signing.md) | macOS bundle with a valid ad-hoc signature | M8 | done |
+| [OG-069](OG-069-repo-tabs.md) | Repository tabs replacing Recents | Next | done |

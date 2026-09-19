@@ -72,7 +72,7 @@ describe("DiffView", () => {
     vi.mocked(diffFile).mockImplementation(async ({ file }) =>
       file === "bin.bin" ? "Binary files a/bin.bin and b/bin.bin differ\n" : PATCH,
     );
-    useRepoStore.setState({ repo: REPO, recents: [], loading: false, error: null });
+    useRepoStore.setState({ repo: REPO, recents: [], openTabs: [], loading: false, error: null });
     useDiffStore.getState().reset();
     useUiStore.setState({ fileTree: false });
   });

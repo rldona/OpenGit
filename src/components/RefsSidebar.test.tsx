@@ -175,7 +175,7 @@ describe("RefsSidebar", () => {
     localStorage.clear();
     vi.clearAllMocks();
     useCollapseStore.setState({ collapsed: {} });
-    useRepoStore.setState({ repo: REPO, recents: [], loading: false, error: null });
+    useRepoStore.setState({ repo: REPO, recents: [], openTabs: [], loading: false, error: null });
     useLogStore.getState().reset();
     useRefsStore.getState().reset();
     useRefsStore.setState({

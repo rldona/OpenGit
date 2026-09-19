@@ -57,7 +57,7 @@ describe("StashSidebar", () => {
     vi.mocked(stashDrop).mockResolvedValue(undefined);
     vi.mocked(stashShow).mockResolvedValue("diff --git a/a.txt b/a.txt\n+dos\n");
     vi.mocked(confirmDestructive).mockResolvedValue(true);
-    useRepoStore.setState({ repo: REPO, recents: [], loading: false, error: null });
+    useRepoStore.setState({ repo: REPO, recents: [], openTabs: [], loading: false, error: null });
     useStashStore.getState().reset();
     useStashStore.setState({ root: REPO.root, stashes: STASHES });
   });

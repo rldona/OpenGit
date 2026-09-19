@@ -7,7 +7,7 @@ const STORAGE_KEY = "opengit.sidebar.collapsed";
  * default because a repo with many remote branches pushes everything
  * below them (tags, stashes, submodules) out of view.
  */
-const DEFAULT_COLLAPSED = ["recents"];
+const DEFAULT_COLLAPSED: string[] = [];
 
 function load(): Record<string, boolean> {
   try {

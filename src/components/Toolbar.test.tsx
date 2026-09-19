@@ -53,7 +53,7 @@ function entries(count: number) {
 describe("Toolbar", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    useRepoStore.setState({ repo: REPO, recents: [], loading: false, error: null });
+    useRepoStore.setState({ repo: REPO, recents: [], openTabs: [], loading: false, error: null });
     useRemoteStore.setState({ running: false });
     useRefsStore.setState({ merging: false });
     useStatusStore.setState({ report: null });
