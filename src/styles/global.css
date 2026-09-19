@@ -786,9 +786,11 @@ body {
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  padding: 2px 9px;
+  padding: 7px 10px;
+  margin-bottom: -1px;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-bottom-color: transparent;
+  border-radius: 6px 6px 0 0;
   background: transparent;
   color: var(--text-muted);
   font: inherit;
