@@ -29,7 +29,7 @@ fn parents(repo: &TestRepo) -> Vec<String> {
 }
 
 #[test]
-fn merge_fast_forward_avanza_la_rama_sin_commit_de_merge() {
+fn fast_forward_merge_advances_branch_without_merge_commit() {
     let repo = TestRepo::init();
     commit_file(&repo, "a.txt", "uno\n", "base");
     repo.git_ok(&["checkout", "-q", "-b", "feature"]);
@@ -41,11 +41,11 @@ fn merge_fast_forward_avanza_la_rama_sin_commit_de_merge() {
 
     assert!(!result.conflicted);
     assert_eq!(head(&repo), feature);
-    assert_eq!(parents(&repo).len(), 1, "fast-forward: sin commit de merge");
+    assert_eq!(parents(&repo).len(), 1, "fast-forward: no merge commit");
 }
 
 #[test]
-fn merge_no_ff_crea_commit_de_merge() {
+fn no_ff_merge_creates_merge_commit() {
     let repo = TestRepo::init();
     commit_file(&repo, "a.txt", "uno\n", "base");
     repo.git_ok(&["checkout", "-q", "-b", "feature"]);
@@ -55,11 +55,11 @@ fn merge_no_ff_crea_commit_de_merge() {
     let result = merge_branch(&runner(), repo.path(), "feature", true).expect("merge no-ff");
 
     assert!(!result.conflicted);
-    assert_eq!(parents(&repo).len(), 2, "no-ff: commit con dos padres");
+    assert_eq!(parents(&repo).len(), 2, "no-ff: commit with two parents");
 }
 
 #[test]
-fn merge_con_conflicto_deja_la_operacion_en_curso() {
+fn conflicted_merge_leaves_operation_in_progress() {
     let repo = TestRepo::init();
     commit_file(&repo, "a.txt", "base\n", "base");
     repo.git_ok(&["checkout", "-q", "-b", "feature"]);
@@ -69,7 +69,7 @@ fn merge_con_conflicto_deja_la_operacion_en_curso() {
 
     let result = merge_branch(&runner(), repo.path(), "feature", false).expect("merge");
 
-    assert!(result.conflicted, "el conflicto no debe ser un error");
+    assert!(result.conflicted, "conflict must not be an error");
     assert!(
         result.output.to_lowercase().contains("conflict"),
         "{}",
@@ -82,16 +82,16 @@ fn merge_con_conflicto_deja_la_operacion_en_curso() {
     assert_eq!(
         std::fs::read_to_string(repo.path().join("a.txt")).unwrap(),
         "main\n",
-        "abort deja el árbol como estaba"
+        "abort leaves the tree as it was"
     );
 }
 
 #[test]
-fn merge_al_dia_no_es_un_error() {
+fn up_to_date_merge_is_not_an_error() {
     let repo = TestRepo::init();
     commit_file(&repo, "a.txt", "uno\n", "base");
 
-    let result = merge_branch(&runner(), repo.path(), "main", false).expect("merge al día");
+    let result = merge_branch(&runner(), repo.path(), "main", false).expect("merge up to date");
 
     assert!(!result.conflicted);
     assert!(
@@ -103,11 +103,12 @@ fn merge_al_dia_no_es_un_error() {
 }
 
 #[test]
-fn merge_fallido_sin_conflicto_es_error() {
+fn failed_merge_without_conflict_is_an_error() {
     let repo = TestRepo::init();
     commit_file(&repo, "a.txt", "uno\n", "base");
 
-    let error = merge_branch(&runner(), repo.path(), "no-existe", false).expect_err("rama ausente");
+    let error =
+        merge_branch(&runner(), repo.path(), "no-existe", false).expect_err("missing branch");
 
     let text = format!("{error}").to_lowercase();
     assert!(

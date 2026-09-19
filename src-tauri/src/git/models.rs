@@ -1,18 +1,18 @@
 use serde::Serialize;
 
-/// Commit del historial, suficiente para la vista de grafo.
+/// History commit, enough for the graph view.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Commit {
     pub hash: String,
     pub parents: Vec<String>,
     pub author_name: String,
     pub author_email: String,
-    /// Timestamp UNIX del autor.
+    /// UNIX timestamp of the author.
     pub author_time: i64,
-    /// Refs decoradas por `%D` (HEAD, ramas, tags, remotos).
+    /// Refs decorated by `%D` (HEAD, branches, tags, remotes).
     pub refs: Vec<String>,
     pub subject: String,
-    /// Cuerpo del mensaje (`%b`), sin el asunto. Vacío si el commit no tiene.
+    /// Message body (`%b`), without the subject. Empty if the commit has none.
     pub body: String,
 }
 
@@ -26,23 +26,23 @@ pub enum StatusKind {
     Ignored,
 }
 
-/// Entrada de `git status --porcelain=v2`.
+/// Entry of `git status --porcelain=v2`.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct FileStatus {
     pub kind: StatusKind,
-    /// Estado índice/working tree (XY).
+    /// Index/working tree status (XY).
     pub xy: String,
     pub path: String,
-    /// Ruta original en renombrados y copias.
+    /// Original path in renames and copies.
     pub orig_path: Option<String>,
 }
 
-/// Informe de estado del working tree, con la cabecera de rama.
+/// Working tree status report, with the branch header.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize)]
 pub struct StatusReport {
-    /// OID de HEAD; `None` en un repo sin commits.
+    /// HEAD OID; `None` in a repo without commits.
     pub head: Option<String>,
-    /// Rama actual; `None` si HEAD está detached.
+    /// Current branch; `None` if HEAD is detached.
     pub branch: Option<String>,
     pub detached: bool,
     pub upstream: Option<String>,
@@ -51,20 +51,20 @@ pub struct StatusReport {
     pub entries: Vec<FileStatus>,
 }
 
-/// Referencia de `git for-each-ref`.
+/// Reference from `git for-each-ref`.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Ref {
-    /// Nombre completo (`refs/heads/main`).
+    /// Full name (`refs/heads/main`).
     pub name: String,
     pub object_id: String,
     pub object_type: String,
     pub upstream: Option<String>,
     pub track: Option<String>,
-    /// Objeto al que resuelve la ref: para un tag anotado, el commit pelado.
+    /// Object the ref resolves to: for an annotated tag, the peeled commit.
     pub target: String,
 }
 
-/// Entrada de `git stash list`.
+/// Entry of `git stash list`.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Stash {
     /// `stash@{n}`.
@@ -74,85 +74,85 @@ pub struct Stash {
     pub hash: String,
 }
 
-/// Cambio de fichero según `git diff --numstat`.
+/// File change according to `git diff --numstat`.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct FileDiff {
     pub path: String,
-    /// Ruta original en renombrados.
+    /// Original path in renames.
     pub orig_path: Option<String>,
     pub binary: bool,
     pub added: Option<u64>,
     pub deleted: Option<u64>,
 }
 
-/// Estado del submódulo respecto al índice del superproyecto.
+/// Submodule state relative to the superproject index.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum SubmoduleState {
-    /// ` `: al día con el commit registrado.
+    /// ` `: up to date with the recorded commit.
     Clean,
-    /// `+`: el submódulo está en un commit distinto del registrado.
+    /// `+`: the submodule is at a commit different from the recorded one.
     Modified,
-    /// `-`: no inicializado.
+    /// `-`: not initialized.
     Uninitialized,
-    /// `U`: conflicto de merge.
+    /// `U`: merge conflict.
     Conflict,
 }
 
-/// Entrada de `git submodule status`.
+/// Entry of `git submodule status`.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Submodule {
     pub path: String,
-    /// Commit registrado en el índice del superproyecto.
+    /// Commit recorded in the superproject index.
     pub head: String,
     pub state: SubmoduleState,
-    /// Descripción de git (`heads/main`, un tag, ...), si la da.
+    /// Git description (`heads/main`, a tag, ...), if it provides one.
     pub describe: Option<String>,
 }
 
-/// Entrada de `git worktree list --porcelain`.
+/// Entry of `git worktree list --porcelain`.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Worktree {
     pub path: String,
     pub head: String,
-    /// Ref completa (`refs/heads/main`); `None` si está detached.
+    /// Full ref (`refs/heads/main`); `None` if detached.
     pub branch: Option<String>,
     pub detached: bool,
     pub bare: bool,
     pub locked: bool,
 }
 
-/// Estado de Git LFS en el repositorio.
+/// Git LFS status in the repository.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct LfsStatus {
-    /// `git lfs version` funciona.
+    /// `git lfs version` works.
     pub installed: bool,
-    /// Salida de `git lfs version`, si está instalado.
+    /// Output of `git lfs version`, if installed.
     pub version: Option<String>,
-    /// Algún `.gitattributes` rastreado usa `filter=lfs`.
+    /// Some tracked `.gitattributes` uses `filter=lfs`.
     pub configured: bool,
 }
 
-/// Remoto del repositorio, con su URL web cuando es abrible.
+/// Repository remote, with its web URL when it can be opened.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Remote {
     pub name: String,
     pub url: String,
-    /// Equivalente `https://…`; `None` para rutas locales o `file://`.
+    /// `https://…` equivalent; `None` for local paths or `file://`.
     pub web_url: Option<String>,
 }
 
-/// Identidad efectiva con la que git firmaría un commit (`git var GIT_AUTHOR_IDENT`).
+/// Effective identity git would use to sign a commit (`git var GIT_AUTHOR_IDENT`).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct AuthorIdent {
     pub name: String,
     pub email: String,
 }
 
-/// Commits que faltan por llegar del upstream y por subir a él.
+/// Commits still to arrive from the upstream and still to be pushed to it.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize)]
 pub struct TrackingCommits {
-    /// `HEAD..upstream`, en orden de `rev-list`.
+    /// `HEAD..upstream`, in `rev-list` order.
     pub incoming: Vec<String>,
     /// `upstream..HEAD`.
     pub outgoing: Vec<String>,

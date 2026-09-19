@@ -12,13 +12,13 @@ fn runner() -> Runner {
 }
 
 #[test]
-fn version_de_git_cumple_el_minimo() {
-    let version = runner().version().expect("leer versión de git");
+fn git_version_meets_the_minimum() {
+    let version = runner().version().expect("read the git version");
     assert!(version.meets_minimum(), "git {version} es menor que 2.34");
 }
 
 #[test]
-fn ejecuta_args_con_espacios_comillas_y_utf8() {
+fn runs_args_with_spaces_quotes_and_utf8() {
     let repo = TestRepo::init();
     repo.write("carpeta con espacios/ñandú 日本.txt", b"hola\n");
     repo.git_ok(&["add", "."]);
@@ -42,7 +42,7 @@ fn ejecuta_args_con_espacios_comillas_y_utf8() {
 }
 
 #[test]
-fn error_de_git_llega_con_stderr_y_codigo() {
+fn git_error_arrives_with_stderr_and_code() {
     let repo = TestRepo::init();
     let error = runner()
         .run_checked(
@@ -61,12 +61,12 @@ fn error_de_git_llega_con_stderr_y_codigo() {
             assert!(!stdout.is_empty() || !stderr.is_empty());
             assert_eq!(args.first().map(String::as_str), Some("rev-parse"));
         }
-        other => panic!("esperaba CommandFailed, llegó {other:?}"),
+        other => panic!("expected CommandFailed, got {other:?}"),
     }
 }
 
 #[test]
-fn run_sin_checked_devuelve_la_salida_del_fallo() {
+fn run_unchecked_returns_output_on_failure() {
     let repo = TestRepo::init();
     let output = runner()
         .run(&GitCommand::new(["rev-parse", "--verify", "refs/heads/no-existe"]).cwd(repo.path()))
@@ -76,7 +76,7 @@ fn run_sin_checked_devuelve_la_salida_del_fallo() {
 }
 
 #[test]
-fn stdin_bytes_llega_al_proceso() {
+fn stdin_bytes_reaches_the_process() {
     let repo = TestRepo::init();
     let output = runner()
         .run_checked(
@@ -89,7 +89,7 @@ fn stdin_bytes_llega_al_proceso() {
 }
 
 #[test]
-fn timeout_mata_el_proceso_sin_dejarlo_huerfano() {
+fn timeout_kills_the_process_without_orphans() {
     let repo = TestRepo::init();
     let command = GitCommand::new(["cat-file", "--batch"])
         .cwd(repo.path())
@@ -100,13 +100,13 @@ fn timeout_mata_el_proceso_sin_dejarlo_huerfano() {
 
     let error = process
         .wait(Duration::from_millis(200))
-        .expect_err("debe agotar el timeout");
-    assert!(matches!(error, GitError::Timeout { .. }), "llegó {error:?}");
+        .expect_err("must exhaust the timeout");
+    assert!(matches!(error, GitError::Timeout { .. }), "got {error:?}");
     assert_process_gone(pid);
 }
 
 #[test]
-fn cancelar_no_deja_huerfanos() {
+fn cancelling_leaves_no_orphans() {
     let repo = TestRepo::init();
     let command = GitCommand::new(["cat-file", "--batch"])
         .cwd(repo.path())
@@ -118,16 +118,13 @@ fn cancelar_no_deja_huerfanos() {
     process.cancel().expect("cancelar");
     let error = process
         .wait(Duration::from_secs(5))
-        .expect_err("debe terminar cancelado");
-    assert!(
-        matches!(error, GitError::Cancelled { .. }),
-        "llegó {error:?}"
-    );
+        .expect_err("must finish cancelled");
+    assert!(matches!(error, GitError::Cancelled { .. }), "got {error:?}");
     assert_process_gone(pid);
 }
 
 #[test]
-fn log_page_no_incluye_los_commits_internos_del_stash() {
+fn log_page_does_not_include_stash_internal_commits() {
     let repo = TestRepo::init();
     repo.write("a.txt", b"uno\n");
     repo.git_ok(&["add", "."]);
@@ -138,9 +135,9 @@ fn log_page_no_incluye_los_commits_internos_del_stash() {
 
     let commits = log_page(&runner(), repo.path(), 0, 50, None, None).expect("log page");
 
-    // `git log --all` arrastraría `refs/stash`: el commit del stash y su commit
-    // interno "index on <rama>: …", que en el historial no pintan nada.
-    assert_eq!(commits.len(), 1, "solo debería verse el commit base");
+    // `git log --all` would drag `refs/stash` in: the stash commit and its inner
+    // "index on <branch>: …" commit, which have no place in the history.
+    assert_eq!(commits.len(), 1, "only the base commit should be listed");
     assert_eq!(commits[0].subject, "base");
     assert!(
         !commits.iter().any(|commit| commit
@@ -150,7 +147,7 @@ fn log_page_no_incluye_los_commits_internos_del_stash() {
         "ninguna ref de stash debe llegar al historial"
     );
 
-    // Y el stash sigue existiendo: lo que cambia es el historial, no el repo.
+    // And the stash still exists: what changes is the history, not the repo.
     let stash_list = repo.git_ok(&["stash", "list"]);
     assert!(!String::from_utf8_lossy(&stash_list.stdout)
         .trim()
@@ -158,7 +155,7 @@ fn log_page_no_incluye_los_commits_internos_del_stash() {
 }
 
 #[test]
-fn status_y_log_page_sobre_repo_real() {
+fn status_and_log_page_on_real_repo() {
     let repo = TestRepo::init();
     assert!(!has_commits(&runner(), repo.path()).expect("has_commits"));
 
@@ -196,7 +193,7 @@ fn status_y_log_page_sobre_repo_real() {
 }
 
 #[test]
-fn log_page_filtra_por_ref() {
+fn log_page_filters_by_ref() {
     let repo = TestRepo::init();
     repo.write("base.txt", b"base\n");
     repo.git_ok(&["add", "."]);
@@ -221,7 +218,7 @@ fn log_page_filtra_por_ref() {
 }
 
 #[test]
-fn refs_sobre_repo_real() {
+fn refs_on_real_repo() {
     let repo = TestRepo::init();
     repo.write("x.txt", b"x\n");
     repo.git_ok(&["add", "."]);
@@ -245,7 +242,7 @@ fn refs_sobre_repo_real() {
 fn assert_process_gone(pid: u32) {
     std::thread::sleep(Duration::from_millis(100));
     let alive = unsafe { libc::kill(pid as i32, 0) } == 0;
-    assert!(!alive, "el proceso {pid} sigue vivo");
+    assert!(!alive, "process {pid} is still alive");
 }
 
 #[cfg(not(unix))]

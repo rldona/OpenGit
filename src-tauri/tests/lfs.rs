@@ -8,7 +8,7 @@ fn runner() -> Runner {
 }
 
 #[test]
-fn lfs_configured_detecta_gitattributes_rastreado() {
+fn lfs_configured_detects_tracked_gitattributes() {
     let repo = TestRepo::init();
     repo.write("a.txt", b"uno\n");
     repo.git_ok(&["add", "."]);
@@ -30,7 +30,7 @@ fn lfs_configured_detecta_gitattributes_rastreado() {
 }
 
 #[test]
-fn lfs_configured_ignora_comentarios_y_no_rastreado() {
+fn lfs_configured_ignores_comments_and_untracked() {
     let repo = TestRepo::init();
     repo.write(".gitattributes", b"# *.bin filter=lfs\n");
     repo.write("sin-trackear/.gitattributes", b"*.bin filter=lfs\n");
@@ -42,7 +42,7 @@ fn lfs_configured_ignora_comentarios_y_no_rastreado() {
 }
 
 #[test]
-fn lfs_configured_en_la_raiz() {
+fn lfs_configured_at_root() {
     let repo = TestRepo::init();
     repo.write(
         ".gitattributes",

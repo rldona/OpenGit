@@ -5,7 +5,7 @@ use super::{split_records, splitn, text};
 
 const RECORD_SEP: u8 = 0;
 
-/// Parsea `git status --porcelain=v2 -z --branch --untracked-files=all`.
+/// Parses `git status --porcelain=v2 -z --branch --untracked-files=all`.
 pub fn parse_status(data: &[u8]) -> Result<StatusReport, GitError> {
     let records = split_records(data, RECORD_SEP);
     let mut report = StatusReport::default();

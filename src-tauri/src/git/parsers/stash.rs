@@ -7,7 +7,7 @@ const RECORD_SEP: u8 = 0;
 const FIELD_SEP: u8 = 0x1f;
 const EXPECTED_FIELDS: usize = 4;
 
-/// Parsea `git stash list -z --format=%gd%x1f%gs%x1f%ct%x1f%H`.
+/// Parses `git stash list -z --format=%gd%x1f%gs%x1f%ct%x1f%H`.
 pub fn parse_stash_list(data: &[u8]) -> Result<Vec<Stash>, GitError> {
     let mut stashes = Vec::new();
     for record in split_records(data, RECORD_SEP) {

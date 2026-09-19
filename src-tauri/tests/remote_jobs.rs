@@ -13,8 +13,8 @@ fn runner() -> Runner {
 }
 
 fn init_bare(dir: &TempDir) {
-    // `-b main` explícito: sin init.defaultBranch, CI crea master y el clon
-    // no seguiría la rama que empujamos.
+    // Explicit `-b main`: without init.defaultBranch, CI creates master and the clone
+    // would not follow the branch we push.
     let output = git(dir.path(), &["init", "--bare", "-b", "main", "-q"]);
     assert!(output.status.success());
 }
@@ -56,7 +56,7 @@ fn collect_until_finished(
 }
 
 #[test]
-fn push_transmite_salida_y_configura_upstream() {
+fn push_streams_output_and_sets_upstream() {
     let remote = TempDir::new("bare-push");
     init_bare(&remote);
     let repo = TestRepo::init();
@@ -74,9 +74,9 @@ fn push_transmite_salida_y_configura_upstream() {
     let (lines, finished) = collect_until_finished(&receiver, Duration::from_secs(20));
 
     let (success, cancelled) = finished.expect("evento de fin");
-    assert!(success, "el push debe funcionar: {lines:?}");
+    assert!(success, "the push must succeed: {lines:?}");
     assert!(!cancelled);
-    assert!(!lines.is_empty(), "se esperaba salida en streaming");
+    assert!(!lines.is_empty(), "streamed output was expected");
 
     assert!(
         git(remote.path(), &["rev-parse", "--verify", "refs/heads/main"])
@@ -96,7 +96,7 @@ fn push_transmite_salida_y_configura_upstream() {
 }
 
 #[test]
-fn fetch_actualiza_las_refs_remotas() {
+fn fetch_updates_remote_refs() {
     let remote = TempDir::new("bare-fetch");
     init_bare(&remote);
     let a = TestRepo::init();
@@ -135,7 +135,7 @@ fn fetch_actualiza_las_refs_remotas() {
     );
     let (lines, finished) = collect_until_finished(&receiver, Duration::from_secs(20));
     let (success, _) = finished.expect("evento de fin");
-    assert!(success, "el fetch debe funcionar: {lines:?}");
+    assert!(success, "the fetch must succeed: {lines:?}");
 
     let remote_main =
         String::from_utf8(b.git_ok(&["rev-parse", "refs/remotes/origin/main"]).stdout).unwrap();
@@ -144,7 +144,7 @@ fn fetch_actualiza_las_refs_remotas() {
 }
 
 #[test]
-fn pull_mergea_los_cambios_del_remoto() {
+fn pull_merges_the_remote_changes() {
     let remote = TempDir::new("bare-pull");
     init_bare(&remote);
     let a = TestRepo::init();
@@ -183,7 +183,7 @@ fn pull_mergea_los_cambios_del_remoto() {
     );
     let (lines, finished) = collect_until_finished(&receiver, Duration::from_secs(20));
     let (success, _) = finished.expect("evento de fin");
-    assert!(success, "el pull debe funcionar: {lines:?}");
+    assert!(success, "the pull must succeed: {lines:?}");
 
     let b_head = String::from_utf8(b.git_ok(&["rev-parse", "HEAD"]).stdout).unwrap();
     let a_head = String::from_utf8(a.git_ok(&["rev-parse", "HEAD"]).stdout).unwrap();
@@ -191,7 +191,7 @@ fn pull_mergea_los_cambios_del_remoto() {
 }
 
 #[test]
-fn push_rechazado_por_non_fast_forward() {
+fn push_rejected_by_non_fast_forward() {
     let remote = TempDir::new("bare-nff");
     init_bare(&remote);
     let a = TestRepo::init();
@@ -228,7 +228,7 @@ fn push_rechazado_por_non_fast_forward() {
     let (lines, finished) = collect_until_finished(&receiver, Duration::from_secs(20));
     let (success, _) = finished.expect("evento de fin");
 
-    assert!(!success, "el push debe rechazarse: {lines:?}");
+    assert!(!success, "the push must be rejected: {lines:?}");
     let text = lines.join("\n");
     assert!(
         text.contains("rejected")
@@ -239,7 +239,7 @@ fn push_rechazado_por_non_fast_forward() {
 }
 
 #[test]
-fn cancelar_un_push_no_deja_huerfanos() {
+fn cancelling_a_push_leaves_no_orphans() {
     let remote = TempDir::new("bare-cancel");
     init_bare(&remote);
     let hook = remote.path().join("hooks/pre-receive");
@@ -273,7 +273,7 @@ fn cancelar_un_push_no_deja_huerfanos() {
     )
     .expect("arrancar job");
 
-    // Espera a que el push arranque (primeras líneas del progreso).
+    // Wait for the push to start (first progress lines).
     let started = Instant::now();
     while started.elapsed() < Duration::from_secs(10) {
         if let Ok(RemoteJobEvent::Output { .. }) = receiver.recv_timeout(Duration::from_millis(200))
@@ -282,12 +282,12 @@ fn cancelar_un_push_no_deja_huerfanos() {
         }
     }
 
-    assert!(manager.cancel(&id), "el job debe estar registrado");
+    assert!(manager.cancel(&id), "the job must be registered");
     let (lines, finished) = collect_until_finished(&receiver, Duration::from_secs(5));
     let (success, cancelled) = finished.expect("evento de fin tras cancelar");
 
     assert!(!success);
-    assert!(cancelled, "debe llegar como cancelado: {lines:?}");
+    assert!(cancelled, "it must arrive as cancelled: {lines:?}");
     assert!(
         started.elapsed() < Duration::from_secs(9),
         "no debe esperar al hook"

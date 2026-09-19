@@ -1,18 +1,18 @@
-//! Reconstrucción de parches para stage/unstage parcial (OG-006).
+//! Patch reconstruction for partial stage/unstage (OG-006).
 //!
-//! Se trabaja con bytes, no con strings: CRLF, ficheros sin newline final y
-//! contenido no UTF-8 deben sobrevivir intactos al recorte de hunks y líneas.
+//! Work is done with bytes, not strings: CRLF, files without a final newline
+//! and non-UTF-8 content must survive the hunk and line trimming intact.
 
 use crate::git::error::GitError;
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum HunkSelection {
-    /// Fichero completo (se resuelve con `git add`/`git restore`, no con parche).
+    /// Whole file (resolved with `git add`/`git restore`, not with a patch).
     File,
-    /// Índice del hunk dentro del parche (0-based).
+    /// Index of the hunk inside the patch (0-based).
     Hunk { index: usize },
-    /// Índices globales de línea dentro del parche (0-based, contando cabeceras).
+    /// Global line indices inside the patch (0-based, counting headers).
     Lines { indices: Vec<usize> },
 }
 
@@ -31,7 +31,7 @@ struct HunkRange {
     end: usize,
 }
 
-/// Parche unificado parseado, conservando cada línea byte a byte.
+/// Parsed unified patch, keeping every line byte by byte.
 #[derive(Debug, Clone)]
 pub struct ParsedPatch {
     lines: Vec<Vec<u8>>,
@@ -48,7 +48,7 @@ impl ParsedPatch {
         self.hunks.len()
     }
 
-    /// Líneas (índice global) que representan cambios, para ofrecer selección.
+    /// Lines (global index) that represent changes, to offer a selection.
     pub fn change_lines(&self) -> Vec<usize> {
         self.lines
             .iter()
@@ -58,7 +58,7 @@ impl ParsedPatch {
             .collect()
     }
 
-    /// Construye el parche de la selección. `None` si no queda ningún cambio.
+    /// Builds the patch for the selection. `None` if no change remains.
     pub fn build(&self, selection: &HunkSelection) -> Result<Option<Vec<u8>>, GitError> {
         match selection {
             HunkSelection::File => Err(GitError::invalid(
@@ -107,7 +107,7 @@ impl ParsedPatch {
                                     hunk_lines.push(line.clone());
                                     has_change = true;
                                 } else {
-                                    // La línea sigue existiendo en el index: pasa a contexto.
+                                    // The line still exists in the index: it becomes context.
                                     let mut context = line.clone();
                                     context[0] = b' ';
                                     hunk_lines.push(context);
@@ -115,7 +115,7 @@ impl ParsedPatch {
                                 previous_kept = true;
                             }
                             LineKind::Other => {
-                                // Marcadores `\ No newline`: solo si su línea sigue.
+                                // `\ No newline` markers: only if their line remains.
                                 if previous_kept {
                                     hunk_lines.push(line.clone());
                                 }
@@ -219,7 +219,7 @@ mod tests {
     const DIFF: &[u8] = b"diff --git a/a.txt b/a.txt\nindex 111..222 100644\n--- a/a.txt\n+++ b/a.txt\n@@ -1,3 +1,3 @@\n uno\n-dos\n+DOS\n tres\n@@ -8,3 +8,3 @@\n ocho\n-nueve\n+NUEVE\n diez\n";
 
     #[test]
-    fn parsea_hunks_y_lineas_de_cambio() {
+    fn parses_hunks_and_change_lines() {
         let patch = parse(DIFF);
         assert_eq!(patch.hunk_count(), 2);
         assert!(!patch.is_empty());
@@ -228,7 +228,7 @@ mod tests {
     }
 
     #[test]
-    fn construye_parche_de_un_hunk() {
+    fn builds_patch_of_a_hunk() {
         let patch = parse(DIFF);
         let built = patch
             .build(&HunkSelection::Hunk { index: 0 })
@@ -242,7 +242,7 @@ mod tests {
     }
 
     #[test]
-    fn construye_parche_de_lineas_sueltas() {
+    fn builds_patch_of_loose_lines() {
         let patch = parse(DIFF);
         let changes = patch.change_lines();
         let built = patch
@@ -255,18 +255,18 @@ mod tests {
         assert!(text.contains("+NUEVE"));
         assert!(
             text.contains(" nueve"),
-            "la línea no seleccionada pasa a contexto: {text}"
+            "the unselected line becomes context: {text}"
         );
         assert!(!text.contains("-nueve"));
         assert!(
             !text.contains("@@ -1,3"),
-            "el hunk sin cambios se descarta: {text}"
+            "the hunk without changes is dropped: {text}"
         );
         assert!(text.contains("@@ -8,3 +8,3 @@"));
     }
 
     #[test]
-    fn sin_cambios_seleccionados_no_hay_parche() {
+    fn no_patch_when_no_changes_selected() {
         let patch = parse(DIFF);
         let context_only = patch.change_lines().is_empty();
         assert!(!context_only);
@@ -277,7 +277,7 @@ mod tests {
     }
 
     #[test]
-    fn conserva_crlf_y_sin_newline_final() {
+    fn preserves_crlf_and_missing_final_newline() {
         let crlf = parse(b"--- a/a.txt\n+++ b/a.txt\n@@ -1 +1 @@\n-a\r\n+b\r\n");
         let built = crlf
             .build(&HunkSelection::Hunk { index: 0 })
@@ -295,7 +295,7 @@ mod tests {
     }
 
     #[test]
-    fn hunk_fuera_de_rango_falla() {
+    fn hunk_out_of_range_fails() {
         let patch = parse(DIFF);
         assert!(patch.build(&HunkSelection::Hunk { index: 9 }).is_err());
     }

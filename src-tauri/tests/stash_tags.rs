@@ -22,7 +22,7 @@ fn commit_file(repo: &TestRepo, name: &str, content: &str, message: &str) {
 }
 
 #[test]
-fn stash_crear_listar_aplicar_y_borrar() {
+fn stash_create_list_apply_and_drop() {
     let repo = TestRepo::init();
     commit_file(&repo, "a.txt", "uno\n", "base");
 
@@ -51,7 +51,7 @@ fn stash_crear_listar_aplicar_y_borrar() {
 }
 
 #[test]
-fn stash_pop_aplica_y_borra() {
+fn stash_pop_applies_and_drops() {
     let repo = TestRepo::init();
     commit_file(&repo, "a.txt", "uno\n", "base");
     repo.write("a.txt", b"dos\n");
@@ -67,7 +67,7 @@ fn stash_pop_aplica_y_borra() {
 }
 
 #[test]
-fn un_conflicto_conserva_el_stash() {
+fn a_conflict_keeps_the_stash() {
     let repo = TestRepo::init();
     commit_file(&repo, "a.txt", "uno\n", "base");
     repo.write("a.txt", b"stash\n");
@@ -82,7 +82,7 @@ fn un_conflicto_conserva_el_stash() {
 }
 
 #[test]
-fn referencias_de_stash_invalidas_fallan() {
+fn invalid_stash_references_fail() {
     let repo = TestRepo::init();
     commit_file(&repo, "a.txt", "uno\n", "base");
 
@@ -94,7 +94,7 @@ fn referencias_de_stash_invalidas_fallan() {
 }
 
 #[test]
-fn tags_ligeros_anotados_y_borrado() {
+fn lightweight_annotated_tags_and_deletion() {
     let repo = TestRepo::init();
     commit_file(&repo, "a.txt", "uno\n", "base");
     let head = String::from_utf8(repo.git_ok(&["rev-parse", "HEAD"]).stdout)
@@ -102,8 +102,9 @@ fn tags_ligeros_anotados_y_borrado() {
         .trim()
         .to_string();
 
-    tag_create(&runner(), repo.path(), "v1.0.0", &head, None).expect("tag ligero");
-    tag_create(&runner(), repo.path(), "v1.1.0", &head, Some("con mensaje")).expect("tag anotado");
+    tag_create(&runner(), repo.path(), "v1.0.0", &head, None).expect("lightweight tag");
+    tag_create(&runner(), repo.path(), "v1.1.0", &head, Some("con mensaje"))
+        .expect("annotated tag");
 
     assert_eq!(
         repo.git_ok(&["cat-file", "-t", "refs/tags/v1.0.0"]).stdout,
@@ -125,12 +126,12 @@ fn tags_ligeros_anotados_y_borrado() {
         .status
         .success());
 
-    let error = tag_create(&runner(), repo.path(), "mala..tag", &head, None).expect_err("inválido");
+    let error = tag_create(&runner(), repo.path(), "mala..tag", &head, None).expect_err("invalid");
     assert!(format!("{error}").contains("invalid ref name"), "{error}");
 }
 
 #[test]
-fn push_de_un_tag_al_remoto() {
+fn push_a_tag_to_the_remote() {
     let remote = TempDir::new("bare-tag");
     let init = git(remote.path(), &["init", "--bare", "-b", "main", "-q"]);
     assert!(init.status.success());
@@ -173,7 +174,7 @@ fn push_de_un_tag_al_remoto() {
             break;
         }
     }
-    assert_eq!(finished, Some(true), "el push del tag debe funcionar");
+    assert_eq!(finished, Some(true), "the tag push must succeed");
     assert_eq!(
         git(remote.path(), &["cat-file", "-t", "refs/tags/v2.0.0"]).stdout,
         b"tag\n"
@@ -181,7 +182,7 @@ fn push_de_un_tag_al_remoto() {
 }
 
 #[test]
-fn stash_show_incluye_tracked_y_untracked() {
+fn stash_show_includes_tracked_and_untracked() {
     let repo = TestRepo::init();
     commit_file(&repo, "a.txt", "uno\n", "base");
 
@@ -197,7 +198,7 @@ fn stash_show_incluye_tracked_y_untracked() {
 }
 
 #[test]
-fn stash_show_valida_la_referencia() {
+fn stash_show_validates_the_reference() {
     let repo = TestRepo::init();
     commit_file(&repo, "a.txt", "uno\n", "base");
 

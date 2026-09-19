@@ -23,7 +23,8 @@ between them and without touching behaviour.
 - [x] Release notes of published releases (v0.1.0 edited on GitHub) and the
   wording the release workflow generates (already English).
 - [x] Frontend comments and test descriptions (~107 files).
-- [ ] Rust comments, doc comments and test names/messages.
+- [x] Rust comments, doc comments and test names/messages (`src-tauri/src` and
+  `tests/`, including helper functions and assertion messages).
 - [ ] `docs/tickets/` (title, states and prose) and its index.
 - [ ] `docs/architecture/`, `docs/decisions/` and `docs/guides/`.
 - [ ] `.ai/` (agents, skills, workflows, memory).

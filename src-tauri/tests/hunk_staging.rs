@@ -19,16 +19,11 @@ fn line_index(patch: &[u8], needle: &[u8]) -> usize {
     patch
         .split(|byte| *byte == b'\n')
         .position(|line| line == needle)
-        .unwrap_or_else(|| {
-            panic!(
-                "no se encontró la línea {:?}",
-                String::from_utf8_lossy(needle)
-            )
-        })
+        .unwrap_or_else(|| panic!("line {:?} not found", String::from_utf8_lossy(needle)))
 }
 
 #[test]
-fn stage_de_un_hunk_actualiza_el_index_sin_tocar_el_worktree() {
+fn staging_a_hunk_updates_the_index_without_touching_the_worktree() {
     let repo = TestRepo::init();
     let original = numbered_file(20);
     repo.write("a.txt", original.as_bytes());
@@ -41,7 +36,7 @@ fn stage_de_un_hunk_actualiza_el_index_sin_tocar_el_worktree() {
     repo.write("a.txt", modified.as_bytes());
 
     let diff = worktree_diff_bytes(&runner(), repo.path(), "a.txt", false).unwrap();
-    assert_eq!(parse(&diff).hunk_count(), 2, "esperaba dos hunks separados");
+    assert_eq!(parse(&diff).hunk_count(), 2, "expected two separate hunks");
 
     stage_selection(
         &runner(),
@@ -51,7 +46,7 @@ fn stage_de_un_hunk_actualiza_el_index_sin_tocar_el_worktree() {
         &HunkSelection::Hunk { index: 0 },
         false,
     )
-    .expect("stage del primer hunk");
+    .expect("stage first hunk");
 
     let cached =
         String::from_utf8(worktree_diff_bytes(&runner(), repo.path(), "a.txt", true).unwrap())
@@ -71,7 +66,7 @@ fn stage_de_un_hunk_actualiza_el_index_sin_tocar_el_worktree() {
 }
 
 #[test]
-fn stage_de_lineas_sueltas_dentro_de_un_hunk() {
+fn staging_individual_lines_within_a_hunk() {
     let repo = TestRepo::init();
     repo.write("a.txt", b"uno\ndos\ntres\n");
     repo.git_ok(&["add", "."]);
@@ -91,7 +86,7 @@ fn stage_de_lineas_sueltas_dentro_de_un_hunk() {
         },
         false,
     )
-    .expect("stage de la línea añadida");
+    .expect("stage added line");
 
     let cached =
         String::from_utf8(worktree_diff_bytes(&runner(), repo.path(), "a.txt", true).unwrap())
@@ -106,7 +101,7 @@ fn stage_de_lineas_sueltas_dentro_de_un_hunk() {
 }
 
 #[test]
-fn unstage_de_un_hunk_devuelve_el_index_a_head() {
+fn unstaging_a_hunk_returns_the_index_to_head() {
     let repo = TestRepo::init();
     let original = numbered_file(20);
     repo.write("a.txt", original.as_bytes());
@@ -130,7 +125,7 @@ fn unstage_de_un_hunk_devuelve_el_index_a_head() {
         &HunkSelection::Hunk { index: 0 },
         true,
     )
-    .expect("unstage del primer hunk");
+    .expect("unstage first hunk");
 
     let after =
         String::from_utf8(worktree_diff_bytes(&runner(), repo.path(), "a.txt", true).unwrap())
@@ -144,7 +139,7 @@ fn unstage_de_un_hunk_devuelve_el_index_a_head() {
 }
 
 #[test]
-fn crlf_y_sin_newline_final_no_se_corrompen() {
+fn crlf_and_missing_final_newline_do_not_get_corrupted() {
     let repo = TestRepo::init();
     repo.write("crlf.txt", b"a\r\nb\r\nc\r\n");
     repo.write("nonl.txt", b"sin newline");
@@ -171,7 +166,7 @@ fn crlf_y_sin_newline_final_no_se_corrompen() {
         &HunkSelection::Hunk { index: 0 },
         false,
     )
-    .expect("stage sin newline final");
+    .expect("stage without final newline");
 
     assert_eq!(
         repo.git_ok(&["show", ":crlf.txt"]).stdout,
@@ -192,7 +187,7 @@ fn crlf_y_sin_newline_final_no_se_corrompen() {
 }
 
 #[test]
-fn rutas_con_espacios_y_utf8() {
+fn paths_with_spaces_and_utf8() {
     let repo = TestRepo::init();
     let name = "carpeta ñ/mi fichero.txt";
     repo.write(name, b"uno\n");
@@ -208,7 +203,7 @@ fn rutas_con_espacios_y_utf8() {
         &HunkSelection::Hunk { index: 0 },
         false,
     )
-    .expect("stage en ruta con espacios y utf8");
+    .expect("stage path with spaces and utf8");
 
     let cached = worktree_diff_bytes(&runner(), repo.path(), name, true).unwrap();
     assert!(String::from_utf8_lossy(&cached).contains("mi fichero.txt"));
@@ -219,7 +214,7 @@ fn rutas_con_espacios_y_utf8() {
 }
 
 #[test]
-fn discard_de_un_hunk_solo_revierte_ese_hunk() {
+fn discarding_a_hunk_only_reverts_that_hunk() {
     let repo = TestRepo::init();
     let original = numbered_file(20);
     repo.write("a.txt", original.as_bytes());
@@ -233,7 +228,7 @@ fn discard_de_un_hunk_solo_revierte_ese_hunk() {
 
     assert!(
         discard_selection(&runner(), repo.path(), "a.txt", &HunkSelection::File).is_err(),
-        "el descarte completo no se resuelve con parches"
+        "full discard is not resolved with patches"
     );
 
     discard_selection(
@@ -242,7 +237,7 @@ fn discard_de_un_hunk_solo_revierte_ese_hunk() {
         "a.txt",
         &HunkSelection::Hunk { index: 0 },
     )
-    .expect("descartar el primer hunk");
+    .expect("discard first hunk");
 
     let content = std::fs::read_to_string(repo.path().join("a.txt")).unwrap();
     assert!(content.contains("linea 2\n"), "{content}");
@@ -250,11 +245,11 @@ fn discard_de_un_hunk_solo_revierte_ese_hunk() {
     assert!(content.contains("LINEA 18"), "{content}");
 
     let cached = worktree_diff_bytes(&runner(), repo.path(), "a.txt", true).unwrap();
-    assert!(cached.is_empty(), "el index no debe cambiar");
+    assert!(cached.is_empty(), "the index must not change");
 }
 
 #[test]
-fn discard_de_lineas_conserva_las_no_seleccionadas() {
+fn discarding_lines_keeps_unselected_ones() {
     let repo = TestRepo::init();
     repo.write("a.txt", b"uno\ndos\n");
     repo.git_ok(&["add", "."]);
@@ -272,7 +267,7 @@ fn discard_de_lineas_conserva_las_no_seleccionadas() {
             indices: vec![index],
         },
     )
-    .expect("descartar una línea");
+    .expect("discard one line");
 
     assert_eq!(
         std::fs::read_to_string(repo.path().join("a.txt")).unwrap(),

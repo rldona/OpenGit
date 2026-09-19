@@ -1,5 +1,5 @@
-//! Adaptador de git: ejecución segura del binario del sistema (ADR-0003),
-//! parseo robusto de su salida y modelos tipados para la UI.
+//! Git adapter: safe execution of the system binary (ADR-0003),
+//! robust parsing of its output and typed models for the UI.
 
 pub mod error;
 pub mod models;
@@ -26,13 +26,13 @@ use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 
-/// Formato de una línea de log: campos separados por `%x1f`, commits por `-z`.
+/// Format of a log line: fields separated by `%x1f`, commits by `-z`.
 pub const LOG_FORMAT: &str = "%H%x1f%P%x1f%an%x1f%ae%x1f%at%x1f%D%x1f%s%x1f%b";
-/// Formato de `for-each-ref`: campos separados por NUL.
+/// `for-each-ref` format: fields separated by NUL.
 pub const REFS_FORMAT: &str =
     "%(refname)%00%(objectname)%00%(objecttype)%00%(upstream)%00%(upstream:track)%00%(*objectname)";
 
-/// Commit del plan de rebase interactivo.
+/// Commit of the interactive rebase plan.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct PlanCommit {
     pub hash: String,
@@ -51,10 +51,10 @@ pub enum TodoAction {
 }
 
 impl TodoAction {
-    /// Acción que se escribe en el todo-list de git.
+    /// Action written to git's todo-list.
     fn as_git(self) -> &'static str {
         match self {
-            // El reword se resuelve con `exec git commit --amend -F` después del pick.
+            // Reword is resolved with `exec git commit --amend -F` after the pick.
             Self::Pick | Self::Reword => "pick",
             Self::Squash => "squash",
             Self::Fixup => "fixup",
@@ -67,12 +67,12 @@ impl TodoAction {
 pub struct TodoItem {
     pub hash: String,
     pub action: TodoAction,
-    /// Mensaje nuevo para `reword`; en el resto de acciones se ignora.
+    /// New message for `reword`; ignored for the rest of the actions.
     #[serde(default)]
     pub message: Option<String>,
 }
 
-/// Commits de `base..HEAD` en orden cronológico (el que se reescribe primero).
+/// Commits of `base..HEAD` in chronological order (the one rewritten first).
 pub fn rebase_plan(runner: &Runner, repo: &Path, base: &str) -> Result<Vec<PlanCommit>, GitError> {
     validate_commit_hash(base)?;
     let args: Vec<OsString> = vec![
@@ -103,8 +103,8 @@ fn shell_quote(value: &str) -> String {
     format!("'{}'", value.replace('\'', "'\\''"))
 }
 
-/// Ejecuta el rebase interactivo inyectando el todo-list con `GIT_SEQUENCE_EDITOR`.
-/// Los ficheros de mensaje viven en el directorio de datos de la app, nunca en el repo.
+/// Runs the interactive rebase injecting the todo-list with `GIT_SEQUENCE_EDITOR`.
+/// Message files live in the app data directory, never in the repo.
 pub fn interactive_rebase(
     runner: &Runner,
     repo: &Path,
@@ -181,7 +181,7 @@ fn validate_commit_hash(hash: &str) -> Result<(), GitError> {
     Ok(())
 }
 
-/// Aplica el commit indicado sobre la rama actual.
+/// Applies the given commit onto the current branch.
 pub fn cherry_pick(runner: &Runner, repo: &Path, hash: &str) -> Result<(), GitError> {
     validate_commit_hash(hash)?;
     runner
@@ -189,16 +189,16 @@ pub fn cherry_pick(runner: &Runner, repo: &Path, hash: &str) -> Result<(), GitEr
         .map(|_| ())
 }
 
-/// Resultado de un merge. Un conflicto no es un error de git: deja la
-/// operación a medias y el flujo de OG-019/OG-020 toma el relevo.
+/// Result of a merge. A conflict is not a git error: it leaves the
+/// operation half-done and the OG-019/OG-020 flow takes over.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct MergeResult {
     pub conflicted: bool,
-    /// Salida combinada de git, para el panel de Output.
+    /// Combined git output, for the Output panel.
     pub output: String,
 }
 
-/// `git merge --no-edit [--no-ff] <rev>` sobre la rama actual.
+/// `git merge --no-edit [--no-ff] <rev>` onto the current branch.
 pub fn merge_branch(
     runner: &Runner,
     repo: &Path,
@@ -213,7 +213,7 @@ pub fn merge_branch(
     args.push("--end-of-options".into());
     args.push(rev.into());
     let output = runner.run(&GitCommand::new(args.clone()).cwd(repo).write())?;
-    // El exit code no distingue conflicto de error: manda MERGE_HEAD.
+    // The exit code does not distinguish conflict from error: MERGE_HEAD decides.
     let conflicted = repo_op_state(runner, repo)?.merge;
     if !output.success() && !conflicted {
         return Err(GitError::CommandFailed {
@@ -237,7 +237,7 @@ pub fn merge_branch(
     })
 }
 
-/// Crea el commit de reversión del commit indicado (mensaje por defecto).
+/// Creates the revert commit of the given commit (default message).
 pub fn revert_commit(runner: &Runner, repo: &Path, hash: &str) -> Result<(), GitError> {
     validate_commit_hash(hash)?;
     runner
@@ -377,7 +377,7 @@ pub fn image_bytes(
     chosen.ok_or_else(|| GitError::invalid("image side not found"))
 }
 
-/// Reset mixed: mueve HEAD y desestagea, sin tocar el working tree.
+/// Mixed reset: moves HEAD and unstages, without touching the working tree.
 pub fn reset_mixed(runner: &Runner, repo: &Path, hash: &str) -> Result<(), GitError> {
     validate_commit_hash(hash)?;
     runner
@@ -389,7 +389,7 @@ pub fn reset_mixed(runner: &Runner, repo: &Path, hash: &str) -> Result<(), GitEr
         .map(|_| ())
 }
 
-/// Crea un tag ligero (sin mensaje) o anotado (con mensaje) en `target`.
+/// Creates a lightweight tag (no message) or annotated tag (with message) at `target`.
 pub fn tag_create(
     runner: &Runner,
     repo: &Path,
@@ -421,7 +421,7 @@ pub fn tag_delete(runner: &Runner, repo: &Path, name: &str) -> Result<(), GitErr
         .map(|_| ())
 }
 
-/// Lista los stashes con su referencia, mensaje, fecha y commit.
+/// Lists stashes with their reference, message, date and commit.
 pub fn stash_list(runner: &Runner, repo: &Path) -> Result<Vec<Stash>, GitError> {
     let output = runner.run_checked(
         &GitCommand::new(["stash", "list", "-z", "--format=%gd%x1f%gs%x1f%ct%x1f%H"]).cwd(repo),
@@ -429,20 +429,20 @@ pub fn stash_list(runner: &Runner, repo: &Path) -> Result<Vec<Stash>, GitError> 
     parse_stash_list(&output.stdout)
 }
 
-/// Lista los submódulos del repo (sin recursión).
+/// Lists the repo submodules (no recursion).
 pub fn submodule_status(runner: &Runner, repo: &Path) -> Result<Vec<Submodule>, GitError> {
     let output = runner.run_checked(&GitCommand::new(["submodule", "status"]).cwd(repo))?;
     parse_submodule_status(&output.stdout)
 }
 
-/// Lista los worktrees del repo, incluido el principal.
+/// Lists the repo worktrees, including the main one.
 pub fn worktree_list(runner: &Runner, repo: &Path) -> Result<Vec<Worktree>, GitError> {
     let output =
         runner.run_checked(&GitCommand::new(["worktree", "list", "--porcelain"]).cwd(repo))?;
     parse_worktree_list(&output.stdout)
 }
 
-/// Estado de Git LFS: binario disponible y atributos `filter=lfs` rastreados.
+/// Git LFS status: binary available and tracked `filter=lfs` attributes.
 pub fn lfs_status(runner: &Runner, repo: &Path) -> Result<LfsStatus, GitError> {
     let output = runner.run(&GitCommand::new(["lfs", "version"]).cwd(repo))?;
     let (installed, version) = if output.success() {
@@ -477,8 +477,8 @@ pub fn lfs_status(runner: &Runner, repo: &Path) -> Result<LfsStatus, GitError> {
     })
 }
 
-/// Convierte una URL de remoto en su equivalente web (`https://…`).
-/// Devuelve `None` para rutas locales, `file://` o formatos desconocidos.
+/// Converts a remote URL into its web equivalent (`https://…`).
+/// Returns `None` for local paths, `file://` or unknown formats.
 pub fn remote_web_url(url: &str) -> Option<String> {
     let trimmed = url.trim().trim_end_matches('/');
     if trimmed.is_empty() || trimmed.starts_with("file://") {
@@ -500,8 +500,8 @@ pub fn remote_web_url(url: &str) -> Option<String> {
         let (host, path) = rest.split_once('/')?;
         (host.to_string(), path.to_string())
     } else if let Some((before, after)) = trimmed.split_once(':') {
-        // Formato scp: `git@host:org/repo.git`. Descarta rutas locales y
-        // unidades de Windows antes de tratarlo como host.
+        // scp format: `git@host:org/repo.git`. Discards local paths and
+        // Windows drives before treating it as a host.
         if before.contains('/') || before.contains('\\') || after.starts_with('\\') {
             return None;
         }
@@ -522,7 +522,7 @@ pub fn remote_web_url(url: &str) -> Option<String> {
     Some(format!("https://{host}/{path}"))
 }
 
-/// Lista los remotos del repo con su URL y su URL web cuando la hay.
+/// Lists the repo remotes with their URL and web URL when available.
 pub fn remote_urls(runner: &Runner, repo: &Path) -> Result<Vec<Remote>, GitError> {
     let listed = runner.run_checked(&GitCommand::new(["remote"]).cwd(repo))?;
     let mut remotes = Vec::new();
@@ -543,7 +543,7 @@ pub fn remote_urls(runner: &Runner, repo: &Path) -> Result<Vec<Remote>, GitError
     Ok(remotes)
 }
 
-/// Identidad efectiva que git usaría al commitear: `Name <email> timestamp tz`.
+/// Effective identity git would use when committing: `Name <email> timestamp tz`.
 pub fn author_ident(runner: &Runner, repo: &Path) -> Result<AuthorIdent, GitError> {
     let output = runner.run_checked(&GitCommand::new(["var", "GIT_AUTHOR_IDENT"]).cwd(repo))?;
     let text = output.stdout_lossy();
@@ -572,7 +572,7 @@ fn rev_list(runner: &Runner, repo: &Path, range: &str) -> Result<Vec<String>, Gi
         .collect())
 }
 
-/// Hashes de `HEAD..upstream` (incoming) y `upstream..HEAD` (outgoing).
+/// Hashes of `HEAD..upstream` (incoming) and `upstream..HEAD` (outgoing).
 pub fn tracking_commits(
     runner: &Runner,
     repo: &Path,
@@ -614,7 +614,7 @@ pub fn stash_push(
         .map(|_| ())
 }
 
-/// Aplica un stash; con `drop` usa `pop` (solo lo borra si aplica bien).
+/// Applies a stash; with `drop` it uses `pop` (only deletes it if it applies cleanly).
 pub fn stash_apply(
     runner: &Runner,
     repo: &Path,
@@ -643,7 +643,7 @@ pub fn stash_drop(runner: &Runner, repo: &Path, reference: &str) -> Result<(), G
         .map(|_| ())
 }
 
-/// Parche completo de un stash, incluidos los untracked guardados con `-u`.
+/// Full patch of a stash, including untracked files saved with `-u`.
 pub fn stash_show(runner: &Runner, repo: &Path, reference: &str) -> Result<String, GitError> {
     validate_stash_reference(reference)?;
     let output = runner.run_checked(
@@ -665,7 +665,7 @@ fn validate_stash_reference(reference: &str) -> Result<(), GitError> {
     Ok(())
 }
 
-/// Rama actual y su relación con el upstream.
+/// Current branch and its relationship with the upstream.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct BranchTracking {
     pub current: Option<String>,
@@ -674,7 +674,7 @@ pub struct BranchTracking {
     pub behind: u32,
 }
 
-/// En qué rama estamos y cuántos commits hay por delante/detrás del upstream.
+/// Which branch we are on and how many commits ahead/behind the upstream.
 pub fn branch_tracking(runner: &Runner, repo: &Path) -> Result<BranchTracking, GitError> {
     let current_output =
         runner.run(&GitCommand::new(["symbolic-ref", "--short", "-q", "HEAD"]).cwd(repo))?;
@@ -738,7 +738,7 @@ pub(crate) fn validate_ref_name(runner: &Runner, repo: &Path, name: &str) -> Res
     Ok(())
 }
 
-/// Checkout de una rama local o, con `track`, de una remota creando la local.
+/// Checkout of a local branch or, with `track`, of a remote one creating the local branch.
 pub fn checkout_ref(
     runner: &Runner,
     repo: &Path,
@@ -756,7 +756,7 @@ pub fn checkout_ref(
         .map(|_| ())
 }
 
-/// Crea una rama en un punto de partida (hash o ref).
+/// Creates a branch at a starting point (hash or ref).
 pub fn create_branch(
     runner: &Runner,
     repo: &Path,
@@ -786,7 +786,7 @@ pub fn rename_branch(runner: &Runner, repo: &Path, old: &str, new: &str) -> Resu
         .map(|_| ())
 }
 
-/// `force = false` usa `-d`; `-D` solo tras confirmación explícita en la UI.
+/// `force = false` uses `-d`; `-D` only after explicit confirmation in the UI.
 pub fn delete_branch(
     runner: &Runner,
     repo: &Path,
@@ -800,15 +800,15 @@ pub fn delete_branch(
         .map(|_| ())
 }
 
-/// Resultado de crear un commit.
+/// Result of creating a commit.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct CommitResult {
     pub hash: String,
     pub subject: String,
 }
 
-/// Operación de git a medias en el repo (merge, rebase, cherry-pick/revert),
-/// con el paso actual cuando es un rebase.
+/// Half-done git operation in the repo (merge, rebase, cherry-pick/revert),
+/// with the current step when it is a rebase.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize)]
 pub struct RepoOpState {
     pub merge: bool,
@@ -839,14 +839,14 @@ impl RepoOpState {
     }
 }
 
-/// Mensaje del último commit, para precargar el amend.
+/// Message of the last commit, to preload the amend.
 pub fn last_commit_message(runner: &Runner, repo: &Path) -> Result<String, GitError> {
     let output = runner.run_checked(&GitCommand::new(["log", "-1", "--format=%B"]).cwd(repo))?;
     Ok(output.stdout_lossy().trim_end().to_string())
 }
 
-/// Crea el commit con el mensaje por stdin (nunca interpolado en `-m`).
-/// No se pasa `--no-verify`: los hooks del usuario mandan.
+/// Creates the commit with the message via stdin (never interpolated into `-m`).
+/// `--no-verify` is not passed: the user's hooks rule.
 pub fn commit(
     runner: &Runner,
     repo: &Path,
@@ -893,7 +893,7 @@ fn read_number(path: std::path::PathBuf) -> Option<u32> {
         .and_then(|text| text.trim().parse().ok())
 }
 
-/// Detecta merge, rebase o cherry-pick/revert en curso, con el paso del rebase.
+/// Detects an in-progress merge, rebase or cherry-pick/revert, with the rebase step.
 pub fn repo_op_state(runner: &Runner, repo: &Path) -> Result<RepoOpState, GitError> {
     let git_dir = runner
         .run_checked(&GitCommand::new(["rev-parse", "--git-dir"]).cwd(repo))?
@@ -934,7 +934,7 @@ pub fn repo_op_state(runner: &Runner, repo: &Path) -> Result<RepoOpState, GitErr
     })
 }
 
-/// Cancela la operación en curso (merge, rebase, cherry-pick o revert).
+/// Cancels the operation in progress (merge, rebase, cherry-pick or revert).
 pub fn repo_op_abort(runner: &Runner, repo: &Path) -> Result<(), GitError> {
     let state = repo_op_state(runner, repo)?;
     let operation = state
@@ -945,7 +945,7 @@ pub fn repo_op_abort(runner: &Runner, repo: &Path) -> Result<(), GitError> {
         .map(|_| ())
 }
 
-/// Continúa la operación en curso aceptando el mensaje por defecto.
+/// Continues the operation in progress accepting the default message.
 pub fn repo_op_continue(runner: &Runner, repo: &Path) -> Result<(), GitError> {
     let state = repo_op_state(runner, repo)?;
     let operation = state
@@ -961,7 +961,7 @@ pub fn repo_op_continue(runner: &Runner, repo: &Path) -> Result<(), GitError> {
         .map(|_| ())
 }
 
-/// Salta el commit o patch conflictivo de la operación en curso.
+/// Skips the conflicted commit or patch of the operation in progress.
 pub fn repo_op_skip(runner: &Runner, repo: &Path) -> Result<(), GitError> {
     let state = repo_op_state(runner, repo)?;
     let operation = state
@@ -982,7 +982,7 @@ pub fn repo_op_skip(runner: &Runner, repo: &Path) -> Result<(), GitError> {
         .map(|_| ())
 }
 
-/// Filtros de búsqueda del historial (literal, sin regex).
+/// History search filters (literal, no regex).
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct LogSearch {
     pub grep: Option<String>,
@@ -1010,8 +1010,8 @@ fn push_search_pattern(args: &mut Vec<OsString>, flag: &str, pattern: Option<&st
     }
 }
 
-/// Página de historial en orden topológico. Con `rev = None` recorre todas las
-/// refs; con `search` filtra por mensaje, autor y/o ruta (de forma literal).
+/// Page of history in topological order. With `rev = None` it walks all the
+/// refs; with `search` it filters by message, author and/or path (literally).
 pub fn log_page(
     runner: &Runner,
     repo: &Path,
@@ -1038,15 +1038,15 @@ pub fn log_page(
 
     match rev {
         Some(rev) => {
-            // Evita que una ref que empiece por "-" se interprete como opción.
+            // Prevents a ref starting with "-" from being parsed as an option.
             args.push("--end-of-options".into());
             args.push(rev.into());
         }
         None => {
-            // `--all` incluiría `refs/stash`, y con él el commit del stash y su
-            // commit interno "index on <rama>: …", que no pintan nada en el
-            // historial: los stashes tienen su propia sección.
-            // El `--exclude` afecta al `--all` que va justo detrás.
+            // `--all` would include `refs/stash`, and with it the stash commit
+            // and its internal commit "index on <branch>: …", which have no
+            // place in the history: stashes have their own section.
+            // The `--exclude` affects the `--all` right behind it.
             args.push("--exclude=refs/stash".into());
             args.push("--all".into());
         }
@@ -1065,13 +1065,13 @@ pub fn log_page(
     parse_log(&output.stdout)
 }
 
-/// True si HEAD apunta a un commit (repo con historial).
+/// True if HEAD points to a commit (repo with history).
 pub fn has_commits(runner: &Runner, repo: &Path) -> Result<bool, GitError> {
     let cmd = GitCommand::new(["rev-parse", "--verify", "--quiet", "HEAD"]).cwd(repo);
     Ok(runner.run(&cmd)?.success())
 }
 
-/// Estado del working tree con cabecera de rama.
+/// Working tree status with the branch header.
 pub fn status(runner: &Runner, repo: &Path) -> Result<StatusReport, GitError> {
     let cmd = GitCommand::new([
         "status",
@@ -1085,7 +1085,7 @@ pub fn status(runner: &Runner, repo: &Path) -> Result<StatusReport, GitError> {
     parse_status(&output.stdout)
 }
 
-/// Branches locales, remotas y tags.
+/// Local branches, remotes and tags.
 pub fn refs(runner: &Runner, repo: &Path) -> Result<Vec<Ref>, GitError> {
     let args: Vec<OsString> = vec![
         "for-each-ref".into(),
@@ -1098,7 +1098,7 @@ pub fn refs(runner: &Runner, repo: &Path) -> Result<Vec<Ref>, GitError> {
     parse_refs(&output.stdout)
 }
 
-/// Cambios por fichero con detección de renombrados; `cached` compara el index con HEAD.
+/// Per-file changes with rename detection; `cached` compares the index with HEAD.
 pub fn diff_numstat(runner: &Runner, repo: &Path, cached: bool) -> Result<Vec<FileDiff>, GitError> {
     let mut args: Vec<OsString> = vec!["diff".into(), "--numstat".into(), "-z".into(), "-M".into()];
     if cached {
@@ -1108,7 +1108,7 @@ pub fn diff_numstat(runner: &Runner, repo: &Path, cached: bool) -> Result<Vec<Fi
     parse_numstat(&output.stdout)
 }
 
-/// Ficheros tocados por un commit (numstat con renombrados).
+/// Files touched by a commit (numstat with renames).
 pub fn commit_files(runner: &Runner, repo: &Path, rev: &str) -> Result<Vec<FileDiff>, GitError> {
     let args: Vec<OsString> = vec![
         "diff-tree".into(),
@@ -1125,8 +1125,8 @@ pub fn commit_files(runner: &Runner, repo: &Path, rev: &str) -> Result<Vec<FileD
     parse_numstat(&output.stdout)
 }
 
-/// Parche de un fichero del working tree o del index (`staged`), opcionalmente
-/// invertido (`-R`) para el "reverse hunk".
+/// Patch of a file from the working tree or the index (`staged`), optionally
+/// reversed (`-R`) for the "reverse hunk".
 pub fn worktree_file_diff(
     runner: &Runner,
     repo: &Path,
@@ -1152,7 +1152,7 @@ pub fn worktree_file_diff(
     Ok(output.stdout_lossy())
 }
 
-/// Parche de un fichero del working tree o del index, en bytes.
+/// Patch of a file from the working tree or the index, in bytes.
 pub fn worktree_diff_bytes(
     runner: &Runner,
     repo: &Path,
@@ -1174,7 +1174,7 @@ pub fn worktree_diff_bytes(
     Ok(output.stdout)
 }
 
-/// Aplica un parche al index por stdin (nunca por fichero temporal).
+/// Applies a patch to the index via stdin (never via a temporary file).
 pub fn apply_index_patch(
     runner: &Runner,
     repo: &Path,
@@ -1202,7 +1202,7 @@ pub fn apply_index_patch(
         .map(|_| ())
 }
 
-/// Stage/unstage parcial: fichero completo o una selección de hunks/líneas.
+/// Partial stage/unstage: whole file or a selection of hunks/lines.
 pub fn stage_selection(
     runner: &Runner,
     repo: &Path,
@@ -1226,9 +1226,9 @@ pub fn stage_selection(
     apply_index_patch(runner, repo, &built, reverse)
 }
 
-/// Aplica un parche al working tree por stdin; con `reverse` lo descarta.
-/// `--unidiff-zero` es necesario porque una selección de líneas puede dejar
-/// el borde del hunk sin contexto; el parche se reconstruye del diff recién leído.
+/// Applies a patch to the working tree via stdin; with `reverse` it discards it.
+/// `--unidiff-zero` is necessary because a line selection can leave the hunk
+/// edge without context; the patch is rebuilt from the diff just read.
 pub fn apply_worktree_patch(
     runner: &Runner,
     repo: &Path,
@@ -1255,7 +1255,7 @@ pub fn apply_worktree_patch(
         .map(|_| ())
 }
 
-/// Descarta una selección de hunks/líneas del working tree (destructivo).
+/// Discards a selection of hunks/lines from the working tree (destructive).
 pub fn discard_selection(
     runner: &Runner,
     repo: &Path,
@@ -1275,7 +1275,7 @@ pub fn discard_selection(
     apply_worktree_patch(runner, repo, &built, true)
 }
 
-/// Parche de un fichero dentro de un commit (funciona también en el commit raíz).
+/// Patch of a file inside a commit (it also works on the root commit).
 pub fn commit_file_diff(
     runner: &Runner,
     repo: &Path,
