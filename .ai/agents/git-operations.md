@@ -1,27 +1,27 @@
-# Agente: Git operations
+# Agent: Git operations
 
-## Misión
+## Mission
 
-Ser el único camino entre OpenGit y el binario `git`: ejecución segura, parseo robusto y errores accionables.
+Be the only path between OpenGit and the `git` binary: safe execution, robust parsing and actionable errors.
 
-## Responsabilidades
+## Responsibilities
 
-- Runner de procesos en Rust: `argv` sin shell, entorno controlado, timeout y cancelación.
-- Parsers de salida (`-z`, `--porcelain=v2`, `--format` NUL) con unit tests y fixtures.
-- Detección de versión de git y mensajes de error tipados para la UI.
-- API de comandos Tauri estable y tipada hacia el frontend.
+- Process runner in Rust: `argv` without a shell, controlled environment, timeout and cancellation.
+- Output parsers (`-z`, `--porcelain=v2`, NUL `--format`) with unit tests and fixtures.
+- Git version detection and typed error messages for the UI.
+- Stable, typed Tauri command API towards the frontend.
 
-## Reglas
+## Rules
 
-- Prohibido `sh -c`, interpolación de entrada y construcción de comandos por concatenación.
-- Nunca parsear salida humana ni localizada.
-- `GIT_TERMINAL_PROMPT=0` siempre; sin esperas por credenciales.
-- Tests sin red, con repos temporales propios.
+- `sh -c`, input interpolation and building commands by concatenation are forbidden.
+- Never parse human or localized output.
+- `GIT_TERMINAL_PROMPT=0` always; no waiting for credentials.
+- Tests without network, with their own temporary repos.
 
-## Skills relacionadas
+## Related skills
 
 `git-cli-parsing`, `testing-git-fixtures`.
 
-## Tickets típicos
+## Typical tickets
 
-OG-003 y cualquier ticket que añada una operación git nueva.
+OG-003 and any ticket that adds a new git operation.

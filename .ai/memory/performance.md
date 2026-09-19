@@ -1,20 +1,20 @@
-# Rendimiento
+# Performance
 
-## Grafo: layout puro + canvas del viewport + filas virtualizadas
+## Graph: pure layout + viewport canvas + virtualized rows
 
-- **Fecha:** 2026-09-18
-- **Contexto:** OG-004 exigía fluidez con 10 000 commits (el punto débil de SourceTree).
-- **Decisiones que importan:**
-  - El layout de lanes es una función pura e incremental (`src/lib/graph/layout.ts`) con estado que se pasa entre páginas; no se recalcula lo ya pintado.
-  - Las lanes tienen **id** y el color vive en un mapa aparte (`colors`), de modo que una rama descubierta más tarde (su tip llega en otra página) repinta toda su línea sin mutar filas.
-  - El canvas dibuja solo las filas del viewport (overscan de 1) y se repinta en cada scroll; la lista DOM solo monta ~viewport + 12 filas.
-  - Test de 10 000 commits en una lane: el layout es lineal en el número de commits y pasa en milisegundos.
-- **Implicación:** cualquier cambio debe mantener el layout incremental y no introducir trabajo por fila total. Si se añade un tercer tipo de borde, extender `GraphEdge.kind` en vez de duplicar lógica en el render.
+- **Date:** 2026-09-18
+- **Context:** OG-004 required smoothness with 10,000 commits (SourceTree's weak spot).
+- **Decisions that matter:**
+  - Lane layout is a pure and incremental function (`src/lib/graph/layout.ts`) with state passed between pages; what's already painted is not recalculated.
+  - Lanes have an **id** and the color lives in a separate map (`colors`), so a branch discovered later (its tip arrives on another page) repaints its whole line without mutating rows.
+  - The canvas draws only the viewport's rows (overscan of 1) and repaints on every scroll; the DOM list only mounts ~viewport + 12 rows.
+  - 10,000-commit test in one lane: the layout is linear in the number of commits and passes in milliseconds.
+- **Implication:** any change must keep the layout incremental and not introduce work per total row. If a third type of edge is added, extend `GraphEdge.kind` instead of duplicating logic in the render.
 
-## Diff con CodeMirror 6
+## Diff with CodeMirror 6
 
-- **Fecha:** 2026-09-18
-- **Contexto:** OG-005; ficheros de miles de líneas sin bloquear la UI.
-- **Diseño:** el parche de git se pide solo del fichero seleccionado; `splitPatch` lo divide en dos documentos para `MergeView` (lado a lado con colapso de tramos sin cambios) o se muestra tal cual con decoraciones por línea (unificado). Los lenguajes se cargan bajo demanda con `@codemirror/language-data`; si la extensión es desconocida, no se carga nada.
-- **Hallazgo:** el bundle principal supera los 500 kB y Vite avisa (CodeMirror + descripciones de lenguajes). No rompe nada; si molesta, separar `DiffEditor` con `import()` dinámico para que el chunk del editor no cargue en la primera pintura.
-- **Implicación:** no calcular diffs en el frontend; solo presentar el parche de git. El parche completo se conserva en el store para que OG-006 pueda trocearlo en hunks.
+- **Date:** 2026-09-18
+- **Context:** OG-005; files of thousands of lines without blocking the UI.
+- **Design:** the git patch is requested only for the selected file; `splitPatch` divides it into two documents for `MergeView` (side by side with collapsing of unchanged runs) or it is shown as-is with per-line decorations (unified). Languages are loaded on demand with `@codemirror/language-data`; if the extension is unknown, nothing is loaded.
+- **Finding:** the main bundle exceeds 500 kB and Vite warns (CodeMirror + language descriptions). It doesn't break anything; if it becomes annoying, split out `DiffEditor` with a dynamic `import()` so the editor chunk doesn't load on first paint.
+- **Implication:** don't compute diffs on the frontend; only present git's patch. The full patch is kept in the store so OG-006 can split it into hunks.

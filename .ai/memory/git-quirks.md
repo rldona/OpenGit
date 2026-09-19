@@ -1,99 +1,99 @@
-# Git — peculiaridades
+# Git — quirks
 
-## El progreso de fetch/push no sale sin TTY
+## fetch/push progress doesn't show without a TTY
 
-- **Fecha:** 2026-09-18
-- **Contexto:** diseñar el panel de salida en streaming para M2.
-- **Hallazgo:** git desactiva el progreso cuando stderr no es una terminal. Con `GIT_PROGRESS_DELAY=0` y `--progress` se fuerza igualmente.
-- **Implicación:** lanzar las operaciones de red con esas variables/flags y parsear el progreso como best-effort; la verdad es el exit code.
+- **Date:** 2026-09-18
+- **Context:** designing the streaming output panel for M2.
+- **Finding:** git disables progress when stderr is not a terminal. With `GIT_PROGRESS_DELAY=0` and `--progress` it's forced anyway.
+- **Implication:** launch network operations with those variables/flags and parse the progress as best-effort; the truth is the exit code.
 
-## `GIT_OPTIONAL_LOCKS=0` en lecturas
+## `GIT_OPTIONAL_LOCKS=0` on reads
 
-- **Fecha:** 2026-09-18
-- **Contexto:** evitar que el watcher de `.git` reaccione a nuestras propias lecturas.
-- **Hallazgo:** `git status` puede refrescar el index y tocar `.git/index` aunque no cambies nada.
-- **Implicación:** exportar `GIT_OPTIONAL_LOCKS=0` en comandos de lectura; el watcher se pausa además durante operaciones propias (OG-010).
+- **Date:** 2026-09-18
+- **Context:** preventing the `.git` watcher from reacting to our own reads.
+- **Finding:** `git status` can refresh the index and touch `.git/index` even if you change nothing.
+- **Implication:** export `GIT_OPTIONAL_LOCKS=0` on read commands; the watcher is also paused during our own operations (OG-010).
 
-## Rutas no-UTF8 en Unix
+## Non-UTF8 paths on Unix
 
-- **Fecha:** 2026-09-18
-- **Contexto:** modelar nombres de fichero entre Rust y JSON.
-- **Hallazgo:** en Unix un path puede ser bytes inválidos como UTF-8; `-z` los entrega tal cual, sin quoting.
-- **Implicación:** no hacer `unwrap()` de `to_str()` en paths; conservar `OsString`/bytes y usar `to_string_lossy` solo para mostrar.
+- **Date:** 2026-09-18
+- **Context:** modeling file names between Rust and JSON.
+- **Finding:** on Unix a path can be bytes that are invalid UTF-8; `-z` delivers them as-is, without quoting.
+- **Implication:** don't `unwrap()` `to_str()` on paths; preserve `OsString`/bytes and use `to_string_lossy` only for display.
 
-## `core.quotepath=false` solo cuando no hay `-z`
+## `core.quotepath=false` only when there is no `-z`
 
-- **Fecha:** 2026-09-18
-- **Contexto:** nombres con acentos salían escapados (`\303\261`) en algunas consultas.
-- **Hallazgo:** git cita los paths non-ASCII en salida no-`-z`; con `-z` no aplica.
-- **Implicación:** preferir siempre `-z`; si un comando no lo soporta, añadir `-c core.quotepath=false`.
+- **Date:** 2026-09-18
+- **Context:** names with accents came out escaped (`\303\261`) in some queries.
+- **Finding:** git quotes non-ASCII paths in non-`-z` output; with `-z` it doesn't apply.
+- **Implication:** always prefer `-z`; if a command doesn't support it, add `-c core.quotepath=false`.
 
-## Mensajes de commit con `-m` y shell
+## Commit messages with `-m` and a shell
 
-- **Fecha:** 2026-09-18
-- **Contexto:** commitear desde la app.
-- **Hallazgo:** interpolar el mensaje en `-m` requiere escapar comillas y rompe saltos de línea.
-- **Implicación:** pasar el mensaje por stdin (`-F -`), nunca concatenado.
+- **Date:** 2026-09-18
+- **Context:** committing from the app.
+- **Finding:** interpolating the message into `-m` requires escaping quotes and breaks line breaks.
+- **Implication:** pass the message via stdin (`-F -`), never concatenated.
 
-## La salida de git no se normaliza si no hay streaming
+## Git output is not normalized when there is no streaming
 
-- **Fecha:** 2026-09-18
-- **Contexto:** OG-011 añadió un lector por líneas para el progreso de fetch/pull/push (que usa `\r`).
-- **Hallazgo:** al trocear también por `\r` en los comandos normales, los parches CRLF perdían el `\r` y `git apply` fallaba (`patch does not apply`). Regresión detectada por los tests de OG-006.
-- **Implicación:** `read_stream` solo normaliza cuando hay sink; sin él, `read_to_end` byte a byte. Cualquier cambio en el runner debe pasar la suite de staging con CRLF.
+- **Date:** 2026-09-18
+- **Context:** OG-011 added a line reader for fetch/pull/push progress (which uses `\r`).
+- **Finding:** when also splitting on `\r` for normal commands, CRLF patches lost the `\r` and `git apply` failed (`patch does not apply`). Regression caught by the OG-006 tests.
+- **Implication:** `read_stream` only normalizes when there is a sink; without it, `read_to_end` byte by byte. Any change to the runner must pass the staging suite with CRLF.
 
-## El tracking exige un remoto configurado, no solo la ref
+## Tracking requires a configured remote, not just the ref
 
-- **Fecha:** 2026-09-18
-- **Contexto:** tests de OG-008 con `refs/remotes/origin/x` creadas con `update-ref`.
-- **Hallazgo:** `git branch --set-upstream-to=origin/x` y `git checkout --track origin/x` fallan con `starting point is not a branch` si no existe un remoto `origin` en la config, aunque la ref remota exista.
-- **Implicación:** en tests, añadir `git remote add origin <ruta-inexistente>` antes (sin red). En la app no aplica porque los remotos vienen del repo del usuario.
+- **Date:** 2026-09-18
+- **Context:** OG-008 tests with `refs/remotes/origin/x` created with `update-ref`.
+- **Finding:** `git branch --set-upstream-to=origin/x` and `git checkout --track origin/x` fail with `starting point is not a branch` if there is no `origin` remote in the config, even though the remote ref exists.
+- **Implication:** in tests, add `git remote add origin <nonexistent-path>` first (no network). In the app it doesn't apply because remotes come from the user's repo.
 
-## La salida de los hooks de commit va a stdout
+## Commit hook output goes to stdout
 
-- **Fecha:** 2026-09-18
-- **Contexto:** OG-007; al fallar un `pre-commit` solo se veía el stderr de git.
-- **Hallazgo:** los hooks escriben sus mensajes en **stdout**; `GitError::CommandFailed` solo guardaba stderr y se perdía la causa real.
-- **Implicación:** `CommandFailed` incluye `stdout` y `stderr`; al mostrar errores, preferir stderr y caer a stdout. El mensaje del commit se pasa por stdin (`--file=-`), sin `--no-verify`.
+- **Date:** 2026-09-18
+- **Context:** OG-007; when a `pre-commit` failed, only git's stderr was visible.
+- **Finding:** hooks write their messages to **stdout**; `GitError::CommandFailed` only saved stderr and the real cause was lost.
+- **Implication:** `CommandFailed` includes `stdout` and `stderr`; when showing errors, prefer stderr and fall back to stdout. The commit message is passed via stdin (`--file=-`), without `--no-verify`.
 
-## Stage parcial: un `-` descartado debe pasar a contexto
+## Partial staging: a discarded `-` must become context
 
-- **Fecha:** 2026-09-18
-- **Contexto:** reconstrucción de parches por líneas en OG-006.
-- **Hallazgo:** si se deselecciona la línea `-vieja` de un par `-vieja/+nueva`, el index sigue teniendo `vieja`; emitir el parche sin ella rompe el contexto posterior (`error: patch does not apply`). Hay que emitirla como contexto (` vieja`). Los `+` descartados se omiten sin más, y los marcadores `\ No newline at end of file` solo valen si su línea sigue en el parche.
-- **Hallazgo 2:** git fusiona en un solo hunk los cambios separados por menos de 2×contexto (por defecto 3 líneas); al escribir tests de hunks hay que separarlos más de 6 líneas.
-- **Implicación:** implementado y cubierto en `git::patch::ParsedPatch::build`; cualquier cambio ahí exige pasar los tests de CRLF y sin newline final.
+- **Date:** 2026-09-18
+- **Context:** line-by-line patch reconstruction in OG-006.
+- **Finding:** if you deselect the `-old` line of an `-old/+new` pair, the index still has `old`; emitting the patch without it breaks the following context (`error: patch does not apply`). It must be emitted as context (` old`). Discarded `+` lines are simply omitted, and `\ No newline at end of file` markers are only valid if their line is still in the patch.
+- **Finding 2:** git merges changes separated by less than 2×context (3 lines by default) into a single hunk; when writing hunk tests you must separate them by more than 6 lines.
+- **Implication:** implemented and covered in `git::patch::ParsedPatch::build`; any change there requires passing the CRLF and no-final-newline tests.
 
-## Formatos exactos con `-z` (log, status, numstat)
+## Exact formats with `-z` (log, status, numstat)
 
-- **Fecha:** 2026-09-18
-- **Contexto:** parsers de OG-003; los detalles no obvios se verificaron con fixtures reales.
-- **Hallazgo:**
-  - `git log -z --format=...`: `-z` separa los commits con NUL (además de los separadores del formato); con `%x1f` entre campos queda un stream de tokens limpio.
-  - Rename en `status --porcelain=v2 -z`: la ruta nueva cierra el registro y la original es el **siguiente token** NUL, no un campo del mismo token.
-  - Rename en `diff --numstat -z`: el token de contadores lleva la ruta vacía (`1\t0\t`) y las dos rutas van en los dos tokens siguientes.
-- **Implicación:** parsear por tokens secuenciales con índice, no pre-dividir registros asumiendo un NUL por entrada. Los fixtures reales están en `src-tauri/tests/fixtures/` y se regeneran con `generate.sh`.
+- **Date:** 2026-09-18
+- **Context:** OG-003 parsers; the non-obvious details were verified with real fixtures.
+- **Finding:**
+  - `git log -z --format=...`: `-z` separates commits with NUL (in addition to the format separators); with `%x1f` between fields you get a clean token stream.
+  - Rename in `status --porcelain=v2 -z`: the new path closes the record and the original is the **next token** NUL, not a field of the same token.
+  - Rename in `diff --numstat -z`: the counters token carries the empty path (`1\t0\t`) and both paths are in the next two tokens.
+- **Implication:** parse by sequential tokens with an index, don't pre-split records assuming one NUL per entry. The real fixtures are in `src-tauri/tests/fixtures/` and are regenerated with `generate.sh`.
 
-## Rebase interactivo sin editor: GIT_SEQUENCE_EDITOR y reword con `exec`
+## Interactive rebase without an editor: GIT_SEQUENCE_EDITOR and reword with `exec`
 
-- **Fecha:** 2026-09-18
-- **Contexto:** OG-021; hay que ejecutar `git rebase -i` con un plan generado por la app, sin abrir editores.
-- **Hallazgo:**
-  - `GIT_SEQUENCE_EDITOR="cp '<todo>'"` funciona: git invoca `<editor> <fichero-todo>`, así que `cp` recibe origen y destino. El todo vive en el directorio de datos de la app, nunca en el repo.
-  - La acción `reword` abre el editor de mensajes, que choca con el `GIT_EDITOR=true` que usamos para aceptar los mensajes por defecto del squash. Se resuelve emitiendo `pick <sha>` + `exec git commit --amend -F '<mensaje>'`; así cada reword (en v1, uno) tiene su mensaje sin editor.
-  - En un squash, el asunto resultante es el del commit **anterior** (el que recibe), no el del squashado: `pick c1; squash c2` deja el asunto de c1 y el mensaje de c2 en el cuerpo.
-- **Implicación:** el todo-list es un detalle interno de `interactive_rebase`; cualquier cambio debe cubrir squash/fixup, drop, reword, reordenar y conflicto con abort.
+- **Date:** 2026-09-18
+- **Context:** OG-021; `git rebase -i` must run with a plan generated by the app, without opening editors.
+- **Finding:**
+  - `GIT_SEQUENCE_EDITOR="cp '<todo>'"` works: git invokes `<editor> <todo-file>`, so `cp` receives source and destination. The todo lives in the app's data directory, never in the repo.
+  - The `reword` action opens the message editor, which clashes with the `GIT_EDITOR=true` we use to accept squash's default messages. It is solved by emitting `pick <sha>` + `exec git commit --amend -F '<message>'`; that way each reword (in v1, one) has its message without an editor.
+  - In a squash, the resulting subject is that of the **previous** commit (the one that receives), not that of the squashed one: `pick c1; squash c2` leaves c1's subject and c2's message in the body.
+- **Implication:** the todo-list is an internal detail of `interactive_rebase`; any change must cover squash/fixup, drop, reword, reordering and conflict with abort.
 
-## Submódulos locales: `protocol.file.allow` y dónde vive el clon
+## Local submodules: `protocol.file.allow` and where the clone lives
 
-- **Fecha:** 2026-09-18
-- **Contexto:** tests de `git submodule status` (OG-024) con repos locales, sin red.
-- **Hallazgo:** desde git 2.38.1 el protocolo `file://` está restringido y `git submodule add <ruta-local>` falla sin `-c protocol.file.allow=always`. Además, un commit en el repo origen **no mueve el submódulo**: `submodule add` clona en `<super>/.git/modules/<path>`; el estado `+` (different commit) solo aparece al commitear dentro de `super/<path>`. El `-` de `deinit` y el espacio de clean se calculan contra el gitlink del índice del superproyecto.
-- **Implicación:** los tests de submódulos usan `protocol.file.allow=always` y commitean en el clon del submódulo (no en el repo origen).
+- **Date:** 2026-09-18
+- **Context:** `git submodule status` tests (OG-024) with local repos, without network.
+- **Finding:** since git 2.38.1 the `file://` protocol is restricted and `git submodule add <local-path>` fails without `-c protocol.file.allow=always`. Moreover, a commit in the origin repo **does not move the submodule**: `submodule add` clones into `<super>/.git/modules/<path>`; the `+` state (different commit) only appears when committing inside `super/<path>`. `deinit`'s `-` and clean's space are computed against the gitlink of the superproject's index.
+- **Implication:** submodule tests use `protocol.file.allow=always` and commit in the submodule clone (not in the origin repo).
 
-## Parches recortados por líneas: `git apply --unidiff-zero`
+## Line-trimmed patches: `git apply --unidiff-zero`
 
-- **Fecha:** 2026-09-18
-- **Contexto:** OG-031, descartar hunks/líneas reconstruyendo el parche del diff y aplicándolo invertido al working tree.
-- **Hallazgo:** al seleccionar líneas sueltas, el hunk reconstruido puede quedar con un borde sin contexto (p. ej. termina en `+linea`). `git apply` rechaza esos hunks con «patch does not apply» aunque el contenido coincida, tanto en forward como en `--reverse`, salvo que se pase `--unidiff-zero`.
-- **Implicación:** los aplicadores de stage (`--cached`) y discard (worktree) usan `--unidiff-zero`; la seguridad viene de reconstruir el parche desde el diff recién leído, no de la heurística de contexto de git.
+- **Date:** 2026-09-18
+- **Context:** OG-031, discarding hunks/lines by reconstructing the diff patch and applying it in reverse to the working tree.
+- **Finding:** when selecting loose lines, the reconstructed hunk can end up with an edge without context (e.g. ending in `+line`). `git apply` rejects those hunks with "patch does not apply" even if the content matches, both forward and `--reverse`, unless `--unidiff-zero` is passed.
+- **Implication:** the stage (`--cached`) and discard (worktree) appliers use `--unidiff-zero`; safety comes from reconstructing the patch from the freshly read diff, not from git's context heuristic.

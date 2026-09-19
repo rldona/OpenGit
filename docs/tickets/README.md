@@ -94,4 +94,4 @@ One file per ticket, named `OG-NNN-slug.md`. Every change in the repository star
 | [OG-059](OG-059-merge-estrategias.md) | Merge strategies and Merge in the native menu | M8 | ready |
 | [OG-060](OG-060-drag-and-drop.md) | Drag & drop for merge and staging | M8 | ready |
 | [OG-061](OG-061-image-preview.md) | Image preview and comparison | M8 | done |
-| [OG-062](OG-062-english-translation.md) | Translate the project to English | M8 | in progress |
+| [OG-062](OG-062-english-translation.md) | Translate the project to English | M8 | done |

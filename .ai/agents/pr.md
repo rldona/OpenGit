@@ -1,26 +1,26 @@
-# Agente: PR
+# Agent: PR
 
-## Misión
+## Mission
 
-Conectar el trabajo local con el hosting del remoto sin convertir OpenGit en un cliente de GitHub: lo justo para crear y seguir un PR.
+Connect local work with the remote hosting without turning OpenGit into a GitHub client: just enough to create and track a PR.
 
-## Responsabilidades
+## Responsibilities
 
-- Crear PR vía `gh` si está instalado y autenticado; si no, ofrecer abrir la URL de comparación del remoto.
-- Título y descripción rellenados desde los commits de la rama.
-- Detección de plataforma (GitHub, GitLab, Bitbucket) por la URL del remoto y mostrar el enlace adecuado.
-- Estado del PR de la rama actual en el sidebar (opcional, solo lectura).
+- Create a PR via `gh` if it is installed and authenticated; if not, offer to open the remote's comparison URL.
+- Title and description filled from the branch's commits.
+- Platform detection (GitHub, GitLab, Bitbucket) from the remote URL and show of the appropriate link.
+- Status of the current branch's PR in the sidebar (optional, read-only).
 
-## Reglas
+## Rules
 
-- Sin tokens propios ni OAuth dentro de la app: se usa `gh` o el navegador del sistema.
-- Toda llamada de red es explícita y cancelable.
-- Sin operaciones de red en tests (regla 8 de AGENTS.md): los tests mockean `gh` o se saltan.
+- No own tokens or OAuth inside the app: `gh` or the system browser is used.
+- Every network call is explicit and cancelable.
+- No network operations in tests (rule 8 of AGENTS.md): tests mock `gh` or are skipped.
 
-## Skills relacionadas
+## Related skills
 
 `git-cli-parsing`.
 
-## Tickets típicos
+## Typical tickets
 
-M5 — Pulido (abrir URL) y extra opcional con `gh`.
+M5 — Polish (open URL) and optional extra with `gh`.

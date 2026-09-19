@@ -1,29 +1,29 @@
 # Tauri
 
-## `app_data_dir` para el estado persistido
+## `app_data_dir` for persisted state
 
-- **Fecha:** 2026-09-18
-- **Contexto:** persistir los repositorios recientes (OG-002) sin escribir en el repo del usuario.
-- **Hallazgo:** `app.path().app_data_dir()` resuelve a `~/Library/Application Support/<identifier>` en macOS (equivalentes en Windows/Linux) y es la misma ruta en dev y en release. Hay que crear la carpeta antes de escribir.
-- **Implicación:** `recent_repos.json` vive ahí vía `AppState`; los tests inyectan una ruta temporal en `Recents`, nunca la real.
+- **Date:** 2026-09-18
+- **Context:** persisting recent repositories (OG-002) without writing to the user's repo.
+- **Finding:** `app.path().app_data_dir()` resolves to `~/Library/Application Support/<identifier>` on macOS (equivalents on Windows/Linux) and is the same path in dev and in release. The folder must be created before writing.
+- **Implication:** `recent_repos.json` lives there via `AppState`; tests inject a temporary path into `Recents`, never the real one.
 
-## Los plugins requieren permiso explícito en capabilities
+## Plugins require explicit permission in capabilities
 
-- **Fecha:** 2026-09-18
-- **Contexto:** selector nativo de carpetas con `tauri-plugin-dialog`.
-- **Hallazgo:** sin `dialog:allow-open` en `src-tauri/capabilities/default.json` el comando compila pero `open()` falla en runtime con un error de permisos.
-- **Implicación:** al añadir un plugin, añadir a la capability el permiso mínimo que use la UI (no `*:default` por comodidad).
+- **Date:** 2026-09-18
+- **Context:** native folder picker with `tauri-plugin-dialog`.
+- **Finding:** without `dialog:allow-open` in `src-tauri/capabilities/default.json` the command compiles but `open()` fails at runtime with a permissions error.
+- **Implication:** when adding a plugin, add to the capability the minimum permission used by the UI (not `*:default` for convenience).
 
-## Abrir URLs externas: `tauri-plugin-opener` con scope
+## Opening external URLs: `tauri-plugin-opener` with scope
 
-- **Fecha:** 2026-09-18
-- **Contexto:** OG-034, abrir la URL del remoto en el navegador del sistema.
-- **Hallazgo:** `window.open` abriría una ventana del WebView; la vía oficial en Tauri 2 es `tauri-plugin-opener`. El permiso admite scope por URL: `{ "identifier": "opener:allow-open-url", "allow": [{ "url": "https://*" }, { "url": "http://*" }] }`; sin él, el plugin compila pero falla en runtime. El build de Tauri valida la capability al compilar.
-- **Implicación:** para acciones externas, usar el plugin con permiso limitado al esquema necesario; nunca `opener:default` sin scope si solo se abren URLs web.
+- **Date:** 2026-09-18
+- **Context:** OG-034, opening the remote URL in the system browser.
+- **Finding:** `window.open` would open a WebView window; the official way in Tauri 2 is `tauri-plugin-opener`. The permission supports per-URL scope: `{ "identifier": "opener:allow-open-url", "allow": [{ "url": "https://*" }, { "url": "http://*" }] }`; without it, the plugin compiles but fails at runtime. The Tauri build validates the capability at compile time.
+- **Implication:** for external actions, use the plugin with a permission limited to the necessary scheme; never `opener:default` without scope if you only open web URLs.
 
-## Los comandos del núcleo (`core:*`) también necesitan permiso, y fallan en silencio
+## Core commands (`core:*`) also need permission, and they fail silently
 
-- **Fecha:** 2026-09-18
-- **Contexto:** OG-041; la barra de título seguía poniendo "OpenGit" con un repo abierto, pese a que `App.tsx` llamaba a `setWindowTitle(repo.root)` desde OG-035.
-- **Hallazgo:** `core:default` **no** incluye todos los comandos del núcleo. En `core:window`, el permiso por defecto trae `allow-title` (leer el título) pero no `allow-set-title` (escribirlo). A diferencia de los plugins, aquí es fácil suponer que `core:default` lo cubre todo. El error de ACL llega como rechazo de la promesa de `invoke`, y un `.catch(() => {})` lo hace invisible: la feature parecía implementada y estaba muerta desde hacía un hito entero.
-- **Implicación:** dos reglas. (1) Comprobar los permisos concretos de `core:*`, no fiarse de `core:default`; se listan en `src-tauri/gen/schemas/acl-manifests.json` bajo `default_permission.permissions`. (2) **Nunca tragarse en silencio el error de una llamada IPC**: si no se puede tratar, mandarlo al panel de Output. Un catch vacío sobre `invoke` esconde errores de configuración, que son permanentes, no esporádicos.
+- **Date:** 2026-09-18
+- **Context:** OG-041; the title bar still said "OpenGit" with a repo open, even though `App.tsx` called `setWindowTitle(repo.root)` since OG-035.
+- **Finding:** `core:default` does **not** include all core commands. In `core:window`, the default permission brings `allow-title` (read the title) but not `allow-set-title` (write it). Unlike plugins, here it's easy to assume `core:default` covers everything. The ACL error arrives as a rejection of the `invoke` promise, and a `.catch(() => {})` makes it invisible: the feature seemed implemented and had been dead for a whole milestone.
+- **Implication:** two rules. (1) Check the specific permissions of `core:*`, don't trust `core:default`; they are listed in `src-tauri/gen/schemas/acl-manifests.json` under `default_permission.permissions`. (2) **Never silently swallow the error of an IPC call**: if it can't be handled, send it to the Output panel. An empty catch over `invoke` hides configuration errors, which are permanent, not sporadic.

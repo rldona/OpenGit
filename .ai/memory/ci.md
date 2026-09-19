@@ -1,22 +1,22 @@
 # CI
 
-## macOS factura 10× en GitHub Actions
+## macOS is billed 10× on GitHub Actions
 
-- **Fecha:** 2026-09-18
-- **Contexto:** OG-001 lanzaba frontend + Rust + build en macOS, Ubuntu y Windows en cada push al PR (~8–9 min de reloj).
-- **Hallazgo:** GitHub Actions factura macOS a 10× y Windows a 2× sobre los minutos de Linux. Las builds de los tres SO eran el cuello de botella, no la validación en sí (frontend 15 s, Rust 2m44s).
-- **Implicación:** OG-012 separó los workflows: `ci.yml` (frontend + Rust, solo Ubuntu) en cada PR y `build.yml` (`workflow_dispatch`, matriz de 3 SO, `--no-bundle`, artefactos) a demanda. Revisar si cambia la política de facturación.
+- **Date:** 2026-09-18
+- **Context:** OG-001 ran frontend + Rust + build on macOS, Ubuntu and Windows on every push to the PR (~8–9 min wall clock).
+- **Finding:** GitHub Actions bills macOS at 10× and Windows at 2× the Linux minutes. Building on the three OSes was the bottleneck, not the validation itself (frontend 15 s, Rust 2m44s).
+- **Implication:** OG-012 split the workflows: `ci.yml` (frontend + Rust, Ubuntu only) on every PR and `build.yml` (`workflow_dispatch`, 3-OS matrix, `--no-bundle`, artifacts) on demand. Review if the billing policy changes.
 
-## paths-ignore y required checks
+## paths-ignore and required checks
 
-- **Fecha:** 2026-09-18
-- **Contexto:** filtrado de commits que solo tocan docs en `ci.yml`.
-- **Hallazgo:** con `paths-ignore`, un cambio solo de docs no dispara el workflow; si hubiera required checks configurados, el merge se quedaría esperando un check que nunca llega.
-- **Implicación:** ahora no hay branch protection, así que es seguro. Si se activa, quitar el filtro o sustituirlo por un job ligero de detección de cambios.
+- **Date:** 2026-09-18
+- **Context:** filtering commits that only touch docs in `ci.yml`.
+- **Finding:** with `paths-ignore`, a docs-only change doesn't trigger the workflow; if required checks were configured, the merge would sit waiting for a check that never arrives.
+- **Implication:** right now there is no branch protection, so it's safe. If it's enabled, remove the filter or replace it with a lightweight change-detection job.
 
-## Test de watcher flaky en CI
+## Flaky watcher test in CI
 
-- **Fecha:** 2026-09-18
-- **Contexto:** el PR #34 (solo UI) falló en el job Rust con `watch::la_pausa_silencia_los_cambios_propios` («no debe emitir en pausa»).
-- **Hallazgo:** el test depende del timing real de inotify/FSEvents y puede fallar sin cambios de código; `gh run rerun --failed` pasó a la primera.
-- **Implicación:** ante ese fallo, reejecutar antes de sospechar del cambio. Si se repite, hacerlo determinista (esperar el primer evento con timeout mayor en vez de dormir una cantidad fija).
+- **Date:** 2026-09-18
+- **Context:** PR #34 (UI only) failed in the Rust job with `watch::la_pausa_silencia_los_cambios_propios` ("must not emit while paused").
+- **Finding:** the test depends on the real timing of inotify/FSEvents and can fail without code changes; `gh run rerun --failed` passed on the first try.
+- **Implication:** on that failure, rerun before suspecting the change. If it repeats, make it deterministic (wait for the first event with a longer timeout instead of sleeping a fixed amount).

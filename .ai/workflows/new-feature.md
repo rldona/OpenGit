@@ -1,11 +1,11 @@
-# Workflow: nueva feature
+# Workflow: new feature
 
-1. **Ticket primero.** Si no existe `OG-NNN`, créalo en `docs/tickets/` con contexto, alcance y criterios de aceptación. Sin ticket no hay rama.
-2. **Estado y dependencias.** Comprueba que sus dependencias están `done`. Pásalo a `in-progress` y actualiza el índice de `docs/tickets/README.md`.
-3. **Rama.** `feat/OG-NNN-slug` (o `fix/`, `chore/`, `docs/`).
-4. **Consulta contexto.** Lee `docs/architecture/overview.md`, los ADRs aplicables y las skills del área (`.ai/skills/`). Si la tarea toca un área con agente definido (`.ai/agents/`), carga su brief.
-5. **Implementa en vertical.** Cambio mínimo que cumpla los criterios; tests a la vez, no después.
-6. **Verifica.**
+1. **Ticket first.** If `OG-NNN` does not exist, create it in `docs/tickets/` with context, scope and acceptance criteria. No ticket, no branch.
+2. **Status and dependencies.** Check that its dependencies are `done`. Move it to `in-progress` and update the `docs/tickets/README.md` index.
+3. **Branch.** `feat/OG-NNN-slug` (or `fix/`, `chore/`, `docs/`).
+4. **Consult context.** Read `docs/architecture/overview.md`, the applicable ADRs and the skills for the area (`.ai/skills/`). If the task touches an area with a defined agent (`.ai/agents/`), load its brief.
+5. **Implement vertically.** Minimal change that meets the criteria; tests at the same time, not afterwards.
+6. **Verify.**
 
    ```bash
    npm run lint && npm run typecheck && npm run test
@@ -13,7 +13,7 @@
    cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings
    ```
 
-7. **Cierre.** Ticket a `done`, actualiza el índice. Commit(s) en Conventional Commits con scope. PR con `Closes OG-NNN`.
-8. **Memoria.** Si aprendiste algo no obvio (git, plataforma, rendimiento), anótalo en `.ai/memory/`.
+7. **Close.** Ticket to `done`, update the index. Commit(s) in Conventional Commits with scope. PR with `Closes OG-NNN`.
+8. **Memory.** If you learned something non-obvious (git, platform, performance), note it in `.ai/memory/`.
 
-Regla de oro: si durante la implementación descubres que el ticket estaba mal definido, se corrige el ticket antes de seguir; no se improvisa alcance.
+Golden rule: if during the implementation you discover that the ticket was badly defined, the ticket is fixed before continuing; scope is not improvised.
