@@ -54,6 +54,7 @@ describe("useUpdateStore", () => {
 
     await useUpdateStore.getState().check({ manual: true });
     expect(useUpdateStore.getState().status).toBe("error");
+    expect(useUpdateStore.getState().detail).toContain("offline");
   });
 
   it("skips automatic checks within 24h but never manual ones", async () => {

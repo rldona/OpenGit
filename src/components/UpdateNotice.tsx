@@ -7,6 +7,7 @@ import { useUpdateStore } from "../lib/stores/update";
 export function UpdateNotice() {
   const status = useUpdateStore((state) => state.status);
   const version = useUpdateStore((state) => state.version);
+  const detail = useUpdateStore((state) => state.detail);
   const openDownload = useUpdateStore((state) => state.openDownload);
   const check = useUpdateStore((state) => state.check);
   const dismiss = useUpdateStore((state) => state.dismiss);
@@ -41,7 +42,7 @@ export function UpdateNotice() {
       {status === "error" && (
         <>
           <span>
-            Could not check for updates.{" "}
+            Could not check for updates.{detail ? ` ${detail}` : ""}{" "}
             <button
               type="button"
               className="update-action"
