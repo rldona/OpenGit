@@ -1,7 +1,7 @@
 # OG-048 · Identidad visual (badges, iconos, fechas)
 
 - **Milestone:** M7 — Paridad SourceTree (fase 2)
-- **Estado:** ready
+- **Estado:** done
 - **Depende de:** —
 - **Referencias:** ROADMAP.md, OG-022, OG-037
 

@@ -91,6 +91,12 @@ export type JobFinishedEvent = {
   cancelled: boolean;
 };
 
+/** Resultado de un merge: `conflicted` deja el flujo de OG-019/OG-020. */
+export type MergeResult = {
+  conflicted: boolean;
+  output: string;
+};
+
 /** Identidad efectiva que git usaría al firmar un commit. */
 export type AuthorIdent = {
   name: string;

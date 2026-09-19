@@ -1,10 +1,11 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { confirmDestructive } from "../lib/bridge/dialog";
 import { startRemoteJob } from "../lib/bridge/jobs";
 import { listRefs, logPage } from "../lib/bridge/log";
 import { openExternal } from "../lib/bridge/opener";
-import { checkoutRef } from "../lib/bridge/refs";
+import { checkoutRef, mergeBranch } from "../lib/bridge/refs";
 import { tagCreate, tagDelete } from "../lib/bridge/tags";
 import type { RefEntry, Remote, RepoInfo } from "../lib/bridge/types";
 import { useExtrasStore } from "../lib/stores/extras";
@@ -27,6 +28,7 @@ vi.mock("../lib/bridge/refs", () => ({
   createBranch: vi.fn(),
   renameBranch: vi.fn(),
   deleteBranch: vi.fn(),
+  mergeBranch: vi.fn().mockResolvedValue({ conflicted: false, output: "" }),
 }));
 
 vi.mock("../lib/bridge/log", () => ({
@@ -296,6 +298,29 @@ describe("RefsSidebar", () => {
     expect(within(menu).getByRole("menuitem", { name: "Rename" })).toBeInTheDocument();
     expect(within(menu).getByRole("menuitem", { name: "Delete" })).toBeInTheDocument();
     expect(within(menu).getByRole("menuitem", { name: "Copy name" })).toBeInTheDocument();
+  });
+
+  it("fusiona una rama en la actual desde el menú contextual", async () => {
+    const user = userEvent.setup();
+    vi.mocked(mergeBranch).mockResolvedValue({ conflicted: false, output: "" });
+    vi.mocked(confirmDestructive).mockResolvedValue(true);
+    render(<RefsSidebar />);
+    await screen.findByText("feature");
+
+    fireEvent.contextMenu(screen.getByText("feature"));
+    await user.click(screen.getByRole("menuitem", { name: "Merge into main" }));
+
+    expect(confirmDestructive).toHaveBeenCalledWith("Merge feature into main?");
+    expect(mergeBranch).toHaveBeenCalledWith("/tmp/repo", "feature", false);
+  });
+
+  it("no ofrece fusionar la rama actual en sí misma", async () => {
+    render(<RefsSidebar />);
+    await screen.findByText("feature");
+
+    fireEvent.contextMenu(screen.getByText("main"));
+
+    expect(screen.getByRole("menuitem", { name: "Merge into main" })).toBeDisabled();
   });
 
   it("abre el menú de la sección Branches con el botón derecho", async () => {
