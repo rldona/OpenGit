@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
 import { pickDirectory } from "./lib/bridge/dialog";
+import { openExternal } from "./lib/bridge/opener";
 import { startRemoteJob } from "./lib/bridge/jobs";
 import { readConflictFile } from "./lib/bridge/conflict";
 import { subscribeRepoEvents } from "./lib/bridge/events";
@@ -17,6 +18,7 @@ import { statusRepo } from "./lib/bridge/status";
 import { stashList } from "./lib/bridge/stash";
 import type { Commit, RepoInfo, StatusReport } from "./lib/bridge/types";
 import { useDiffStore } from "./lib/stores/diff";
+import { useUpdateStore } from "./lib/stores/update";
 import { useCommitStore } from "./lib/stores/commit";
 import { useExtrasStore } from "./lib/stores/extras";
 import { useLogStore } from "./lib/stores/log";
@@ -30,6 +32,16 @@ import { THEME_STORAGE_KEY } from "./lib/theme";
 vi.mock("./lib/bridge/dialog", () => ({
   pickDirectory: vi.fn(),
   confirmDestructive: vi.fn().mockResolvedValue(true),
+}));
+
+vi.mock("./lib/bridge/app", () => ({
+  appVersion: vi.fn().mockResolvedValue("0.3.1"),
+}));
+
+vi.mock("./lib/bridge/opener", () => ({
+  openExternal: vi.fn().mockResolvedValue(undefined),
+  openTerminal: vi.fn().mockResolvedValue(undefined),
+  revealInFileManager: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("./lib/bridge/rebase", () => ({
@@ -214,6 +226,9 @@ describe("App", () => {
       rebase_total: null,
     });
     useRepoStore.setState({ repo: null, recents: [], openTabs: [], loading: false, error: null });
+    useUpdateStore.getState().reset();
+    // The startup update check must never touch the network in tests.
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("offline")));
     useCommitStore.getState().reset();
     useExtrasStore.getState().reset();
     useLogStore.getState().reset();
@@ -843,6 +858,20 @@ describe("App", () => {
 
     act(() => menuMock.handler?.("toggle-output"));
     expect(screen.getByRole("region", { name: "Output" })).toBeInTheDocument();
+  });
+
+  it("checks for updates from the native menu and offers the download", async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(JSON.stringify({ tag_name: "v0.4.0" }), { status: 200 }),
+    );
+    render(<App />);
+
+    act(() => menuMock.handler?.("check-updates"));
+
+    expect(await screen.findByText(/is available\./)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Download" }));
+    expect(openExternal).toHaveBeenCalledWith("https://github.com/rldona/OpenGit/releases/latest");
   });
 
   it("opens the Merge window from the native menu", async () => {

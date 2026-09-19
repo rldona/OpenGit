@@ -20,6 +20,7 @@ import { StashSidebar } from "./components/StashSidebar";
 import { StashView } from "./components/StashView";
 import { StatusView } from "./components/StatusView";
 import { Toolbar } from "./components/Toolbar";
+import { UpdateNotice } from "./components/UpdateNotice";
 import { confirmDestructive } from "./lib/bridge/dialog";
 import { subscribeMenuEvents } from "./lib/bridge/events";
 import { openExternal } from "./lib/bridge/opener";
@@ -38,6 +39,7 @@ import { syncAutoRefresh } from "./lib/stores/settings";
 import { useStatusStore } from "./lib/stores/status";
 import { useThemeStore } from "./lib/stores/theme";
 import { useUiStore } from "./lib/stores/ui";
+import { useUpdateStore } from "./lib/stores/update";
 
 const PROJECT_URL = "https://github.com/rldona/OpenGit";
 
@@ -112,6 +114,12 @@ function App() {
   useEffect(() => {
     void loadRecents();
   }, [loadRecents]);
+
+  useEffect(() => {
+    // Silent update check on startup (OG-077): only notifies when a newer
+    // release exists; the store skips it when the 24h cache is fresh.
+    void useUpdateStore.getState().check();
+  }, []);
 
   useEffect(() => {
     // The stored "Automatically refresh" preference has to reach the watcher.
@@ -235,6 +243,10 @@ function App() {
       case "documentation":
         void openExternal(PROJECT_URL);
         break;
+      case "check-updates":
+      case "check-updates-help":
+        void useUpdateStore.getState().check({ manual: true });
+        break;
       default:
         break;
     }
@@ -300,6 +312,8 @@ function App() {
       {repo && <OpBanner />}
 
       <RepoTabs />
+
+      <UpdateNotice />
 
       <SplitPane
         className="workspace"
