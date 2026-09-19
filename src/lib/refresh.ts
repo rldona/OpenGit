@@ -1,4 +1,5 @@
 import { useCommitStore } from "./stores/commit";
+import { useDiffStore } from "./stores/diff";
 import { useExtrasStore } from "./stores/extras";
 import { useLogStore } from "./stores/log";
 import { useRefsStore } from "./stores/refs";
@@ -19,6 +20,9 @@ export async function refreshRepo(root: string): Promise<void> {
     useRefsStore.getState().refresh(root),
     useExtrasStore.getState().refresh(root),
     useStashStore.getState().refresh(root),
+    // Keep the worktree file list with the badge (OG-072); it no-ops unless
+    // the diff view shows this repository's working tree.
+    useDiffStore.getState().refreshWorktree(root),
     // An operation may have finished outside the app: keep the banner honest.
     useCommitStore.getState().refreshOpState(root),
   ]);

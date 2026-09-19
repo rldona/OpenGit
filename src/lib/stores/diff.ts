@@ -12,7 +12,7 @@ import {
 } from "../bridge/diff";
 import { formatGitError } from "../bridge/errors";
 import { statusRepo } from "../bridge/status";
-import type { FileDiff } from "../bridge/types";
+import type { FileDiff, StatusReport } from "../bridge/types";
 import { isBinaryPatch } from "../diff/patch";
 import { isImagePath } from "../images";
 import { useStatusStore } from "./status";
@@ -50,6 +50,12 @@ type DiffState = {
   error: string | null;
   openWorktree: (root: string) => Promise<void>;
   openWorktreeFile: (root: string, file: string, staged?: boolean) => Promise<void>;
+  /**
+   * Silent rebuild of the worktree file list after the watcher (OG-072):
+   * keeps the selection when the file is still there instead of jumping to
+   * the first file like `openWorktree` does.
+   */
+  refreshWorktree: (root: string) => Promise<void>;
   openCommit: (root: string, rev: string) => Promise<void>;
   /** Diff between two revisions (OG-054). */
   openCompare: (root: string, base: string, rev: string) => Promise<void>;
@@ -77,6 +83,52 @@ function indexByPath(diffs: FileDiff[]): Map<string, FileDiff> {
     }
   }
   return map;
+}
+
+/** Worktree file rows from one status snapshot plus both numstats. */
+function buildWorktreeFiles(
+  report: StatusReport,
+  unstaged: FileDiff[],
+  staged: FileDiff[],
+): DiffFileEntry[] {
+  const stagedMap = indexByPath(staged);
+  const unstagedMap = indexByPath(unstaged);
+  const files: DiffFileEntry[] = [];
+  for (const entry of report.entries) {
+    if (entry.kind === "untracked") {
+      files.push({
+        key: `worktree:${entry.path}`,
+        path: entry.path,
+        orig_path: null,
+        added: null,
+        deleted: null,
+        binary: false,
+        untracked: true,
+        staged: false,
+      });
+      continue;
+    }
+    // A conflict is not shown twice (index and worktree sides): it has its
+    // own editor, and duplicating the path broke the file tree keys.
+    const sides = entry.kind === "unmerged" ? ([false] as const) : ([true, false] as const);
+    for (const stagedSide of sides) {
+      const present = stagedSide ? entry.xy[0] !== "." : entry.xy[1] !== ".";
+      if (!present) continue;
+      const counts = (stagedSide ? stagedMap : unstagedMap).get(entry.path);
+      files.push({
+        key: `${stagedSide ? "index" : "worktree"}:${entry.path}`,
+        path: entry.path,
+        orig_path: entry.orig_path,
+        added: counts?.added ?? null,
+        deleted: counts?.deleted ?? null,
+        binary: counts?.binary ?? false,
+        untracked: false,
+        staged: stagedSide,
+      });
+    }
+  }
+  files.sort((a, b) => a.path.localeCompare(b.path));
+  return files;
 }
 
 /**
@@ -112,43 +164,7 @@ export const useDiffStore = create<DiffState>((set, get) => ({
       if (token !== openToken) {
         return;
       }
-      const stagedMap = indexByPath(staged);
-      const unstagedMap = indexByPath(unstaged);
-      const files: DiffFileEntry[] = [];
-      for (const entry of report.entries) {
-        if (entry.kind === "untracked") {
-          files.push({
-            key: `worktree:${entry.path}`,
-            path: entry.path,
-            orig_path: null,
-            added: null,
-            deleted: null,
-            binary: false,
-            untracked: true,
-            staged: false,
-          });
-          continue;
-        }
-        // A conflict is not shown twice (index and worktree sides): it has its
-        // own editor, and duplicating the path broke the file tree keys.
-        const sides = entry.kind === "unmerged" ? ([false] as const) : ([true, false] as const);
-        for (const stagedSide of sides) {
-          const present = stagedSide ? entry.xy[0] !== "." : entry.xy[1] !== ".";
-          if (!present) continue;
-          const counts = (stagedSide ? stagedMap : unstagedMap).get(entry.path);
-          files.push({
-            key: `${stagedSide ? "index" : "worktree"}:${entry.path}`,
-            path: entry.path,
-            orig_path: entry.orig_path,
-            added: counts?.added ?? null,
-            deleted: counts?.deleted ?? null,
-            binary: counts?.binary ?? false,
-            untracked: false,
-            staged: stagedSide,
-          });
-        }
-      }
-      files.sort((a, b) => a.path.localeCompare(b.path));
+      const files = buildWorktreeFiles(report, unstaged, staged);
       set({ files, selected: null, patch: "", binary: false, loading: false });
       if (files.length > 0) {
         await get().selectFile(files[0]);
@@ -158,6 +174,46 @@ export const useDiffStore = create<DiffState>((set, get) => ({
         return;
       }
       set({ loading: false, error: formatGitError(error) });
+    }
+  },
+
+  refreshWorktree: async (root) => {
+    const state = get();
+    if (state.root !== root || state.target?.kind !== "worktree") {
+      return;
+    }
+    const token = ++openToken;
+    try {
+      const [report, unstaged, staged] = await Promise.all([
+        statusRepo(root),
+        diffNumstat(root, false),
+        diffNumstat(root, true),
+      ]);
+      if (token !== openToken) {
+        return;
+      }
+      // The repository or the target may have changed while refreshing.
+      if (get().root !== root || get().target?.kind !== "worktree") {
+        return;
+      }
+      const files = buildWorktreeFiles(report, unstaged, staged);
+      set({ files, error: null });
+      // Keep the user's selection (read fresh: they may have clicked another
+      // file while the refresh was in flight); fall back to the first file.
+      const keptKey = get().selected?.key;
+      const kept = keptKey ? files.find((file) => file.key === keptKey) : undefined;
+      if (kept) {
+        await get().selectFile(kept);
+      } else if (files.length > 0) {
+        await get().selectFile(files[0]);
+      } else {
+        set({ selected: null, patch: "", binary: false });
+      }
+    } catch (error) {
+      if (token !== openToken) {
+        return;
+      }
+      set({ error: formatGitError(error) });
     }
   },
 

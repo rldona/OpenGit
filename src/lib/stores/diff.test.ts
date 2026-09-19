@@ -58,6 +58,7 @@ describe("useDiffStore", () => {
       { path: "a.txt", orig_path: null, binary: false, added: 1, deleted: 1 },
     ]);
     vi.mocked(diffFile).mockResolvedValue(PATCH);
+    vi.mocked(untrackedFileDiff).mockResolvedValue(UNTRACKED_PATCH);
     vi.mocked(commitFiles).mockResolvedValue([
       { path: "a.txt", orig_path: null, binary: false, added: 1, deleted: 0 },
     ]);
@@ -169,6 +170,50 @@ describe("useDiffStore", () => {
 
     expect(useDiffStore.getState().reversed).toBe(true);
     expect(diffFile).toHaveBeenCalledWith(expect.objectContaining({ reversed: true }));
+  });
+
+  it("refreshes the worktree list without moving the selection", async () => {
+    await useDiffStore.getState().openWorktree("/tmp/repo");
+    expect(useDiffStore.getState().selected?.path).toBe("a.txt");
+    vi.mocked(statusRepo).mockResolvedValue({
+      ...REPORT,
+      entries: [...REPORT.entries, { kind: "ordinary", xy: ".M", path: "b.txt", orig_path: null }],
+    });
+    vi.mocked(diffFile).mockClear();
+
+    await useDiffStore.getState().refreshWorktree("/tmp/repo");
+
+    const state = useDiffStore.getState();
+    expect(state.files.map((file) => file.path)).toEqual(["a.txt", "b.txt", "nuevo.txt"]);
+    expect(state.selected?.path).toBe("a.txt");
+    expect(state.loading).toBe(false);
+    expect(diffFile).toHaveBeenCalledWith(expect.objectContaining({ file: "a.txt" }));
+  });
+
+  it("falls back to the first file when the selection is gone", async () => {
+    await useDiffStore.getState().openWorktree("/tmp/repo");
+    vi.mocked(statusRepo).mockResolvedValue({
+      ...REPORT,
+      entries: [{ kind: "untracked", xy: "?", path: "nuevo.txt", orig_path: null }],
+    });
+
+    await useDiffStore.getState().refreshWorktree("/tmp/repo");
+
+    expect(useDiffStore.getState().selected?.path).toBe("nuevo.txt");
+    expect(untrackedFileDiff).toHaveBeenCalledWith("/tmp/repo", "nuevo.txt");
+  });
+
+  it("ignores refreshes outside the worktree target", async () => {
+    await useDiffStore.getState().openCommit("/tmp/repo", "abc1234");
+    vi.mocked(statusRepo).mockClear();
+    vi.mocked(diffNumstat).mockClear();
+
+    await useDiffStore.getState().refreshWorktree("/tmp/repo");
+    await useDiffStore.getState().refreshWorktree("/tmp/other");
+
+    expect(statusRepo).not.toHaveBeenCalled();
+    expect(diffNumstat).not.toHaveBeenCalled();
+    expect(useDiffStore.getState().files).toHaveLength(1);
   });
 
   it("stages a hunk and clears the selection", async () => {

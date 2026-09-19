@@ -246,7 +246,6 @@ describe("DiffView", () => {
   });
 
   it("previews an untracked file read-only with its counters", async () => {
-    const user = userEvent.setup();
     vi.mocked(statusRepo).mockResolvedValue({
       ...REPORT,
       entries: [{ kind: "untracked", xy: "?", path: "nuevo.txt", orig_path: null }],
