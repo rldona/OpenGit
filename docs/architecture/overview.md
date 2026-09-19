@@ -66,13 +66,13 @@ progress events (fetch/pull/push) ──listen──────────► 
 
 ## Minimal data model
 
-| Model | Git source | Notes |
-| --- | --- | --- |
-| `Commit` | `git log --format=... -z` | hash, parents, author, date, refs, subject |
-| `FileStatus` | `git status --porcelain=v2 -z` | index vs HEAD vs working tree |
-| `FileDiff` | `git diff -z` + `--numstat` | hunks, binaries, renames |
-| `Ref` | `git for-each-ref --format=... -z` | locals, remotes, tags |
-| `Stash` | `git stash list --format=... -z` | message, date, base |
+| Model        | Git source                         | Notes                                      |
+| ------------ | ---------------------------------- | ------------------------------------------ |
+| `Commit`     | `git log --format=... -z`          | hash, parents, author, date, refs, subject |
+| `FileStatus` | `git status --porcelain=v2 -z`     | index vs HEAD vs working tree              |
+| `FileDiff`   | `git diff -z` + `--numstat`        | hunks, binaries, renames                   |
+| `Ref`        | `git for-each-ref --format=... -z` | locals, remotes, tags                      |
+| `Stash`      | `git stash list --format=... -z`   | message, date, base                        |
 
 ## Performance
 

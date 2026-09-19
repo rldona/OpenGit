@@ -2,13 +2,13 @@
 
 Record of decisions with a high cost to revert. An accepted ADR **is not edited**: it is replaced by a new one that supersedes it.
 
-| ADR | Title | Status |
-| --- | --- | --- |
-| [0001](ADR-0001-tauri-2.md) | Desktop shell based on Tauri 2 | accepted |
-| [0002](ADR-0002-react-typescript.md) | React + TypeScript frontend | accepted |
-| [0003](ADR-0003-git-cli-como-motor.md) | The system `git` binary as the engine | accepted |
+| ADR                                          | Title                                 | Status   |
+| -------------------------------------------- | ------------------------------------- | -------- |
+| [0001](ADR-0001-tauri-2.md)                  | Desktop shell based on Tauri 2        | accepted |
+| [0002](ADR-0002-react-typescript.md)         | React + TypeScript frontend           | accepted |
+| [0003](ADR-0003-git-cli-como-motor.md)       | The system `git` binary as the engine | accepted |
 | [0004](ADR-0004-grafo-canvas-incremental.md) | Canvas graph with incremental loading | accepted |
-| [0005](ADR-0005-estado-global-zustand.md) | Global state with Zustand | accepted |
-| [0006](ADR-0006-editor-diff-codemirror.md) | Diff editor based on CodeMirror 6 | accepted |
+| [0005](ADR-0005-estado-global-zustand.md)    | Global state with Zustand             | accepted |
+| [0006](ADR-0006-editor-diff-codemirror.md)   | Diff editor based on CodeMirror 6     | accepted |
 
 To propose a new one, copy [`TEMPLATE.md`](TEMPLATE.md) and follow the `.ai/workflows/adr.md` flow.

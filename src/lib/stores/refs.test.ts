@@ -166,6 +166,26 @@ describe("useRefsStore", () => {
     expect(useUiStore.getState().outputLines.join("\n")).toContain("Merged feature");
   });
 
+  it("flags the merge as running until it finishes", async () => {
+    let resolveMerge!: (value: { conflicted: boolean; output: string }) => void;
+    vi.mocked(mergeBranch).mockReturnValue(
+      new Promise((resolve) => {
+        resolveMerge = resolve;
+      }),
+    );
+    await useRefsStore.getState().load("/tmp/repo");
+
+    const pending = useRefsStore.getState().merge("/tmp/repo", "feature", DEFAULT_MERGE_OPTIONS);
+
+    expect(useRefsStore.getState().merging).toBe(true);
+    expect(useUiStore.getState().outputLines.join("\n")).toContain("Merging feature…");
+
+    resolveMerge({ conflicted: false, output: "" });
+    await pending;
+
+    expect(useRefsStore.getState().merging).toBe(false);
+  });
+
   it("a merge with conflicts is not an error and is reported", async () => {
     vi.mocked(mergeBranch).mockResolvedValue({
       conflicted: true,
