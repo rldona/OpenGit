@@ -797,6 +797,12 @@ pub fn read_text_file(path: String) -> Result<String, GitError> {
     crate::git::read_text_file(&path)
 }
 
+/// Secret GPG keys available for commit signing; empty when gpg is missing.
+#[tauri::command]
+pub fn gpg_secret_keys() -> Vec<crate::git::GpgKey> {
+    crate::git::gpg_secret_keys()
+}
+
 #[tauri::command]
 pub fn tracking_commits(
     path: String,

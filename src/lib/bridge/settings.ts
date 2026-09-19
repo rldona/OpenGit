@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import type { GpgKey } from "./types";
 
 /** Scope of a git config entry. */
 export type ConfigScope = "local" | "global";
@@ -51,4 +52,9 @@ export function commitTemplateWrite(path: string, contents: string): Promise<str
 /** Reads a small UTF-8 file (the template "Import…"). */
 export function readTextFile(path: string): Promise<string> {
   return invoke<string>("read_text_file", { path });
+}
+
+/** Secret GPG keys available for commit signing. */
+export function gpgSecretKeys(): Promise<GpgKey[]> {
+  return invoke<GpgKey[]>("gpg_secret_keys");
 }

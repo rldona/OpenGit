@@ -167,7 +167,8 @@ pub fn run() {
             commands::git_config_path,
             commands::commit_template_read,
             commands::commit_template_write,
-            commands::read_text_file
+            commands::read_text_file,
+            commands::gpg_secret_keys
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
