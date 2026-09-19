@@ -27,3 +27,11 @@
 - **Context:** OG-041; the title bar still said "OpenGit" with a repo open, even though `App.tsx` called `setWindowTitle(repo.root)` since OG-035.
 - **Finding:** `core:default` does **not** include all core commands. In `core:window`, the default permission brings `allow-title` (read the title) but not `allow-set-title` (write it). Unlike plugins, here it's easy to assume `core:default` covers everything. The ACL error arrives as a rejection of the `invoke` promise, and a `.catch(() => {})` makes it invisible: the feature seemed implemented and had been dead for a whole milestone.
 - **Implication:** two rules. (1) Check the specific permissions of `core:*`, don't trust `core:default`; they are listed in `src-tauri/gen/schemas/acl-manifests.json` under `default_permission.permissions`. (2) **Never silently swallow the error of an IPC call**: if it can't be handled, send it to the Output panel. An empty catch over `invoke` hides configuration errors, which are permanent, not sporadic.
+
+## macOS arm64 needs a valid signature; configure ad-hoc signing
+
+- **Date:** 2026-09-19
+- **Context:** OG-068; the `v0.1.0` DMG's `OpenGit.app` could not be opened on an Apple Silicon Mac, even after removing the quarantine attribute.
+- **Finding:** `codesign -dv` showed `flags=adhoc,linker-signed` and `Info.plist=not bound`, and the bundle had no `Contents/_CodeSignature`. `codesign --verify` failed with *"code has no resources but signature indicates they must be present"*: the linker signs the binary but does not seal the bundle resources. Tauri only re-signs the assembled bundle when `bundle.macOS.signingIdentity` is set.
+- **Implication:** set `"macOS": { "signingIdentity": "-" }` (ad-hoc) so the DMG ships a valid signature; without it, arm64 refuses to launch the app. Ad-hoc does not remove Gatekeeper: users still right-click → Open or run `xattr -dr com.apple.quarantine`. To repair an already-installed copy: `codesign --force --sign - /Applications/OpenGit.app`.
+
