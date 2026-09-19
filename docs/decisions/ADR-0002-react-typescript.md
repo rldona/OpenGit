@@ -1,25 +1,34 @@
-# ADR-0002 · Frontend en React + TypeScript
+# ADR-0002 · React + TypeScript frontend
 
-- **Estado:** aceptado
-- **Fecha:** 2026-09-18
-- **Decisores:** Raúl López
+- **Status:** accepted
+- **Date:** 2026-09-18
+- **Deciders:** Raúl López
 
-## Contexto
+## Context
 
-La UI concentra el valor del producto: grafo de commits, diff, staging, sidebar y panel de salida. Necesita librerías maduras de diff, virtualización de listas largas y componentes accesibles.
+The UI concentrates the product's value: commit graph, diff, staging, sidebar
+and output panel. It needs mature diff libraries, long-list virtualization and
+accessible components.
 
-## Decisión
+## Decision
 
-**React + TypeScript** con Vite sobre Tauri 2.
+**React + TypeScript** with Vite on top of Tauri 2.
 
-## Alternativas consideradas
+## Alternatives considered
 
-- **Svelte 5** — menos peso en runtime y runes muy cómodos para listas grandes, pero ecosistema más pequeño justo en las piezas críticas (visores de diff, virtualización, Testing Library).
-- **SolidJS** — rendimiento excelente, pero comunidad y ecosistema menores; más riesgo de escribir componentes propios.
+- **Svelte 5** — less runtime weight and very comfortable runes for long lists,
+  but a smaller ecosystem exactly in the critical pieces (diff viewers,
+  virtualization, Testing Library).
+- **SolidJS** — excellent performance, but a smaller community and ecosystem;
+  more risk of writing components from scratch.
 
-## Consecuencias
+## Consequences
 
-- Acceso directo a CodeMirror 6 / Monaco, TanStack Virtual, Testing Library y patrones conocidos de testing de componentes.
-- Mayor peso y boilerplate que alternativas; se mitiga con Vite y virtualización agresiva de listas.
-- El rendimiento en repos grandes depende de decisiones concretas (memorización, filas virtualizadas, grafo en canvas), no del framework.
-- Gestión de estado global pendiente de decidir en el ticket OG-001 (propuesta: Zustand); si se adopta, será un ADR nuevo.
+- Direct access to CodeMirror 6 / Monaco, TanStack Virtual, Testing Library and
+  well-known component testing patterns.
+- More weight and boilerplate than the alternatives; mitigated with Vite and
+  aggressive list virtualization.
+- Performance in large repositories depends on concrete decisions (memoization,
+  virtualized rows, canvas graph), not on the framework.
+- Global state management still to be decided in ticket OG-001 (proposal:
+  Zustand); if adopted, it will be a new ADR.
