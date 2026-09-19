@@ -1,43 +1,43 @@
-# OG-015 · Gestión de tags
+# OG-015 · Tag management
 
-- **Milestone:** M3 — Historial avanzado
-- **Estado:** done
-- **Depende de:** OG-008, OG-011
-- **Referencias:** docs/architecture/overview.md
+- **Milestone:** M3 — Advanced history
+- **Status:** done
+- **Depends on:** OG-008, OG-011
+- **References:** docs/architecture/overview.md
 
-## Contexto
+## Context
 
-El sidebar ya lista tags (anotados y ligeros) pero no permite crearlos, borrarlos ni subirlos al remoto.
+The sidebar already lists tags (annotated and lightweight) but does not allow creating, deleting or pushing them to the remote.
 
-## Alcance
+## Scope
 
-- Crear tag ligero o anotado (con mensaje) sobre el commit seleccionado o HEAD.
-- Borrar tag local con confirmación.
-- Push del tag al remoto reutilizando el sistema de jobs (streaming y cancelación).
-- Mantener la distinción visual anotado/ligero.
+- Create a lightweight or annotated tag (with a message) on the selected commit or HEAD.
+- Delete a local tag with confirmation.
+- Push the tag to the remote reusing the job system (streaming and cancellation).
+- Keep the visual distinction annotated/lightweight.
 
-## Criterios de aceptación
+## Acceptance criteria
 
-- [x] Crear un tag ligero y uno anotado y verlos en el sidebar con su tipo correcto. _(tests de Rust y UI)_
-- [x] El tag anotado guarda el mensaje. _(test con `git tag -n -l`)_
-- [x] Borrar un tag pide confirmación y desaparece del sidebar. _(confirmación nativa + test)_
-- [x] Push del tag al remoto se ve en streaming y deja el tag en el remoto. _(JobKind::PushTag + test con bare local)_
-- [x] Nombres inválidos se rechazan con error legible (`git check-ref-format`). _(test)_
+- [x] Create a lightweight and an annotated tag and see them in the sidebar with their correct type. _(Rust and UI tests)_
+- [x] The annotated tag stores the message. _(test with `git tag -n -l`)_
+- [x] Deleting a tag asks for confirmation and it disappears from the sidebar. _(native confirmation + test)_
+- [x] Pushing the tag to the remote is shown in streaming and leaves the tag on the remote. _(JobKind::PushTag + test with local bare)_
+- [x] Invalid names are rejected with a readable error (`git check-ref-format`). _(test)_
 
-## Fuera de alcance
+## Out of scope
 
-- Editar o mover tags existentes.
-- Firma de tags.
+- Edit or move existing tags.
+- Tag signing.
 
-## Notas técnicas
+## Technical notes
 
-- Crear: `git tag <name> <target>` / `git tag -a <name> -m <msg> <target>`; borrar: `git tag -d <name>`.
-- Push: nuevo `JobKind::PushTag` → `git push --progress <remote> refs/tags/<name>` (por defecto `origin`).
-- El nombre se valida con `git check-ref-format` antes de tocar nada.
+- Create: `git tag <name> <target>` / `git tag -a <name> -m <msg> <target>`; delete: `git tag -d <name>`.
+- Push: new `JobKind::PushTag` → `git push --progress <remote> refs/tags/<name>` (default `origin`).
+- The name is validated with `git check-ref-format` before touching anything.
 
-## Notas de implementación (2026-09-18)
+## Implementation notes (2026-09-18)
 
-- Rust: `tag_create` y `tag_delete` en `git/mod.rs`; `JobKind::PushTag` reutiliza el streaming de OG-011.
-- UI: en el sidebar de Tags, botón "+" (nombre, mensaje opcional y checkbox anotado; destino = commit seleccionado o HEAD) y acciones Delete/Push por tag con confirmación en el borrado.
-- Tests: Rust (crear ligero/anotado, borrar, nombre inválido, push a bare local) y frontend (store y sidebar).
-- Cerrado el 2026-09-18 con CI verde (Frontend 30 s, Rust 1m13s) en el PR #12, junto con OG-016.
+- Rust: `tag_create` and `tag_delete` in `git/mod.rs`; `JobKind::PushTag` reuses the OG-011 streaming.
+- UI: in the Tags sidebar, a "+" button (name, optional message and annotated checkbox; target = selected commit or HEAD) and Delete/Push actions per tag with confirmation on deletion.
+- Tests: Rust (create lightweight/annotated, delete, invalid name, push to local bare) and frontend (store and sidebar).
+- Closed on 2026-09-18 with green CI (Frontend 30 s, Rust 1m13s) in PR #12, together with OG-016.

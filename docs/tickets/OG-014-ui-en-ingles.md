@@ -1,32 +1,32 @@
-# OG-014 · UI en inglés (pre-i18n)
+# OG-014 · UI in English (pre-i18n)
 
-- **Milestone:** M1 — MVP local
-- **Estado:** done
-- **Depende de:** —
-- **Referencias:** AGENTS.md
+- **Milestone:** M1 — Local MVP
+- **Status:** done
+- **Depends on:** —
+- **References:** AGENTS.md
 
-## Contexto
+## Context
 
-La app nació con los textos de UI en español. La convención del proyecto es código e identificadores en inglés; la UI también lo estará, y más adelante se decidirá si se añade multidioma (español incluido).
+The app was born with the UI texts in Spanish. The project convention is code and identifiers in English; the UI will be in English too, and later it will be decided whether to add multiple languages (Spanish included).
 
-## Alcance
+## Scope
 
-- Traducir al inglés todos los textos visibles: componentes, stores, mensajes de error del bridge y del núcleo Rust, títulos de diálogos nativos y el `lang` del HTML.
-- Mantener documentación, tickets, ADRs y memoria en español.
-- Actualizar los tests que comprueban textos.
+- Translate to English all visible texts: components, stores, bridge and Rust core error messages, native dialog titles and the HTML `lang`.
+- Keep documentation, tickets, ADRs and memory in Spanish.
+- Update the tests that check texts.
 
-## Criterios de aceptación
+## Acceptance criteria
 
-- [x] No queda ningún texto de UI en español (fuera de `docs/`, `.ai/` y comentarios). _(verificado con grep sobre `src/`)_
-- [x] Tests de frontend y Rust en verde con las nuevas cadenas. _(74 y 62 tests)_
-- [x] Lint, typecheck, build y `tauri build` en verde.
+- [x] No UI text is left in Spanish (outside `docs/`, `.ai/` and comments). _(verified with grep over `src/`)_
+- [x] Frontend and Rust tests green with the new strings. _(74 and 62 tests)_
+- [x] Lint, typecheck, build and `tauri build` green.
 
-## Fuera de alcance
+## Out of scope
 
-- Infraestructura de i18n (ficheros de traducción, selector de idioma): se decidirá más adelante.
+- i18n infrastructure (translation files, language selector): to be decided later.
 
-## Notas de implementación (2026-09-18)
+## Implementation notes (2026-09-18)
 
-- Se tradujeron componentes (`App`, `HistoryView`, `StatusView`, `CommitPanel`, `DiffView`, `PatchView`), stores (`repo`, `status`, `commit`), mensajes de `formatGitError`, diálogos nativos y los mensajes de error del núcleo Rust.
-- `AGENTS.md` fija la regla: UI en inglés, documentación en español.
-- Cerrado el 2026-09-18 con CI verde (Frontend 30 s, Rust 1m22s) en el PR #10, junto con OG-008.
+- Components (`App`, `HistoryView`, `StatusView`, `CommitPanel`, `DiffView`, `PatchView`), stores (`repo`, `status`, `commit`), `formatGitError` messages, native dialogs and Rust core error messages were translated.
+- `AGENTS.md` sets the rule: UI in English, documentation in Spanish.
+- Closed on 2026-09-18 with green CI (Frontend 30 s, Rust 1m22s) in PR #10, together with OG-008.

@@ -1,46 +1,46 @@
-# OG-010 · Watcher de `.git` y refresco
+# OG-010 · `.git` watcher and refresh
 
-- **Milestone:** M1 — MVP local
-- **Estado:** done
-- **Depende de:** OG-003
-- **Referencias:** docs/architecture/overview.md, OG-009
+- **Milestone:** M1 — Local MVP
+- **Status:** done
+- **Depends on:** OG-003
+- **References:** docs/architecture/overview.md, OG-009
 
-## Contexto
+## Context
 
-El estado del repo cambia por la app y por fuera (terminal, IDE, hooks). La UI debe reflejarlo sin polling y sin tormentas de recargas.
+The repo state changes by the app and from outside (terminal, IDE, hooks). The UI must reflect it without polling and without reload storms.
 
-## Alcance
+## Scope
 
-- Observar `.git`: `HEAD`, `refs/`, `index`, `MERGE_HEAD`, `ORIG_HEAD`, `packed-refs`.
-- Debounce de 250 ms y agrupación de eventos por tipo (refs, index, working tree).
-- Pausa del watcher durante operaciones lanzadas por la app y reanudación con un refresco único al terminar.
-- Eventos tipados a la UI: `repo://refs-changed`, `repo://index-changed`, `repo://worktree-changed`.
-- Fallback por polling lento (p. ej. 5 s) si el SO no entrega eventos (contenedores, volúmenes de red).
+- Watch `.git`: `HEAD`, `refs/`, `index`, `MERGE_HEAD`, `ORIG_HEAD`, `packed-refs`.
+- 250 ms debounce and grouping of events by type (refs, index, working tree).
+- Pause of the watcher during operations launched by the app and resumption with a single refresh at the end.
+- Typed events to the UI: `repo://refs-changed`, `repo://index-changed`, `repo://worktree-changed`.
+- Fallback by slow polling (e.g. 5 s) if the OS does not deliver events (containers, network volumes).
 
-## Criterios de aceptación
+## Acceptance criteria
 
-- [x] Un commit desde terminal se refleja en < 1 s sin tocar la UI. _(evento de refs/index con debounce; test de integración con repo real)_
-- [x] Diez cambios seguidos en el index producen un solo refresco. _(acumulador por tipo + ventana de 250 ms; unit test)_
-- [x] Una operación larga de la app no dispara refrescos durante su ejecución. _(pause/resume; unit e integración)_
-- [x] El watcher se detiene al cerrar el repo o cambiar de repo (sin fugas de hilos). _(`close_repo` y parada del anterior en `open_repo`)_
-- [x] No hay bucles: el propio refresco no vuelve a disparar eventos. _(eventos de acceso ignorados, `GIT_OPTIONAL_LOCKS=0` en lecturas y pausa en las escrituras)_
+- [x] A commit from the terminal is reflected in < 1 s without touching the UI. _(refs/index event with debounce; integration test with a real repo)_
+- [x] Ten consecutive changes in the index produce a single refresh. _(accumulator by type + 250 ms window; unit test)_
+- [x] A long app operation does not trigger refreshes during its execution. _(pause/resume; unit and integration)_
+- [x] The watcher stops when closing the repo or changing repo (no thread leaks). _(`close_repo` and stopping the previous one in `open_repo`)_
+- [x] There are no loops: the refresh itself does not trigger events again. _(access events ignored, `GIT_OPTIONAL_LOCKS=0` on reads and pause on writes)_
 
-## Fuera de alcance
+## Out of scope
 
-- Vigilar el working tree completo (coste alto en repos grandes); el refresco de status se decide por eventos de `.git` y por acciones explícitas.
-- Índice de búsqueda de ficheros.
+- Watching the whole working tree (high cost on large repos); the status refresh is decided by `.git` events and by explicit actions.
+- File search index.
 
-## Notas técnicas
+## Technical notes
 
-- Crate recomendada: `notify` + `notify-debouncer-mini`. Se usa solo `notify` y el debounce se implementa con una ventana de 250 ms en el hilo del watcher.
-- En macOS, `FSEvents` da eventos a nivel de directorio; no asumir path por fichero.
-- Durante `fetch/pull/push` el watcher también se pausa para no reaccionar a `FETCH_HEAD`.
+- Recommended crate: `notify` + `notify-debouncer-mini`. Only `notify` is used and the debounce is implemented with a 250 ms window in the watcher thread.
+- On macOS, `FSEvents` gives directory-level events; do not assume path per file.
+- During `fetch/pull/push` the watcher is also paused so as not to react to `FETCH_HEAD`.
 
-## Notas de implementación (2026-09-18)
+## Implementation notes (2026-09-18)
 
-- `src/watch/mod.rs`: `notify` con modo recursivo sobre `.git`, clasificación de rutas (`index`, `refs/**`, `HEAD`/`packed-refs`/`ORIG_HEAD`/`MERGE_HEAD`/…), descarte de eventos de acceso (anti-bucles) y acumulador por tipo para agrupar. Fallback a polling de 5 s si el watcher no se puede crear.
-- Pausa: contador atómico; los comandos de escritura (`stage`, `unstage`, `discard`, `delete_untracked`) pausan el watcher y al reanudar emiten un único `repo://refreshed`.
-- La UI (`useRepoEvents`) escucha los cuatro eventos: refs y refresco recargan el historial (silencioso, conserva selección y filtro); index y worktree refrescan el status.
-- Al cerrar el repo (botón Cerrar) o abrir otro, el watcher anterior se detiene y se libera el hilo.
-- Dependencia nueva justificada por el ticket: `notify` 8.2.
-- Cerrado el 2026-09-18 con CI verde (Frontend 20 s, Rust 1m39s) en el PR #5, junto con OG-009.
+- `src/watch/mod.rs`: `notify` with recursive mode over `.git`, path classification (`index`, `refs/**`, `HEAD`/`packed-refs`/`ORIG_HEAD`/`MERGE_HEAD`/…), discarding of access events (anti-loops) and accumulator by type for grouping. Fallback to 5 s polling if the watcher cannot be created.
+- Pause: atomic counter; write commands (`stage`, `unstage`, `discard`, `delete_untracked`) pause the watcher and on resuming emit a single `repo://refreshed`.
+- The UI (`useRepoEvents`) listens to the four events: refs and refresh reload the history (silent, preserves selection and filter); index and worktree refresh the status.
+- On closing the repo (Close button) or opening another, the previous watcher stops and the thread is freed.
+- New dependency justified by the ticket: `notify` 8.2.
+- Closed on 2026-09-18 with green CI (Frontend 20 s, Rust 1m39s) in PR #5, together with OG-009.

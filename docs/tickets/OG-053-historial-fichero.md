@@ -1,44 +1,44 @@
-# OG-053 · Historial de un fichero
+# OG-053 · File history
 
-- **Milestone:** M8 — Paridad SourceTree (fase 3)
-- **Estado:** ready
-- **Depende de:** OG-009, OG-044
-- **Referencias:** ROADMAP.md, OG-018
+- **Milestone:** M8 — SourceTree parity (phase 3)
+- **Status:** ready
+- **Depends on:** OG-009, OG-044
+- **References:** ROADMAP.md, OG-018
 
-## Contexto
+## Context
 
-Ver el diff de un fichero es fácil, pero no hay forma de ver **su historia**:
-qué commits lo tocaron. SourceTree lo ofrece como "Log Selected" desde el
-árbol de ficheros y desde el propio diff. Hacia atrás solo se puede buscar a
-mano commit a commit.
+Viewing the diff of a file is easy, but there is no way to see **its history**:
+which commits touched it. SourceTree offers it as "Log Selected" from the
+file tree and from the diff itself. Going back you can only search manually,
+commit by commit.
 
-## Alcance
+## Scope
 
-- "Show file history" en el menú contextual de ficheros de status, de los
-  árboles de diff (status y detalle de commit) y del panel de parche.
-- Modo de historial filtrado por ruta: la vista de History muestra una banda
-  con la ruta activa y un botón para quitarla.
-- Reutilizar el backend de búsqueda por ruta (`log_page` con `search.path`).
+- "Show file history" in the context menu of status files, of the diff trees
+  (status and commit detail) and of the patch panel.
+- History mode filtered by path: the History view shows a band with the
+  active path and a button to remove it.
+- Reuse the path-search backend (`log_page` with `search.path`).
 
-## Criterios de aceptación
+## Acceptance criteria
 
-- [ ] Desde un fichero modificado, "Show file history" abre el historial con
-      solo los commits que lo tocaron, incluidos renames (`--follow` o
-      equivalente documentado).
-- [ ] La banda indica la ruta y permite volver al historial completo.
-- [ ] Funciona igual desde un fichero del detalle de commit y del diff.
-- [ ] La selección y el scroll se comportan como en el historial normal.
-- [ ] Tests de store y de UI con el bridge mockeado.
+- [ ] From a modified file, "Show file history" opens the history with only
+      the commits that touched it, including renames (`--follow` or
+      documented equivalent).
+- [ ] The band indicates the path and allows returning to the full history.
+- [ ] It works the same from a file of the commit detail and of the diff.
+- [ ] Selection and scroll behave as in the normal history.
+- [ ] Store and UI tests with the mocked bridge.
 
-## Fuera de alcance
+## Out of scope
 
 - Blame (OG-055).
-- Detección de copias (`-C`).
+- Copy detection (`-C`).
 
-## Notas técnicas
+## Technical notes
 
-- `logPage` ya acepta `search.path`; el trabajo es de contexto de vista: el
-  filtro de ruta debe convivir con el de rama y sobrevivir a `reload`.
-- Para renames, `git log --follow` no se puede combinar con todas las
-  opciones del log actual: decidir y documentar el compromiso (probablemente
-  `--follow` solo cuando hay ruta).
+- `logPage` already accepts `search.path`; the work is about view context: the
+  path filter must coexist with the branch one and survive `reload`.
+- For renames, `git log --follow` cannot be combined with all the options of
+  the current log: decide and document the trade-off (probably `--follow`
+  only when there is a path).

@@ -1,43 +1,43 @@
-# OG-048 · Identidad visual (badges, iconos, fechas)
+# OG-048 · Visual identity (badges, icons, dates)
 
-- **Milestone:** M7 — Paridad SourceTree (fase 2)
-- **Estado:** done
-- **Depende de:** —
-- **Referencias:** ROADMAP.md, OG-022, OG-037
+- **Milestone:** M7 — SourceTree parity (phase 2)
+- **Status:** done
+- **Depends on:** —
+- **References:** ROADMAP.md, OG-022, OG-037
 
-## Contexto
+## Context
 
-M6 colocó los elementos donde toca, pero comparando capturas contra SourceTree la app sigue sin parecerse, y no es por la disposición sino por el acabado: los badges de ref son casi todos del mismo tono lavado (relleno al 18 % de alfa, sin icono), las secciones de la sidebar no tienen icono, el autor sale sin email y las fechas son absolutas.
+M6 placed the elements where they belong, but comparing screenshots against SourceTree the app still does not look alike, and it is not because of the layout but because of the finish: the ref badges are almost all the same washed-out tone (18 % alpha fill, no icon), the sidebar sections have no icon, the author is shown without email and the dates are absolute.
 
-Este ticket recoge lo que M7 no tiqueteó: la **identidad visual**, no la estructura.
+This ticket collects what M7 did not ticket: the **visual identity**, not the structure.
 
-## Alcance
+## Scope
 
-- **Badges de ref:** glifo por tipo (rama, rama remota, tag) y color saturado distinguible de un vistazo: local, remota y tag deben leerse como tres cosas distintas sin acercarse.
-- **Iconos de sección** en la sidebar (Workspace, Branches, Tags, Remotes, Stashes, Submodules), como ancla visual de cada bloque.
-- **Fechas relativas** en la tabla: `Today at 22:17`, `Yesterday at …`, y absoluta a partir de cierta antigüedad.
-- **Autor con email** en la columna Author (`Nombre <email>`), truncado con elipsis.
-- Revisar la densidad de fila y el resalte de la fila seleccionada (SourceTree marca la selección en todo el ancho).
-- Todo debe funcionar en tema claro y oscuro (OG-022).
+- **Ref badges:** glyph per type (branch, remote branch, tag) and a saturated color distinguishable at a glance: local, remote and tag must read as three different things without getting close.
+- **Section icons** in the sidebar (Workspace, Branches, Tags, Remotes, Stashes, Submodules), as a visual anchor for each block.
+- **Relative dates** in the table: `Today at 22:17`, `Yesterday at …`, and absolute beyond a certain age.
+- **Author with email** in the Author column (`Name <email>`), truncated with ellipsis.
+- Review row density and the highlight of the selected row (SourceTree marks the selection across the full width).
+- Everything must work in light and dark theme (OG-022).
 
-## Criterios de aceptación
+## Acceptance criteria
 
-- [ ] Rama local, rama remota y tag se distinguen por color y glifo sin leer el texto.
-- [ ] Cada sección de la sidebar tiene su icono.
-- [ ] Las fechas recientes se muestran relativas y las antiguas absolutas.
-- [ ] La columna Author muestra nombre y email, truncando sin romper la fila.
-- [ ] La fila seleccionada se resalta en todo el ancho.
-- [ ] Contraste suficiente en ambos temas.
-- [ ] Tests: formateo de fechas (hoy, ayer, antigua) y clasificación de badge por tipo de ref.
+- [ ] Local branch, remote branch and tag are distinguished by color and glyph without reading the text.
+- [ ] Each sidebar section has its icon.
+- [ ] Recent dates are shown relative and old ones absolute.
+- [ ] The Author column shows name and email, truncating without breaking the row.
+- [ ] The selected row is highlighted across the full width.
+- [ ] Enough contrast in both themes.
+- [ ] Tests: date formatting (today, yesterday, old) and badge classification by ref type.
 
-## Fuera de alcance
+## Out of scope
 
-- Iconos personalizables o packs de iconos.
-- Cambiar la familia tipográfica.
-- Avatares de autor (SourceTree los pinta; requiere red o caché local, y la regla 8 prohíbe red en tests).
+- Customizable icons or icon packs.
+- Changing the typeface family.
+- Author avatars (SourceTree paints them; it requires network or local cache, and rule 8 forbids network in tests).
 
-## Notas técnicas
+## Technical notes
 
-- El formateo relativo necesita una referencia de "ahora" inyectable para que los tests sean deterministas; nada de `Date.now()` directo dentro del componente.
-- Los colores van como variables CSS del tema, no incrustados, para no romper OG-022.
-- `renderRefs` ya recorta a 3 refs con un `+N`: al añadir glifos hay que revisar que la fila siga sin desbordarse.
+- Relative formatting needs an injectable "now" reference so that tests are deterministic; no direct `Date.now()` inside the component.
+- Colors go as theme CSS variables, not hardcoded, so as not to break OG-022.
+- `renderRefs` already trims to 3 refs with a `+N`: when adding glyphs, check that the row still does not overflow.

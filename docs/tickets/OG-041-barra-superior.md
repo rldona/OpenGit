@@ -1,79 +1,79 @@
-# OG-041 · Barra superior de ventana
+# OG-041 · Window top bar
 
-- **Milestone:** M7 — Paridad SourceTree (fase 2)
-- **Estado:** done
-- **Depende de:** OG-035, OG-044
-- **Bloquea parcialmente:** OG-049 (el botón Merge), OG-043 (destino del botón Commit)
-- **Referencias:** ROADMAP.md, OG-035
+- **Milestone:** M7 — SourceTree parity (phase 2)
+- **Status:** done
+- **Depends on:** OG-035, OG-044
+- **Partially blocks:** OG-049 (the Merge button), OG-043 (target of the Commit button)
+- **References:** ROADMAP.md, OG-035
 
-## Contexto
+## Context
 
-OG-035 dejó una toolbar funcional pero con botones de texto en una sola fila (`App.tsx:270-330`): Open repository, Fetch, Pull, Push, Refresh, Close, Output, ayuda y un `select` de tema. SourceTree separa acciones de repositorio (izquierda, iconos grandes con etiqueta) de utilidades (derecha), y centra el nombre del repositorio en la barra de título.
+OG-035 left a functional toolbar but with text buttons in a single row (`App.tsx:270-330`): Open repository, Fetch, Pull, Push, Refresh, Close, Output, help and a theme `select`. SourceTree separates repository actions (left, large icons with label) from utilities (right), and centers the repository name in the title bar.
 
-## Alcance
+## Scope
 
-- Acciones a la izquierda: **Commit** (con badge del número de cambios pendientes), **Pull**, **Push**, **Fetch**, **Branch**, **Stash**.
-- **Merge queda fuera**: `git merge` no existe en el backend. Sale como OG-049 y se añadirá a la barra al cerrarlo.
-- Utilidades a la derecha: **View Remote**, **Show in Finder**, **Terminal**, **Settings**.
-- Nombre del repositorio centrado; la ruta completa queda como `title`.
-- Commit navega a la vista de commit; hasta que exista (OG-043) apunta a la vista de status, que es donde vive hoy el panel de commit. Branch y Stash abren sus flujos ya existentes.
-- Extraer la toolbar de `App.tsx` a su propio componente.
-- Botones deshabilitados y con `aria-label` cuando no hay repo abierto o hay una operación remota en curso.
+- Actions on the left: **Commit** (with badge of the number of pending changes), **Pull**, **Push**, **Fetch**, **Branch**, **Stash**.
+- **Merge is out**: `git merge` does not exist in the backend. It is tracked as OG-049 and will be added to the bar when it closes.
+- Utilities on the right: **View Remote**, **Show in Finder**, **Terminal**, **Settings**.
+- Repository name centered; the full path remains as `title`.
+- Commit navigates to the commit view; until it exists (OG-043) it points to the status view, which is where the commit panel lives today. Branch and Stash open their already existing flows.
+- Extract the toolbar from `App.tsx` into its own component.
+- Buttons disabled and with `aria-label` when there is no repo open or a remote operation is in progress.
 
-## Criterios de aceptación
+## Acceptance criteria
 
-- [x] Las acciones de repositorio aparecen a la izquierda con icono y etiqueta.
-- [x] El badge de Commit refleja el número de cambios y desaparece cuando no hay ninguno.
-- [x] Las utilidades aparecen a la derecha y "Show in Finder" abre el gestor de ficheros del sistema.
-- [x] El nombre del repo se ve centrado en la barra.
-- [x] Sin repo abierto solo queda activo "Open repository".
-- [x] La barra de título de la ventana muestra la ruta del repositorio.
-- [x] Tests: badge, estados deshabilitados y dispatch de cada acción.
+- [x] Repository actions appear on the left with icon and label.
+- [x] The Commit badge reflects the number of changes and disappears when there are none.
+- [x] Utilities appear on the right and "Show in Finder" opens the system file manager.
+- [x] The repo name is shown centered in the bar.
+- [x] With no repo open only "Open repository" remains active.
+- [x] The window title bar shows the repository path.
+- [x] Tests: badge, disabled states and dispatch of each action.
 
-## Fuera de alcance
+## Out of scope
 
-- Personalizar qué botones se muestran.
-- Rediseñar el menú nativo (OG-035 ya lo cubre).
-- Implementar `git merge` (OG-049).
+- Customizing which buttons are shown.
+- Redesigning the native menu (OG-035 already covers it).
+- Implementing `git merge` (OG-049).
 
-## Notas técnicas
+## Technical notes
 
-- "Show in Finder" y "Terminal" son específicos por plataforma; conviene un comando Rust que resuelva el programa según el SO en vez de asumir `open`.
-- "View Remote" puede apoyarse en lo hecho en OG-034 (abrir la URL del remoto).
-- El `select` de tema se mueve a Settings; hasta que Settings exista, mantenerlo accesible.
+- "Show in Finder" and "Terminal" are platform-specific; a Rust command that resolves the program per OS instead of assuming `open` is advisable.
+- "View Remote" can build on what was done in OG-034 (open the remote URL).
+- The theme `select` moves to Settings; until Settings exists, keep it accessible.
 
-## Notas de implementación (2026-09-18)
+## Implementation notes (2026-09-18)
 
-- `Toolbar` extraído de `App.tsx`, que baja de 514 a ~330 líneas. Rejilla de tres columnas (`1fr auto 1fr`) para que el nombre del repo quede centrado de verdad y no "centrado según lo que ocupen los botones".
-- Botones con icono arriba y etiqueta debajo (`ToolButton`), con el badge de cambios superpuesto sobre el icono de Commit.
-- **Branch y Stash no abren diálogos nuevos**: emiten una petición por el store de UI (`requestNewBranch` / `requestNewStash`) y la sidebar abre el formulario que ya tenía, desplegando su sección. Evita duplicar dos flujos de creación.
-- **Settings** no existía como pantalla. En vez de dejar un botón muerto, abre un popover con el selector de tema (que antes colgaba suelto de la toolbar), el conmutador del panel de Output, los atajos y cerrar repositorio. Se cierra con Escape o pulsando fuera.
-- **Show in Finder** usa `revealItemInDir` del plugin opener, con su permiso añadido en `capabilities/default.json`. Sin Rust nuevo.
-- **Terminal** sí necesitó comando Rust (`open_terminal`): no hay API multiplataforma. Candidatos por plataforma en orden de preferencia y **siempre por argv**, nunca por shell: un repo llamado `foo; rm -rf ~` sería una inyección de libro (regla 3).
+- `Toolbar` extracted from `App.tsx`, which drops from 514 to ~330 lines. Three-column grid (`1fr auto 1fr`) so that the repo name is truly centered and not "centered according to what the buttons occupy".
+- Buttons with icon above and label below (`ToolButton`), with the changes badge overlaid on the Commit icon.
+- **Branch and Stash do not open new dialogs**: they emit a request through the UI store (`requestNewBranch` / `requestNewStash`) and the sidebar opens the form it already had, expanding its section. Avoids duplicating two creation flows.
+- **Settings** did not exist as a screen. Instead of leaving a dead button, it opens a popover with the theme selector (which previously hung loose from the toolbar), the Output panel toggle, the shortcuts and close repository. It closes with Escape or by clicking outside.
+- **Show in Finder** uses `revealItemInDir` from the opener plugin, with its permission added in `capabilities/default.json`. No new Rust.
+- **Terminal** did need a Rust command (`open_terminal`): there is no cross-platform API. Per-platform candidates in order of preference and **always by argv**, never by shell: a repo named `foo; rm -rf ~` would be a textbook injection (rule 3).
 
-### Bug encontrado: el título de la ventana nunca se fijaba
+### Bug found: the window title was never being set
 
-`setWindowTitle` llevaba desde OG-035 fallando en silencio. El permiso por defecto de `core:window` incluye `allow-title` (leer) pero **no `allow-set-title`** (escribir), y el `.catch(() => {})` de `App.tsx` se tragaba el error de ACL. El criterio "título con la ruta del repo" de OG-035 estaba marcado como cumplido sin estarlo.
+`setWindowTitle` had been failing silently since OG-035. The default `core:window` permission includes `allow-title` (read) but **not `allow-set-title`** (write), and the `.catch(() => {})` in `App.tsx` swallowed the ACL error. OG-035's "title with the repo path" criterion was marked as met without being so.
 
-- Añadido `core:window:allow-set-title` a `capabilities/default.json`.
-- El `catch` ya no es mudo: manda el motivo al panel de Output. Test de regresión incluido.
-- Lección para `.ai/memory/`: un `catch` vacío sobre una llamada IPC de Tauri esconde los errores de ACL, que no son excepcionales sino de configuración. Si se traga, que sea al Output.
+- Added `core:window:allow-set-title` to `capabilities/default.json`.
+- The `catch` is no longer silent: it sends the reason to the Output panel. Regression test included.
+- Lesson for `.ai/memory/`: an empty `catch` over a Tauri IPC call hides ACL errors, which are not exceptional but configuration ones. If it swallows, let it be to Output.
 
-### Fuera de este ticket
+### Out of this ticket
 
-- **Merge** no está: `git merge` no existe en el backend. Sale como OG-049.
-- **Commit** apunta a la vista de status mientras no exista la vista dedicada (OG-043).
-- Se valoró fusionar la barra de título al estilo Electron (`titleBarStyle: Overlay`). **Se llegó a implementar y se revirtió**: ver abajo.
+- **Merge** is not there: `git merge` does not exist in the backend. It is tracked as OG-049.
+- **Commit** points to the status view as long as the dedicated view (OG-043) does not exist.
+- Merging the title bar Electron-style (`titleBarStyle: Overlay`) was considered. **It was implemented and reverted**: see below.
 
-### Descartado: barra de título fusionada (`titleBarStyle: Overlay`)
+### Discarded: merged title bar (`titleBarStyle: Overlay`)
 
-El objetivo era centrar la ruta del repositorio en la fila del título, como SourceTree. La alineación de esa fila la decide macOS y no se puede cambiar desde Tauri con la barra nativa, así que la única vía era dibujarla nosotros con `Overlay` + `hiddenTitle`.
+The goal was to center the repository path in the title row, like SourceTree. The alignment of that row is decided by macOS and cannot be changed from Tauri with the native bar, so the only way was to draw it ourselves with `Overlay` + `hiddenTitle`.
 
-Se implementó entera (config de ventana con `trafficLightPosition`, comando Rust `host_platform` para reservar hueco a los semáforos solo en macOS, `data-tauri-drag-region` y el permiso `core:window:allow-start-dragging`) y **se revirtió por decisión de producto**: el resultado gustaba menos que la barra nativa.
+It was fully implemented (window config with `trafficLightPosition`, Rust command `host_platform` to reserve space for the traffic lights only on macOS, `data-tauri-drag-region` and the `core:window:allow-start-dragging` permission) and **it was reverted by product decision**: the result was liked less than the native bar.
 
-Queda anotado por si alguien lo reintenta:
+It remains noted in case someone retries it:
 
-- La alineación del título nativo **no es configurable**. O barra nativa tal cual, o dibujarla entera.
-- `core:window:allow-start-dragging` **no** está en el permiso por defecto de `core:window`. Sin él la región de arrastre no hace nada y no avisa: el mismo fallo silencioso que `allow-set-title`.
-- Requiere detección de plataforma, porque en Windows y Linux `titleBarStyle` se ignora y el hueco de los semáforos sobraría. Se resolvió con un comando Rust de tres líneas (`std::env::consts::OS`) en vez de añadir `@tauri-apps/plugin-os` por la regla 5.
-- Sigue vigente la pega de fondo: no se puede arrastrar la ventana cuando no está enfocada ([tauri#4316](https://github.com/tauri-apps/tauri/issues/4316)).
+- The alignment of the native title **is not configurable**. Either the native bar as is, or draw it entirely.
+- `core:window:allow-start-dragging` is **not** in the default `core:window` permission. Without it the drag region does nothing and does not warn: the same silent failure as `allow-set-title`.
+- It requires platform detection, because on Windows and Linux `titleBarStyle` is ignored and the traffic-light gap would be left over. It was solved with a three-line Rust command (`std::env::consts::OS`) instead of adding `@tauri-apps/plugin-os` because of rule 5.
+- The underlying drawback still stands: the window cannot be dragged when it is not focused ([tauri#4316](https://github.com/tauri-apps/tauri/issues/4316)).

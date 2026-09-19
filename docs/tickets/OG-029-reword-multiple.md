@@ -1,46 +1,46 @@
-# OG-029 · Reword múltiple en rebase interactivo (v2)
+# OG-029 · Multiple reword in interactive rebase (v2)
 
-- **Milestone:** M5 — Pulido (v2 de OG-021)
-- **Estado:** done
-- **Depende de:** OG-021
-- **Referencias:** ROADMAP.md, docs/tickets/OG-021-rebase-interactivo.md
+- **Milestone:** M5 — Polish (v2 of OG-021)
+- **Status:** done
+- **Depends on:** OG-021
+- **References:** ROADMAP.md, docs/tickets/OG-021-rebase-interactivo.md
 
-## Contexto
+## Context
 
-OG-021 permitió un solo `reword` por plan con un único mensaje global, resuelto con `pick` + `exec git commit --amend -F`. Era una limitación explícita de la v1; ahora se levanta.
+OG-021 allowed a single `reword` per plan with a single global message, solved with `pick` + `exec git commit --amend -F`. It was an explicit limitation of v1; now it is lifted.
 
-## Alcance
+## Scope
 
-- `TodoItem` gana un `message` opcional; cada `reword` lleva su propio mensaje y `interactive_rebase` deja de aceptar el mensaje global.
-- Un fichero de mensaje por reword (`rebase-message-<índice>.txt` en el directorio de datos) y un `exec git commit --amend -F` tras el pick correspondiente.
-- Sin límite de rewords; sigue sin permitirse `reword` sin mensaje.
-- Store: el mensaje vive en la fila y viaja con ella al reordenar; `run` valida que todos los rewords tengan texto.
-- UI: input de mensaje en cada fila marcada como `reword`; el botón Run se deshabilita si falta alguno.
-- Tests: dos rewords con mensajes distintos, reword sin mensaje, reordenar conservando el mensaje y validación en store/UI.
+- `TodoItem` gains an optional `message`; each `reword` carries its own message and `interactive_rebase` no longer accepts the global message.
+- One message file per reword (`rebase-message-<index>.txt` in the data directory) and an `exec git commit --amend -F` after the corresponding pick.
+- No limit on rewords; `reword` without a message is still not allowed.
+- Store: the message lives in the row and travels with it when reordering; `run` validates that all rewords have text.
+- UI: message input in each row marked as `reword`; the Run button is disabled if any is missing.
+- Tests: two rewords with different messages, reword without message, reordering while preserving the message, and validation in store/UI.
 
-## Criterios de aceptación
+## Acceptance criteria
 
-- [x] Dos `reword` en el mismo plan aplican dos mensajes distintos.
-- [x] Un `reword` sin mensaje falla con un error claro y ningún reword con mensaje vacío llega a git.
-- [x] Reordenar una fila mueve su acción **y** su mensaje.
-- [x] La UI muestra un input por fila `reword` y bloquea Run hasta completarlos.
-- [x] Tests Rust (integración) y frontend (store y vista) actualizados.
+- [x] Two `reword` in the same plan apply two different messages.
+- [x] A `reword` without a message fails with a clear error and no reword with an empty message reaches git.
+- [x] Reordering a row moves its action **and** its message.
+- [x] The UI shows one input per `reword` row and blocks Run until they are completed.
+- [x] Rust (integration) and frontend (store and view) tests updated.
 
-## Fuera de alcance
+## Out of scope
 
-- Editar el cuerpo del mensaje con un editor completo o multilínea con formato.
-- `edit`, `autosquash` y comandos arbitrarios (siguen fuera, como en OG-021).
-- Mantener los ficheros de mensaje entre ejecuciones: son temporales del run.
+- Editing the message body with a full editor or formatted multiline.
+- `edit`, `autosquash` and arbitrary commands (still out, as in OG-021).
+- Keeping the message files between runs: they are temporary to the run.
 
-## Notas técnicas
+## Technical notes
 
-- El todo-list sigue inyectándose con `GIT_SEQUENCE_EDITOR`; los ficheros de mensaje se numeran por posición en el plan y se sobrescriben en cada ejecución.
-- `message` se recorta (trim) al escribir el fichero; los `message` en acciones distintas de `reword` se ignoran.
-- En la UI, el mensaje no se indexa por hash sino que viaja dentro de la fila: reordenar ya intercambia filas completas.
+- The todo-list is still injected with `GIT_SEQUENCE_EDITOR`; the message files are numbered by position in the plan and overwritten on each execution.
+- `message` is trimmed when writing the file; `message` in actions other than `reword` is ignored.
+- In the UI, the message is not indexed by hash but travels inside the row: reordering already swaps complete rows.
 
-## Notas de implementación (2026-09-18)
+## Implementation notes (2026-09-18)
 
-- Rust: `TodoItem.message` con `#[serde(default)]`; `interactive_rebase` pierde el `reword_message` global y escribe `rebase-message-<índice>.txt` por cada reword, con un `exec` tras su pick. La validación es por item.
-- Frontend: `PlanRow.message`; el store pasa `message` solo en rewords (`null` en el resto); `RebaseView` pinta el input dentro de la fila (con `flex-wrap`) y deshabilita Run si falta alguno.
-- Tests: 110 Rust (rewords múltiples y reword sin mensaje separados) y 180 frontend (varios mensajes, viaje al reordenar y validación por fila).
-- Cerrado el 2026-09-18 con CI verde (Frontend 37 s, Rust 1m14s) en el PR #26.
+- Rust: `TodoItem.message` with `#[serde(default)]`; `interactive_rebase` loses the global `reword_message` and writes `rebase-message-<index>.txt` for each reword, with an `exec` after its pick. Validation is per item.
+- Frontend: `PlanRow.message`; the store passes `message` only in rewords (`null` in the rest); `RebaseView` renders the input inside the row (with `flex-wrap`) and disables Run if any is missing.
+- Tests: 110 Rust (multiple rewords and reword without message separated) and 180 frontend (several messages, travel on reorder and per-row validation).
+- Closed on 2026-09-18 with green CI (Frontend 37 s, Rust 1m14s) in PR #26.

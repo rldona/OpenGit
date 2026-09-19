@@ -1,11 +1,11 @@
 # OG-062 · Translate the project to English
 
 - **Milestone:** M8 — SourceTree parity (phase 3) (cross-cutting)
-- **Estado:** in progress
-- **Depende de:** —
-- **Referencias:** ROADMAP.md, AGENTS.md
+- **Status:** in progress
+- **Depends on:** —
+- **References:** ROADMAP.md, AGENTS.md
 
-## Contexto
+## Context
 
 Since 2026-09-19 the convention is English for documentation, code and
 comments, but most of the repository was written in Spanish first: code
@@ -16,7 +16,7 @@ descriptions and names, ~99 markdown files (62 tickets, 8 ADRs, guides,
 This ticket translates all of it in small, reviewable batches, with CI green
 between them and without touching behaviour.
 
-## Alcance
+## Scope
 
 - [x] Root docs: `AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`,
   `ROADMAP.md`, `CONTRIBUTING.md` (PR #47).
@@ -25,25 +25,25 @@ between them and without touching behaviour.
 - [x] Frontend comments and test descriptions (~107 files).
 - [x] Rust comments, doc comments and test names/messages (`src-tauri/src` and
   `tests/`, including helper functions and assertion messages).
-- [ ] `docs/tickets/` (title, states and prose) and its index.
+- [x] `docs/tickets/` (title, states and prose) and its index.
 - [ ] `docs/architecture/`, `docs/decisions/` and `docs/guides/`.
 - [ ] `.ai/` (agents, skills, workflows, memory).
 
-## Criterios de aceptación
+## Acceptance criteria
 
 - [ ] No Spanish prose left in comments or docs (manual sweep with `rg`).
 - [ ] Tests keep passing between batches: translation changes no behaviour.
 - [ ] One batch per PR so each diff is reviewable.
 - [ ] Code identifiers are not renamed just to translate a comment.
 
-## Fuera de alcance
+## Out of scope
 
 - Translating past commit messages or PR titles/bodies (optional, editable on
   GitHub; tracked in ROADMAP.md).
 - Translating UI into more languages (the interface stays English; i18n is a
   separate decision).
 
-## Notas técnicas
+## Technical notes
 
 - Comments explain *why*; when translating, keep the reasoning, do not
   summarise it away.

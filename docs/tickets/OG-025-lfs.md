@@ -1,48 +1,48 @@
-# OG-025 · Git LFS: detección y avisos
+# OG-025 · Git LFS: detection and warnings
 
-- **Milestone:** M5 — Pulido
-- **Estado:** done
-- **Depende de:** OG-002, OG-009
-- **Referencias:** ROADMAP.md
+- **Milestone:** M5 — Polish
+- **Status:** done
+- **Depends on:** OG-002, OG-009
+- **References:** ROADMAP.md
 
-## Contexto
+## Context
 
-En repos con Git LFS, si `git-lfs` no está instalado los ficheros gestionados se ven como punteros de texto (version/oid/size) y la app no avisa de ello: parecen cambios normales.
+In repos with Git LFS, if `git-lfs` is not installed the managed files look like text pointers (version/oid/size) and the app does not warn about it: they look like normal changes.
 
-## Alcance (v1)
+## Scope (v1)
 
 - Backend: `lfs_status(path) -> { installed, version, configured }`.
-  - `installed`/`version`: salida de `git lfs version`; si git-lfs no está, no es un error.
-  - `configured`: hay `filter=lfs` en algún `.gitattributes` rastreado (incluidos subdirectorios).
-- Aviso en **File status** cuando el repo usa LFS y `git-lfs` no está instalado.
-- Sección **Git LFS** en el sidebar de extras cuando el repo lo configura, con versión o aviso de no instalado.
-- Aviso en la vista de diff cuando el parche es un **puntero LFS** (version + oid + size): el contenido real no está disponible; se muestran oid corto y tamaño.
-- Solo lectura: no se instala LFS ni se hace `track`, `pull` o `push` de objetos.
+  - `installed`/`version`: output of `git lfs version`; if git-lfs is not there, it is not an error.
+  - `configured`: there is `filter=lfs` in some tracked `.gitattributes` (including subdirectories).
+- Warning in **File status** when the repo uses LFS and `git-lfs` is not installed.
+- **Git LFS** section in the extras sidebar when the repo configures it, with version or not-installed warning.
+- Warning in the diff view when the patch is an **LFS pointer** (version + oid + size): the real content is not available; the short oid and size are shown.
+- Read-only: LFS is not installed and objects are not `track`ed, `pull`ed or `push`ed.
 
-## Criterios de aceptación
+## Acceptance criteria
 
-- [x] `configured` es `true` con un `.gitattributes` con `filter=lfs` (también anidado) y `false` sin él o si solo aparece comentado.
-- [x] El aviso de File status aparece solo si `configured && !installed`; la sección del sidebar, siempre que `configured`.
-- [x] La detección de puntero funciona en parches unificados y side-by-side y no marca diffs normales.
-- [x] Tests: parsers de `.gitattributes` y del listado NUL, integración de `lfs_status`, store y componentes.
+- [x] `configured` is `true` with a `.gitattributes` containing `filter=lfs` (also nested) and `false` without it or if it only appears commented out.
+- [x] The File status warning appears only if `configured && !installed`; the sidebar section, whenever `configured`.
+- [x] Pointer detection works in unified and side-by-side patches and does not flag normal diffs.
+- [x] Tests: `.gitattributes` and NUL listing parsers, `lfs_status` integration, store and components.
 
-## Fuera de alcance
+## Out of scope
 
-- `git lfs install/track/pull/push/fetch`, smudge/clean y descarga de objetos.
-- Mostrar el contenido remoto del fichero o su diff real.
-- Barra de progreso o caché de LFS.
+- `git lfs install/track/pull/push/fetch`, smudge/clean and object download.
+- Showing the remote content of the file or its real diff.
+- LFS progress bar or cache.
 
-## Notas técnicas
+## Technical notes
 
-- `git lfs version` termina con código 1 cuando git-lfs no está; se interpreta como "no instalado" sin propagar el error.
-- `.gitattributes` se localiza con `git ls-files -z` filtrando nombres acabados en `.gitattributes` y se lee del working tree: solo cuentan los rastreados.
-- El detector de punteros ignora prefijos de diff (`+`/`-`/espacio) y exige `version https://git-lfs.github.com/spec/v1`, `oid sha256:<64 hex>` y `size <n>`.
-- `LfsStatus` vive en el store `extras` junto a submódulos y worktrees; se refresca con el watcher y con `mod+R`.
+- `git lfs version` exits with code 1 when git-lfs is not there; it is interpreted as "not installed" without propagating the error.
+- `.gitattributes` is located with `git ls-files -z` filtering names ending in `.gitattributes` and read from the working tree: only tracked ones count.
+- The pointer detector ignores diff prefixes (`+`/`-`/space) and requires `version https://git-lfs.github.com/spec/v1`, `oid sha256:<64 hex>` and `size <n>`.
+- `LfsStatus` lives in the `extras` store next to submodules and worktrees; it is refreshed with the watcher and with `mod+R`.
 
-## Notas de implementación (2026-09-18)
+## Implementation notes (2026-09-18)
 
-- Rust: `LfsStatus`; `parse_gitattributes_paths` y `parse_gitattributes_uses_lfs` (comentarios fuera; token exacto `filter=lfs`); `lfs_status` tolera que `git lfs version` falle.
-- En los tests de integración no se añaden ficheros que casen con `filter=lfs`: sin git-lfs instalado, `git add` intenta ejecutar el filtro y falla (justo el escenario que avisa la UI). En esta máquina git-lfs no está instalado y el aviso es visible desde el primer arranque.
-- Frontend: `parseLfsPointerPatch` detecta version/oid/size ignorando prefijos de diff; aviso en File status (solo si falta git-lfs) y en el diff (siempre que el parche sea un puntero); sección Git LFS en el sidebar.
-- Tests: 109 Rust (2 de parsers y 3 de integración nuevos), 179 frontend (10 nuevos).
-- Cerrado el 2026-09-18 con CI verde (Frontend 41 s, Rust 1m27s) en el PR #21.
+- Rust: `LfsStatus`; `parse_gitattributes_paths` and `parse_gitattributes_uses_lfs` (comments excluded; exact token `filter=lfs`); `lfs_status` tolerates `git lfs version` failing.
+- In the integration tests no files matching `filter=lfs` are added: without git-lfs installed, `git add` tries to run the filter and fails (precisely the scenario the UI warns about). On this machine git-lfs is not installed and the warning is visible from the first launch.
+- Frontend: `parseLfsPointerPatch` detects version/oid/size ignoring diff prefixes; warning in File status (only if git-lfs is missing) and in the diff (whenever the patch is a pointer); Git LFS section in the sidebar.
+- Tests: 109 Rust (2 parser and 3 integration new), 179 frontend (10 new).
+- Closed on 2026-09-18 with green CI (Frontend 41 s, Rust 1m27s) in PR #21.
