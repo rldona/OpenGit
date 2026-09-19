@@ -749,13 +749,21 @@ body {
 }
 
 .repo-tab.active {
-  border-color: var(--border);
-  border-bottom-color: transparent;
-  background: var(--bg);
+  border-color: var(--accent);
+  background: var(--accent);
 }
 
 .repo-tab.active .repo-tab-open {
-  color: var(--text);
+  color: var(--accent-fg);
+}
+
+.repo-tab.active .repo-tab-close {
+  color: var(--accent-fg);
+}
+
+.repo-tab.active .repo-tab-close:hover {
+  background: rgb(255 255 255 / 20%);
+  color: var(--accent-fg);
 }
 
 .repo-tab-close {
