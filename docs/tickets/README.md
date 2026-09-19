@@ -108,3 +108,4 @@ One file per ticket, named `OG-NNN-slug.md`. Every change in the repository star
 | [OG-073](OG-073-submodule-env-race.md) | Fix submodule test env race in CI | Next | done |
 | [OG-074](OG-074-readme-downloads.md) | Point README downloads at the new release | Next | done |
 | [OG-075](OG-075-image-flicker-untracked.md) | Image preview flicker and untracked images | Next | done |
+| [OG-076](OG-076-image-fit-frame.md) | Fit image previews inside their frame | Next | done |

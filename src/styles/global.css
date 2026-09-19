@@ -2062,8 +2062,13 @@ body {
 }
 
 .image-frame img {
+  width: auto;
+  height: auto;
   max-width: 100%;
-  max-height: 100%;
+  /* The frame height is indefinite (`.diff-pane` is not a flex column), so
+     a percentage cap never applies: use viewport units, which always are.
+     Small images keep their natural size; large ones shrink to fit. */
+  max-height: 60vh;
   object-fit: contain;
 }
 
