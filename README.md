@@ -33,7 +33,17 @@ Installers are published on [Releases](https://github.com/rldona/OpenGit/release
 
 The binaries are **not signed or notarized** (certificates cost money and this personal project does not pay for them), so the OS will warn you on first launch:
 
-- **macOS:** Gatekeeper blocks the app. Open the `.dmg`, drag OpenGit to Applications and open it with right click → **Open**; if it still complains, `xattr -cr /Applications/OpenGit.app`.
+- **macOS:** open the `.dmg` and drag OpenGit to Applications. On first launch
+  Gatekeeper may say **"OpenGit is damaged and can't be opened"**; that only
+  means it is unsigned and quarantined, and Security & Privacy does **not**
+  offer "Open Anyway" for it. Remove the quarantine attribute and open it:
+
+  ```bash
+  xattr -dr com.apple.quarantine /Applications/OpenGit.app
+  ```
+
+  (On older macOS versions right-click → **Open** also works.) You have to
+  repeat it if you copy the app again, because macOS re-adds the attribute.
 - **Windows:** SmartScreen shows a warning. Click **More info** → **Run anyway**.
 - **Linux:** install the `.deb` with `sudo apt install ./OpenGit_*.deb` or make the `.AppImage` executable.
 
