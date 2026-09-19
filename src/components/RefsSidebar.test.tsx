@@ -2,6 +2,7 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { confirmDestructive } from "../lib/bridge/dialog";
+import { DEFAULT_MERGE_OPTIONS } from "../lib/merge";
 import { startRemoteJob } from "../lib/bridge/jobs";
 import { listRefs, logPage } from "../lib/bridge/log";
 import { openExternal } from "../lib/bridge/opener";
@@ -311,7 +312,7 @@ describe("RefsSidebar", () => {
     await user.click(screen.getByRole("menuitem", { name: "Merge into main" }));
 
     expect(confirmDestructive).toHaveBeenCalledWith("Merge feature into main?");
-    expect(mergeBranch).toHaveBeenCalledWith("/tmp/repo", "feature", false);
+    expect(mergeBranch).toHaveBeenCalledWith("/tmp/repo", "feature", DEFAULT_MERGE_OPTIONS);
   });
 
   it("does not offer merging the current branch into itself", async () => {
