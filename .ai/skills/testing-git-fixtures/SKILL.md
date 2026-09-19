@@ -3,20 +3,20 @@ name: testing-git-fixtures
 description: Use when writing tests for git parsers or git-dependent behavior (fixtures, temp repos, tempdir, deterministic commits, CRLF, non-ASCII paths, binary files). Triggers on fixture, test repo, git init, tmpdir, integration test, parser test, CI matrix. Covers isolation from user config, deterministic dates and offline rules.
 ---
 
-# Tests de git: fixtures y repos temporales
+# Git tests: fixtures and temporary repos
 
-## Dos niveles
+## Two levels
 
-1. **Parsers (unit):** fixtures como strings en el repo (`tests/fixtures/*.txt`) cargadas con `include_str!`. Sin disco, sin red, sin git.
-2. **Integración:** repos temporales creados por el test con `git init`. Sin red, sin el repo del proyecto (regla 8 de AGENTS.md).
+1. **Parsers (unit):** fixtures as strings in the repo (`tests/fixtures/*.txt`) loaded with `include_str!`. No disk, no network, no git.
+2. **Integration:** temporary repos created by the test with `git init`. No network, no project repo (rule 8 of AGENTS.md).
 
-## Aislamiento obligatorio del entorno
+## Mandatory environment isolation
 
-Un test no puede depender de la config del desarrollador ni de la máquina:
+A test can't depend on the developer's or the machine's config:
 
 ```rust
-// Rust: helper de test
-cmd.env("GIT_CONFIG_GLOBAL", &empty_config)   // fichero vacío dentro del tempdir
+// Rust: test helper
+cmd.env("GIT_CONFIG_GLOBAL", &empty_config)   // empty file inside the tempdir
    .env("GIT_CONFIG_NOSYSTEM", "1")
    .env("GIT_TERMINAL_PROMPT", "0")
    .env("TZ", "UTC")
@@ -24,33 +24,33 @@ cmd.env("GIT_CONFIG_GLOBAL", &empty_config)   // fichero vacío dentro del tempd
    .env_remove("GIT_WORK_TREE");
 ```
 
-- En los `git commit` del test: `-c user.name=Test -c user.email=test@example.com -c commit.gpgsign=false -c core.autocrlf=false`.
-- Fechas fijas: `GIT_AUTHOR_DATE` y `GIT_COMMITTER_DATE` (formato `@1700000000 +0000`) para timestamps reproducibles.
-- No usar `/dev/null` como config global: en Windows no existe; usa un fichero vacío en el tempdir.
+- In the test's `git commit`: `-c user.name=Test -c user.email=test@example.com -c commit.gpgsign=false -c core.autocrlf=false`.
+- Fixed dates: `GIT_AUTHOR_DATE` and `GIT_COMMITTER_DATE` (format `@1700000000 +0000`) for reproducible timestamps.
+- Don't use `/dev/null` as global config: it doesn't exist on Windows; use an empty file in the tempdir.
 
-## Matriz de casos (obligatoria al tocar parsers)
+## Case matrix (mandatory when touching parsers)
 
-| Caso | Cómo provocarlo |
+| Case | How to trigger it |
 | --- | --- |
-| Repo vacío | `git init` sin commits |
+| Empty repo | `git init` without commits |
 | Detached HEAD | `git checkout <hash>` |
-| Rename | `git mv` + commit con `-M` |
-| Binario | bytes nulos en el fichero |
-| CRLF | escribir el fichero con `\r\n` y sin `core.autocrlf` |
-| Sin newline final | `printf 'x' > f` (sin `\n`) |
-| Non-ASCII | ruta `carpeta/ñandú-日本.txt` |
-| Merge / conflicto | dos ramas sobre la misma línea |
-| Submódulo (lectura) | `git submodule add` de un repo local |
+| Rename | `git mv` + commit with `-M` |
+| Binary | null bytes in the file |
+| CRLF | write the file with `\r\n` and without `core.autocrlf` |
+| No trailing newline | `printf 'x' > f` (without `\n`) |
+| Non-ASCII | path `carpeta/ñandú-日本.txt` |
+| Merge / conflict | two branches on the same line |
+| Submodule (read) | `git submodule add` of a local repo |
 
-## Reglas de ejecución
+## Execution rules
 
-- Limpia al terminar: en Windows, un proceso git vivo mantiene locks en `.git`; cierra antes de borrar el tempdir.
-- Nada de `sleep` para "esperar" al watcher: expón una señal o inyecta un notificador falso.
-- Los tests de rendimiento usan un repo sintético de 10 000 commits generado con `git fast-import` o `commit-tree` en bucle; no entran en la suite rápida.
+- Clean up when done: on Windows, a live git process holds locks in `.git`; close before deleting the tempdir.
+- No `sleep` to "wait" for the watcher: expose a signal or inject a fake notifier.
+- Performance tests use a synthetic repo of 10,000 commits generated with `git fast-import` or `commit-tree` in a loop; they don't go into the fast suite.
 
-## Anti-patrones
+## Anti-patterns
 
-- Heredar la config global del usuario (`gpgsign`, hooks, `init.defaultBranch` cambia el nombre de la rama).
-- Crear repos de prueba dentro del repo del proyecto.
-- Fixtures "inventadas" a mano en vez de salida real de git de la versión soportada (2.34+).
-- Tests que dependen del orden de ejecución o comparten un tempdir.
+- Inheriting the user's global config (`gpgsign`, hooks, `init.defaultBranch` changes the branch name).
+- Creating test repos inside the project repo.
+- "Made-up" fixtures by hand instead of real git output from the supported version (2.34+).
+- Tests that depend on execution order or share a tempdir.
