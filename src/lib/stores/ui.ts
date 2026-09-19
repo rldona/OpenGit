@@ -11,6 +11,8 @@ type UiState = {
   shortcutsOpen: boolean;
   newBranchRequest: number;
   newStashRequest: number;
+  /** Incremented to focus the history search field (mod+f). */
+  searchFocusRequest: number;
   fileTree: boolean;
   toggleOutput: () => void;
   appendOutput: (line: string) => void;
@@ -19,6 +21,7 @@ type UiState = {
   setShortcutsOpen: (open: boolean) => void;
   requestNewBranch: () => void;
   requestNewStash: () => void;
+  requestSearchFocus: () => void;
   setFileTree: (fileTree: boolean) => void;
 };
 
@@ -29,6 +32,7 @@ export const useUiStore = create<UiState>((set) => ({
   shortcutsOpen: false,
   newBranchRequest: 0,
   newStashRequest: 0,
+  searchFocusRequest: 0,
   fileTree: false,
   toggleOutput: () => set((state) => ({ outputOpen: !state.outputOpen })),
   appendOutput: (line) =>
@@ -38,5 +42,6 @@ export const useUiStore = create<UiState>((set) => ({
   setShortcutsOpen: (open) => set({ shortcutsOpen: open }),
   requestNewBranch: () => set((state) => ({ newBranchRequest: state.newBranchRequest + 1 })),
   requestNewStash: () => set((state) => ({ newStashRequest: state.newStashRequest + 1 })),
+  requestSearchFocus: () => set((state) => ({ searchFocusRequest: state.searchFocusRequest + 1 })),
   setFileTree: (fileTree) => set({ fileTree }),
 }));

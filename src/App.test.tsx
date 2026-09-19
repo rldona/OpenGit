@@ -218,6 +218,7 @@ describe("App", () => {
       outputLines: ["OpenGit listo."],
       activeView: "history",
       shortcutsOpen: false,
+      searchFocusRequest: 0,
       fileTree: true,
     });
     localStorage.clear();
@@ -252,6 +253,61 @@ describe("App", () => {
     expect(within(header).getByText("Commit")).toBeInTheDocument();
     expect(within(header).getByText("Author")).toBeInTheDocument();
     expect(within(header).getByText("Date")).toBeInTheDocument();
+  });
+
+  it("searches the history by message and clears back to the full log", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Choose folder" }));
+    await screen.findAllByText("commit de prueba");
+
+    const input = screen.getByRole("searchbox", { name: "Search message" });
+    await user.type(input, "prueba{Enter}");
+
+    await waitFor(() =>
+      expect(logPage).toHaveBeenLastCalledWith("/tmp/mi-repo", 0, 200, null, {
+        grep: "prueba",
+        author: "",
+        path: "",
+      }),
+    );
+    expect(await screen.findByText("1 result")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Clear" }));
+
+    await waitFor(() =>
+      expect(logPage).toHaveBeenLastCalledWith("/tmp/mi-repo", 0, 200, null, null),
+    );
+    expect(screen.queryByText("1 result")).not.toBeInTheDocument();
+    expect(useLogStore.getState().search).toBeNull();
+  });
+
+  it("focuses the search field with mod+f", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Choose folder" }));
+    await screen.findAllByText("commit de prueba");
+
+    fireEvent.keyDown(document, { key: "f", ctrlKey: true, metaKey: true });
+
+    await waitFor(() =>
+      expect(screen.getByRole("searchbox", { name: "Search message" })).toHaveFocus(),
+    );
+  });
+
+  it("shows the no-results state when the search matches nothing", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Choose folder" }));
+    await screen.findAllByText("commit de prueba");
+
+    vi.mocked(logPage).mockResolvedValue([]);
+    await user.type(screen.getByRole("searchbox", { name: "Search message" }), "nada{Enter}");
+
+    expect(await screen.findByText("No commits match the search")).toBeInTheDocument();
   });
 
   it("opens the conflict editor from File status", async () => {

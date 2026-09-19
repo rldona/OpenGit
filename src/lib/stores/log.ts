@@ -6,7 +6,7 @@ import {
   revertCommit as revertRequest,
 } from "../bridge/history";
 import { listRefs, logPage } from "../bridge/log";
-import type { Commit, RefEntry } from "../bridge/types";
+import type { Commit, LogSearch, RefEntry } from "../bridge/types";
 import { emptyLayout, layoutPage, type GraphLayout } from "../graph/layout";
 import { useRefsStore } from "./refs";
 import { useStatusStore } from "./status";
@@ -23,6 +23,8 @@ type LogState = {
   layout: GraphLayout;
   refs: RefEntry[];
   filter: string | null;
+  /** Active history search; `null` means the full log. */
+  search: LogSearch | null;
   selected: string | null;
   loading: boolean;
   hasMore: boolean;
@@ -33,6 +35,9 @@ type LogState = {
   reload: (root: string) => Promise<void>;
   loadMore: () => Promise<void>;
   setFilter: (root: string, rev: string | null) => Promise<void>;
+  /** Applies (or clears, if every field is empty) a history search. */
+  applySearch: (root: string, search: LogSearch) => Promise<void>;
+  clearSearch: (root: string) => Promise<void>;
   select: (hash: string | null) => void;
   /** Loads pages until the commit is found, selects it and requests the scroll. */
   revealCommit: (root: string, hash: string) => Promise<void>;
@@ -55,8 +60,30 @@ async function refreshAfterRewrite(root: string, reload: () => Promise<void>): P
   await useStatusStore.getState().refresh(root);
 }
 
-function toInput(commit: Commit) {
-  return { hash: commit.hash, parents: commit.parents, refs: commit.refs };
+/**
+ * Graph input for a commit. In search mode the parents are dropped (OG-018):
+ * they are not in the result and would leave lanes open that never close, so
+ * the nodes are painted in a single column.
+ */
+function toInput(commit: Commit, parentless: boolean) {
+  return {
+    hash: commit.hash,
+    parents: parentless ? [] : commit.parents,
+    refs: commit.refs,
+  };
+}
+
+/** Normalizes a search: trims the fields and returns `null` if all are empty. */
+function activeSearch(search: LogSearch): LogSearch | null {
+  const trimmed: LogSearch = {
+    grep: search.grep.trim(),
+    author: search.author.trim(),
+    path: search.path.trim(),
+  };
+  if (trimmed.grep === "" && trimmed.author === "" && trimmed.path === "") {
+    return null;
+  }
+  return trimmed;
 }
 
 export const useLogStore = create<LogState>((set, get) => ({
@@ -65,6 +92,7 @@ export const useLogStore = create<LogState>((set, get) => ({
   layout: emptyLayout(),
   refs: [],
   filter: null,
+  search: null,
   selected: null,
   revealRequest: 0,
   loading: false,
@@ -75,7 +103,12 @@ export const useLogStore = create<LogState>((set, get) => ({
     // Entering a project (new root) selects HEAD so the detail panel
     // shows something without having to click a row. When filtering or searching
     // within the same repository the selection is cleared, as before.
-    const entering = get().root !== root;
+    const previous = get().root;
+    const entering = previous !== root;
+    // Switching from one open repository to another starts clean: keeping the
+    // branch filter or the search of the previous one would load the new log
+    // already filtered. The first load (no previous root) has nothing to reset.
+    const switching = entering && previous !== null;
     set({
       root,
       loading: true,
@@ -84,17 +117,18 @@ export const useLogStore = create<LogState>((set, get) => ({
       layout: emptyLayout(),
       selected: null,
       hasMore: true,
+      ...(switching ? { filter: null, search: null } : {}),
     });
     try {
-      const { filter } = get();
+      const { filter, search } = get();
       const [refs, commits] = await Promise.all([
         listRefs(root),
-        logPage(root, 0, PAGE_SIZE, filter, null),
+        logPage(root, 0, PAGE_SIZE, filter, search),
       ]);
       set({
         refs,
         commits,
-        layout: layoutPage(commits.map(toInput)),
+        layout: layoutPage(commits.map((commit) => toInput(commit, search !== null))),
         hasMore: commits.length === PAGE_SIZE,
         selected: entering ? (commits[0]?.hash ?? null) : null,
       });
@@ -105,19 +139,19 @@ export const useLogStore = create<LogState>((set, get) => ({
     }
   },
 
-  /// Silent refresh after the watcher: keeps selection and filter.
+  /// Silent refresh after the watcher: keeps selection, filter and search.
   reload: async (root) => {
     try {
-      const { filter } = get();
+      const { filter, search } = get();
       const [refs, commits] = await Promise.all([
         listRefs(root),
-        logPage(root, 0, PAGE_SIZE, filter, null),
+        logPage(root, 0, PAGE_SIZE, filter, search),
       ]);
       set({
         root,
         refs,
         commits,
-        layout: layoutPage(commits.map(toInput)),
+        layout: layoutPage(commits.map((commit) => toInput(commit, search !== null))),
         hasMore: commits.length === PAGE_SIZE,
       });
     } catch (error) {
@@ -126,14 +160,17 @@ export const useLogStore = create<LogState>((set, get) => ({
   },
 
   loadMore: async () => {
-    const { root, loading, hasMore, commits, layout, filter } = get();
+    const { root, loading, hasMore, commits, layout, filter, search } = get();
     if (!root || loading || !hasMore) return;
     set({ loading: true });
     try {
-      const page = await logPage(root, commits.length, PAGE_SIZE, filter, null);
+      const page = await logPage(root, commits.length, PAGE_SIZE, filter, search);
       set({
         commits: [...commits, ...page],
-        layout: layoutPage(page.map(toInput), layout),
+        layout: layoutPage(
+          page.map((commit) => toInput(commit, search !== null)),
+          layout,
+        ),
         hasMore: page.length === PAGE_SIZE,
       });
     } catch (error) {
@@ -148,13 +185,26 @@ export const useLogStore = create<LogState>((set, get) => ({
     await get().load(root);
   },
 
+  applySearch: async (root, search) => {
+    set({ search: activeSearch(search) });
+    await get().load(root);
+  },
+
+  clearSearch: async (root) => {
+    if (get().search === null) {
+      return;
+    }
+    set({ search: null });
+    await get().load(root);
+  },
+
   select: (hash) => set({ selected: hash }),
 
   revealCommit: async (root, hash) => {
     const found = () => get().commits.some((commit) => commit.hash === hash);
-    // With an active branch filter the commit may not be in the log.
-    if (get().filter !== null && !found()) {
-      set({ filter: null });
+    // With an active branch filter or search the commit may not be in the log.
+    if ((get().filter !== null || get().search !== null) && !found()) {
+      set({ filter: null, search: null });
       await get().load(root);
     }
     while (!found() && get().hasMore) {
@@ -212,6 +262,7 @@ export const useLogStore = create<LogState>((set, get) => ({
       layout: emptyLayout(),
       refs: [],
       filter: null,
+      search: null,
       selected: null,
       revealRequest: 0,
       loading: false,

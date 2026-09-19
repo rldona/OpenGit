@@ -124,6 +124,84 @@ describe("useLogStore", () => {
     expect(logPage).toHaveBeenLastCalledWith("/tmp/repo", 0, 200, "refs/heads/main", null);
   });
 
+  it("applies a search and passes it to the bridge", async () => {
+    vi.mocked(logPage).mockResolvedValue([COMMIT]);
+
+    await useLogStore.getState().applySearch("/tmp/repo", { grep: "fix", author: "", path: "" });
+
+    expect(useLogStore.getState().search).toEqual({ grep: "fix", author: "", path: "" });
+    expect(logPage).toHaveBeenLastCalledWith("/tmp/repo", 0, 200, null, {
+      grep: "fix",
+      author: "",
+      path: "",
+    });
+    expect(useLogStore.getState().commits).toHaveLength(1);
+  });
+
+  it("an empty search clears instead of filtering", async () => {
+    await useLogStore.getState().applySearch("/tmp/repo", { grep: "  ", author: "", path: "" });
+
+    expect(useLogStore.getState().search).toBeNull();
+    expect(logPage).toHaveBeenLastCalledWith("/tmp/repo", 0, 200, null, null);
+  });
+
+  it("clears the search when opening a different repository", async () => {
+    vi.mocked(logPage).mockResolvedValue([COMMIT]);
+    await useLogStore.getState().applySearch("/tmp/a", { grep: "fix", author: "", path: "" });
+
+    await useLogStore.getState().load("/tmp/b");
+
+    expect(useLogStore.getState().search).toBeNull();
+    expect(logPage).toHaveBeenLastCalledWith("/tmp/b", 0, 200, null, null);
+  });
+
+  it("keeps the search across reload and combines it with the branch filter", async () => {
+    vi.mocked(logPage).mockResolvedValue([COMMIT]);
+    await useLogStore.getState().applySearch("/tmp/repo", { grep: "fix", author: "", path: "" });
+    vi.mocked(logPage).mockClear();
+
+    useLogStore.setState({ filter: "refs/heads/main" });
+    await useLogStore.getState().reload("/tmp/repo");
+
+    expect(logPage).toHaveBeenCalledWith("/tmp/repo", 0, 200, "refs/heads/main", {
+      grep: "fix",
+      author: "",
+      path: "",
+    });
+
+    await useLogStore.getState().clearSearch("/tmp/repo");
+
+    expect(useLogStore.getState().search).toBeNull();
+    expect(useLogStore.getState().filter).toBe("refs/heads/main");
+    expect(logPage).toHaveBeenLastCalledWith("/tmp/repo", 0, 200, "refs/heads/main", null);
+  });
+
+  it("paginates with the active search", async () => {
+    vi.mocked(logPage).mockResolvedValueOnce(page(200, "p")).mockResolvedValueOnce(page(1, "r"));
+    await useLogStore.getState().applySearch("/tmp/repo", { grep: "fix", author: "", path: "" });
+
+    await useLogStore.getState().loadMore();
+
+    expect(logPage).toHaveBeenLastCalledWith("/tmp/repo", 200, 200, null, {
+      grep: "fix",
+      author: "",
+      path: "",
+    });
+  });
+
+  it("flattens the graph in search mode", async () => {
+    vi.mocked(logPage).mockResolvedValue([
+      { ...COMMIT, hash: "bbbb0000", parents: ["aaaa0000"] },
+      { ...COMMIT, hash: "aaaa0000", parents: [] },
+    ]);
+
+    await useLogStore.getState().applySearch("/tmp/repo", { grep: "fix", author: "", path: "" });
+
+    const rows = useLogStore.getState().layout.rows;
+    expect(rows).toHaveLength(2);
+    expect(rows.every((row) => row.lane === 0 && row.edges.length === 0)).toBe(true);
+  });
+
   it("cherry-picks and refreshes log, refs and status", async () => {
     vi.mocked(cherryPick).mockResolvedValue(undefined);
     useUiStore.setState({ outputLines: [] });

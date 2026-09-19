@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { classifyRef, formatAuthor, formatCommitDate, shortRefName } from "../lib/format";
 import { ROW_HEIGHT, graphWidth as graphWidthFor, visibleLaneCount } from "../lib/graph/layout";
 import { sameRange, visibleRange, type VisibleRange } from "../lib/graph/viewport";
@@ -20,6 +20,7 @@ import { WORKTREE_SELECTION, useLogStore } from "../lib/stores/log";
 import { useRefsStore } from "../lib/stores/refs";
 import { useRepoStore } from "../lib/stores/repo";
 import { useStatusStore } from "../lib/stores/status";
+import { useUiStore } from "../lib/stores/ui";
 import { ColumnResizer } from "./ColumnResizer";
 import { CommitDetailPanel } from "./CommitDetailPanel";
 import { Icon } from "./Icon";
@@ -33,12 +34,36 @@ export function HistoryView() {
   const layout = useLogStore((state) => state.layout);
   const refs = useLogStore((state) => state.refs);
   const filter = useLogStore((state) => state.filter);
+  const search = useLogStore((state) => state.search);
   const selected = useLogStore((state) => state.selected);
   const loading = useLogStore((state) => state.loading);
+  const hasMore = useLogStore((state) => state.hasMore);
   const load = useLogStore((state) => state.load);
   const loadMore = useLogStore((state) => state.loadMore);
   const setFilter = useLogStore((state) => state.setFilter);
+  const applySearch = useLogStore((state) => state.applySearch);
+  const clearSearch = useLogStore((state) => state.clearSearch);
   const select = useLogStore((state) => state.select);
+
+  const searchFocusRequest = useUiStore((state) => state.searchFocusRequest);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const handledFocus = useRef(0);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [grep, setGrep] = useState("");
+  const [author, setAuthor] = useState("");
+  const [path, setPath] = useState("");
+  const searching = search !== null;
+
+  // `mod+f`: the App switches to History and requests the focus here.
+  useEffect(() => {
+    if (searchFocusRequest === 0 || searchFocusRequest === handledFocus.current) {
+      return;
+    }
+    handledFocus.current = searchFocusRequest;
+    setSearchOpen(true);
+    searchInputRef.current?.focus();
+    searchInputRef.current?.select();
+  }, [searchFocusRequest]);
 
   const [widths, setWidths] = useState(loadColumnWidths);
   const setWidth = (column: ColumnName, width: number) =>
@@ -70,11 +95,37 @@ export function HistoryView() {
   const totalRows = rows.length + (showWorktree ? 1 : 0);
   const commitOffset = showWorktree ? 1 : 0;
 
+  const submitSearch = (event: FormEvent) => {
+    event.preventDefault();
+    if (root) {
+      void applySearch(root, { grep, author, path });
+    }
+  };
+
+  const clear = () => {
+    setGrep("");
+    setAuthor("");
+    setPath("");
+    if (root) {
+      void clearSearch(root);
+    }
+  };
+
+  const hasDraft = grep.trim() !== "" || author.trim() !== "" || path.trim() !== "";
+
   useEffect(() => {
     if (root) {
       void load(root);
     }
   }, [root, load]);
+
+  // A new repository starts with an empty search: both in the store
+  // (`load` resets it) and in these drafts.
+  useEffect(() => {
+    setGrep("");
+    setAuthor("");
+    setPath("");
+  }, [root]);
 
   const updateRange = useCallback(() => {
     const scroller = scrollRef.current;
@@ -182,6 +233,59 @@ export function HistoryView() {
             ))}
           </select>
         </label>
+
+        <form className="history-search" onSubmit={submitSearch} role="search">
+          <input
+            ref={searchInputRef}
+            className="history-search-message"
+            type="search"
+            value={grep}
+            placeholder="Search message"
+            aria-label="Search message"
+            onChange={(event) => setGrep(event.target.value)}
+          />
+          <button
+            type="button"
+            className="history-search-toggle"
+            aria-expanded={searchOpen}
+            onClick={() => setSearchOpen((open) => !open)}
+          >
+            Filters
+          </button>
+          {searchOpen && (
+            <>
+              <input
+                type="text"
+                value={author}
+                placeholder="Author"
+                aria-label="Search author"
+                onChange={(event) => setAuthor(event.target.value)}
+              />
+              <input
+                type="text"
+                value={path}
+                placeholder="Path"
+                aria-label="Search path"
+                onChange={(event) => setPath(event.target.value)}
+              />
+            </>
+          )}
+          <button type="submit" className="history-search-submit">
+            Search
+          </button>
+          {(searching || hasDraft) && (
+            <button type="button" className="history-search-clear" onClick={clear}>
+              Clear
+            </button>
+          )}
+          {searching && (
+            <span className="history-search-count muted">
+              {commits.length}
+              {hasMore ? "+" : ""} {commits.length === 1 ? "result" : "results"}
+            </span>
+          )}
+        </form>
+
         {loading && <span className="muted">Loading…</span>}
       </div>
 
@@ -237,6 +341,9 @@ export function HistoryView() {
               offset={commitOffset}
               worktree={showWorktree}
             />
+          )}
+          {searching && !loading && commits.length === 0 && (
+            <p className="history-empty muted">No commits match the search</p>
           )}
           <div className="history-list" ref={scrollRef} onScroll={updateRange}>
             <div className="history-inner" style={{ height: totalRows * ROW_HEIGHT }}>
