@@ -110,3 +110,4 @@ One file per ticket, named `OG-NNN-slug.md`. Every change in the repository star
 | [OG-075](OG-075-image-flicker-untracked.md) | Image preview flicker and untracked images | Next | done |
 | [OG-076](OG-076-image-fit-frame.md) | Fit image previews inside their frame | Next | done |
 | [OG-077](OG-077-update-check.md) | Update check with download link | Next | done |
+| [OG-078](OG-078-open-external.md) | Open working-tree files in external applications | Next | done |

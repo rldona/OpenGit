@@ -1,4 +1,5 @@
 import { copyText } from "../lib/clipboard";
+import { openFileDefault, openFileEditor, revealFile } from "../lib/openFiles";
 import { useDiffStore, type DiffFileEntry } from "../lib/stores/diff";
 import { useBlameStore } from "../lib/stores/blame";
 import { useLogStore } from "../lib/stores/log";
@@ -16,6 +17,7 @@ export function DiffFilesPanel() {
   const selected = useDiffStore((state) => state.selected);
   const selectFile = useDiffStore((state) => state.selectFile);
   const root = useRepoStore((state) => state.repo?.root ?? null);
+  const target = useDiffStore((state) => state.target);
   const showFileHistory = useLogStore((state) => state.showFileHistory);
   const openBlame = useBlameStore((state) => state.open);
   const fileTree = useUiStore((state) => state.fileTree);
@@ -36,6 +38,15 @@ export function DiffFilesPanel() {
           ...(entry.untracked
             ? []
             : [{ label: "Blame", onSelect: () => root && void openBlame(root, entry.path) }]),
+          // External applications only make sense on the working tree: on a
+          // commit the file on disk may not match the shown content (OG-078).
+          ...(root && target?.kind === "worktree"
+            ? [
+                { label: "Open", onSelect: () => openFileDefault(root, entry.path) },
+                { label: "Open in VS Code", onSelect: () => openFileEditor(root, entry.path) },
+                { label: "Show in Finder", onSelect: () => revealFile(root, entry.path) },
+              ]
+            : []),
           { label: "Copy path", onSelect: () => void copyText(entry.path) },
         ])
       }

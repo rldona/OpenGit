@@ -15,3 +15,8 @@ export function revealInFileManager(path: string): Promise<void> {
 export function openTerminal(path: string): Promise<void> {
   return invoke("open_terminal", { path });
 }
+
+/** Opens a file in Visual Studio Code (`code <file>`, OG-078). */
+export function openEditor(path: string): Promise<void> {
+  return invoke<void>("open_editor", { path });
+}
