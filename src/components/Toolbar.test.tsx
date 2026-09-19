@@ -38,6 +38,7 @@ const handlers = {
   onPush: vi.fn(),
   onMerge: vi.fn(),
   onRefresh: vi.fn(),
+  onSettings: vi.fn(),
 };
 
 function entries(count: number) {
@@ -164,15 +165,12 @@ describe("Toolbar", () => {
     expect(openExternal).toHaveBeenCalledWith("https://x/y");
   });
 
-  it("closes the Settings popover with Escape", async () => {
+  it("opens Settings through the callback", async () => {
     const user = userEvent.setup();
     render(<Toolbar {...handlers} />);
 
     await user.click(screen.getByRole("button", { name: /Settings/ }));
-    expect(screen.getByRole("dialog", { name: "Settings" })).toBeInTheDocument();
 
-    await user.keyboard("{Escape}");
-
-    expect(screen.queryByRole("dialog", { name: "Settings" })).not.toBeInTheDocument();
+    expect(handlers.onSettings).toHaveBeenCalled();
   });
 });

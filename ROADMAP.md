@@ -115,6 +115,7 @@ plus the merge loose ends and drag gestures.
 - [x] Merge window with the log picker ("Merge From Log") (OG-063).
 - [x] Clicking a branch selects its commit in the history (OG-064).
 - [x] Refresh button: include stashes and give feedback (OG-065).
+- [ ] Settings modal (SourceTree-style) with tabs (OG-067).
 - [ ] Merge indicator: busy while running, banner only if unfinished (OG-066).
 
 **Exit:** search and navigate history without touching the terminal, and run a

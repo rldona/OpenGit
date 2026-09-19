@@ -570,21 +570,20 @@ describe("App", () => {
     expect(commitFiles).toHaveBeenCalledWith("/tmp/mi-repo", "aaaa0000");
   });
 
-  it("toggles the output panel from Settings", async () => {
+  it("opens the Settings modal on the Appearance tab without a repo", async () => {
     const user = userEvent.setup();
     render(<App />);
 
-    expect(screen.queryByRole("region", { name: "Output" })).not.toBeInTheDocument();
-
     await user.click(screen.getByRole("button", { name: "Settings" }));
-    await user.click(screen.getByRole("button", { name: "Toggle output panel" }));
-    expect(screen.getByRole("region", { name: "Output" })).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Toggle output panel" }));
-    expect(screen.queryByRole("region", { name: "Output" })).not.toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "Settings" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Appearance" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
   });
 
-  it("changes the theme and applies it to the document", async () => {
+  it("changes the theme and applies it to the document on OK", async () => {
     const user = userEvent.setup();
     render(<App />);
 
@@ -593,14 +592,14 @@ describe("App", () => {
     expect(select).toHaveValue("system");
 
     await user.selectOptions(select, "light");
-
     expect(select).toHaveValue("light");
+    // Cancel would discard it: the theme is applied on OK.
+    expect(document.documentElement.dataset.theme).toBe("dark");
+
+    await user.click(screen.getByRole("button", { name: "OK" }));
+
     expect(document.documentElement.dataset.theme).toBe("light");
     expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe("light");
-
-    await user.selectOptions(select, "dark");
-
-    expect(document.documentElement.dataset.theme).toBe("dark");
   });
 
   it("opens the shortcuts help with ? and closes it with Esc", async () => {
@@ -614,18 +613,6 @@ describe("App", () => {
 
     await user.keyboard("{Escape}");
 
-    expect(screen.queryByRole("dialog", { name: "Keyboard shortcuts" })).not.toBeInTheDocument();
-  });
-
-  it("opens and closes the help from Settings", async () => {
-    const user = userEvent.setup();
-    render(<App />);
-
-    await user.click(screen.getByRole("button", { name: "Settings" }));
-    await user.click(screen.getByRole("button", { name: "Keyboard shortcuts" }));
-    expect(screen.getByRole("dialog", { name: "Keyboard shortcuts" })).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "Close" }));
     expect(screen.queryByRole("dialog", { name: "Keyboard shortcuts" })).not.toBeInTheDocument();
   });
 
