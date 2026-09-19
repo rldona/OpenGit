@@ -126,6 +126,7 @@ describe("RefsSidebar", () => {
     localStorage.clear();
     useCollapseStore.setState({ collapsed: {} });
     useRepoStore.setState({ repo: REPO, recents: [], loading: false, error: null });
+    useLogStore.getState().reset();
     useRefsStore.getState().reset();
     useRefsStore.setState({
       root: REPO.root,
@@ -158,13 +159,38 @@ describe("RefsSidebar", () => {
     expect(screen.getByText("2↓")).toBeInTheDocument();
   });
 
-  it("selects the branch on click, without checking out", async () => {
+  it("locates a branch's commit on click, without checking out", async () => {
     const user = userEvent.setup();
+    vi.mocked(logPage).mockResolvedValue([
+      {
+        hash: "x",
+        parents: [],
+        author_name: "Ana",
+        author_email: "ana@example.com",
+        author_time: 1_700_000_000,
+        subject: "otro commit",
+        refs: [],
+        body: "",
+      },
+      {
+        hash: "b",
+        parents: [],
+        author_name: "Ana",
+        author_email: "ana@example.com",
+        author_time: 1_700_000_000,
+        subject: "punta de feature",
+        refs: [],
+        body: "",
+      },
+    ]);
+    await useLogStore.getState().load("/tmp/repo");
     render(<RefsSidebar />);
 
     const feature = await screen.findByRole("button", { name: "feature" });
     await user.click(feature);
 
+    expect(useLogStore.getState().selected).toBe("b");
+    expect(useUiStore.getState().activeView).toBe("history");
     expect(feature).toHaveClass("selected");
     expect(checkoutRef).not.toHaveBeenCalled();
   });
@@ -180,8 +206,31 @@ describe("RefsSidebar", () => {
     expect(checkoutRef).toHaveBeenCalledWith("/tmp/repo", "feature", false);
   });
 
-  it("selects a remote branch without checking out", async () => {
+  it("locates a remote branch's commit on click, without checking out", async () => {
     const user = userEvent.setup();
+    vi.mocked(logPage).mockResolvedValue([
+      {
+        hash: "x",
+        parents: [],
+        author_name: "Ana",
+        author_email: "ana@example.com",
+        author_time: 1_700_000_000,
+        subject: "otro commit",
+        refs: [],
+        body: "",
+      },
+      {
+        hash: "c",
+        parents: [],
+        author_name: "Ana",
+        author_email: "ana@example.com",
+        author_time: 1_700_000_000,
+        subject: "punta de origin/remota",
+        refs: [],
+        body: "",
+      },
+    ]);
+    await useLogStore.getState().load("/tmp/repo");
     render(<RefsSidebar />);
     await screen.findByText("feature");
 
@@ -189,6 +238,8 @@ describe("RefsSidebar", () => {
     const remote = await screen.findByRole("button", { name: "origin/remota" });
     await user.click(remote);
 
+    expect(useLogStore.getState().selected).toBe("c");
+    expect(useUiStore.getState().activeView).toBe("history");
     expect(remote).toHaveClass("selected");
     expect(checkoutRef).not.toHaveBeenCalled();
   });
