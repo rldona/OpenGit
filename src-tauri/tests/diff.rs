@@ -2,7 +2,7 @@ mod support;
 
 use opengit_lib::git::{
     commit_file_diff, commit_files, compare_file_diff, compare_numstat, diff_numstat,
-    worktree_file_diff, Runner,
+    untracked_file_diff, worktree_file_diff, Runner,
 };
 use support::TestRepo;
 
@@ -63,6 +63,33 @@ fn diff_of_binaries_warns() {
 
     let patch = worktree_file_diff(&runner(), repo.path(), "bin.bin", false, false).unwrap();
     assert!(patch.contains("Binary files"), "{patch}");
+}
+
+#[test]
+fn diff_of_untracked_text_binary_empty_and_missing() {
+    let repo = TestRepo::init();
+    repo.write("nuevo.txt", b"hola\nmundo\n");
+    repo.write("añadido.txt", "con eñe\n".as_bytes());
+    repo.write("bin.bin", b"\x00\x01\x02");
+    repo.write("vacio.txt", b"");
+
+    let patch = untracked_file_diff(&runner(), repo.path(), "nuevo.txt").unwrap();
+    assert!(patch.contains("--- /dev/null"), "{patch}");
+    assert!(patch.contains("+++ b/nuevo.txt"), "{patch}");
+    assert!(patch.contains("+hola"), "{patch}");
+    assert!(patch.contains("+mundo"), "{patch}");
+
+    let non_ascii = untracked_file_diff(&runner(), repo.path(), "añadido.txt").unwrap();
+    assert!(non_ascii.contains("+con eñe"), "{non_ascii}");
+
+    let binary = untracked_file_diff(&runner(), repo.path(), "bin.bin").unwrap();
+    assert!(binary.contains("Binary files"), "{binary}");
+
+    let empty = untracked_file_diff(&runner(), repo.path(), "vacio.txt").unwrap();
+    assert!(empty.contains("new file"), "{empty}");
+    assert!(!empty.contains("@@"), "{empty}");
+
+    assert!(untracked_file_diff(&runner(), repo.path(), "noexiste.txt").is_err());
 }
 
 #[test]

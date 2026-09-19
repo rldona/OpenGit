@@ -1706,6 +1706,36 @@ pub fn worktree_file_diff(
     Ok(output.stdout_lossy())
 }
 
+/// Preview of an untracked file as a new-file patch: `diff --no-index`
+/// against `/dev/null` (OG-071). Exit code 1 means "differences" here, so
+/// codes 0/1 with a non-empty stdout are success; anything else (e.g. the
+/// file vanished mid-flight, which also exits 1 but prints nothing) is an
+/// error.
+pub fn untracked_file_diff(runner: &Runner, repo: &Path, file: &str) -> Result<String, GitError> {
+    let args: Vec<OsString> = vec![
+        "diff".into(),
+        "--no-color".into(),
+        "--no-ext-diff".into(),
+        "--no-index".into(),
+        "--".into(),
+        "/dev/null".into(),
+        file.into(),
+    ];
+    let cmd = GitCommand::new(args).cwd(repo);
+    let output = runner.run(&cmd)?;
+    let exit_code = output.exit_code();
+    if (exit_code == 0 || exit_code == 1) && !output.stdout.is_empty() {
+        Ok(output.stdout_lossy())
+    } else {
+        Err(GitError::CommandFailed {
+            exit_code,
+            stdout: output.stdout_lossy(),
+            stderr: output.stderr_lossy(),
+            args: cmd.args(),
+        })
+    }
+}
+
 /// Patch of a file from the working tree or the index, in bytes.
 pub fn worktree_diff_bytes(
     runner: &Runner,

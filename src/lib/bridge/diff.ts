@@ -13,6 +13,11 @@ export function diffFile(request: DiffRequest): Promise<string> {
   return invoke<string>("diff_file", request);
 }
 
+/** Read-only preview of an untracked file as a new-file patch (OG-071). */
+export function untrackedFileDiff(path: string, file: string): Promise<string> {
+  return invoke<string>("untracked_file_diff", { path, file });
+}
+
 export function commitFiles(path: string, rev: string): Promise<FileDiff[]> {
   return invoke<FileDiff[]>("commit_files", { path, rev });
 }

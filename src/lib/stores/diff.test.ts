@@ -7,6 +7,7 @@ import {
   diffNumstat,
   discardSelection,
   stageSelection,
+  untrackedFileDiff,
 } from "../bridge/diff";
 import { statusRepo } from "../bridge/status";
 import type { StatusReport } from "../bridge/types";
@@ -14,6 +15,7 @@ import { useDiffStore } from "./diff";
 
 vi.mock("../bridge/diff", () => ({
   diffFile: vi.fn(),
+  untrackedFileDiff: vi.fn(),
   commitFiles: vi.fn(),
   compareNumstat: vi.fn(),
   compareFile: vi.fn(),
@@ -44,6 +46,9 @@ const REPORT: StatusReport = {
 };
 
 const PATCH = "diff --git a/a.txt b/a.txt\n@@ -1 +1 @@\n-viejo\n+nuevo\n";
+
+const UNTRACKED_PATCH =
+  "diff --git a/nuevo.txt b/nuevo.txt\nnew file mode 100644\nindex 0000000..70e300c\n--- /dev/null\n+++ b/nuevo.txt\n@@ -0,0 +1,2 @@\n+hola\n+mundo\n";
 
 describe("useDiffStore", () => {
   beforeEach(() => {
@@ -127,7 +132,8 @@ describe("useDiffStore", () => {
     expect(useDiffStore.getState().mode).toBe("unified");
   });
 
-  it("does not request a patch for untracked files", async () => {
+  it("requests a read-only preview for untracked files", async () => {
+    vi.mocked(untrackedFileDiff).mockResolvedValue(UNTRACKED_PATCH);
     await useDiffStore.getState().openWorktree("/tmp/repo");
     const untracked = useDiffStore.getState().files.find((file) => file.untracked);
     vi.mocked(diffFile).mockClear();
@@ -135,7 +141,24 @@ describe("useDiffStore", () => {
     await useDiffStore.getState().selectFile(untracked!);
 
     expect(diffFile).not.toHaveBeenCalled();
-    expect(useDiffStore.getState().patch).toBe("");
+    expect(untrackedFileDiff).toHaveBeenCalledWith("/tmp/repo", "nuevo.txt");
+    expect(useDiffStore.getState().patch).toBe(UNTRACKED_PATCH);
+    expect(useDiffStore.getState().binary).toBe(false);
+    expect(useDiffStore.getState().error).toBeNull();
+  });
+
+  it("flags a binary untracked preview without staging actions", async () => {
+    vi.mocked(untrackedFileDiff).mockResolvedValue(
+      "diff --git a/logo.png b/logo.png\nnew file mode 100644\nindex 0000000..8352675\nBinary files /dev/null and b/logo.png differ\n",
+    );
+    await useDiffStore.getState().openWorktree("/tmp/repo");
+    const untracked = useDiffStore.getState().files.find((file) => file.untracked)!;
+
+    await useDiffStore.getState().selectFile(untracked);
+    expect(useDiffStore.getState().binary).toBe(true);
+
+    await useDiffStore.getState().applySelection({ kind: "file" });
+    expect(stageSelection).not.toHaveBeenCalled();
   });
 
   it("reverses the diff by requesting it again", async () => {

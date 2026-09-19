@@ -1,5 +1,6 @@
 import { confirmDestructive } from "../lib/bridge/dialog";
 import { parseLfsPointerPatch } from "../lib/lfs";
+import { patchCounts, splitPatch } from "../lib/diff/patch";
 import { isImagePath } from "../lib/images";
 import { useContextMenu } from "../lib/hooks/useContextMenu";
 import { useBlameStore } from "../lib/stores/blame";
@@ -32,8 +33,14 @@ export function DiffPatchPanel() {
   const paneMenu = useContextMenu();
 
   const patchActions = target?.kind === "worktree" && !reversed;
-  const pointer = selected && !selected.untracked && !binary ? parseLfsPointerPatch(patch) : null;
-  const imagePreview = selected && !selected.untracked && binary && isImagePath(selected.path);
+  // Untracked files render a read-only new-file preview (OG-071): no staging
+  // or discard actions, no blame, no image preview.
+  const previewOnly = selected?.untracked === true;
+  const pointer = selected && !previewOnly && !binary ? parseLfsPointerPatch(patch) : null;
+  const imagePreview = selected && !previewOnly && binary && isImagePath(selected.path);
+  const untrackedEmpty = previewOnly && !binary && patch !== "" && splitPatch(patch) === null;
+  const untrackedCounts =
+    previewOnly && !binary && patch !== "" && !untrackedEmpty ? patchCounts(patch) : null;
 
   const confirmDiscard = async (selection: Parameters<typeof discardSelection>[0]) => {
     if (await confirmDestructive("Discard the selected changes? This cannot be undone.")) {
@@ -67,11 +74,18 @@ export function DiffPatchPanel() {
           {selected.orig_path && (
             <span className="diff-pane-orig muted">← {selected.orig_path}</span>
           )}
-          {!selected.untracked && (
+          {!selected.untracked ? (
             <span className="diff-pane-counts">
               <span className="added">+{selected.added ?? 0}</span>
               <span className="deleted">-{selected.deleted ?? 0}</span>
             </span>
+          ) : (
+            untrackedCounts && (
+              <span className="diff-pane-counts">
+                <span className="added">+{untrackedCounts.added}</span>
+                <span className="deleted">-{untrackedCounts.deleted}</span>
+              </span>
+            )
           )}
         </div>
       )}
@@ -87,31 +101,27 @@ export function DiffPatchPanel() {
         </p>
       )}
       {!selected && !error && <p className="muted status-empty">No file selected</p>}
-      {selected?.untracked && (
-        <p className="muted status-empty">
-          Untracked file: no diff yet. Stage it to see the content.
-        </p>
-      )}
+      {selected?.untracked && untrackedEmpty && <p className="muted status-empty">Empty file</p>}
       {imagePreview && <ImageDiffPanel />}
-      {selected && !selected.untracked && binary && !imagePreview && (
+      {selected && binary && !imagePreview && (
         <p className="muted status-empty">Binary file: no text diff available.</p>
       )}
-      {selected && !selected.untracked && !binary && patch !== "" && mode === "unified" && (
+      {selected && !binary && patch !== "" && !untrackedEmpty && mode === "unified" && (
         <PatchView
           patch={patch}
-          staging={patchActions}
+          staging={patchActions && !previewOnly}
           stagedSide={selected.staged}
           selectedLines={selectedLines}
           onToggleLine={toggleLine}
           onApply={(selection) => void applySelection(selection)}
           onDiscard={
-            patchActions && !selected.staged
+            patchActions && !previewOnly && !selected.staged
               ? (selection) => void confirmDiscard(selection)
               : undefined
           }
         />
       )}
-      {selected && !selected.untracked && !binary && patch !== "" && mode === "side" && (
+      {selected && !binary && patch !== "" && !untrackedEmpty && mode === "side" && (
         <DiffEditor patch={patch} fileName={selected.path} mode={mode} />
       )}
       {paneMenu.menu}
