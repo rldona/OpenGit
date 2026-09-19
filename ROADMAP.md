@@ -115,6 +115,20 @@ submódulos, worktrees), más los remates de merge y los gestos de arrastre.
 **Salida:** buscar y navegar el historial sin tocar el terminal, y operar un
 repo con remotos, submódulos y worktrees desde la app.
 
+## Traducción al inglés de documentación y comentarios
+
+Desde 2026-09-19 la convención es **inglés para documentación, código y
+comentarios**. Lo escrito antes en español se traducirá en un proceso aparte,
+en barridos pequeños y revisables, con CI en verde entre ellos; no bloquea M8
+ni features nuevas.
+
+- [x] README.md (2026-09-19).
+- [ ] ROADMAP.md, AGENTS.md, CLAUDE.md y `.github/copilot-instructions.md`.
+- [ ] Tickets y ADRs (`docs/tickets/`, `docs/decisions/`).
+- [ ] Guías, arquitectura y `.ai/`.
+- [ ] Comentarios de código y mensajes de test (frontend y Rust).
+- [ ] Textos de PRs e issues antiguos (opcional: se editan en GitHub).
+
 ## Fuera de alcance
 
 - Reimplementar git (nunca).

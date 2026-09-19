@@ -1,12 +1,12 @@
 <p align="center">
-  <img src="assets/open-git-logo.png" alt="OpenGit" width="140" />
+  <img src="assets/open-git-logo-trans.png" alt="OpenGit" width="140" />
 </p>
 
 <h1 align="center">OpenGit</h1>
 
 <p align="center">
-  Cliente de Git de escritorio para Windows, macOS y Linux, inspirado en la UX de SourceTree:
-  grafo legible, stage por hunks y una sidebar con todo lo que se toca a diario.
+  Desktop Git client for Windows, macOS and Linux, inspired by SourceTree's UX:
+  a readable graph, hunk staging and a sidebar with everything you touch daily.
 </p>
 
 <p align="center">
@@ -18,96 +18,96 @@
 </p>
 
 <p align="center">
-  <img src="assets/opengit-screenshot.png" alt="OpenGit mostrando el historial con grafo, ficheros y diff" width="100%" />
+  <img src="assets/opengit-screenshot.png" alt="OpenGit showing the history with graph, files and diff" width="100%" />
 </p>
 
-## Descarga
+## Download
 
-Los instaladores se publican en [Releases](https://github.com/rldona/OpenGit/releases/latest).
+Installers are published on [Releases](https://github.com/rldona/OpenGit/releases/latest).
 
-| SO | Descarga | Formato |
+| OS | Download | Format |
 | --- | --- | --- |
-| **Windows** | [OpenGit_x64-setup.exe](https://github.com/rldona/OpenGit/releases/download/v0.1.0/OpenGit_0.1.0_x64-setup.exe) · [OpenGit_x64.msi](https://github.com/rldona/OpenGit/releases/download/v0.1.0/OpenGit_0.1.0_x64_en-US.msi) | Instalador / MSI |
+| **Windows** | [OpenGit_x64-setup.exe](https://github.com/rldona/OpenGit/releases/download/v0.1.0/OpenGit_0.1.0_x64-setup.exe) · [OpenGit_x64.msi](https://github.com/rldona/OpenGit/releases/download/v0.1.0/OpenGit_0.1.0_x64_en-US.msi) | Installer / MSI |
 | **macOS** (Apple Silicon) | [OpenGit_aarch64.dmg](https://github.com/rldona/OpenGit/releases/download/v0.1.0/OpenGit_0.1.0_aarch64.dmg) | DMG |
 | **Linux** | [OpenGit_amd64.deb](https://github.com/rldona/OpenGit/releases/download/v0.1.0/OpenGit_0.1.0_amd64.deb) · [OpenGit_amd64.AppImage](https://github.com/rldona/OpenGit/releases/download/v0.1.0/OpenGit_0.1.0_amd64.AppImage) | Debian / AppImage |
 
-Los binarios **no están firmados ni notarizados** (los certificados son de pago y el proyecto no los asume), así que el sistema avisará al abrirlos:
+The binaries are **not signed or notarized** (certificates cost money and this personal project does not pay for them), so the OS will warn you on first launch:
 
-- **macOS:** Gatekeeper bloquea la app. Abre el `.dmg`, arrastra OpenGit a Aplicaciones y ábrela con clic derecho → **Abrir**; si sigue bloqueada, `xattr -cr /Applications/OpenGit.app`.
-- **Windows:** SmartScreen mostrará un aviso. Pulsa **Más información** → **Ejecutar de todas formas**.
-- **Linux:** `.deb` con `sudo apt install ./OpenGit_*.deb` o `.AppImage` con permiso de ejecución.
+- **macOS:** Gatekeeper blocks the app. Open the `.dmg`, drag OpenGit to Applications and open it with right click → **Open**; if it still complains, `xattr -cr /Applications/OpenGit.app`.
+- **Windows:** SmartScreen shows a warning. Click **More info** → **Run anyway**.
+- **Linux:** install the `.deb` with `sudo apt install ./OpenGit_*.deb` or make the `.AppImage` executable.
 
-## Características
+## Features
 
-- **Grafo de commits en canvas** con carga incremental: fluido en repos de decenas de miles de commits.
-- **Diff con stage por hunk, por línea y por selección**, y descarte de cambios sin salir de la app.
-- **Ventana de commit estilo SourceTree**: pending files con staged/unstaged, preview del fichero, `Commit Options…` (amend) y push inmediato opcional.
-- **Sidebar completa**: branches, remotos, tags, stashes, submódulos y worktrees, con menús contextuales.
-- **Operaciones de historial**: merge, cherry-pick, revert, reset y rebase interactivo con vista previa del plan.
-- **Editor de conflictos por bloques** y banner de operación en curso (abortar, continuar, skip).
-- **Remotos** con diálogo de opciones, progreso en streaming y cancelación; las credenciales las resuelve el credential helper del sistema.
-- **Historial navegable**: filtro por rama, orden por columnas, búsqueda y fila de "Uncommitted changes".
-- **Tema claro/oscuro** y atajos de teclado.
+- **Canvas commit graph** with incremental loading: smooth in repositories with tens of thousands of commits.
+- **Diff with hunk, line and selection staging**, plus discard without leaving the app.
+- **SourceTree-style commit window**: pending files with staged/unstaged sections, file preview, `Commit Options…` (amend) and optional push immediately.
+- **Complete sidebar**: branches, remotes, tags, stashes, submodules and worktrees, with context menus.
+- **History operations**: merge, cherry-pick, revert, reset and interactive rebase with plan preview.
+- **Block-based conflict editor** and an in-progress operation banner (abort, skip, continue).
+- **Remotes** with an options dialog, streaming progress and cancel; credentials are handled by the system credential helper.
+- **Navigable history**: branch filter, column sorting, search and an "Uncommitted changes" row.
+- **Light/dark theme** and keyboard shortcuts.
 
-## Estado
+## Status
 
-**M7 completado** el 2026-09-19 (paridad con SourceTree: ventana de commit, stashes, remotos con diálogo, columnas ordenables y merge). **M8 planificado**: búsqueda, historial de fichero, comparar refs, blame y gestión de remotos, submódulos y worktrees. Detalle en [ROADMAP.md](ROADMAP.md).
+**M7 completed** on 2026-09-19 (SourceTree parity: commit window, stashes, remote dialogs, sortable columns and merge). **M8 planned**: search, file history, comparing refs, blame and management of remotes, submodules and worktrees. Details in [ROADMAP.md](ROADMAP.md).
 
 ## Stack
 
-| Área | Decisión | ADR |
+| Area | Decision | ADR |
 | --- | --- | --- |
-| Shell de escritorio | Tauri 2 (Rust) | [ADR-0001](docs/decisions/) |
+| Desktop shell | Tauri 2 (Rust) | [ADR-0001](docs/decisions/) |
 | UI | React + TypeScript | [ADR-0002](docs/decisions/) |
-| Motor git | binario `git` del sistema | [ADR-0003](docs/decisions/) |
-| Grafo de commits | canvas + carga incremental | [ADR-0004](docs/decisions/) |
-| Estado global | Zustand | [ADR-0005](docs/decisions/) |
+| Git engine | system `git` binary | [ADR-0003](docs/decisions/) |
+| Commit graph | canvas + incremental loading | [ADR-0004](docs/decisions/) |
+| Global state | Zustand | [ADR-0005](docs/decisions/) |
 
-## Principios
+## Principles
 
-1. **Git es la fuente de verdad.** No se reimplementa git: se orquesta el binario del sistema y se parsea su salida de forma robusta (`-z`, `--porcelain=v2`).
-2. **La UI nunca se bloquea.** Las operaciones git corren en procesos separados con salida en streaming; el estado del repo se refresca con watch sobre `.git` + debounce.
-3. **Un solo código para los tres SO.** Nada de codebases paralelos por plataforma.
-4. **Si algo es raro, terminal.** Rebase interactivo visual y operaciones destructivas llegan tarde, con red de seguridad y nunca como único camino.
+1. **Git is the source of truth.** Git is never reimplemented: the system binary is orchestrated and its output parsed robustly (`-z`, `--porcelain=v2`).
+2. **The UI never blocks.** Git operations run in separate processes with streamed output; the repository state is refreshed by watching `.git` with debounce.
+3. **One codebase for the three OSes.** No parallel per-platform codebases.
+4. **When in doubt, terminal.** Interactive rebase and destructive operations come late, with a safety net and never as the only path.
 
-## Estructura del repositorio
+## Repository layout
 
 ```
 OpenGit/
 ├── src/                       # React + TypeScript (UI)
-├── src-tauri/                 # Rust (núcleo Tauri)
-├── assets/                    # Logo y capturas
-├── AGENTS.md                  # Instrucciones para agentes (opencode, Claude, etc.)
+├── src-tauri/                 # Rust (Tauri core)
+├── assets/                    # Logo and screenshots
+├── AGENTS.md                  # Instructions for agents (opencode, Claude, etc.)
 ├── README.md
 ├── ROADMAP.md
-├── .github/workflows/         # CI: frontend, Rust y build en los tres SO
-├── .ai/                       # Agentes, skills, workflows y memoria
+├── .github/workflows/         # CI: frontend, Rust and builds on the three OSes
+├── .ai/                       # Agents, skills, workflows and memory
 ├── docs/
-│   ├── architecture/          # Visión de componentes y flujos
+│   ├── architecture/          # Components and data flow
 │   ├── decisions/             # ADRs
-│   ├── guides/                # Guías de desarrollo
-│   └── tickets/               # Backlog, un fichero por ticket
+│   ├── guides/                # Development guides
+│   └── tickets/               # Backlog, one file per ticket
 └── LICENSE
 ```
 
-## Documentación
+## Documentation
 
-- [ROADMAP.md](ROADMAP.md) — hitos y criterios de salida.
-- [docs/tickets/](docs/tickets/README.md) — backlog con un fichero por ticket.
-- [docs/architecture/overview.md](docs/architecture/overview.md) — componentes, flujo de datos y presupuesto de rendimiento.
+- [ROADMAP.md](ROADMAP.md) — milestones and exit criteria.
+- [docs/tickets/](docs/tickets/README.md) — backlog, one file per ticket.
+- [docs/architecture/overview.md](docs/architecture/overview.md) — components, data flow and performance budget.
 - [docs/decisions/](docs/decisions/README.md) — ADRs.
-- [docs/guides/development.md](docs/guides/development.md) — entorno, comandos y convenciones.
-- [AGENTS.md](AGENTS.md) — reglas para agentes que trabajen en el repo.
+- [docs/guides/development.md](docs/guides/development.md) — environment, commands and conventions.
+- [AGENTS.md](AGENTS.md) — rules for agents working on the repo.
 
-## Arranque rápido
+## Quick start
 
-Requisitos: Node.js 22+ y Rust estable (ver [docs/guides/development.md](docs/guides/development.md)).
+Requirements: Node.js 22+ and a stable Rust toolchain (see [docs/guides/development.md](docs/guides/development.md)).
 
 ```bash
 npm install
 npm run tauri dev
 ```
 
-## Licencia
+## License
 
-MIT — ver [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE).
