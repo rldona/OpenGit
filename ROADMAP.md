@@ -111,6 +111,7 @@ submódulos, worktrees), más los remates de merge y los gestos de arrastre.
 - [ ] Worktrees gestionables: crear, abrir y eliminar (OG-058).
 - [ ] Estrategias de merge (`--squash`, `-X ours/theirs`) y Merge en el menú nativo (OG-059).
 - [ ] Drag & drop: rama para merge y ficheros entre staged/unstaged (OG-060).
+- [x] Preview y comparación de imágenes (antes/después) (OG-061).
 
 **Salida:** buscar y navegar el historial sin tocar el terminal, y operar un
 repo con remotos, submódulos y worktrees desde la app.

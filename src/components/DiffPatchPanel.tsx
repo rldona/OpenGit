@@ -1,7 +1,9 @@
 import { confirmDestructive } from "../lib/bridge/dialog";
 import { parseLfsPointerPatch } from "../lib/lfs";
+import { isImagePath } from "../lib/images";
 import { useDiffStore } from "../lib/stores/diff";
 import { DiffEditor } from "./DiffEditor";
+import { ImageDiffPanel } from "./ImageDiffPanel";
 import { PatchView } from "./PatchView";
 
 /**
@@ -23,6 +25,7 @@ export function DiffPatchPanel() {
 
   const patchActions = target?.kind === "worktree" && !reversed;
   const pointer = selected && !selected.untracked && !binary ? parseLfsPointerPatch(patch) : null;
+  const imagePreview = selected && !selected.untracked && binary && isImagePath(selected.path);
 
   const confirmDiscard = async (selection: Parameters<typeof discardSelection>[0]) => {
     if (await confirmDestructive("Discard the selected changes? This cannot be undone.")) {
@@ -65,7 +68,8 @@ export function DiffPatchPanel() {
           Untracked file: no diff yet. Stage it to see the content.
         </p>
       )}
-      {selected && !selected.untracked && binary && (
+      {imagePreview && <ImageDiffPanel />}
+      {selected && !selected.untracked && binary && !imagePreview && (
         <p className="muted status-empty">Binary file: no text diff available.</p>
       )}
       {selected && !selected.untracked && !binary && patch !== "" && mode === "unified" && (
