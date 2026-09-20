@@ -25,6 +25,10 @@ type LogState = {
   filter: string | null;
   /** Active history search; `null` means the full log. */
   search: LogSearch | null;
+  /** Path whose file history is shown; `null` = full history (OG-053). */
+  historyPath: string | null;
+  /** Up to two selected commits for comparison, in click order (OG-054). */
+  compareSelection: string[];
   selected: string | null;
   loading: boolean;
   hasMore: boolean;
@@ -38,6 +42,13 @@ type LogState = {
   /** Applies (or clears, if every field is empty) a history search. */
   applySearch: (root: string, search: LogSearch) => Promise<void>;
   clearSearch: (root: string) => Promise<void>;
+  /** Opens the history filtered by one file, following renames (OG-053). */
+  showFileHistory: (root: string, path: string) => Promise<void>;
+  /** Leaves the file history and returns to the full log. */
+  clearFileHistory: (root: string) => Promise<void>;
+  /** Adds or removes a commit from the comparison selection (max. two). */
+  toggleCompareSelection: (hash: string) => void;
+  clearCompareSelection: () => void;
   select: (hash: string | null) => void;
   /** Loads pages until the commit is found, selects it and requests the scroll. */
   revealCommit: (root: string, hash: string) => Promise<void>;
@@ -86,6 +97,17 @@ function activeSearch(search: LogSearch): LogSearch | null {
   return trimmed;
 }
 
+/**
+ * Search the active log should use: the file-history filter takes precedence
+ * over the commit search, following the path across renames (OG-053).
+ */
+function currentSearch(state: Pick<LogState, "search" | "historyPath">): LogSearch | null {
+  if (state.historyPath !== null) {
+    return { grep: "", author: "", path: state.historyPath, follow: true };
+  }
+  return state.search;
+}
+
 export const useLogStore = create<LogState>((set, get) => ({
   root: null,
   commits: [],
@@ -93,6 +115,8 @@ export const useLogStore = create<LogState>((set, get) => ({
   refs: [],
   filter: null,
   search: null,
+  historyPath: null,
+  compareSelection: [],
   selected: null,
   revealRequest: 0,
   loading: false,
@@ -117,36 +141,48 @@ export const useLogStore = create<LogState>((set, get) => ({
       layout: emptyLayout(),
       selected: null,
       hasMore: true,
-      ...(switching ? { filter: null, search: null } : {}),
+      ...(switching ? { filter: null, search: null, historyPath: null, compareSelection: [] } : {}),
     });
     try {
-      const { filter, search } = get();
+      const { filter } = get();
+      const search = currentSearch(get());
       const [refs, commits] = await Promise.all([
         listRefs(root),
         logPage(root, 0, PAGE_SIZE, filter, search),
       ]);
+      // A different repository may have been opened while this was in flight.
+      if (get().root !== root) return;
+      const changes = useStatusStore.getState().report?.entries.length ?? 0;
       set({
         refs,
         commits,
         layout: layoutPage(commits.map((commit) => toInput(commit, search !== null))),
         hasMore: commits.length === PAGE_SIZE,
-        selected: entering ? (commits[0]?.hash ?? null) : null,
+        // With pending changes the working tree row is preselected, so its
+        // panels (files + patch) are visible as soon as the repo opens.
+        selected: entering ? (changes > 0 ? WORKTREE_SELECTION : (commits[0]?.hash ?? null)) : null,
       });
     } catch (error) {
+      if (get().root !== root) return;
       set({ error: formatGitError(error) });
     } finally {
-      set({ loading: false });
+      if (get().root === root) {
+        set({ loading: false });
+      }
     }
   },
 
   /// Silent refresh after the watcher: keeps selection, filter and search.
   reload: async (root) => {
     try {
-      const { filter, search } = get();
+      const { filter } = get();
+      const search = currentSearch(get());
       const [refs, commits] = await Promise.all([
         listRefs(root),
         logPage(root, 0, PAGE_SIZE, filter, search),
       ]);
+      const current = get().root;
+      if (current !== null && current !== root) return;
       set({
         root,
         refs,
@@ -155,16 +191,20 @@ export const useLogStore = create<LogState>((set, get) => ({
         hasMore: commits.length === PAGE_SIZE,
       });
     } catch (error) {
+      const current = get().root;
+      if (current !== null && current !== root) return;
       set({ error: formatGitError(error) });
     }
   },
 
   loadMore: async () => {
-    const { root, loading, hasMore, commits, layout, filter, search } = get();
+    const { root, loading, hasMore, commits, layout, filter } = get();
     if (!root || loading || !hasMore) return;
     set({ loading: true });
+    const search = currentSearch(get());
     try {
       const page = await logPage(root, commits.length, PAGE_SIZE, filter, search);
+      if (get().root !== root) return;
       set({
         commits: [...commits, ...page],
         layout: layoutPage(
@@ -174,9 +214,12 @@ export const useLogStore = create<LogState>((set, get) => ({
         hasMore: page.length === PAGE_SIZE,
       });
     } catch (error) {
+      if (get().root !== root) return;
       set({ error: formatGitError(error) });
     } finally {
-      set({ loading: false });
+      if (get().root === root) {
+        set({ loading: false });
+      }
     }
   },
 
@@ -186,7 +229,7 @@ export const useLogStore = create<LogState>((set, get) => ({
   },
 
   applySearch: async (root, search) => {
-    set({ search: activeSearch(search) });
+    set({ search: activeSearch(search), historyPath: null });
     await get().load(root);
   },
 
@@ -198,13 +241,42 @@ export const useLogStore = create<LogState>((set, get) => ({
     await get().load(root);
   },
 
+  showFileHistory: async (root, path) => {
+    set({ historyPath: path, search: null });
+    useUiStore.getState().setActiveView("history");
+    await get().load(root);
+  },
+
+  clearFileHistory: async (root) => {
+    if (get().historyPath === null) {
+      return;
+    }
+    set({ historyPath: null });
+    await get().load(root);
+  },
+
+  toggleCompareSelection: (hash) =>
+    set((state) => {
+      if (state.compareSelection.includes(hash)) {
+        return { compareSelection: state.compareSelection.filter((item) => item !== hash) };
+      }
+      // Like SourceTree: Ctrl/Cmd+click keeps at most two, the oldest drops out.
+      return { compareSelection: [...state.compareSelection, hash].slice(-2) };
+    }),
+
+  clearCompareSelection: () => set({ compareSelection: [] }),
+
   select: (hash) => set({ selected: hash }),
 
   revealCommit: async (root, hash) => {
     const found = () => get().commits.some((commit) => commit.hash === hash);
-    // With an active branch filter or search the commit may not be in the log.
-    if ((get().filter !== null || get().search !== null) && !found()) {
-      set({ filter: null, search: null });
+    // With an active branch filter, search or file history the commit may not
+    // be in the log.
+    if (
+      (get().filter !== null || get().search !== null || get().historyPath !== null) &&
+      !found()
+    ) {
+      set({ filter: null, search: null, historyPath: null });
       await get().load(root);
     }
     while (!found() && get().hasMore) {
@@ -263,6 +335,8 @@ export const useLogStore = create<LogState>((set, get) => ({
       refs: [],
       filter: null,
       search: null,
+      historyPath: null,
+      compareSelection: [],
       selected: null,
       revealRequest: 0,
       loading: false,

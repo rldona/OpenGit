@@ -153,9 +153,37 @@ describe("MergeWindow", () => {
       noFf: false,
       noCommit: true,
       includeMessages: false,
+      squash: false,
+      strategy: null,
       rebase: false,
     });
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it("sends squash and strategy from the advanced section", async () => {
+    const user = userEvent.setup();
+    render(<MergeWindow onClose={() => {}} />);
+
+    await user.click(await screen.findByRole("button", { name: /feature commit/ }));
+    await user.click(screen.getByLabelText(/Squash changes/));
+    await user.selectOptions(screen.getByLabelText("Merge strategy"), "theirs");
+    await user.click(screen.getByRole("button", { name: "OK" }));
+
+    expect(mergeBranch).toHaveBeenCalledWith(
+      "/tmp/repo",
+      "bbbb0000",
+      expect.objectContaining({ squash: true, strategy: "theirs" }),
+    );
+  });
+
+  it("disables the commit flags while squashing", async () => {
+    const user = userEvent.setup();
+    render(<MergeWindow onClose={() => {}} />);
+
+    await screen.findByRole("button", { name: /feature commit/ });
+    await user.click(screen.getByLabelText(/Squash changes/));
+
+    expect(screen.getByLabelText(/Commit merge immediately/)).toBeDisabled();
   });
 
   it("keeps the branch picker in the Merge Fetched tab", async () => {

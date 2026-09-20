@@ -1,7 +1,18 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { lfsStatus, openRepo, remoteUrls, submoduleStatus, worktreeList } from "../lib/bridge/repo";
+import { confirmDestructive } from "../lib/bridge/dialog";
+import {
+  lfsStatus,
+  openRepo,
+  remoteUrls,
+  submoduleStatus,
+  submoduleSync,
+  submoduleUpdate,
+  worktreeAdd,
+  worktreeList,
+  worktreeRemove,
+} from "../lib/bridge/repo";
 import type { LfsStatus, RepoInfo, Submodule, Worktree } from "../lib/bridge/types";
 import { useExtrasStore } from "../lib/stores/extras";
 import { useRepoStore } from "../lib/stores/repo";
@@ -14,9 +25,19 @@ vi.mock("../lib/bridge/repo", () => ({
   removeRecentRepo: vi.fn(),
   closeRepo: vi.fn(),
   submoduleStatus: vi.fn(),
+  submoduleUpdate: vi.fn().mockResolvedValue(""),
+  submoduleSync: vi.fn().mockResolvedValue(""),
+  submoduleAdd: vi.fn().mockResolvedValue(""),
   worktreeList: vi.fn(),
+  worktreeAdd: vi.fn().mockResolvedValue(undefined),
+  worktreeRemove: vi.fn().mockResolvedValue(undefined),
   lfsStatus: vi.fn(),
   remoteUrls: vi.fn(),
+}));
+
+vi.mock("../lib/bridge/dialog", () => ({
+  pickDirectory: vi.fn(),
+  confirmDestructive: vi.fn().mockResolvedValue(true),
 }));
 
 const REPO: RepoInfo = {
@@ -106,7 +127,26 @@ describe("ExtrasSidebar", () => {
     expect(openRepo).toHaveBeenCalledWith("/tmp/repo/vendor/lib");
   });
 
-  it("is not shown without submodules or extra worktrees", () => {
+  it("initializes an uninitialized submodule with the prominent action", async () => {
+    const user = userEvent.setup();
+    render(<ExtrasSidebar />);
+
+    await user.click(screen.getByRole("button", { name: "Update" }));
+
+    expect(submoduleUpdate).toHaveBeenCalledWith("/tmp/repo", true, true);
+  });
+
+  it("syncs a submodule from its context menu", async () => {
+    const user = userEvent.setup();
+    render(<ExtrasSidebar />);
+
+    fireEvent.contextMenu(screen.getByRole("button", { name: /vendor\/lib/ }));
+    await user.click(screen.getByRole("menuitem", { name: "Sync" }));
+
+    expect(submoduleSync).toHaveBeenCalledWith("/tmp/repo");
+  });
+
+  it("keeps the Worktrees section visible with a single one to create more", async () => {
     vi.mocked(submoduleStatus).mockResolvedValue([]);
     vi.mocked(worktreeList).mockResolvedValue([WORKTREES[0]]);
     vi.mocked(lfsStatus).mockResolvedValue({
@@ -120,9 +160,44 @@ describe("ExtrasSidebar", () => {
       lfs: { installed: true, version: "git-lfs/3.5.1", configured: false },
     });
 
-    const { container } = render(<ExtrasSidebar />);
+    render(<ExtrasSidebar />);
 
-    expect(container).toBeEmptyDOMElement();
+    expect(screen.getByRole("button", { name: "Worktrees" })).toBeInTheDocument();
+    expect(screen.getByText("current")).toBeInTheDocument();
+  });
+
+  it("creates a worktree from the section menu", async () => {
+    const user = userEvent.setup();
+    render(<ExtrasSidebar />);
+
+    fireEvent.contextMenu(screen.getByRole("button", { name: "Worktrees" }));
+    await user.click(screen.getByRole("menuitem", { name: "New worktree…" }));
+
+    await user.type(screen.getByLabelText("Worktree folder"), "/tmp/nueva");
+    await user.type(screen.getByLabelText("Worktree branch"), "topic2");
+    await user.click(screen.getByRole("button", { name: "OK" }));
+
+    expect(worktreeAdd).toHaveBeenCalledWith("/tmp/repo", "/tmp/nueva", "topic2", true, "HEAD");
+  });
+
+  it("removes a worktree after confirming", async () => {
+    const user = userEvent.setup();
+    vi.mocked(confirmDestructive).mockResolvedValue(true);
+    render(<ExtrasSidebar />);
+
+    fireEvent.contextMenu(screen.getByRole("button", { name: /wt-topic/ }));
+    await user.click(screen.getByRole("menuitem", { name: "Remove" }));
+
+    expect(confirmDestructive).toHaveBeenCalledWith("Remove worktree wt-topic?");
+    expect(worktreeRemove).toHaveBeenCalledWith("/tmp/repo", "/tmp/wt-topic", false);
+  });
+
+  it("does not offer to remove the current worktree", async () => {
+    render(<ExtrasSidebar />);
+
+    fireEvent.contextMenu(screen.getByText("current").closest("button")!);
+
+    expect(screen.getByRole("menuitem", { name: "Remove" })).toBeDisabled();
   });
 
   it("shows the Git LFS section with the installed version", async () => {

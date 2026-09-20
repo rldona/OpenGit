@@ -1,7 +1,7 @@
 use opengit_lib::git::{
-    parse_gitattributes_paths, parse_gitattributes_uses_lfs, parse_log, parse_numstat, parse_refs,
-    parse_status, parse_submodule_status, parse_worktree_list, remote_web_url, GitError,
-    StatusKind, SubmoduleState,
+    parse_blame, parse_gitattributes_paths, parse_gitattributes_uses_lfs, parse_log, parse_numstat,
+    parse_refs, parse_status, parse_submodule_status, parse_worktree_list, remote_web_url,
+    GitError, StatusKind, SubmoduleState,
 };
 
 const LOG_TOPO: &[u8] = include_bytes!("fixtures/log_topo.bin");
@@ -360,4 +360,68 @@ fn remote_web_url_rejects_local_paths() {
     assert_eq!(remote_web_url("C:\\repos\\opengit"), None);
     assert_eq!(remote_web_url(""), None);
     assert_eq!(remote_web_url("git@github.com:"), None);
+}
+
+const BLAME: &str = concat!(
+    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa 1 1 2\n",
+    "author Ana López\n",
+    "author-mail <ana@example.com>\n",
+    "author-time 1700000000\n",
+    "author-tz +0000\n",
+    "committer Ana López\n",
+    "committer-mail <ana@example.com>\n",
+    "committer-time 1700000000\n",
+    "committer-tz +0000\n",
+    "summary primer commit\n",
+    "filename src/a.txt\n",
+    "\tlet uno = 1;\n",
+    "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb 2 2 1\n",
+    "author Bob\n",
+    "author-mail <bob@example.com>\n",
+    "author-time 1700000100\n",
+    "author-tz +0000\n",
+    "committer Bob\n",
+    "committer-mail <bob@example.com>\n",
+    "committer-time 1700000100\n",
+    "committer-tz +0000\n",
+    "summary segundo commit\n",
+    "previous aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa src/a.txt\n",
+    "filename src/a.txt\n",
+    "\tlet dos = 2;\n",
+);
+
+#[test]
+fn blame_porcelain_parses_one_row_per_line() {
+    let lines = parse_blame(BLAME.as_bytes()).expect("parse blame");
+
+    assert_eq!(lines.len(), 2);
+    assert_eq!(lines[0].line, 1);
+    assert_eq!(lines[0].hash, "a".repeat(40));
+    assert_eq!(lines[0].author_name, "Ana López");
+    assert_eq!(lines[0].author_email, "ana@example.com");
+    assert_eq!(lines[0].author_time, 1_700_000_000);
+    assert_eq!(lines[0].content, "let uno = 1;");
+
+    assert_eq!(lines[1].line, 2);
+    assert_eq!(lines[1].hash, "b".repeat(40));
+    assert_eq!(lines[1].author_name, "Bob");
+    assert_eq!(lines[1].content, "let dos = 2;");
+}
+
+#[test]
+fn blame_strips_boundary_marker_and_keeps_empty_content() {
+    let data = concat!(
+        "^cccccccccccccccccccccccccccccccccccccccc 1 1 1\n",
+        "author Carol\n",
+        "author-mail <carol@example.com>\n",
+        "author-time 1700000200\n",
+        "summary borde\n",
+        "\t\n",
+    );
+
+    let lines = parse_blame(data.as_bytes()).expect("parse");
+
+    assert_eq!(lines.len(), 1);
+    assert_eq!(lines[0].hash, "c".repeat(40), "the ^ marker is stripped");
+    assert_eq!(lines[0].content, "");
 }

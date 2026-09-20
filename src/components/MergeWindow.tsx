@@ -16,45 +16,84 @@ function MergeOptionsFields({
   options: MergeOptions;
   onChange: (options: MergeOptions) => void;
 }) {
+  // `--squash` does not commit either: the commit flags stop making sense.
+  const commitFlagsDisabled = options.rebase || options.squash;
   return (
-    <fieldset className="remote-options merge-options">
-      <legend>Options</legend>
-      <label>
-        <input
-          type="checkbox"
-          checked={!options.noCommit}
-          disabled={options.rebase}
-          onChange={(event) => onChange({ ...options, noCommit: !event.target.checked })}
-        />
-        Commit merge immediately (if no conflicts)
-      </label>
-      <label>
-        <input
-          type="checkbox"
-          checked={options.includeMessages}
-          disabled={options.rebase}
-          onChange={(event) => onChange({ ...options, includeMessages: event.target.checked })}
-        />
-        Include messages from commits being merged in merge commit
-      </label>
-      <label>
-        <input
-          type="checkbox"
-          checked={options.noFf}
-          disabled={options.rebase}
-          onChange={(event) => onChange({ ...options, noFf: event.target.checked })}
-        />
-        Create a commit even if merge resolved via fast-forward
-      </label>
-      <label>
-        <input
-          type="checkbox"
-          checked={options.rebase}
-          onChange={(event) => onChange({ ...options, rebase: event.target.checked })}
-        />
-        Rebase instead of merge (WARNING: make sure you haven&apos;t pushed your changes)
-      </label>
-    </fieldset>
+    <>
+      <fieldset className="remote-options merge-options">
+        <legend>Options</legend>
+        <label>
+          <input
+            type="checkbox"
+            checked={!options.noCommit}
+            disabled={commitFlagsDisabled}
+            onChange={(event) => onChange({ ...options, noCommit: !event.target.checked })}
+          />
+          Commit merge immediately (if no conflicts)
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={options.includeMessages}
+            disabled={commitFlagsDisabled}
+            onChange={(event) => onChange({ ...options, includeMessages: event.target.checked })}
+          />
+          Include messages from commits being merged in merge commit
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={options.noFf}
+            disabled={commitFlagsDisabled}
+            onChange={(event) => onChange({ ...options, noFf: event.target.checked })}
+          />
+          Create a commit even if merge resolved via fast-forward
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={options.squash}
+            disabled={options.rebase}
+            onChange={(event) => onChange({ ...options, squash: event.target.checked })}
+          />
+          Squash changes (stage them without committing)
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={options.rebase}
+            onChange={(event) => onChange({ ...options, rebase: event.target.checked })}
+          />
+          Rebase instead of merge (WARNING: make sure you haven&apos;t pushed your changes)
+        </label>
+      </fieldset>
+
+      <fieldset className="remote-options merge-options">
+        <legend>Advanced</legend>
+        <div className="remote-field">
+          <span>Conflict resolution:</span>
+          <select
+            aria-label="Merge strategy"
+            value={options.strategy ?? ""}
+            disabled={options.rebase}
+            onChange={(event) =>
+              onChange({
+                ...options,
+                strategy: (event.target.value || null) as MergeOptions["strategy"],
+              })
+            }
+          >
+            <option value="">Default</option>
+            <option value="ours">Prefer ours (current branch)</option>
+            <option value="theirs">Prefer theirs (merged branch)</option>
+          </select>
+        </div>
+        <p className="muted">
+          -X ours/theirs only resolves content conflicts; rename/delete conflicts still need manual
+          resolution.
+        </p>
+      </fieldset>
+    </>
   );
 }
 

@@ -168,9 +168,11 @@ export const useRefsStore = create<RefsState>((set, get) => ({
         ? `Merge conflicts from ${rev}`
         : options.rebase
           ? `Rebased onto ${rev}`
-          : options.noCommit
-            ? `Merged ${rev} (not committed)`
-            : `Merged ${rev}`;
+          : options.squash
+            ? `Squashed ${rev} (staged, not committed)`
+            : options.noCommit
+              ? `Merged ${rev} (not committed)`
+              : `Merged ${rev}`;
       output(done);
       await get().refresh(root);
       await useStatusStore.getState().refresh(root);

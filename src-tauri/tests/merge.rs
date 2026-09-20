@@ -1,6 +1,8 @@
 mod support;
 
-use opengit_lib::git::{merge_branch, repo_op_abort, repo_op_state, MergeOptions, Runner};
+use opengit_lib::git::{
+    merge_branch, repo_op_abort, repo_op_state, MergeOptions, MergeStrategy, Runner,
+};
 use support::TestRepo;
 
 fn runner() -> Runner {
@@ -184,4 +186,99 @@ fn merge_rebase_replays_the_current_branch() {
     assert_eq!(parents(&repo)[0], feature);
     let subjects = String::from_utf8(repo.git_ok(&["log", "--format=%s", "-2"]).stdout).unwrap();
     assert!(subjects.contains("main moves"), "{subjects}");
+}
+
+#[test]
+fn squash_merge_stages_changes_without_committing() {
+    let repo = TestRepo::init();
+    commit_file(&repo, "a.txt", "uno\n", "base");
+    repo.git_ok(&["checkout", "-q", "-b", "feature"]);
+    commit_file(&repo, "b.txt", "dos\n", "feature");
+    repo.git_ok(&["checkout", "-q", "main"]);
+    commit_file(&repo, "c.txt", "tres\n", "main moves");
+
+    let result = merge_branch(
+        &runner(),
+        repo.path(),
+        "feature",
+        MergeOptions {
+            squash: true,
+            ..MergeOptions::default()
+        },
+    )
+    .expect("merge --squash");
+
+    assert!(!result.conflicted);
+    assert_eq!(parents(&repo).len(), 1, "squash: no merge commit");
+    assert!(
+        !repo_op_state(&runner(), repo.path()).unwrap().merge,
+        "--squash does not write MERGE_HEAD"
+    );
+    let staged =
+        String::from_utf8(repo.git_ok(&["diff", "--cached", "--name-only"]).stdout).unwrap();
+    assert!(staged.contains("b.txt"), "{staged}");
+}
+
+#[test]
+fn ours_strategy_resolves_content_conflicts() {
+    let repo = TestRepo::init();
+    commit_file(&repo, "a.txt", "base\n", "base");
+    repo.git_ok(&["checkout", "-q", "-b", "feature"]);
+    commit_file(&repo, "a.txt", "feature\n", "feature");
+    repo.git_ok(&["checkout", "-q", "main"]);
+    commit_file(&repo, "a.txt", "main\n", "main");
+
+    let result = merge_branch(
+        &runner(),
+        repo.path(),
+        "feature",
+        MergeOptions {
+            strategy: Some(MergeStrategy::Ours),
+            ..MergeOptions::default()
+        },
+    )
+    .expect("merge -X ours");
+
+    assert!(!result.conflicted);
+    assert_eq!(
+        std::fs::read_to_string(repo.path().join("a.txt")).unwrap(),
+        "main\n"
+    );
+    assert_eq!(
+        parents(&repo).len(),
+        2,
+        "ours still creates the merge commit"
+    );
+}
+
+#[test]
+fn theirs_strategy_resolves_content_conflicts() {
+    let repo = TestRepo::init();
+    commit_file(&repo, "a.txt", "base\n", "base");
+    repo.git_ok(&["checkout", "-q", "-b", "feature"]);
+    commit_file(&repo, "a.txt", "feature\n", "feature");
+    repo.git_ok(&["checkout", "-q", "main"]);
+    commit_file(&repo, "a.txt", "main\n", "main");
+
+    let result = merge_branch(
+        &runner(),
+        repo.path(),
+        "feature",
+        MergeOptions {
+            strategy: Some(MergeStrategy::Theirs),
+            ..MergeOptions::default()
+        },
+    )
+    .expect("merge -X theirs");
+
+    assert!(!result.conflicted);
+    assert_eq!(
+        std::fs::read_to_string(repo.path().join("a.txt")).unwrap(),
+        "feature\n"
+    );
+    assert_eq!(
+        parents(&repo).len(),
+        2,
+        "theirs still creates the merge commit"
+    );
 }

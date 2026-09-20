@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { confirmDestructive } from "../lib/bridge/dialog";
@@ -75,10 +75,35 @@ describe("StashSidebar", () => {
     fireEvent.contextMenu(screen.getByRole("button", { name: "Stashes" }));
     await user.click(screen.getByRole("menuitem", { name: "Stash Changes…" }));
     await user.type(screen.getByLabelText("Stash message"), "trabajo a medias");
-    await user.click(screen.getByLabelText("Include untracked"));
+    await user.click(screen.getByLabelText("Include untracked files"));
     await user.click(screen.getByRole("button", { name: "Stash" }));
 
     expect(stashPush).toHaveBeenCalledWith("/tmp/repo", "trabajo a medias", true);
+  });
+
+  it("can cancel the stash dialog", async () => {
+    const user = userEvent.setup();
+    render(<StashSidebar />);
+
+    fireEvent.contextMenu(screen.getByRole("button", { name: "Stashes" }));
+    await user.click(screen.getByRole("menuitem", { name: "Stash Changes…" }));
+    expect(screen.getByRole("dialog", { name: "Stash Changes" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(screen.queryByRole("dialog", { name: "Stash Changes" })).not.toBeInTheDocument();
+    expect(stashPush).not.toHaveBeenCalled();
+  });
+
+  it("does not open the stash dialog on remount with a stale request", async () => {
+    useUiStore.setState({ newStashRequest: 2 });
+    render(<StashSidebar />);
+    await screen.findByText("WIP on main: cambios");
+
+    expect(screen.queryByRole("dialog", { name: "Stash Changes" })).not.toBeInTheDocument();
+
+    act(() => useUiStore.getState().requestNewStash());
+    expect(await screen.findByRole("dialog", { name: "Stash Changes" })).toBeInTheDocument();
   });
 
   it("selects the stash and opens the view when clicked", async () => {

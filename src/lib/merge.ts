@@ -5,5 +5,7 @@ export const DEFAULT_MERGE_OPTIONS: MergeOptions = {
   noFf: false,
   noCommit: false,
   includeMessages: false,
+  squash: false,
+  strategy: null,
   rebase: false,
 };

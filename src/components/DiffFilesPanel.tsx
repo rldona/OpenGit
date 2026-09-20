@@ -1,5 +1,8 @@
 import { copyText } from "../lib/clipboard";
 import { useDiffStore, type DiffFileEntry } from "../lib/stores/diff";
+import { useBlameStore } from "../lib/stores/blame";
+import { useLogStore } from "../lib/stores/log";
+import { useRepoStore } from "../lib/stores/repo";
 import { useUiStore } from "../lib/stores/ui";
 import { useContextMenu } from "../lib/hooks/useContextMenu";
 import { FileTree } from "./FileTree";
@@ -12,6 +15,9 @@ export function DiffFilesPanel() {
   const files = useDiffStore((state) => state.files);
   const selected = useDiffStore((state) => state.selected);
   const selectFile = useDiffStore((state) => state.selectFile);
+  const root = useRepoStore((state) => state.repo?.root ?? null);
+  const showFileHistory = useLogStore((state) => state.showFileHistory);
+  const openBlame = useBlameStore((state) => state.open);
   const fileTree = useUiStore((state) => state.fileTree);
   const fileMenu = useContextMenu();
 
@@ -23,6 +29,13 @@ export function DiffFilesPanel() {
       onContextMenu={(event) =>
         fileMenu.open(event, [
           { label: "Select", onSelect: () => void selectFile(entry) },
+          {
+            label: "Show file history",
+            onSelect: () => root && void showFileHistory(root, entry.path),
+          },
+          ...(entry.untracked
+            ? []
+            : [{ label: "Blame", onSelect: () => root && void openBlame(root, entry.path) }]),
           { label: "Copy path", onSelect: () => void copyText(entry.path) },
         ])
       }

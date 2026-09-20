@@ -1,7 +1,7 @@
 # OG-054 · Compare commits and branches
 
 - **Milestone:** M8 — SourceTree parity (phase 3)
-- **Status:** ready
+- **Status:** done
 - **Depends on:** OG-005, OG-037
 - **References:** ROADMAP.md, OG-039
 
@@ -24,11 +24,11 @@ with respect to main?" without checkout.
 
 ## Acceptance criteria
 
-- [ ] Selecting two commits and "Compare selected" opens the diff between them.
-- [ ] Same with two branches (Ctrl/Cmd+click in the sidebar).
-- [ ] The panel indicates base and compared, and going back leaves the view as it was.
-- [ ] Added/deleted/renamed files are listed and open correctly.
-- [ ] Parser/command tests in Rust and UI tests with the mocked bridge.
+- [x] Selecting two commits and "Compare selected" opens the diff between them.
+- [x] Same with two branches (Ctrl/Cmd+click in the sidebar).
+- [x] The panel indicates base and compared, and going back leaves the view as it was.
+- [x] Added/deleted/renamed files are listed and open correctly.
+- [x] Parser/command tests in Rust and UI tests with the mocked bridge.
 
 ## Out of scope
 

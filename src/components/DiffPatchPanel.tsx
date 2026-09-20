@@ -1,7 +1,11 @@
 import { confirmDestructive } from "../lib/bridge/dialog";
 import { parseLfsPointerPatch } from "../lib/lfs";
 import { isImagePath } from "../lib/images";
+import { useContextMenu } from "../lib/hooks/useContextMenu";
+import { useBlameStore } from "../lib/stores/blame";
 import { useDiffStore } from "../lib/stores/diff";
+import { useLogStore } from "../lib/stores/log";
+import { useRepoStore } from "../lib/stores/repo";
 import { DiffEditor } from "./DiffEditor";
 import { ImageDiffPanel } from "./ImageDiffPanel";
 import { PatchView } from "./PatchView";
@@ -22,6 +26,10 @@ export function DiffPatchPanel() {
   const toggleLine = useDiffStore((state) => state.toggleLine);
   const applySelection = useDiffStore((state) => state.applySelection);
   const discardSelection = useDiffStore((state) => state.discardSelection);
+  const root = useRepoStore((state) => state.repo?.root ?? null);
+  const showFileHistory = useLogStore((state) => state.showFileHistory);
+  const openBlame = useBlameStore((state) => state.open);
+  const paneMenu = useContextMenu();
 
   const patchActions = target?.kind === "worktree" && !reversed;
   const pointer = selected && !selected.untracked && !binary ? parseLfsPointerPatch(patch) : null;
@@ -34,7 +42,23 @@ export function DiffPatchPanel() {
   };
 
   return (
-    <div className="diff-pane">
+    <div
+      className="diff-pane"
+      onContextMenu={(event) =>
+        paneMenu.open(event, [
+          {
+            label: "Show file history",
+            disabled: !selected,
+            onSelect: () => root && selected && void showFileHistory(root, selected.path),
+          },
+          {
+            label: "Blame",
+            disabled: !selected || selected.untracked || binary,
+            onSelect: () => root && selected && void openBlame(root, selected.path),
+          },
+        ])
+      }
+    >
       {/* Header with the file path, like SourceTree: it replaces the
           `diff --git`/`index`/`---`/`+++` lines that are no longer rendered. */}
       {selected && (
@@ -90,6 +114,7 @@ export function DiffPatchPanel() {
       {selected && !selected.untracked && !binary && patch !== "" && mode === "side" && (
         <DiffEditor patch={patch} fileName={selected.path} mode={mode} />
       )}
+      {paneMenu.menu}
     </div>
   );
 }

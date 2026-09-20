@@ -1,7 +1,7 @@
 # OG-059 · Merge strategies and Merge in the native menu
 
 - **Milestone:** M8 — SourceTree parity (phase 3)
-- **Status:** ready
+- **Status:** done
 - **Depends on:** OG-049
 - **References:** ROADMAP.md, OG-049
 
@@ -24,13 +24,13 @@ Merge, which already exists in the toolbar.
 
 ## Acceptance criteria
 
-- [ ] Squash on a merge with a resolved conflict leaves the changes staged and
+- [x] Squash on a merge with a resolved conflict leaves the changes staged and
       uncommitted, and this is communicated.
-- [ ] `-X ours`/`-X theirs` resolve content conflicts without leaving the
+- [x] `-X ours`/`-X theirs` resolve content conflicts without leaving the
       operation half-done.
-- [ ] An invalid strategy never reaches git (validation in Rust).
-- [ ] The native menu opens the same dialog as the toolbar.
-- [ ] Integration tests: squash, ours, theirs and strategy validation.
+- [x] An invalid strategy never reaches git (validation in Rust).
+- [x] The native menu opens the same dialog as the toolbar.
+- [x] Integration tests: squash, ours, theirs and strategy validation.
 
 ## Out of scope
 

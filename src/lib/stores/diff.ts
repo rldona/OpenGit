@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import {
   commitFiles,
+  compareFile,
+  compareNumstat,
   diffFile,
   diffNumstat,
   discardSelection,
@@ -14,7 +16,10 @@ import { isBinaryPatch } from "../diff/patch";
 import { isImagePath } from "../images";
 import { useStatusStore } from "./status";
 
-export type DiffTarget = { kind: "worktree" } | { kind: "commit"; rev: string };
+export type DiffTarget =
+  | { kind: "worktree" }
+  | { kind: "commit"; rev: string }
+  | { kind: "compare"; base: string; rev: string };
 export type DiffMode = "unified" | "side";
 
 export type DiffFileEntry = {
@@ -45,6 +50,8 @@ type DiffState = {
   openWorktree: (root: string) => Promise<void>;
   openWorktreeFile: (root: string, file: string, staged?: boolean) => Promise<void>;
   openCommit: (root: string, rev: string) => Promise<void>;
+  /** Diff between two revisions (OG-054). */
+  openCompare: (root: string, base: string, rev: string) => Promise<void>;
   selectFile: (entry: DiffFileEntry) => Promise<void>;
   setMode: (mode: DiffMode) => void;
   toggleReverse: () => Promise<void>;
@@ -121,7 +128,10 @@ export const useDiffStore = create<DiffState>((set, get) => ({
           });
           continue;
         }
-        for (const stagedSide of [true, false] as const) {
+        // A conflict is not shown twice (index and worktree sides): it has its
+        // own editor, and duplicating the path broke the file tree keys.
+        const sides = entry.kind === "unmerged" ? ([false] as const) : ([true, false] as const);
+        for (const stagedSide of sides) {
           const present = stagedSide ? entry.xy[0] !== "." : entry.xy[1] !== ".";
           if (!present) continue;
           const counts = (stagedSide ? stagedMap : unstagedMap).get(entry.path);
@@ -202,6 +212,46 @@ export const useDiffStore = create<DiffState>((set, get) => ({
     }
   },
 
+  openCompare: async (root, base, rev) => {
+    const token = ++openToken;
+    set({
+      root,
+      target: { kind: "compare", base, rev },
+      files: [],
+      selected: null,
+      patch: "",
+      binary: false,
+      loading: true,
+      error: null,
+      reversed: false,
+    });
+    try {
+      const diffs = await compareNumstat(root, base, rev);
+      if (token !== openToken) {
+        return;
+      }
+      const files: DiffFileEntry[] = diffs.map((diff) => ({
+        key: `compare:${diff.path}`,
+        path: diff.path,
+        orig_path: diff.orig_path,
+        added: diff.added,
+        deleted: diff.deleted,
+        binary: diff.binary,
+        untracked: false,
+        staged: false,
+      }));
+      set({ files, loading: false });
+      if (files.length > 0) {
+        await get().selectFile(files[0]);
+      }
+    } catch (error) {
+      if (token !== openToken) {
+        return;
+      }
+      set({ loading: false, error: formatGitError(error) });
+    }
+  },
+
   selectFile: async (entry) => {
     const { root, target, reversed } = get();
     if (!root || !target) return;
@@ -213,13 +263,24 @@ export const useDiffStore = create<DiffState>((set, get) => ({
     }
     set({ selected: entry, loading: true, error: null });
     try {
-      const patch = await diffFile({
-        path: root,
-        file: entry.path,
-        staged: target.kind === "worktree" && entry.staged,
-        rev: target.kind === "commit" ? target.rev : null,
-        reversed,
-      });
+      let patch: string;
+      if (target.kind === "compare") {
+        patch = await compareFile({
+          path: root,
+          base: target.base,
+          rev: target.rev,
+          file: entry.path,
+          reversed,
+        });
+      } else {
+        patch = await diffFile({
+          path: root,
+          file: entry.path,
+          staged: target.kind === "worktree" && entry.staged,
+          rev: target.kind === "commit" ? target.rev : null,
+          reversed,
+        });
+      }
       set({ patch, binary: entry.binary || isBinaryPatch(patch), loading: false });
     } catch (error) {
       set({ loading: false, error: formatGitError(error) });
@@ -299,7 +360,10 @@ export const useDiffStore = create<DiffState>((set, get) => ({
     }
   },
 
-  reset: () =>
+  reset: () => {
+    // Invalidate any in-flight open so its late response cannot repopulate the
+    // store after the repository changed (or the view was reset).
+    openToken += 1;
     set({
       root: null,
       target: null,
@@ -313,5 +377,6 @@ export const useDiffStore = create<DiffState>((set, get) => ({
       selectedLines: [],
       loading: false,
       error: null,
-    }),
+    });
+  },
 }));

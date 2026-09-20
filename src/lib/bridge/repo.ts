@@ -35,8 +35,39 @@ export function submoduleStatus(path: string): Promise<Submodule[]> {
   return invoke<Submodule[]>("submodule_status", { path });
 }
 
+/** Initializes and updates submodules (`--init --recursive`); returns git output (OG-057). */
+export function submoduleUpdate(path: string, init: boolean, recursive: boolean): Promise<string> {
+  return invoke<string>("submodule_update", { path, init, recursive });
+}
+
+/** Copies the `.gitmodules` URLs into the local config (OG-057). */
+export function submoduleSync(path: string): Promise<string> {
+  return invoke<string>("submodule_sync", { path });
+}
+
+/** Registers and clones a new submodule (OG-057). */
+export function submoduleAdd(path: string, url: string, subpath: string): Promise<string> {
+  return invoke<string>("submodule_add", { path, url, subpath });
+}
+
 export function worktreeList(path: string): Promise<Worktree[]> {
   return invoke<Worktree[]>("worktree_list", { path });
+}
+
+/** Creates a worktree on a new (`create`) or existing branch (OG-058). */
+export function worktreeAdd(
+  path: string,
+  worktree: string,
+  branch: string,
+  create: boolean,
+  startPoint: string | null,
+): Promise<void> {
+  return invoke<void>("worktree_add", { path, worktree, branch, create, startPoint });
+}
+
+/** Removes a worktree; `force` is only used after warning about changes (OG-058). */
+export function worktreeRemove(path: string, worktree: string, force: boolean): Promise<void> {
+  return invoke<void>("worktree_remove", { path, worktree, force });
 }
 
 export function lfsStatus(path: string): Promise<LfsStatus> {

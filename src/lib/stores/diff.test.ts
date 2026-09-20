@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   commitFiles,
+  compareFile,
+  compareNumstat,
   diffFile,
   diffNumstat,
   discardSelection,
@@ -13,6 +15,8 @@ import { useDiffStore } from "./diff";
 vi.mock("../bridge/diff", () => ({
   diffFile: vi.fn(),
   commitFiles: vi.fn(),
+  compareNumstat: vi.fn(),
+  compareFile: vi.fn(),
   diffNumstat: vi.fn(),
   stageSelection: vi.fn(),
   discardSelection: vi.fn(),
@@ -52,6 +56,10 @@ describe("useDiffStore", () => {
     vi.mocked(commitFiles).mockResolvedValue([
       { path: "a.txt", orig_path: null, binary: false, added: 1, deleted: 0 },
     ]);
+    vi.mocked(compareNumstat).mockResolvedValue([
+      { path: "a.txt", orig_path: null, binary: false, added: 1, deleted: 1 },
+    ]);
+    vi.mocked(compareFile).mockResolvedValue(PATCH);
   });
 
   it("builds the working tree list and loads the first patch", async () => {
@@ -241,5 +249,42 @@ describe("useDiffStore", () => {
     const state = useDiffStore.getState();
     expect(state.target).toEqual({ kind: "commit", rev: "rapido0" });
     expect(state.files.map((file) => file.path)).toEqual(["rapido.txt"]);
+  });
+
+  it("reset discards an open that is still in flight", async () => {
+    let resolveSlow: ((value: never[]) => void) | null = null;
+    vi.mocked(commitFiles).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveSlow = resolve as (value: never[]) => void;
+        }),
+    );
+
+    const slow = useDiffStore.getState().openCommit("/tmp/repo", "lento00");
+    useDiffStore.getState().reset();
+    resolveSlow!([]);
+    await slow;
+
+    expect(useDiffStore.getState().target).toBeNull();
+    expect(useDiffStore.getState().files).toHaveLength(0);
+  });
+
+  it("opens a comparison between two revisions and lists its files", async () => {
+    await useDiffStore.getState().openCompare("/tmp/repo", "main", "feature");
+
+    expect(compareNumstat).toHaveBeenCalledWith("/tmp/repo", "main", "feature");
+    expect(useDiffStore.getState().target).toEqual({
+      kind: "compare",
+      base: "main",
+      rev: "feature",
+    });
+    expect(useDiffStore.getState().files).toHaveLength(1);
+    expect(compareFile).toHaveBeenCalledWith({
+      path: "/tmp/repo",
+      base: "main",
+      rev: "feature",
+      file: "a.txt",
+      reversed: false,
+    });
   });
 });

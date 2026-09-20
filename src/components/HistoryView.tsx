@@ -16,6 +16,8 @@ import {
 import { LAYOUT_KEYS } from "../lib/layout";
 import { useCommitActions } from "../lib/hooks/useCommitActions";
 import { useContextMenu } from "../lib/hooks/useContextMenu";
+import { useDiffStore } from "../lib/stores/diff";
+import { useDragStore } from "../lib/stores/drag";
 import { WORKTREE_SELECTION, useLogStore } from "../lib/stores/log";
 import { useRefsStore } from "../lib/stores/refs";
 import { useRepoStore } from "../lib/stores/repo";
@@ -35,6 +37,7 @@ export function HistoryView() {
   const refs = useLogStore((state) => state.refs);
   const filter = useLogStore((state) => state.filter);
   const search = useLogStore((state) => state.search);
+  const historyPath = useLogStore((state) => state.historyPath);
   const selected = useLogStore((state) => state.selected);
   const loading = useLogStore((state) => state.loading);
   const hasMore = useLogStore((state) => state.hasMore);
@@ -43,9 +46,18 @@ export function HistoryView() {
   const setFilter = useLogStore((state) => state.setFilter);
   const applySearch = useLogStore((state) => state.applySearch);
   const clearSearch = useLogStore((state) => state.clearSearch);
+  const clearFileHistory = useLogStore((state) => state.clearFileHistory);
+  const compareSelection = useLogStore((state) => state.compareSelection);
+  const toggleCompareSelection = useLogStore((state) => state.toggleCompareSelection);
+  const clearCompareSelection = useLogStore((state) => state.clearCompareSelection);
   const select = useLogStore((state) => state.select);
+  const openCompare = useDiffStore((state) => state.openCompare);
+  const dragPayload = useDragStore((state) => state.drag);
+  const dragOver = useDragStore((state) => state.over);
+  const mergeTarget = dragOver === "merge" && dragPayload?.kind === "branch";
 
   const searchFocusRequest = useUiStore((state) => state.searchFocusRequest);
+  const setActiveView = useUiStore((state) => state.setActiveView);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const handledFocus = useRef(0);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -53,6 +65,8 @@ export function HistoryView() {
   const [author, setAuthor] = useState("");
   const [path, setPath] = useState("");
   const searching = search !== null;
+  const fileHistory = historyPath !== null;
+  const filtered = searching || fileHistory;
 
   // `mod+f`: the App switches to History and requests the focus here.
   useEffect(() => {
@@ -89,9 +103,12 @@ export function HistoryView() {
   // Presentation order: git's topological one or the one chosen in the header (OG-045).
   const displayed = useMemo(() => sortCommits(commits, sort), [commits, sort]);
   const changes = useStatusStore((state) => state.report?.entries.length ?? 0);
-  // The "Uncommitted changes" row only makes sense with pending changes.
+  // The "Uncommitted changes" row only makes sense with pending changes. The
+  // selection is also required: on a repo switch the old selection can still
+  // point at the worktree row for a moment, and showing its panels then would
+  // paint the previous repository's changes.
   const showWorktree = changes > 0;
-  const worktreeSelected = selected === WORKTREE_SELECTION;
+  const worktreeSelected = selected === WORKTREE_SELECTION && showWorktree;
   const totalRows = rows.length + (showWorktree ? 1 : 0);
   const commitOffset = showWorktree ? 1 : 0;
 
@@ -112,6 +129,16 @@ export function HistoryView() {
   };
 
   const hasDraft = grep.trim() !== "" || author.trim() !== "" || path.trim() !== "";
+  const twoSelected = compareSelection.length === 2;
+
+  const compareSelected = () => {
+    if (!root || compareSelection.length !== 2) {
+      return;
+    }
+    void openCompare(root, compareSelection[0], compareSelection[1]).then(() =>
+      setActiveView("diff"),
+    );
+  };
 
   useEffect(() => {
     if (root) {
@@ -289,6 +316,22 @@ export function HistoryView() {
         {loading && <span className="muted">Loading…</span>}
       </div>
 
+      {fileHistory && (
+        <div className="history-scope">
+          <span className="muted">File history:</span>
+          <span className="history-scope-path" title={historyPath ?? ""}>
+            {historyPath}
+          </span>
+          <button
+            type="button"
+            className="history-scope-clear"
+            onClick={() => root && void clearFileHistory(root)}
+          >
+            Show full history
+          </button>
+        </div>
+      )}
+
       <SplitPane
         className="history-body"
         direction="vertical"
@@ -298,9 +341,9 @@ export function HistoryView() {
         min={160}
         max={720}
         label="Resize commit details"
-        collapsed={!selectedCommit && !worktreeSelected}
+        collapsed={!selectedCommit && !worktreeSelected && !twoSelected}
       >
-        <div className="history-list-wrap">
+        <div className={`history-list-wrap${mergeTarget ? " drop-target" : ""}`} data-drop="merge">
           <div className="commit-header">
             {!sorted && (
               <span className="commit-header-graph" style={{ width: graphWidth }}>
@@ -342,7 +385,7 @@ export function HistoryView() {
               worktree={showWorktree}
             />
           )}
-          {searching && !loading && commits.length === 0 && (
+          {filtered && !loading && commits.length === 0 && (
             <p className="history-empty muted">No commits match the search</p>
           )}
           <div className="history-list" ref={scrollRef} onScroll={updateRange}>
@@ -372,20 +415,35 @@ export function HistoryView() {
                 if (!commit || !rowData) {
                   return null;
                 }
+                const compareIndex = compareSelection.indexOf(rowData.hash);
                 return (
                   <button
                     key={rowData.hash}
                     type="button"
                     className={`commit-row${selected === rowData.hash ? " selected" : ""}${
-                      incomingSet.has(commit.hash) ? " incoming" : ""
-                    }${outgoingSet.has(commit.hash) ? " outgoing" : ""}`}
+                      compareIndex >= 0 ? " compare-selected" : ""
+                    }${incomingSet.has(commit.hash) ? " incoming" : ""}${
+                      outgoingSet.has(commit.hash) ? " outgoing" : ""
+                    }`}
                     style={{ top: index * ROW_HEIGHT, paddingLeft: graphWidth }}
-                    onClick={() => select(rowData.hash)}
+                    onClick={(event) => {
+                      if (event.ctrlKey || event.metaKey) {
+                        toggleCompareSelection(rowData.hash);
+                        return;
+                      }
+                      clearCompareSelection();
+                      select(rowData.hash);
+                    }}
                     onContextMenu={(event) =>
                       commitMenu.open(event, [
                         {
                           label: "Open in Diff view",
                           onSelect: () => void commitActions.showDiff(commit),
+                        },
+                        {
+                          label: "Compare selected",
+                          disabled: compareSelection.length !== 2,
+                          onSelect: () => compareSelected(),
                         },
                         {
                           label: "Cherry-pick",
@@ -404,6 +462,11 @@ export function HistoryView() {
                       ])
                     }
                   >
+                    {compareIndex >= 0 && (
+                      <span className="commit-compare" title="Comparison order">
+                        {compareIndex + 1}
+                      </span>
+                    )}
                     {commit.refs.length > 0 && (
                       <span className="commit-refs">{renderRefs(commit.refs)}</span>
                     )}
@@ -437,7 +500,14 @@ export function HistoryView() {
             </div>
           </div>
         </div>
-        {worktreeSelected && root ? (
+        {twoSelected ? (
+          <div className="compare-hint">
+            <p className="muted">Two commits selected for comparison.</p>
+            <button type="button" className="primary" onClick={compareSelected}>
+              Compare selected
+            </button>
+          </div>
+        ) : worktreeSelected && root ? (
           <WorktreeDetailPanel root={root} />
         ) : selectedCommit ? (
           <CommitDetailPanel commit={selectedCommit} />

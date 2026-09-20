@@ -2,19 +2,23 @@ import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import type { JobFinishedEvent, JobOutputEvent } from "./types";
 
 export type RepoEventHandlers = {
-  onRefsChanged: () => void;
-  onIndexChanged: () => void;
-  onWorktreeChanged: () => void;
-  onRefreshed: () => void;
+  onRefsChanged: (root: string) => void;
+  onIndexChanged: (root: string) => void;
+  onWorktreeChanged: (root: string) => void;
+  onRefreshed: (root: string) => void;
 };
 
-/** Subscribes to watcher events; returns the cleanup functions. */
+/**
+ * Subscribes to watcher events; returns the cleanup functions. The payload is
+ * the root of the repo that emitted the event, so a listener can ignore events
+ * from a repository that is no longer open.
+ */
 export async function subscribeRepoEvents(handlers: RepoEventHandlers): Promise<UnlistenFn[]> {
   return Promise.all([
-    listen("repo://refs-changed", handlers.onRefsChanged),
-    listen("repo://index-changed", handlers.onIndexChanged),
-    listen("repo://worktree-changed", handlers.onWorktreeChanged),
-    listen("repo://refreshed", handlers.onRefreshed),
+    listen<string>("repo://refs-changed", (event) => handlers.onRefsChanged(event.payload)),
+    listen<string>("repo://index-changed", (event) => handlers.onIndexChanged(event.payload)),
+    listen<string>("repo://worktree-changed", (event) => handlers.onWorktreeChanged(event.payload)),
+    listen<string>("repo://refreshed", (event) => handlers.onRefreshed(event.payload)),
   ]);
 }
 

@@ -1,7 +1,7 @@
 # OG-055 · Per-line blame
 
 - **Milestone:** M8 — SourceTree parity (phase 3)
-- **Status:** ready
+- **Status:** done
 - **Depends on:** OG-005, OG-037
 - **References:** ROADMAP.md, OG-053
 
@@ -23,12 +23,12 @@ line; blame does, and SourceTree has it.
 
 ## Acceptance criteria
 
-- [ ] Opening the blame of a file shows one row per line with author,
+- [x] Opening the blame of a file shows one row per line with author,
       date and commit.
-- [ ] Clicking a row opens that commit in the history, selected.
-- [ ] Binary or untracked file: clear message, no raw error.
-- [ ] Large files respond without blocking the UI.
-- [ ] Parser tests with fixtures and view tests with the mocked bridge.
+- [x] Clicking a row opens that commit in the history, selected.
+- [x] Binary or untracked file: clear message, no raw error.
+- [x] Large files respond without blocking the UI.
+- [x] Parser tests with fixtures and view tests with the mocked bridge.
 
 ## Out of scope
 

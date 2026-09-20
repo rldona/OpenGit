@@ -11,20 +11,27 @@ export function useRepoEvents(root: string | null): void {
     }
     let disposed = false;
     let unlisteners: Array<() => void> = [];
+    // The payload is the emitting repo's root: ignoring other repos avoids a
+    // late event from the previous project refreshing the new one.
+    const only = (action: () => void) => (eventRoot: string) => {
+      if (eventRoot === root) {
+        action();
+      }
+    };
     const reloadStatus = () => {
       void useStatusStore.getState().refresh(root);
     };
     void subscribeRepoEvents({
       // Ref changes can move anything (HEAD, tracking, branches), so the whole
       // repository is reloaded; index and worktree changes only touch status.
-      onRefsChanged: () => {
+      onRefsChanged: only(() => {
         void refreshRepo(root);
-      },
-      onIndexChanged: reloadStatus,
-      onWorktreeChanged: reloadStatus,
-      onRefreshed: () => {
+      }),
+      onIndexChanged: only(reloadStatus),
+      onWorktreeChanged: only(reloadStatus),
+      onRefreshed: only(() => {
         void refreshRepo(root);
-      },
+      }),
     })
       .then((functions) => {
         if (disposed) {

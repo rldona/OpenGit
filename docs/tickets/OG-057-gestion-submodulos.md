@@ -1,7 +1,7 @@
 # OG-057 · Submodule management
 
 - **Milestone:** M8 — SourceTree parity (phase 3)
-- **Status:** ready
+- **Status:** done
 - **Depends on:** OG-024, OG-009
 - **References:** ROADMAP.md, OG-024
 
@@ -24,12 +24,12 @@ the terminal.
 
 ## Acceptance criteria
 
-- [ ] An `uninitialized` submodule is initialized from the sidebar and becomes
+- [x] An `uninitialized` submodule is initialized from the sidebar and becomes
       clean.
-- [ ] Adding a submodule in a temporary repo registers, clones and lists it.
-- [ ] Sync applies the URLs from `.gitmodules` without touching the index.
-- [ ] A network or URL failure is shown as an actionable error.
-- [ ] Integration tests with a temporary repo and a local submodule
+- [x] Adding a submodule in a temporary repo registers, clones and lists it.
+- [x] Sync applies the URLs from `.gitmodules` without touching the index.
+- [x] A network or URL failure is shown as an actionable error.
+- [x] Integration tests with a temporary repo and a local submodule
       (`file://`).
 
 ## Out of scope

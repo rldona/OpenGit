@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { copyText } from "../lib/clipboard";
 import { confirmDestructive } from "../lib/bridge/dialog";
 import { formatDateTime } from "../lib/format";
@@ -9,13 +9,13 @@ import { useCollapseStore } from "../lib/stores/collapse";
 import { useStashStore } from "../lib/stores/stash";
 import { useUiStore } from "../lib/stores/ui";
 import { CollapsibleSection } from "./CollapsibleSection";
+import { StashDialog } from "./StashDialog";
 
 export function StashSidebar() {
   const root = useRepoStore((state) => state.repo?.root ?? null);
   const stashes = useStashStore((state) => state.stashes);
   const error = useStashStore((state) => state.error);
   const load = useStashStore((state) => state.load);
-  const create = useStashStore((state) => state.create);
   const apply = useStashStore((state) => state.apply);
   const pop = useStashStore((state) => state.pop);
   const drop = useStashStore((state) => state.drop);
@@ -25,9 +25,7 @@ export function StashSidebar() {
   const newStashRequest = useUiStore((state) => state.newStashRequest);
   const setActiveView = useUiStore((state) => state.setActiveView);
 
-  const [form, setForm] = useState(false);
-  const [message, setMessage] = useState("");
-  const [untracked, setUntracked] = useState(false);
+  const [stashDialog, setStashDialog] = useState(false);
   const stashMenu = useContextMenu();
 
   useEffect(() => {
@@ -36,25 +34,18 @@ export function StashSidebar() {
     }
   }, [root, load]);
 
-  // The Stash button in the toolbar reuses this form (see RefsSidebar).
+  // The Stash button in the toolbar opens the same dialog as the menu. Like
+  // the branch one, it reacts to increments only: remounting when a repository
+  // opens would otherwise pop the dialog with a stale counter.
+  const handledNewStash = useRef(newStashRequest);
   useEffect(() => {
-    if (newStashRequest > 0) {
-      setForm(true);
-      useCollapseStore.getState().set("stashes", false);
-    }
-  }, [newStashRequest]);
-
-  const submit = async () => {
-    if (!root) {
+    if (newStashRequest === handledNewStash.current) {
       return;
     }
-    const ok = await create(root, message.trim() === "" ? null : message.trim(), untracked);
-    if (ok) {
-      setForm(false);
-      setMessage("");
-      setUntracked(false);
-    }
-  };
+    handledNewStash.current = newStashRequest;
+    setStashDialog(true);
+    useCollapseStore.getState().set("stashes", false);
+  }, [newStashRequest]);
 
   const confirmDrop = async (reference: string) => {
     if (root && (await confirmDestructive(`Drop ${reference}? This cannot be undone.`))) {
@@ -85,31 +76,9 @@ export function StashSidebar() {
         title="Stashes"
         icon="stash"
         onContextMenu={(event) =>
-          stashMenu.open(event, [{ label: "Stash Changes…", onSelect: () => setForm(true) }])
+          stashMenu.open(event, [{ label: "Stash Changes…", onSelect: () => setStashDialog(true) }])
         }
       >
-        {form && (
-          <div className="refs-inline refs-stash-form">
-            <input
-              autoFocus
-              aria-label="Stash message"
-              placeholder="Message (optional)"
-              value={message}
-              onChange={(event) => setMessage(event.target.value)}
-            />
-            <label className="refs-check">
-              <input
-                type="checkbox"
-                checked={untracked}
-                onChange={(event) => setUntracked(event.target.checked)}
-              />
-              Include untracked
-            </label>
-            <button type="button" onClick={() => void submit()}>
-              Stash
-            </button>
-          </div>
-        )}
         <ul className="refs-list">
           {stashes.map((stash) => (
             <li key={stash.hash} className="refs-item">
@@ -133,6 +102,7 @@ export function StashSidebar() {
           </p>
         )}
       </CollapsibleSection>
+      {stashDialog && <StashDialog onClose={() => setStashDialog(false)} />}
       {stashMenu.menu}
     </>
   );

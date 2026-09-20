@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { confirmDestructive } from "../lib/bridge/dialog";
@@ -6,10 +6,22 @@ import { DEFAULT_MERGE_OPTIONS } from "../lib/merge";
 import { startRemoteJob } from "../lib/bridge/jobs";
 import { listRefs, logPage } from "../lib/bridge/log";
 import { openExternal } from "../lib/bridge/opener";
-import { checkoutRef, mergeBranch } from "../lib/bridge/refs";
+import {
+  remoteAdd,
+  remoteRemove,
+  remoteRename,
+  remoteSetUrl,
+  remoteUrls,
+  submoduleAdd,
+  submoduleStatus,
+  worktreeList,
+  lfsStatus,
+} from "../lib/bridge/repo";
+import { checkoutRef, createBranch, mergeBranch } from "../lib/bridge/refs";
 import { tagCreate, tagDelete } from "../lib/bridge/tags";
 import type { RefEntry, Remote, RepoInfo } from "../lib/bridge/types";
 import { useExtrasStore } from "../lib/stores/extras";
+import { useDiffStore } from "../lib/stores/diff";
 import { useLogStore } from "../lib/stores/log";
 import { useRefsStore } from "../lib/stores/refs";
 import { useCollapseStore } from "../lib/stores/collapse";
@@ -50,6 +62,32 @@ vi.mock("../lib/bridge/tags", () => ({
 vi.mock("../lib/bridge/jobs", () => ({
   startRemoteJob: vi.fn().mockResolvedValue("job-1"),
   cancelRemoteJob: vi.fn().mockResolvedValue(true),
+}));
+
+vi.mock("../lib/bridge/repo", () => ({
+  submoduleStatus: vi.fn().mockResolvedValue([]),
+  submoduleUpdate: vi.fn().mockResolvedValue(""),
+  submoduleSync: vi.fn().mockResolvedValue(""),
+  submoduleAdd: vi.fn().mockResolvedValue(""),
+  worktreeList: vi.fn().mockResolvedValue([]),
+  lfsStatus: vi
+    .fn()
+    .mockResolvedValue({ installed: true, version: "git-lfs/3.5.1", configured: false }),
+  remoteUrls: vi.fn().mockResolvedValue([]),
+  remoteAdd: vi.fn().mockResolvedValue(undefined),
+  remoteSetUrl: vi.fn().mockResolvedValue(undefined),
+  remoteRename: vi.fn().mockResolvedValue(undefined),
+  remoteRemove: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("../lib/bridge/diff", () => ({
+  diffFile: vi.fn().mockResolvedValue(""),
+  commitFiles: vi.fn().mockResolvedValue([]),
+  compareNumstat: vi.fn().mockResolvedValue([]),
+  compareFile: vi.fn().mockResolvedValue(""),
+  diffNumstat: vi.fn().mockResolvedValue([]),
+  stageSelection: vi.fn(),
+  discardSelection: vi.fn(),
 }));
 
 vi.mock("../lib/bridge/status", () => ({
@@ -122,9 +160,20 @@ const REMOTES: Remote[] = [
   { name: "local", url: "/tmp/otro", web_url: null },
 ];
 
+/** jsdom has no hit testing: the drop target is faked for the pointer drag. */
+function stubDropTarget(drop: string) {
+  const element = document.createElement("div");
+  element.dataset.drop = drop;
+  Object.defineProperty(document, "elementFromPoint", {
+    configurable: true,
+    value: () => element,
+  });
+}
+
 describe("RefsSidebar", () => {
   beforeEach(() => {
     localStorage.clear();
+    vi.clearAllMocks();
     useCollapseStore.setState({ collapsed: {} });
     useRepoStore.setState({ repo: REPO, recents: [], loading: false, error: null });
     useLogStore.getState().reset();
@@ -140,6 +189,18 @@ describe("RefsSidebar", () => {
     useExtrasStore.setState({ remotes: REMOTES });
     vi.mocked(checkoutRef).mockResolvedValue(undefined);
     vi.mocked(listRefs).mockResolvedValue(REFS);
+    vi.mocked(remoteUrls).mockResolvedValue(REMOTES);
+    vi.mocked(remoteAdd).mockResolvedValue(undefined);
+    vi.mocked(remoteRename).mockResolvedValue(undefined);
+    vi.mocked(remoteSetUrl).mockResolvedValue(undefined);
+    vi.mocked(remoteRemove).mockResolvedValue(undefined);
+    vi.mocked(submoduleStatus).mockResolvedValue([]);
+    vi.mocked(worktreeList).mockResolvedValue([]);
+    vi.mocked(lfsStatus).mockResolvedValue({
+      installed: true,
+      version: "git-lfs/3.5.1",
+      configured: false,
+    });
   });
 
   it("shows branches, remotes and tags with the current one marked", async () => {
@@ -384,12 +445,33 @@ describe("RefsSidebar", () => {
 
     expect(screen.getByRole("menuitem", { name: "New Branch…" })).toBeInTheDocument();
     expect(screen.getByRole("menuitem", { name: "New Tag…" })).toBeInTheDocument();
-    expect(screen.getByRole("menuitem", { name: "New Remote…" })).toBeDisabled();
-    expect(screen.getByRole("menuitem", { name: "Add Submodule…" })).toBeDisabled();
+    expect(screen.getByRole("menuitem", { name: "New Remote…" })).toBeEnabled();
+    expect(screen.getByRole("menuitem", { name: "Add Submodule…" })).toBeEnabled();
 
     await user.click(screen.getByRole("menuitem", { name: "New Branch…" }));
 
     expect(screen.getByLabelText("New branch name")).toBeInTheDocument();
+  });
+
+  it("creates a branch from the modal and can cancel it", async () => {
+    const user = userEvent.setup();
+    vi.mocked(createBranch).mockResolvedValue(undefined);
+    render(<RefsSidebar />);
+    await screen.findByText("feature");
+
+    fireEvent.contextMenu(screen.getByRole("button", { name: "Branches" }));
+    await user.click(screen.getByRole("menuitem", { name: "New Branch…" }));
+    await user.type(screen.getByLabelText("New branch name"), "nueva");
+    await user.click(screen.getByRole("button", { name: "Create" }));
+
+    expect(createBranch).toHaveBeenCalledWith("/tmp/repo", "nueva", "HEAD");
+
+    fireEvent.contextMenu(screen.getByRole("button", { name: "Branches" }));
+    await user.click(screen.getByRole("menuitem", { name: "New Branch…" }));
+    expect(screen.getByRole("dialog", { name: "New Branch" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(screen.queryByRole("dialog", { name: "New Branch" })).not.toBeInTheDocument();
   });
 
   it("does not expose Rename or Delete when hovering a branch", async () => {
@@ -426,5 +508,149 @@ describe("RefsSidebar", () => {
     expect(
       screen.queryByRole("button", { name: "Open origin in the browser" }),
     ).not.toBeInTheDocument();
+  });
+
+  it("adds a remote from the Branches menu", async () => {
+    const user = userEvent.setup();
+    render(<RefsSidebar />);
+    await screen.findByText("feature");
+
+    fireEvent.contextMenu(screen.getByRole("button", { name: "Branches" }));
+    await user.click(screen.getByRole("menuitem", { name: "New Remote…" }));
+
+    await user.type(screen.getByLabelText("Remote name"), "upstream");
+    await user.type(screen.getByLabelText("Remote URL"), "https://example.com/repo.git");
+    await user.click(screen.getByRole("button", { name: "OK" }));
+
+    expect(remoteAdd).toHaveBeenCalledWith("/tmp/repo", "upstream", "https://example.com/repo.git");
+    expect(remoteUrls).toHaveBeenCalledWith("/tmp/repo");
+  });
+
+  it("opens the new remote dialog from the Remotes section menu", async () => {
+    const user = userEvent.setup();
+    render(<RefsSidebar />);
+    await screen.findByText("feature");
+
+    fireEvent.contextMenu(screen.getByRole("button", { name: "Remotes" }));
+    await user.click(screen.getByRole("menuitem", { name: "New Remote…" }));
+
+    expect(screen.getByRole("dialog", { name: "New Remote" })).toBeInTheDocument();
+  });
+
+  it("renames a remote from its context menu", async () => {
+    const user = userEvent.setup();
+    render(<RefsSidebar />);
+    await screen.findByText("feature");
+
+    fireEvent.contextMenu(screen.getByRole("button", { name: "origin" }));
+    await user.click(screen.getByRole("menuitem", { name: "Rename…" }));
+
+    const input = screen.getByLabelText("Remote name");
+    await user.clear(input);
+    await user.type(input, "upstream");
+    await user.click(screen.getByRole("button", { name: "OK" }));
+
+    expect(remoteRename).toHaveBeenCalledWith("/tmp/repo", "origin", "upstream");
+    expect(remoteSetUrl).not.toHaveBeenCalled();
+  });
+
+  it("edits a remote URL from its context menu", async () => {
+    const user = userEvent.setup();
+    render(<RefsSidebar />);
+    await screen.findByText("feature");
+
+    fireEvent.contextMenu(screen.getByRole("button", { name: "origin" }));
+    await user.click(screen.getByRole("menuitem", { name: "Edit URL…" }));
+
+    const url = screen.getByLabelText("Remote URL");
+    await user.clear(url);
+    await user.type(url, "https://example.com/new.git");
+    await user.click(screen.getByRole("button", { name: "OK" }));
+
+    expect(remoteSetUrl).toHaveBeenCalledWith("/tmp/repo", "origin", "https://example.com/new.git");
+    expect(remoteRename).not.toHaveBeenCalled();
+  });
+
+  it("removes a remote only after confirming", async () => {
+    const user = userEvent.setup();
+    vi.mocked(confirmDestructive).mockResolvedValue(true);
+    render(<RefsSidebar />);
+    await screen.findByText("feature");
+
+    fireEvent.contextMenu(screen.getByRole("button", { name: "origin" }));
+    await user.click(screen.getByRole("menuitem", { name: "Remove" }));
+
+    expect(confirmDestructive).toHaveBeenCalledWith(
+      "Remove remote origin? Its remote branches disappear from the repo.",
+    );
+    expect(remoteRemove).toHaveBeenCalledWith("/tmp/repo", "origin");
+  });
+
+  it("compares two branches selected with Ctrl+click", async () => {
+    const user = userEvent.setup();
+    render(<RefsSidebar />);
+    await screen.findByText("feature");
+
+    const main = screen.getByRole("button", { name: "main" });
+    const feature = screen.getByRole("button", { name: "feature" });
+    fireEvent.click(main, { ctrlKey: true });
+    fireEvent.click(feature, { ctrlKey: true });
+
+    fireEvent.contextMenu(main);
+    await user.click(screen.getByRole("menuitem", { name: "Compare selected" }));
+
+    expect(useDiffStore.getState().target).toEqual({
+      kind: "compare",
+      base: "a",
+      rev: "b",
+    });
+    expect(useUiStore.getState().activeView).toBe("diff");
+  });
+
+  it("adds a submodule from the Branches menu", async () => {
+    const user = userEvent.setup();
+    render(<RefsSidebar />);
+    await screen.findByText("feature");
+
+    fireEvent.contextMenu(screen.getByRole("button", { name: "Branches" }));
+    await user.click(screen.getByRole("menuitem", { name: "Add Submodule…" }));
+
+    await user.type(screen.getByLabelText("Submodule URL"), "https://example.com/lib.git");
+    await user.type(screen.getByLabelText("Submodule path"), "vendor/lib");
+    await user.click(screen.getByRole("button", { name: "OK" }));
+
+    expect(submoduleAdd).toHaveBeenCalledWith(
+      "/tmp/repo",
+      "https://example.com/lib.git",
+      "vendor/lib",
+    );
+  });
+
+  it("does not open the branch dialog on remount with a stale request", async () => {
+    useUiStore.setState({ newBranchRequest: 3 });
+    render(<RefsSidebar />);
+    await screen.findByText("feature");
+
+    expect(screen.queryByRole("dialog", { name: "New Branch" })).not.toBeInTheDocument();
+
+    // A real new request still opens it.
+    act(() => useUiStore.getState().requestNewBranch());
+    expect(await screen.findByRole("dialog", { name: "New Branch" })).toBeInTheDocument();
+  });
+
+  it("merges a branch dropped on the history", async () => {
+    stubDropTarget("merge");
+    vi.mocked(confirmDestructive).mockResolvedValue(true);
+    render(<RefsSidebar />);
+    const feature = await screen.findByRole("button", { name: "feature" });
+
+    fireEvent.pointerDown(feature, { button: 0, clientX: 0, clientY: 0 });
+    fireEvent.pointerMove(document, { clientX: 40, clientY: 40 });
+    fireEvent.pointerUp(document, { clientX: 40, clientY: 40 });
+
+    expect(confirmDestructive).toHaveBeenCalledWith("Merge feature into main?");
+    await waitFor(() =>
+      expect(mergeBranch).toHaveBeenCalledWith("/tmp/repo", "feature", DEFAULT_MERGE_OPTIONS),
+    );
   });
 });

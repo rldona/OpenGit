@@ -1,7 +1,7 @@
 # OG-060 · Drag & drop for merge and staging
 
 - **Milestone:** M8 — SourceTree parity (phase 3)
-- **Status:** ready
+- **Status:** done
 - **Depends on:** OG-049, OG-044, OG-009
 - **References:** ROADMAP.md, OG-038
 
@@ -24,15 +24,15 @@ is missed.
 
 ## Acceptance criteria
 
-- [ ] Dragging a branch and dropping it onto the history opens the confirmation
+- [x] Dragging a branch and dropping it onto the history opens the confirmation
       and, if accepted, merges into the current branch.
-- [ ] Dropping the current branch or a non-mergeable one does nothing (no
+- [x] Dropping the current branch or a non-mergeable one does nothing (no
       confirmation).
-- [ ] Dragging a file to the other section moves it in or out of the index and
+- [x] Dragging a file to the other section moves it in or out of the index and
       refreshes.
-- [ ] With the mouse (pointer events), without breaking the normal selection
+- [x] With the mouse (pointer events), without breaking the normal selection
       click.
-- [ ] Tests with pointer events on the mocked UI.
+- [x] Tests with pointer events on the mocked UI.
 
 ## Out of scope
 

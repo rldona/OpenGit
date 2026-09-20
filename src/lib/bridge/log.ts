@@ -9,6 +9,7 @@ function searchPayload(search: LogSearch | null) {
     grep: search.grep.trim() === "" ? null : search.grep.trim(),
     author: search.author.trim() === "" ? null : search.author.trim(),
     path: search.path.trim() === "" ? null : search.path.trim(),
+    follow: search.follow ?? false,
   };
 }
 

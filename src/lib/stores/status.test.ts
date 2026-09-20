@@ -69,4 +69,26 @@ describe("useStatusStore", () => {
 
     expect(unstagePath).toHaveBeenCalledWith("/tmp/repo", "a.txt", null);
   });
+
+  it("ignores a late response from a repository that is no longer open", async () => {
+    let resolveOld: ((report: StatusReport) => void) | null = null;
+    vi.mocked(statusRepo).mockImplementationOnce(
+      () =>
+        new Promise<StatusReport>((resolve) => {
+          resolveOld = resolve;
+        }),
+    );
+    const slow = useStatusStore.getState().load("/tmp/a");
+
+    const other: StatusReport = { ...REPORT, head: "bbbbbbbb", entries: [] };
+    vi.mocked(statusRepo).mockResolvedValueOnce(other);
+    await useStatusStore.getState().load("/tmp/b");
+
+    resolveOld!(REPORT);
+    await slow;
+
+    // The stale report of /tmp/a must not overwrite /tmp/b's session.
+    expect(useStatusStore.getState().root).toBe("/tmp/b");
+    expect(useStatusStore.getState().report?.head).toBe("bbbbbbbb");
+  });
 });

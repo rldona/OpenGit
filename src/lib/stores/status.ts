@@ -39,19 +39,34 @@ export const useStatusStore = create<StatusState>((set, get) => ({
   load: async (root) => {
     set({ root, loading: true, error: null });
     try {
-      set({ report: await statusRepo(root) });
+      const report = await statusRepo(root);
+      // Another repository may have been opened while this was in flight.
+      if (get().root !== root) return;
+      set({ report });
     } catch (error) {
+      if (get().root !== root) return;
       set({ error: formatGitError(error) });
     } finally {
-      set({ loading: false });
+      if (get().root === root) {
+        set({ loading: false });
+      }
     }
   },
 
   /// Silent refresh after the watcher: keeps filter and selection.
   refresh: async (root) => {
+    // Refresh of a repository that is no longer (or not yet) the open one is
+    // ignored, so a late response cannot overwrite the current session.
+    const current = get().root;
+    if (current !== null && current !== root) return;
     try {
-      set({ root, report: await statusRepo(root) });
+      const report = await statusRepo(root);
+      const now = get().root;
+      if (now !== null && now !== root) return;
+      set({ root, report });
     } catch (error) {
+      const now = get().root;
+      if (now !== null && now !== root) return;
       set({ error: formatGitError(error) });
     }
   },

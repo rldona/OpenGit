@@ -97,3 +97,31 @@
 - **Context:** OG-031, discarding hunks/lines by reconstructing the diff patch and applying it in reverse to the working tree.
 - **Finding:** when selecting loose lines, the reconstructed hunk can end up with an edge without context (e.g. ending in `+line`). `git apply` rejects those hunks with "patch does not apply" even if the content matches, both forward and `--reverse`, unless `--unidiff-zero` is passed.
 - **Implication:** the stage (`--cached`) and discard (worktree) appliers use `--unidiff-zero`; safety comes from reconstructing the patch from the freshly read diff, not from git's context heuristic.
+
+## `git log --follow` needs a single starting point
+
+- **Date:** 2026-09-19
+- **Context:** OG-053, file history across renames.
+- **Finding:** `--follow` cannot be combined with `--all` (it tracks one path from one commit). The path must come after `--`, and `--follow` only works with exactly one pathspec.
+- **Implication:** with `follow` (and a path) `log_page` walks `HEAD` (or the given rev) and never `--all`; renames before the tracked name are only found by `--follow`, not by a plain path filter.
+
+## `--squash` does not write `MERGE_HEAD` but can still conflict
+
+- **Date:** 2026-09-19
+- **Context:** OG-059, squash merges.
+- **Finding:** `git merge --squash` stages the result without committing and without creating `MERGE_HEAD`, yet a content conflict still leaves unmerged entries in the index. `-X ours|theirs` only resolves content conflicts, and still produces the merge commit.
+- **Implication:** conflict detection stays on `git ls-files --unmerged` (not `MERGE_HEAD`), the same as `--no-commit`; the UI must not expect a merge commit after `--squash`.
+
+## `git worktree remove` without `--force` is the dirty check
+
+- **Date:** 2026-09-19
+- **Context:** OG-058, removing worktrees.
+- **Finding:** `git worktree remove <path>` fails on uncommitted changes with "use --force to delete it"; the main worktree always fails. The failure message is the signal, like force-deleting branches.
+- **Implication:** the UI confirms, tries without `--force`, and only forces after a second explicit warning; the main worktree is never removable.
+
+## Local submodule tests: `protocol.file.allow` must reach the child clone
+
+- **Date:** 2026-09-19
+- **Context:** OG-057, `submodule_add` integration test against a local source.
+- **Finding:** setting `protocol.file.allow=always` in the superproject's local config does **not** propagate to the `git clone` that `submodule add` spawns. It must come from the environment/config parameters (`-c`, or `GIT_CONFIG_COUNT`/`GIT_CONFIG_KEY_0`/`GIT_CONFIG_VALUE_0`) which children inherit.
+- **Implication:** the test process sets the `GIT_CONFIG_*` env vars; the app command never forces `protocol.file.allow` (security).

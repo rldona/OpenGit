@@ -10,12 +10,12 @@ pub mod version;
 
 pub use error::GitError;
 pub use models::{
-    AuthorIdent, Commit, FileDiff, FileStatus, LfsStatus, Ref, Remote, Stash, StatusKind,
-    StatusReport, Submodule, SubmoduleState, TrackingCommits, Worktree,
+    AuthorIdent, BlameLine, Commit, FileDiff, FileStatus, LfsStatus, Ref, Remote, Stash,
+    StatusKind, StatusReport, Submodule, SubmoduleState, TrackingCommits, Worktree,
 };
 pub use parsers::{
-    parse_gitattributes_paths, parse_gitattributes_uses_lfs, parse_log, parse_numstat, parse_refs,
-    parse_stash_list, parse_status, parse_submodule_status, parse_worktree_list,
+    parse_blame, parse_gitattributes_paths, parse_gitattributes_uses_lfs, parse_log, parse_numstat,
+    parse_refs, parse_stash_list, parse_status, parse_submodule_status, parse_worktree_list,
 };
 pub use runner::{GitCommand, GitOutput, GitProcess, Runner, StdinMode, DEFAULT_TIMEOUT};
 pub use version::{GitVersion, MINIMUM_GIT_VERSION};
@@ -198,6 +198,24 @@ pub struct MergeResult {
     pub output: String,
 }
 
+/// Merge strategy for content conflicts (`-X`). Because it is an enum, an
+/// invalid strategy cannot be constructed and never reaches git.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum MergeStrategy {
+    Ours,
+    Theirs,
+}
+
+impl MergeStrategy {
+    fn as_git_arg(self) -> &'static str {
+        match self {
+            MergeStrategy::Ours => "ours",
+            MergeStrategy::Theirs => "theirs",
+        }
+    }
+}
+
 /// Merge options, mirroring the merge window checkboxes.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -208,6 +226,10 @@ pub struct MergeOptions {
     pub no_commit: bool,
     /// `--log`: include the merged commits' subjects in the merge commit.
     pub include_messages: bool,
+    /// `--squash`: apply the merge into the index without committing.
+    pub squash: bool,
+    /// `-X ours|theirs`: resolve content conflicts with a strategy.
+    pub strategy: Option<MergeStrategy>,
     /// `--rebase` instead of a merge.
     pub rebase: bool,
 }
@@ -227,6 +249,13 @@ fn merge_args(rev: &str, options: MergeOptions) -> Vec<OsString> {
     }
     if options.include_messages {
         args.push("--log".into());
+    }
+    if options.squash {
+        args.push("--squash".into());
+    }
+    if let Some(strategy) = options.strategy {
+        args.push("-X".into());
+        args.push(strategy.as_git_arg().into());
     }
     args.push("--end-of-options".into());
     args.push(rev.into());
@@ -477,6 +506,128 @@ pub fn worktree_list(runner: &Runner, repo: &Path) -> Result<Vec<Worktree>, GitE
     let output =
         runner.run_checked(&GitCommand::new(["worktree", "list", "--porcelain"]).cwd(repo))?;
     parse_worktree_list(&output.stdout)
+}
+
+/// Adds a worktree on a new (`create`) or existing branch (OG-058).
+pub fn worktree_add(
+    runner: &Runner,
+    repo: &Path,
+    worktree: &str,
+    branch: &str,
+    create: bool,
+    start_point: Option<&str>,
+) -> Result<(), GitError> {
+    validate_ref_name(runner, repo, branch)?;
+    let mut args: Vec<OsString> = vec!["worktree".into(), "add".into()];
+    if create {
+        args.push("-b".into());
+        args.push(branch.into());
+        args.push(worktree.into());
+        if let Some(start) = start_point.map(str::trim).filter(|value| !value.is_empty()) {
+            args.push(start.into());
+        }
+    } else {
+        args.push(worktree.into());
+        args.push(branch.into());
+    }
+    runner
+        .run_checked(&GitCommand::new(args).cwd(repo).write())
+        .map(|_| ())
+}
+
+/// Removes a worktree. Without `force`, git rejects it if it has changes (OG-058).
+pub fn worktree_remove(
+    runner: &Runner,
+    repo: &Path,
+    worktree: &str,
+    force: bool,
+) -> Result<(), GitError> {
+    let mut args: Vec<OsString> = vec!["worktree".into(), "remove".into()];
+    if force {
+        args.push("--force".into());
+    }
+    args.push(worktree.into());
+    runner
+        .run_checked(&GitCommand::new(args).cwd(repo).write())
+        .map(|_| ())
+}
+
+/// A submodule update clones objects and can take a while: generous timeout
+/// and the output goes to the panel, instead of the network jobs pattern.
+const SUBMODULE_TIMEOUT: Duration = Duration::from_secs(600);
+
+fn submodule_command(
+    runner: &Runner,
+    repo: &Path,
+    args: Vec<OsString>,
+) -> Result<String, GitError> {
+    let output = runner.run_checked(
+        &GitCommand::new(args)
+            .cwd(repo)
+            .write()
+            .timeout(SUBMODULE_TIMEOUT),
+    )?;
+    let mut combined = output.stdout_lossy();
+    let stderr = output.stderr_lossy();
+    if !stderr.trim().is_empty() {
+        if !combined.is_empty() && !combined.ends_with('\n') {
+            combined.push('\n');
+        }
+        combined.push_str(&stderr);
+    }
+    Ok(combined)
+}
+
+/// Initializes and updates the submodules (`--init --recursive`) (OG-057).
+pub fn submodule_update(
+    runner: &Runner,
+    repo: &Path,
+    init: bool,
+    recursive: bool,
+) -> Result<String, GitError> {
+    let mut args: Vec<OsString> = vec!["submodule".into(), "update".into()];
+    if init {
+        args.push("--init".into());
+    }
+    if recursive {
+        args.push("--recursive".into());
+    }
+    submodule_command(runner, repo, args)
+}
+
+/// Copies the URLs from `.gitmodules` into the local config (OG-057).
+pub fn submodule_sync(runner: &Runner, repo: &Path) -> Result<String, GitError> {
+    submodule_command(
+        runner,
+        repo,
+        vec!["submodule".into(), "sync".into(), "--recursive".into()],
+    )
+}
+
+/// Registers and clones a new submodule at `path` (OG-057).
+pub fn submodule_add(
+    runner: &Runner,
+    repo: &Path,
+    url: &str,
+    path: &str,
+) -> Result<String, GitError> {
+    if url.trim().is_empty() {
+        return Err(GitError::invalid("the submodule URL is required"));
+    }
+    if path.trim().is_empty() {
+        return Err(GitError::invalid("the submodule path is required"));
+    }
+    submodule_command(
+        runner,
+        repo,
+        vec![
+            "submodule".into(),
+            "add".into(),
+            "--".into(),
+            url.into(),
+            path.into(),
+        ],
+    )
 }
 
 /// Git LFS status: binary available and tracked `filter=lfs` attributes.
@@ -1321,6 +1472,11 @@ pub struct LogSearch {
     pub grep: Option<String>,
     pub author: Option<String>,
     pub path: Option<String>,
+    /// Only meaningful together with `path` (OG-053): follow the file across
+    /// renames. `git log --follow` accepts a single starting point, so with
+    /// `follow` the log walks HEAD (or the chosen rev), never `--all`.
+    #[serde(default)]
+    pub follow: bool,
 }
 
 impl LogSearch {
@@ -1369,11 +1525,26 @@ pub fn log_page(
         push_search_pattern(&mut args, "author", search.author.as_deref());
     }
 
+    let path = search
+        .and_then(|filter| filter.path.as_deref())
+        .map(str::trim)
+        .filter(|value| !value.is_empty());
+    // `--follow` tracks one file across renames, but cannot be combined with
+    // `--all`: it needs a single starting commit, so it walks HEAD (OG-053).
+    let follow = path.is_some() && search.is_some_and(|filter| filter.follow);
+    if follow {
+        args.push("--follow".into());
+    }
+
     match rev {
         Some(rev) => {
             // Prevents a ref starting with "-" from being parsed as an option.
             args.push("--end-of-options".into());
             args.push(rev.into());
+        }
+        None if follow => {
+            args.push("--end-of-options".into());
+            args.push("HEAD".into());
         }
         None => {
             // `--all` would include `refs/stash`, and with it the stash commit
@@ -1385,17 +1556,20 @@ pub fn log_page(
         }
     }
 
-    if let Some(path) = search
-        .and_then(|filter| filter.path.as_deref())
-        .map(str::trim)
-        .filter(|value| !value.is_empty())
-    {
+    if let Some(path) = path {
         args.push("--".into());
         args.push(path.into());
     }
 
     let output = runner.run_checked(&GitCommand::new(args).cwd(repo))?;
     parse_log(&output.stdout)
+}
+
+/// Per-line blame of a tracked file (OG-055).
+pub fn blame_file(runner: &Runner, repo: &Path, file: &str) -> Result<Vec<BlameLine>, GitError> {
+    let output = runner
+        .run_checked(&GitCommand::new(["blame", "--line-porcelain", "-M", "--", file]).cwd(repo))?;
+    parse_blame(&output.stdout)
 }
 
 /// True if HEAD points to a commit (repo with history).
@@ -1456,6 +1630,53 @@ pub fn commit_files(runner: &Runner, repo: &Path, rev: &str) -> Result<Vec<FileD
     ];
     let output = runner.run_checked(&GitCommand::new(args).cwd(repo))?;
     parse_numstat(&output.stdout)
+}
+
+/// Per-file changes between two revisions (OG-054).
+pub fn compare_numstat(
+    runner: &Runner,
+    repo: &Path,
+    base: &str,
+    rev: &str,
+) -> Result<Vec<FileDiff>, GitError> {
+    let args: Vec<OsString> = vec![
+        "diff".into(),
+        "--numstat".into(),
+        "-z".into(),
+        "-M".into(),
+        "--end-of-options".into(),
+        base.into(),
+        rev.into(),
+    ];
+    let output = runner.run_checked(&GitCommand::new(args).cwd(repo))?;
+    parse_numstat(&output.stdout)
+}
+
+/// Patch of a file between two revisions (OG-054).
+pub fn compare_file_diff(
+    runner: &Runner,
+    repo: &Path,
+    base: &str,
+    rev: &str,
+    file: &str,
+    reversed: bool,
+) -> Result<String, GitError> {
+    let mut args: Vec<OsString> = vec![
+        "diff".into(),
+        "--no-color".into(),
+        "--no-ext-diff".into(),
+        "-M".into(),
+    ];
+    if reversed {
+        args.push("-R".into());
+    }
+    args.push("--end-of-options".into());
+    args.push(base.into());
+    args.push(rev.into());
+    args.push("--".into());
+    args.push(file.into());
+    let output = runner.run_checked(&GitCommand::new(args).cwd(repo))?;
+    Ok(output.stdout_lossy())
 }
 
 /// Patch of a file from the working tree or the index (`staged`), optionally
@@ -1660,6 +1881,8 @@ mod merge_args_tests {
                 no_ff: true,
                 no_commit: true,
                 include_messages: true,
+                squash: false,
+                strategy: None,
                 rebase: false,
             }),
             vec![
@@ -1675,16 +1898,44 @@ mod merge_args_tests {
     }
 
     #[test]
+    fn squash_and_strategy_reach_the_args() {
+        assert_eq!(
+            args_of(MergeOptions {
+                squash: true,
+                strategy: Some(MergeStrategy::Theirs),
+                ..MergeOptions::default()
+            }),
+            vec![
+                "merge",
+                "--no-edit",
+                "--squash",
+                "-X",
+                "theirs",
+                "--end-of-options",
+                "feature"
+            ]
+        );
+    }
+
+    #[test]
     fn rebase_ignores_the_merge_only_flags() {
         assert_eq!(
             args_of(MergeOptions {
                 no_ff: true,
                 no_commit: true,
                 include_messages: true,
+                squash: true,
+                strategy: Some(MergeStrategy::Ours),
                 rebase: true,
             }),
             vec!["rebase", "--end-of-options", "feature"]
         );
+    }
+
+    #[test]
+    fn an_invalid_strategy_is_rejected_before_git() {
+        let parsed = serde_json::from_str::<MergeOptions>(r#"{"strategy":"octopus"}"#);
+        assert!(parsed.is_err(), "only ours/theirs are valid");
     }
 }
 
