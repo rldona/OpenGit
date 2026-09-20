@@ -60,6 +60,16 @@ pub struct Ref {
     pub track: Option<String>,
 }
 
+/// Entrada de `git stash list`.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct Stash {
+    /// `stash@{n}`.
+    pub reference: String,
+    pub subject: String,
+    pub timestamp: i64,
+    pub hash: String,
+}
+
 /// Cambio de fichero según `git diff --numstat`.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct FileDiff {

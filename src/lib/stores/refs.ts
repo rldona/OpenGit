@@ -9,6 +9,7 @@ import {
   deleteBranch,
   renameBranch,
 } from "../bridge/refs";
+import { tagCreate, tagDelete } from "../bridge/tags";
 import type { RefEntry } from "../bridge/types";
 import { useLogStore } from "./log";
 import { useStatusStore } from "./status";
@@ -42,6 +43,13 @@ type RefsState = {
   remove: (root: string, name: string) => Promise<void>;
   forceRemove: (root: string, name: string, typed: string) => Promise<void>;
   cancelForceDelete: () => void;
+  createTag: (
+    root: string,
+    name: string,
+    target: string,
+    message: string | null,
+  ) => Promise<boolean>;
+  deleteTag: (root: string, name: string) => Promise<void>;
   reset: () => void;
 };
 
@@ -182,6 +190,30 @@ export const useRefsStore = create<RefsState>((set, get) => ({
   },
 
   cancelForceDelete: () => set({ pendingForceDelete: null, error: null }),
+
+  createTag: async (root, name, target, message) => {
+    set({ error: null });
+    try {
+      await tagCreate(root, name, target, message);
+      output(`Created tag ${name}`);
+      await get().refresh(root);
+      return true;
+    } catch (error) {
+      set({ error: formatGitError(error) });
+      return false;
+    }
+  },
+
+  deleteTag: async (root, name) => {
+    set({ error: null });
+    try {
+      await tagDelete(root, name);
+      output(`Deleted tag ${name}`);
+      await get().refresh(root);
+    } catch (error) {
+      set({ error: formatGitError(error) });
+    }
+  },
 
   reset: () =>
     set({

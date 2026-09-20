@@ -1,11 +1,13 @@
 mod log;
 mod numstat;
 mod refs;
+mod stash;
 mod status;
 
 pub use log::parse_log;
 pub use numstat::parse_numstat;
 pub use refs::parse_refs;
+pub use stash::parse_stash_list;
 pub use status::parse_status;
 
 /// Divide por `sep` descartando el registro vacío final (terminador).

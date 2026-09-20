@@ -145,8 +145,5 @@ fn nombres_de_rama_invalidos_fallan() {
     let c1 = head_hash(&repo);
 
     let error = create_branch(&runner(), repo.path(), "mala..rama", &c1).expect_err("inválida");
-    assert!(
-        format!("{error}").contains("invalid branch name"),
-        "{error}"
-    );
+    assert!(format!("{error}").contains("invalid ref name"), "{error}");
 }
