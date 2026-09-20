@@ -6,6 +6,7 @@ import { openExternal } from "../lib/bridge/opener";
 import { remoteRemove } from "../lib/bridge/repo";
 import type { RefEntry } from "../lib/bridge/types";
 import { parseTrack } from "../lib/format";
+import { useI18n } from "../lib/i18n";
 import { DEFAULT_MERGE_OPTIONS } from "../lib/merge";
 import { useMergeBranch } from "../lib/hooks/useMergeBranch";
 import { useExtrasStore } from "../lib/stores/extras";
@@ -30,6 +31,7 @@ type RemoteDialogState = {
 };
 
 export function RefsSidebar() {
+  const { t } = useI18n();
   const root = useRepoStore((state) => state.repo?.root ?? null);
   const refs = useRefsStore((state) => state.refs);
   const current = useRefsStore((state) => state.current);
@@ -93,7 +95,7 @@ export function RefsSidebar() {
 
   const confirmMerge = async (rev: string) => {
     const target = current ?? "HEAD";
-    if (await confirmDestructive(`Merge ${rev} into ${target}?`)) {
+    if (await confirmDestructive(t("refs.mergeConfirm", { rev, target }))) {
       await runMerge(rev, DEFAULT_MERGE_OPTIONS);
     }
   };
@@ -189,7 +191,7 @@ export function RefsSidebar() {
   };
 
   const confirmDeleteTag = async (name: string) => {
-    if (root && (await confirmDestructive(`Delete tag ${name}? This cannot be undone.`))) {
+    if (root && (await confirmDestructive(t("refs.deleteTagConfirm", { name })))) {
       await deleteTag(root, name);
     }
   };
@@ -206,9 +208,7 @@ export function RefsSidebar() {
     if (!root) {
       return;
     }
-    const confirmed = await confirmDestructive(
-      `Remove remote ${name}? Its remote branches disappear from the repo.`,
-    );
+    const confirmed = await confirmDestructive(t("refs.removeRemoteConfirm", { name }));
     if (!confirmed) {
       return;
     }
@@ -219,7 +219,7 @@ export function RefsSidebar() {
         useExtrasStore.getState().refresh(root),
         useRefsStore.getState().refresh(root),
       ]);
-      useUiStore.getState().appendOutput(`Remote ${name} removed`);
+      useUiStore.getState().appendOutput(t("refs.remoteRemoved", { name }));
     } catch (err) {
       setRemoteError(formatGitError(err));
     }
@@ -229,13 +229,13 @@ export function RefsSidebar() {
     <>
       <CollapsibleSection
         id="branches"
-        title="Branches"
+        title={t("refs.branches")}
         icon="branch"
         onContextMenu={(event) =>
           refMenu.open(event, [
-            { label: "New Branch…", onSelect: () => setBranchDialog(true) },
+            { label: t("refs.newBranch"), onSelect: () => setBranchDialog(true) },
             {
-              label: "New Tag…",
+              label: t("refs.newTag"),
               onSelect: () => {
                 setTagForm(true);
                 useCollapseStore.getState().set("tags", false);
@@ -244,11 +244,11 @@ export function RefsSidebar() {
             // Like in SourceTree. Subtree still has no backend: it stays
             // disabled so as not to promise what does not exist.
             {
-              label: "New Remote…",
+              label: t("refs.newRemote"),
               onSelect: () => setRemoteDialog({ mode: "add", field: "both", name: null }),
             },
-            { label: "Add Submodule…", onSelect: () => setSubmoduleDialog(true) },
-            { label: "Add/Link Subtree…", disabled: true, onSelect: () => {} },
+            { label: t("refs.addSubmodule"), onSelect: () => setSubmoduleDialog(true) },
+            { label: t("refs.addSubtree"), disabled: true, onSelect: () => {} },
           ])
         }
       >
@@ -259,7 +259,7 @@ export function RefsSidebar() {
                 <div className="refs-inline">
                   <input
                     autoFocus
-                    aria-label={`Rename ${short}`}
+                    aria-label={t("refs.renameAria", { name: short })}
                     value={renameValue}
                     onChange={(event) => setRenameValue(event.target.value)}
                     onKeyDown={(event) => {
@@ -267,7 +267,7 @@ export function RefsSidebar() {
                     }}
                   />
                   <button type="button" onClick={() => void submitRename(short)}>
-                    Save
+                    {t("common.save")}
                   </button>
                   <button
                     type="button"
@@ -276,7 +276,7 @@ export function RefsSidebar() {
                       setRenameValue("");
                     }}
                   >
-                    Cancel
+                    {t("common.cancel")}
                   </button>
                 </div>
               ) : (
@@ -302,31 +302,34 @@ export function RefsSidebar() {
                     }}
                     onContextMenu={(event) =>
                       refMenu.open(event, [
-                        { label: "Checkout", onSelect: () => root && void checkout(root, ref) },
                         {
-                          label: `Merge into ${current ?? "HEAD"}`,
+                          label: t("refs.checkout"),
+                          onSelect: () => root && void checkout(root, ref),
+                        },
+                        {
+                          label: t("refs.mergeInto", { target: current ?? "HEAD" }),
                           disabled: current === short,
                           onSelect: () => void confirmMerge(short),
                         },
                         {
-                          label: "Compare selected",
+                          label: t("refs.compareSelected"),
                           disabled: compareRefs.length !== 2,
                           onSelect: compareSelectedRefs,
                         },
                         {
-                          label: "Rename",
+                          label: t("refs.rename"),
                           onSelect: () => {
                             setRenaming(short);
                             setRenameValue(short);
                           },
                         },
                         {
-                          label: "Delete",
+                          label: t("common.delete"),
                           danger: true,
                           disabled: current === short,
                           onSelect: () => root && void remove(root, short),
                         },
-                        { label: "Copy name", onSelect: () => void copyText(short) },
+                        { label: t("refs.copyName"), onSelect: () => void copyText(short) },
                       ])
                     }
                   >
@@ -353,9 +356,9 @@ export function RefsSidebar() {
               )}
               {pendingForceDelete === short && (
                 <div className="refs-force">
-                  <span className="muted">Type {short} to force delete</span>
+                  <span className="muted">{t("refs.typeToForce", { name: short })}</span>
                   <input
-                    aria-label={`Confirm force delete ${short}`}
+                    aria-label={t("refs.confirmForce", { name: short })}
                     value={typed}
                     onChange={(event) => setTyped(event.target.value)}
                   />
@@ -364,7 +367,7 @@ export function RefsSidebar() {
                     className="danger"
                     onClick={() => root && void forceRemove(root, short, typed)}
                   >
-                    Force delete
+                    {t("refs.forceDelete")}
                   </button>
                   <button
                     type="button"
@@ -373,30 +376,30 @@ export function RefsSidebar() {
                       cancelForceDelete();
                     }}
                   >
-                    Cancel
+                    {t("common.cancel")}
                   </button>
                 </div>
               )}
             </li>
           ))}
-          {locals.length === 0 && <li className="muted">No branches</li>}
+          {locals.length === 0 && <li className="muted">{t("refs.noBranches")}</li>}
         </ul>
       </CollapsibleSection>
 
       <CollapsibleSection
         id="remotes"
-        title="Remotes"
+        title={t("refs.remotes")}
         icon="cloud"
         onContextMenu={(event) =>
           refMenu.open(event, [
             {
-              label: "New Remote…",
+              label: t("refs.newRemote"),
               onSelect: () => setRemoteDialog({ mode: "add", field: "both", name: null }),
             },
           ])
         }
       >
-        {remoteGroups.size === 0 && <p className="muted">No remote branches</p>}
+        {remoteGroups.size === 0 && <p className="muted">{t("refs.noRemoteBranches")}</p>}
         {[...remoteGroups.entries()].map(([remote, items]) => {
           const webUrl = remoteInfos.find((entry) => entry.name === remote)?.web_url ?? null;
           return (
@@ -409,15 +412,15 @@ export function RefsSidebar() {
               onContextMenu={(event) =>
                 refMenu.open(event, [
                   {
-                    label: "Edit URL…",
+                    label: t("refs.editUrl"),
                     onSelect: () => setRemoteDialog({ mode: "edit", field: "url", name: remote }),
                   },
                   {
-                    label: "Rename…",
+                    label: t("refs.renameRemote"),
                     onSelect: () => setRemoteDialog({ mode: "edit", field: "name", name: remote }),
                   },
                   {
-                    label: "Remove",
+                    label: t("common.remove"),
                     danger: true,
                     onSelect: () => void confirmRemoveRemote(remote),
                   },
@@ -429,8 +432,8 @@ export function RefsSidebar() {
                     <button
                       type="button"
                       className="refs-open-remote"
-                      title={`Open ${webUrl} in the browser`}
-                      aria-label={`Open ${remote} in the browser`}
+                      title={t("refs.openInBrowser", { url: webUrl })}
+                      aria-label={t("refs.openRemoteAria", { name: remote })}
                       onClick={() => void openExternal(webUrl)}
                     >
                       ↗
@@ -439,7 +442,7 @@ export function RefsSidebar() {
                 </>
               }
             >
-              {items.length === 0 && <p className="muted">No branches fetched yet</p>}
+              {items.length === 0 && <p className="muted">{t("refs.noBranchesFetched")}</p>}
               <ul className="refs-list">
                 {items.map(({ ref, short }) => (
                   <li key={ref.name}>
@@ -450,8 +453,11 @@ export function RefsSidebar() {
                       onClick={() => reveal(ref)}
                       onContextMenu={(event) =>
                         refMenu.open(event, [
-                          { label: "Checkout", onSelect: () => root && void checkout(root, ref) },
-                          { label: "Copy name", onSelect: () => void copyText(short) },
+                          {
+                            label: t("refs.checkout"),
+                            onSelect: () => root && void checkout(root, ref),
+                          },
+                          { label: t("refs.copyName"), onSelect: () => void copyText(short) },
                         ])
                       }
                     >
@@ -466,18 +472,18 @@ export function RefsSidebar() {
       </CollapsibleSection>
       <CollapsibleSection
         id="tags"
-        title="Tags"
+        title={t("refs.tags")}
         icon="tag"
         onContextMenu={(event) =>
-          refMenu.open(event, [{ label: "New Tag…", onSelect: () => setTagForm(true) }])
+          refMenu.open(event, [{ label: t("refs.newTag"), onSelect: () => setTagForm(true) }])
         }
       >
         {tagForm && (
           <div className="refs-inline refs-tag-form">
             <input
               autoFocus
-              aria-label="New tag name"
-              placeholder="Tag name"
+              aria-label={t("refs.tagNameAria")}
+              placeholder={t("refs.tagName")}
               value={tagName}
               onChange={(event) => setTagName(event.target.value)}
             />
@@ -487,18 +493,18 @@ export function RefsSidebar() {
                 checked={tagAnnotated}
                 onChange={(event) => setTagAnnotated(event.target.checked)}
               />
-              Annotated
+              {t("refs.annotated")}
             </label>
             {tagAnnotated && (
               <input
-                aria-label="Tag message"
-                placeholder="Tag message"
+                aria-label={t("refs.tagMessage")}
+                placeholder={t("refs.tagMessage")}
                 value={tagMessage}
                 onChange={(event) => setTagMessage(event.target.value)}
               />
             )}
             <button type="button" onClick={() => void submitTag()}>
-              Create
+              {t("common.create")}
             </button>
           </div>
         )}
@@ -507,7 +513,7 @@ export function RefsSidebar() {
             <li
               key={ref.name}
               className="refs-item"
-              title={ref.object_type === "tag" ? "Annotated tag" : "Lightweight tag"}
+              title={ref.object_type === "tag" ? t("refs.annotatedTag") : t("refs.lightweightTag")}
             >
               <button
                 type="button"
@@ -516,14 +522,14 @@ export function RefsSidebar() {
                 onClick={() => reveal(ref)}
                 onContextMenu={(event) =>
                   refMenu.open(event, [
-                    { label: "Show in history", onSelect: () => reveal(ref) },
-                    { label: "Push", onSelect: () => pushTag(short) },
+                    { label: t("refs.showInHistory"), onSelect: () => reveal(ref) },
+                    { label: t("refs.push"), onSelect: () => pushTag(short) },
                     {
-                      label: "Delete",
+                      label: t("common.delete"),
                       danger: true,
                       onSelect: () => void confirmDeleteTag(short),
                     },
-                    { label: "Copy name", onSelect: () => void copyText(short) },
+                    { label: t("refs.copyName"), onSelect: () => void copyText(short) },
                   ])
                 }
               >
@@ -532,7 +538,7 @@ export function RefsSidebar() {
               </button>
             </li>
           ))}
-          {tags.length === 0 && <li className="muted">No tags</li>}
+          {tags.length === 0 && <li className="muted">{t("refs.noTags")}</li>}
         </ul>
       </CollapsibleSection>
       {error && (

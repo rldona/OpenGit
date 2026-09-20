@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { formatGitError } from "../lib/bridge/errors";
 import { lfsTrack } from "../lib/bridge/repo";
+import { useI18n } from "../lib/i18n";
 import { useExtrasStore } from "../lib/stores/extras";
 import { useRemoteStore } from "../lib/stores/remote";
 import { useRepoStore } from "../lib/stores/repo";
@@ -8,6 +9,7 @@ import { useUiStore } from "../lib/stores/ui";
 
 /** Tracks a pattern or migrates files to Git LFS (OG-097). */
 export function LfsDialog({ mode, onClose }: { mode: "track" | "migrate"; onClose: () => void }) {
+  const { t } = useI18n();
   const root = useRepoStore((state) => state.repo?.root ?? null);
   const [pattern, setPattern] = useState("");
   const [busy, setBusy] = useState(false);
@@ -29,7 +31,7 @@ export function LfsDialog({ mode, onClose }: { mode: "track" | "migrate"; onClos
     }
     const value = pattern.trim();
     if (value === "") {
-      setError("A pattern is required");
+      setError(t("lfs.required"));
       return;
     }
     if (mode === "migrate") {
@@ -43,7 +45,7 @@ export function LfsDialog({ mode, onClose }: { mode: "track" | "migrate"; onClos
     try {
       await lfsTrack(root, value);
       await useExtrasStore.getState().refresh(root);
-      useUiStore.getState().appendOutput(`Tracking ${value} with Git LFS`);
+      useUiStore.getState().appendOutput(t("lfs.tracking", { pattern: value }));
       onClose();
     } catch (err) {
       setError(formatGitError(err));
@@ -51,20 +53,15 @@ export function LfsDialog({ mode, onClose }: { mode: "track" | "migrate"; onClos
     }
   };
 
-  const title = mode === "track" ? "Track pattern with Git LFS" : "Migrate files to Git LFS";
-  const label = mode === "track" ? "Pattern:" : "Include pattern:";
+  const title = mode === "track" ? t("lfs.trackTitle") : t("lfs.migrateTitle");
+  const label = mode === "track" ? t("lfs.pattern") : t("lfs.include");
 
   return (
     <div className="modal-overlay">
       <div className="remote-dialog" role="dialog" aria-modal="true" aria-label={title}>
         <h2 className="remote-dialog-title">{title}</h2>
 
-        {mode === "migrate" && (
-          <p className="remote-dialog-subtitle">
-            This rewrites history: every matching file becomes an LFS pointer in the rewritten
-            commits. Push a backup branch before continuing.
-          </p>
-        )}
+        {mode === "migrate" && <p className="remote-dialog-subtitle">{t("lfs.migrateWarning")}</p>}
 
         <label className="remote-field">
           <span>{label}</span>
@@ -88,7 +85,7 @@ export function LfsDialog({ mode, onClose }: { mode: "track" | "migrate"; onClos
 
         <div className="remote-dialog-actions">
           <button type="button" onClick={onClose}>
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             type="button"
@@ -96,7 +93,7 @@ export function LfsDialog({ mode, onClose }: { mode: "track" | "migrate"; onClos
             disabled={busy}
             onClick={() => void submit()}
           >
-            {mode === "track" ? "Track" : "Migrate"}
+            {mode === "track" ? t("lfs.track") : t("lfs.migrate")}
           </button>
         </div>
       </div>

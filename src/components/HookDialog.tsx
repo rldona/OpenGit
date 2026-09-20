@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import { formatGitError } from "../lib/bridge/errors";
 import { hookRead, hookSetEnabled, hookWrite } from "../lib/bridge/hooks";
 import type { Hook } from "../lib/bridge/types";
+import { useI18n } from "../lib/i18n";
 import { useHooksStore } from "../lib/stores/hooks";
 import { useRepoStore } from "../lib/stores/repo";
 import { useUiStore } from "../lib/stores/ui";
 
 /** Edits and enables/disables a repository hook (OG-098). */
 export function HookDialog({ hook, onClose }: { hook: Hook; onClose: () => void }) {
+  const { t } = useI18n();
   const root = useRepoStore((state) => state.repo?.root ?? null);
   const [content, setContent] = useState("");
   const [state, setState] = useState(hook);
@@ -60,7 +62,7 @@ export function HookDialog({ hook, onClose }: { hook: Hook; onClose: () => void 
     try {
       await hookWrite(root, state.name, content);
       await refresh();
-      useUiStore.getState().appendOutput(`Saved hook ${state.name}`);
+      useUiStore.getState().appendOutput(t("hooks.saved", { name: state.name }));
       onClose();
     } catch (err) {
       setError(formatGitError(err));
@@ -78,7 +80,12 @@ export function HookDialog({ hook, onClose }: { hook: Hook; onClose: () => void 
     try {
       await hookSetEnabled(root, state.name, enabling);
       await refresh();
-      useUiStore.getState().appendOutput(`${enabling ? "Enabled" : "Disabled"} hook ${state.name}`);
+      useUiStore.getState().appendOutput(
+        t("extras.hookToggled", {
+          action: enabling ? t("extras.hookEnable") : t("extras.hookDisable"),
+          name: state.name,
+        }),
+      );
       setState((previous) => ({
         ...previous,
         installed: true,
@@ -94,15 +101,24 @@ export function HookDialog({ hook, onClose }: { hook: Hook; onClose: () => void 
 
   return (
     <div className="modal-overlay">
-      <div className="remote-dialog hook-dialog" role="dialog" aria-modal="true" aria-label="Hook">
+      <div
+        className="remote-dialog hook-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-label={t("hooks.aria")}
+      >
         <h2 className="remote-dialog-title">{state.name}</h2>
         <p className="remote-dialog-subtitle">
-          {state.active ? "Active" : state.sample && !state.installed ? "Sample" : "Disabled"}
+          {state.active
+            ? t("extras.hookActive")
+            : state.sample && !state.installed
+              ? t("extras.hookSample")
+              : t("extras.hookDisabled")}
         </p>
 
         <textarea
           className="settings-template hook-editor"
-          aria-label="Hook contents"
+          aria-label={t("hooks.contents")}
           value={content}
           onChange={(event) => setContent(event.target.value)}
         />
@@ -115,13 +131,13 @@ export function HookDialog({ hook, onClose }: { hook: Hook; onClose: () => void 
 
         <div className="remote-dialog-actions">
           <button type="button" onClick={() => void toggle()} disabled={busy}>
-            {state.active ? "Disable" : "Enable"}
+            {state.active ? t("extras.hookDisable") : t("extras.hookEnable")}
           </button>
           <button type="button" onClick={onClose}>
-            Cancel
+            {t("common.cancel")}
           </button>
           <button type="button" className="primary" disabled={busy} onClick={() => void save()}>
-            Save
+            {t("common.save")}
           </button>
         </div>
       </div>

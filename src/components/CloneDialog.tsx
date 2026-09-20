@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { pickDirectory } from "../lib/bridge/dialog";
 import { formatGitError } from "../lib/bridge/errors";
 import { cloneFolderName } from "../lib/clone";
+import { useI18n } from "../lib/i18n";
 import { joinFolderPath } from "../lib/paths";
 import { useRemoteStore } from "../lib/stores/remote";
 
@@ -11,6 +12,7 @@ import { useRemoteStore } from "../lib/stores/remote";
  * repository opens in a tab when it finishes.
  */
 export function CloneDialog({ onClose }: { onClose: () => void }) {
+  const { t } = useI18n();
   const start = useRemoteStore((state) => state.start);
   const running = useRemoteStore((state) => state.running);
 
@@ -59,7 +61,7 @@ export function CloneDialog({ onClose }: { onClose: () => void }) {
     }
     const parsedDepth = depth.trim() === "" ? null : Number.parseInt(depth, 10);
     if (parsedDepth !== null && (!Number.isFinite(parsedDepth) || parsedDepth <= 0)) {
-      setError("Depth must be a positive number");
+      setError(t("clone.depthError"));
       return;
     }
     void start(parent, {
@@ -75,13 +77,13 @@ export function CloneDialog({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="modal-overlay">
-      <div className="remote-dialog" role="dialog" aria-modal="true" aria-label="Clone Repository">
-        <h2 className="remote-dialog-title">Clone Repository</h2>
+      <div className="remote-dialog" role="dialog" aria-modal="true" aria-label={t("clone.aria")}>
+        <h2 className="remote-dialog-title">{t("clone.title")}</h2>
 
         <label className="remote-field">
-          <span>Repository URL:</span>
+          <span>{t("clone.url")}</span>
           <input
-            aria-label="Repository URL"
+            aria-label={t("clone.urlAria")}
             value={url}
             autoFocus
             placeholder="https://github.com/user/repo.git"
@@ -90,17 +92,17 @@ export function CloneDialog({ onClose }: { onClose: () => void }) {
         </label>
 
         <div className="remote-field">
-          <span>Parent folder:</span>
-          <input aria-label="Parent folder" readOnly value={parent} />
+          <span>{t("common.parentFolder")}</span>
+          <input aria-label={t("common.parentFolderAria")} readOnly value={parent} />
           <button type="button" onClick={() => void chooseParent()}>
-            Choose…
+            {t("common.choose")}
           </button>
         </div>
 
         <label className="remote-field">
-          <span>Folder name:</span>
+          <span>{t("common.folderName")}</span>
           <input
-            aria-label="Folder name"
+            aria-label={t("common.folderNameAria")}
             value={name}
             onChange={(event) => {
               nameTouched.current = true;
@@ -110,24 +112,26 @@ export function CloneDialog({ onClose }: { onClose: () => void }) {
         </label>
 
         {parent !== "" && name.trim() !== "" && (
-          <p className="remote-url">Clone into {joinFolderPath(parent, name.trim())}</p>
+          <p className="remote-url">
+            {t("clone.into", { path: joinFolderPath(parent, name.trim()) })}
+          </p>
         )}
 
         <fieldset className="remote-options">
-          <legend>Options</legend>
+          <legend>{t("common.options")}</legend>
           <label className="remote-field">
-            <span>Depth (optional):</span>
+            <span>{t("clone.depth")}</span>
             <input
-              aria-label="Depth"
+              aria-label={t("clone.depthAria")}
               inputMode="numeric"
               value={depth}
               onChange={(event) => setDepth(event.target.value)}
             />
           </label>
           <label className="remote-field">
-            <span>Branch (optional):</span>
+            <span>{t("clone.branch")}</span>
             <input
-              aria-label="Branch"
+              aria-label={t("clone.branchAria")}
               value={branch}
               onChange={(event) => setBranch(event.target.value)}
             />
@@ -138,7 +142,7 @@ export function CloneDialog({ onClose }: { onClose: () => void }) {
               checked={recurseSubmodules}
               onChange={(event) => setRecurseSubmodules(event.target.checked)}
             />
-            Clone submodules recursively
+            {t("clone.recurse")}
           </label>
         </fieldset>
 
@@ -150,10 +154,10 @@ export function CloneDialog({ onClose }: { onClose: () => void }) {
 
         <div className="remote-dialog-actions">
           <button type="button" onClick={onClose}>
-            Cancel
+            {t("common.cancel")}
           </button>
           <button type="button" className="primary" disabled={!canSubmit} onClick={submit}>
-            Clone
+            {t("clone.submit")}
           </button>
         </div>
       </div>

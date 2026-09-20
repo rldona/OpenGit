@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useI18n } from "../lib/i18n";
 import { splitUpstream } from "../lib/remote/upstream";
 import { useExtrasStore } from "../lib/stores/extras";
 import { useRefsStore } from "../lib/stores/refs";
@@ -10,6 +11,7 @@ import { useRepoStore } from "../lib/stores/repo";
  * local target branch and the options that map to git flags.
  */
 export function PullDialog({ onClose }: { onClose: () => void }) {
+  const { t } = useI18n();
   const root = useRepoStore((state) => state.repo?.root ?? null);
   const remotes = useExtrasStore((state) => state.remotes);
   const refs = useRefsStore((state) => state.refs);
@@ -96,17 +98,17 @@ export function PullDialog({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="modal-overlay">
-      <div className="remote-dialog" role="dialog" aria-modal="true" aria-label="Pull">
-        <h2 className="remote-dialog-title">Pull</h2>
+      <div className="remote-dialog" role="dialog" aria-modal="true" aria-label={t("pull.aria")}>
+        <h2 className="remote-dialog-title">{t("pull.title")}</h2>
 
         <label className="remote-field">
-          <span>Pull from repository:</span>
+          <span>{t("pull.from")}</span>
           <select
-            aria-label="Pull from repository"
+            aria-label={t("pull.fromAria")}
             value={remote}
             onChange={(event) => setRemote(event.target.value)}
           >
-            {remoteNames.length === 0 && <option value="">No remotes</option>}
+            {remoteNames.length === 0 && <option value="">{t("pull.noRemotes")}</option>}
             {remoteNames.map((name) => (
               <option key={name} value={name}>
                 {name}
@@ -117,13 +119,13 @@ export function PullDialog({ onClose }: { onClose: () => void }) {
         {selectedUrl && <p className="remote-url">{selectedUrl}</p>}
 
         <div className="remote-field">
-          <span>Remote branch to pull:</span>
+          <span>{t("pull.remoteBranch")}</span>
           <select
-            aria-label="Remote branch to pull"
+            aria-label={t("pull.remoteBranchAria")}
             value={branch}
             onChange={(event) => setBranch(event.target.value)}
           >
-            {branches.length === 0 && <option value="">Select a branch</option>}
+            {branches.length === 0 && <option value="">{t("pull.selectBranch")}</option>}
             {branches.map((name) => (
               <option key={name} value={name}>
                 {name}
@@ -136,24 +138,24 @@ export function PullDialog({ onClose }: { onClose: () => void }) {
             disabled={!root}
             onClick={() => root && void refreshRefs(root)}
           >
-            Refresh
+            {t("common.refresh")}
           </button>
         </div>
 
         <p className="remote-field">
-          <span>Pull into local branch:</span>
-          <span className="remote-value">{current ?? "detached HEAD"}</span>
+          <span>{t("pull.intoLocal")}</span>
+          <span className="remote-value">{current ?? t("common.detachedHead")}</span>
         </p>
 
         <fieldset className="remote-options">
-          <legend>Options</legend>
+          <legend>{t("common.options")}</legend>
           <label>
             <input
               type="checkbox"
               checked={commitImmediately}
               onChange={(event) => setCommitImmediately(event.target.checked)}
             />
-            Commit merged changes immediately
+            {t("pull.commitImmediately")}
           </label>
           <label>
             <input
@@ -162,7 +164,7 @@ export function PullDialog({ onClose }: { onClose: () => void }) {
               checked={includeMessages}
               onChange={(event) => setIncludeMessages(event.target.checked)}
             />
-            Include messages from commits being merged in merge commit
+            {t("pull.includeMessages")}
           </label>
           <label>
             <input
@@ -171,7 +173,7 @@ export function PullDialog({ onClose }: { onClose: () => void }) {
               checked={noFf}
               onChange={(event) => setNoFf(event.target.checked)}
             />
-            Create new commit even if fast-forward merge
+            {t("pull.noFf")}
           </label>
           <label>
             <input
@@ -179,16 +181,16 @@ export function PullDialog({ onClose }: { onClose: () => void }) {
               checked={rebase}
               onChange={(event) => setRebase(event.target.checked)}
             />
-            Rebase instead of merge (WARNING: make sure you haven't pushed your changes)
+            {t("pull.rebase")}
           </label>
         </fieldset>
 
         <div className="remote-dialog-actions">
           <button type="button" onClick={onClose}>
-            Cancel
+            {t("common.cancel")}
           </button>
           <button type="button" className="primary" disabled={!canSubmit} onClick={submit}>
-            OK
+            {t("common.ok")}
           </button>
         </div>
       </div>

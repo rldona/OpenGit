@@ -3,6 +3,7 @@ import { pickDirectory } from "../lib/bridge/dialog";
 import { formatGitError } from "../lib/bridge/errors";
 import { gitignoreTemplates, initRepo } from "../lib/bridge/repo";
 import type { GitignoreTemplate } from "../lib/bridge/types";
+import { useI18n } from "../lib/i18n";
 import { joinFolderPath } from "../lib/paths";
 import { useRepoStore } from "../lib/stores/repo";
 
@@ -12,6 +13,7 @@ import { useRepoStore } from "../lib/stores/repo";
  * new repository opens in a tab.
  */
 export function CreateDialog({ onClose }: { onClose: () => void }) {
+  const { t } = useI18n();
   const [parent, setParent] = useState("");
   const [name, setName] = useState("");
   const [branch, setBranch] = useState("main");
@@ -69,49 +71,51 @@ export function CreateDialog({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="modal-overlay">
-      <div className="remote-dialog" role="dialog" aria-modal="true" aria-label="Create Repository">
-        <h2 className="remote-dialog-title">Create Repository</h2>
+      <div className="remote-dialog" role="dialog" aria-modal="true" aria-label={t("create.aria")}>
+        <h2 className="remote-dialog-title">{t("create.title")}</h2>
 
         <div className="remote-field">
-          <span>Parent folder:</span>
-          <input aria-label="Parent folder" readOnly value={parent} autoFocus />
+          <span>{t("common.parentFolder")}</span>
+          <input aria-label={t("common.parentFolderAria")} readOnly value={parent} autoFocus />
           <button type="button" onClick={() => void chooseParent()}>
-            Choose…
+            {t("common.choose")}
           </button>
         </div>
 
         <label className="remote-field">
-          <span>Folder name:</span>
+          <span>{t("common.folderName")}</span>
           <input
-            aria-label="Folder name"
+            aria-label={t("common.folderNameAria")}
             value={name}
             onChange={(event) => setName(event.target.value)}
           />
         </label>
 
         <label className="remote-field">
-          <span>Initial branch:</span>
+          <span>{t("create.initialBranch")}</span>
           <input
-            aria-label="Initial branch"
+            aria-label={t("create.initialBranchAria")}
             value={branch}
             onChange={(event) => setBranch(event.target.value)}
           />
         </label>
 
         {parent !== "" && name.trim() !== "" && (
-          <p className="remote-url">Create at {joinFolderPath(parent, name.trim())}</p>
+          <p className="remote-url">
+            {t("create.at", { path: joinFolderPath(parent, name.trim()) })}
+          </p>
         )}
 
         <fieldset className="remote-options">
-          <legend>Options</legend>
+          <legend>{t("common.options")}</legend>
           <label className="remote-field">
-            <span>.gitignore:</span>
+            <span>{t("create.gitignore")}</span>
             <select
-              aria-label=".gitignore template"
+              aria-label={t("create.gitignoreAria")}
               value={template}
               onChange={(event) => setTemplate(event.target.value)}
             >
-              <option value="">None</option>
+              <option value="">{t("create.none")}</option>
               {templates.map((entry) => (
                 <option key={entry.id} value={entry.id}>
                   {entry.name}
@@ -125,7 +129,7 @@ export function CreateDialog({ onClose }: { onClose: () => void }) {
               checked={initialCommit}
               onChange={(event) => setInitialCommit(event.target.checked)}
             />
-            Create an initial commit
+            {t("create.initialCommit")}
           </label>
         </fieldset>
 
@@ -137,7 +141,7 @@ export function CreateDialog({ onClose }: { onClose: () => void }) {
 
         <div className="remote-dialog-actions">
           <button type="button" onClick={onClose}>
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             type="button"
@@ -145,7 +149,7 @@ export function CreateDialog({ onClose }: { onClose: () => void }) {
             disabled={!canSubmit}
             onClick={() => void submit()}
           >
-            Create
+            {t("common.create")}
           </button>
         </div>
       </div>

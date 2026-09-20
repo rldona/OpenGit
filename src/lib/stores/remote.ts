@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { cancelRemoteJob, startRemoteJob } from "../bridge/jobs";
 import { formatGitError } from "../bridge/errors";
 import type { JobFinishedEvent, JobKind, JobOutputEvent } from "../bridge/types";
+import { t } from "../i18n";
 import { describeRemoteError } from "../remote/errors";
 import { describeRemoteJob } from "../remote/labels";
 import { useExtrasStore } from "./extras";
@@ -60,7 +61,7 @@ export const useRemoteStore = create<RemoteState>((set, get) => ({
       title: describeRemoteJob(kind),
       cloneDestination: kind.kind === "clone" ? kind.destination : null,
     });
-    output(`Running ${kind.kind}…`);
+    output(t("jobs.running", { kind: kind.kind }));
     try {
       const jobId = await startRemoteJob(root, kind);
       if (!get().running) {
@@ -74,7 +75,7 @@ export const useRemoteStore = create<RemoteState>((set, get) => ({
     } catch (error) {
       const message = formatGitError(error);
       set({ running: false, kind: null, error: message, cloneDestination: null });
-      output(`Could not start ${kind.kind}: ${message}`);
+      output(t("jobs.couldNotStart", { kind: kind.kind, message }));
     }
   },
 
@@ -129,16 +130,17 @@ export const useRemoteStore = create<RemoteState>((set, get) => ({
 
     if (payload.success) {
       set({ title: null });
-      output(`${kind ?? "job"} done`);
+      output(t("jobs.done", { kind: kind ?? "job" }));
     } else if (payload.cancelled) {
       set({ title: null });
-      output(`${kind ?? "job"} cancelled`);
+      output(t("jobs.cancelled", { kind: kind ?? "job" }));
     } else {
       // The title is kept: it heads the error window until it is closed.
       const hint = describeRemoteError(recentLines);
-      const message = hint ?? `${kind ?? "job"} failed (exit code ${payload.exit_code})`;
+      const message =
+        hint ?? t("jobs.failedGeneric", { kind: kind ?? "job", code: payload.exit_code });
       set({ error: message });
-      output(`${kind ?? "job"} failed: ${message}`);
+      output(t("jobs.failedWith", { kind: kind ?? "job", message }));
     }
 
     // The watcher also reacts, but we refresh now so as not to depend on it.

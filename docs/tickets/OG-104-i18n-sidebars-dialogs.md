@@ -1,7 +1,7 @@
 # OG-104 · i18n: sidebars and repository dialogs
 
 - **Milestone:** M20 — Internationalization
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** OG-099, OG-100
 - **References:** `docs/decisions/ADR-0009-i18n.md`
 
@@ -24,10 +24,10 @@ and validation messages.
 
 ## Acceptance criteria
 
-- [ ] No literal UI string left in the listed components.
-- [ ] English rendering unchanged; Spanish reads naturally.
-- [ ] Existing dialog tests keep passing; add at least one Spanish case.
-- [ ] `lint`, `typecheck`, `format:check` and `npm test` green.
+- [x] No literal UI string left in the listed components.
+- [x] English rendering unchanged; Spanish reads naturally.
+- [x] Existing dialog tests keep passing; add at least one Spanish case.
+- [x] `lint`, `typecheck`, `format:check` and `npm test` green.
 
 ## Out of scope
 
@@ -40,6 +40,19 @@ and validation messages.
   plain module): route them through the non-reactive `t` from OG-099, not a
   hook.
 
-## Implementation notes
+## Implementation notes (2026-09-21)
 
-_(filled in when the ticket closes)_
+- Catalog sections `refs`, `stash`, `branchDialog`, `remoteDialog`, `clone`,
+  `create`, `fetch`, `pull`, `merge`, `submodule`, `extras`, `lfs`, `hooks`,
+  `jobs`, plus shared `common` keys reused by the dialogs.
+- Migrated `RefsSidebar`, `StashSidebar`, `ExtrasSidebar`, `BranchDialog`,
+  `RemoteDialog`, `StashDialog`, `CloneDialog`, `CreateDialog`, `FetchDialog`,
+  `PullDialog`, `MergeWindow` (options and fetched panel), `SubmoduleDialog`,
+  `WorktreeDialog`, `LfsDialog`, `HookDialog` and `RemoteJobModal`.
+- `describeRemoteJob` (a plain module) and the remote store now use the
+  non-reactive `t`; the job titles keep the SourceTree wording.
+- Aria-labels that tests rely on (`Remote name`, `Fetch from repository`, …)
+  keep their English text via dedicated keys separate from the visible label.
+- Tests: `FetchDialog` renders in Spanish; the English assertions of the rest
+  are unchanged. Verified `typecheck`, `lint`, `format:check` and `npm test`
+  (547).

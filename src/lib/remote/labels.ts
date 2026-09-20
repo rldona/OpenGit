@@ -1,25 +1,26 @@
 import type { JobKind } from "../bridge/types";
+import { t } from "../i18n";
 
 /** Progress window title, SourceTree style. */
 export function describeRemoteJob(kind: JobKind): string {
   switch (kind.kind) {
     case "fetch":
-      return kind.remote ? `Fetching from ${kind.remote}` : "Fetching all remotes";
+      return kind.remote ? t("jobs.fetchingFrom", { remote: kind.remote }) : t("jobs.fetchingAll");
     case "pull": {
-      const from = kind.remote ?? "upstream";
+      const from = kind.remote ?? t("jobs.upstream");
       return kind.branch
-        ? `Pulling Branch "${kind.branch}" From "${from}"`
-        : `Pulling From "${from}"`;
+        ? t("jobs.pullingBranchFrom", { branch: kind.branch, from })
+        : t("jobs.pullingFrom", { from });
     }
     case "push":
-      return kind.remote ? `Pushing to ${kind.remote}` : "Pushing";
+      return kind.remote ? t("jobs.pushingTo", { remote: kind.remote }) : t("jobs.pushing");
     case "push_tag":
-      return `Pushing tag ${kind.tag}`;
+      return t("jobs.pushingTag", { tag: kind.tag });
     case "clone":
-      return `Cloning ${kind.url}`;
+      return t("jobs.cloning", { url: kind.url });
     case "lfs_pull":
-      return "Downloading LFS objects";
+      return t("jobs.lfsPull");
     case "lfs_migrate":
-      return `Migrating ${kind.include} to LFS`;
+      return t("jobs.lfsMigrate", { include: kind.include });
   }
 }
