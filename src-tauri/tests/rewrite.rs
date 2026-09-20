@@ -71,7 +71,7 @@ fn revert_creates_the_revert_commit() {
     commit_file(&repo, "a.txt", "dos\n", "cambio");
     let change = head(&repo);
 
-    revert_commit(&runner(), repo.path(), &change).expect("revert");
+    revert_commit(&runner(), repo.path(), &change, None).expect("revert");
 
     assert_eq!(
         std::fs::read_to_string(repo.path().join("a.txt")).unwrap(),
@@ -199,4 +199,24 @@ fn reset_modes_soft_mixed_and_hard() {
         "uno\n"
     );
     assert!(repo.git_ok(&["status", "--porcelain"]).stdout.is_empty());
+}
+
+#[test]
+fn revert_merge_commit_needs_a_mainline() {
+    let repo = TestRepo::init();
+    commit_file(&repo, "a.txt", "uno\n", "base");
+    repo.git_ok(&["checkout", "-q", "-b", "feature"]);
+    commit_file(&repo, "feature.txt", "f\n", "feature");
+    repo.git_ok(&["checkout", "-q", "main"]);
+    commit_file(&repo, "main.txt", "m\n", "main");
+    repo.git_ok(&["merge", "-q", "--no-ff", "-m", "merge feature", "feature"]);
+    let merge = head(&repo);
+
+    // Without a mainline git refuses to revert a merge.
+    assert!(revert_commit(&runner(), repo.path(), &merge, None).is_err());
+
+    revert_commit(&runner(), repo.path(), &merge, Some(1)).expect("revert merge");
+
+    // Mainline 1 is `main`, so the feature changes are undone.
+    assert!(!repo.path().join("feature.txt").exists());
 }

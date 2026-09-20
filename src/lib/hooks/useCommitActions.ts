@@ -14,7 +14,7 @@ export type CommitActions = {
   showDiff: (commit: Commit) => Promise<void>;
   cherryPick: (commit: Commit) => Promise<void>;
   cherryPickRange: (revs: string[], recordSource?: boolean) => Promise<void>;
-  revert: (commit: Commit) => Promise<void>;
+  revert: (commit: Commit, mainline?: number) => Promise<void>;
   reset: (commit: Commit, mode: ResetMode) => Promise<void>;
   rebase: (commit: Commit) => Promise<void>;
   createPatch: (commit: Commit) => Promise<void>;
@@ -80,12 +80,15 @@ export function useCommitActions(): CommitActions {
         await cherryPickRangeStore(root, revs, recordSource);
       }
     },
-    revert: async (commit) => {
+    revert: async (commit, mainline) => {
+      if (!root) {
+        return;
+      }
+      const where = mainline === undefined ? "" : ` (mainline ${mainline})`;
       if (
-        root &&
-        (await confirmDestructive(`Create a revert commit for ${commit.hash.slice(0, 7)}?`))
+        await confirmDestructive(`Create a revert commit for ${commit.hash.slice(0, 7)}${where}?`)
       ) {
-        await revert(root, commit.hash);
+        await revert(root, commit.hash, mainline);
       }
     },
     reset: async (commit, mode) => {
