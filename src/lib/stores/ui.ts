@@ -2,7 +2,8 @@ import { create } from "zustand";
 
 const MAX_OUTPUT_LINES = 200;
 
-export type ViewName = "history" | "status" | "diff" | "conflict" | "rebase" | "stash" | "blame";
+export type ViewName =
+  "history" | "status" | "diff" | "conflict" | "rebase" | "stash" | "blame" | "search";
 
 type UiState = {
   outputOpen: boolean;

@@ -13,6 +13,7 @@ import { OpBanner } from "./components/OpBanner";
 import { PullDialog } from "./components/PullDialog";
 import { RecentProjects } from "./components/RecentProjects";
 import { RebaseView } from "./components/RebaseView";
+import { SearchView } from "./components/SearchView";
 import { RemoteJobModal } from "./components/RemoteJobModal";
 import { RepoTabs } from "./components/RepoTabs";
 import { SettingsWindow } from "./components/SettingsWindow";
@@ -411,6 +412,15 @@ function App() {
                     Conflicts{conflictCount > 0 ? ` (${conflictCount})` : ""}
                   </button>
                 </li>
+                <li>
+                  <button
+                    type="button"
+                    className={`view-button${activeView === "search" ? " active" : ""}`}
+                    onClick={() => setActiveView("search")}
+                  >
+                    Search
+                  </button>
+                </li>
               </ul>
             </CollapsibleSection>
 
@@ -438,6 +448,8 @@ function App() {
                 <StashView />
               ) : activeView === "blame" ? (
                 <BlameView />
+              ) : activeView === "search" ? (
+                <SearchView />
               ) : (
                 <HistoryView />
               )
