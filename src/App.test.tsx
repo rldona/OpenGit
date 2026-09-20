@@ -182,6 +182,22 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: "Push" })).toBeInTheDocument();
   });
 
+  it("busca commits por mensaje desde la toolbar", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Choose folder" }));
+    await screen.findByText("commit de prueba");
+    await user.type(screen.getByLabelText("Search message"), "feat");
+    await user.click(screen.getByRole("button", { name: "Search" }));
+
+    expect(logPage).toHaveBeenLastCalledWith("/tmp/mi-repo", 0, 200, null, {
+      grep: "feat",
+      author: "",
+      path: "",
+    });
+  });
+
   it("cambia a la vista File status y muestra los cambios", async () => {
     const user = userEvent.setup();
     render(<App />);

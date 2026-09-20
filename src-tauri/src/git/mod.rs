@@ -17,7 +17,7 @@ pub use version::{GitVersion, MINIMUM_GIT_VERSION};
 use std::ffi::OsString;
 use std::path::Path;
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 /// Formato de una línea de log: campos separados por `%x1f`, commits por `-z`.
 pub const LOG_FORMAT: &str = "%H%x1f%P%x1f%an%x1f%ae%x1f%at%x1f%D%x1f%s";
@@ -386,14 +386,43 @@ pub fn repo_op_state(runner: &Runner, repo: &Path) -> Result<RepoOpState, GitErr
     })
 }
 
+/// Filtros de búsqueda del historial (literal, sin regex).
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct LogSearch {
+    pub grep: Option<String>,
+    pub author: Option<String>,
+    pub path: Option<String>,
+}
+
+impl LogSearch {
+    pub fn is_empty(&self) -> bool {
+        [
+            self.grep.as_deref(),
+            self.author.as_deref(),
+            self.path.as_deref(),
+        ]
+        .into_iter()
+        .all(|value| value.map(str::trim).unwrap_or("").is_empty())
+    }
+}
+
+fn push_search_pattern(args: &mut Vec<OsString>, flag: &str, pattern: Option<&str>) {
+    if let Some(pattern) = pattern.map(str::trim).filter(|value| !value.is_empty()) {
+        args.push("--fixed-strings".into());
+        args.push("--regexp-ignore-case".into());
+        args.push(format!("--{flag}={pattern}").into());
+    }
+}
+
 /// Página de historial en orden topológico. Con `rev = None` recorre todas las
-/// refs; con `Some(rev)` solo la rama o ref indicada.
+/// refs; con `search` filtra por mensaje, autor y/o ruta (de forma literal).
 pub fn log_page(
     runner: &Runner,
     repo: &Path,
     skip: usize,
     limit: usize,
     rev: Option<&str>,
+    search: Option<&LogSearch>,
 ) -> Result<Vec<Commit>, GitError> {
     let mut args: Vec<OsString> = vec![
         "log".into(),
@@ -404,6 +433,13 @@ pub fn log_page(
         format!("--skip={skip}").into(),
         format!("--max-count={limit}").into(),
     ];
+
+    let search = search.filter(|filter| !filter.is_empty());
+    if let Some(search) = search {
+        push_search_pattern(&mut args, "grep", search.grep.as_deref());
+        push_search_pattern(&mut args, "author", search.author.as_deref());
+    }
+
     match rev {
         Some(rev) => {
             // Evita que una ref que empiece por "-" se interprete como opción.
@@ -412,6 +448,16 @@ pub fn log_page(
         }
         None => args.push("--all".into()),
     }
+
+    if let Some(path) = search
+        .and_then(|filter| filter.path.as_deref())
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+    {
+        args.push("--".into());
+        args.push(path.into());
+    }
+
     let output = runner.run_checked(&GitCommand::new(args).cwd(repo))?;
     parse_log(&output.stdout)
 }
