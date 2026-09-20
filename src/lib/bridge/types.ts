@@ -238,6 +238,15 @@ export type GpgKey = {
   expires: number | null;
 };
 
+/** State of a `git bisect` in progress (OG-090). */
+export type BisectState = {
+  active: boolean;
+  current: string | null;
+  remaining: number | null;
+};
+
+export type BisectMark = "good" | "bad" | "skip";
+
 /** One entry of the reflog (OG-089). */
 export type ReflogEntry = {
   hash: string;

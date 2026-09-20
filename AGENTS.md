@@ -19,7 +19,7 @@ React UI (WebView)  →  Tauri IPC (invoke/events)  →  Rust core  →  git bin
 
 ## Development
 
-Current state: **M0–M16 and M18 closed**; latest release **v0.6.2** (2026-09-20). It ships in-app auto-updates with a free minisign key (OG-081, ADR-0007), remembered open tabs on by default (OG-082/OG-084), the repository lifecycle: clone and create from the home screen (OG-085..OG-087) history depth: worktree search, patches, word diff and cherry-pick ranges (OG-093..OG-096) and windows per repository (OG-088, ADR-0008). There is no active milestone yet; scope for the next one starts from `ROADMAP.md`. M17 (recovery and debugging) stays in the backlog. Signing and notarization are dropped for cost (OG-028); the updater uses minisign, not code signing.
+Current state: **M0–M18 closed**; latest release **v0.6.2** (2026-09-20). It ships in-app auto-updates with a free minisign key (OG-081, ADR-0007), remembered open tabs on by default (OG-082/OG-084), the repository lifecycle: clone and create from the home screen (OG-085..OG-087), windows per repository (OG-088, ADR-0008), recovery: reflog/undo, bisect, reset modes and reverting merges (OG-089..OG-092) and history depth: worktree search, patches, word diff and cherry-pick ranges (OG-093..OG-096). There is no active milestone yet; scope for the next one starts from `ROADMAP.md`. Signing and notarization are dropped for cost (OG-028); the updater uses minisign, not code signing.
 
 ```bash
 npm install

@@ -1,7 +1,7 @@
 # OG-090 · Bisect
 
 - **Milestone:** M17 — Recovery and debugging
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** OG-003, OG-019
 - **References:** `src-tauri/src/git/`, `src/components/OpBanner.tsx`
 
@@ -20,11 +20,11 @@ flow. It fits the existing in-progress operation banner (OG-019) and checkout.
 
 ## Acceptance criteria
 
-- [ ] Starting a bisect checks out the midpoint and shows the remaining steps.
-- [ ] Marking good/bad/skip advances the search; reset ends it cleanly.
-- [ ] The banner appears only while a bisect is in progress.
-- [ ] Tests with temporary repositories and a scripted history.
-- [ ] Checks green.
+- [x] Starting a bisect checks out the midpoint and shows the remaining steps.
+- [x] Marking good/bad/skip advances the search; reset ends it cleanly.
+- [x] The banner appears only while a bisect is in progress.
+- [x] Tests with temporary repositories and a scripted history.
+- [x] Checks green.
 
 ## Out of scope
 
@@ -37,3 +37,16 @@ flow. It fits the existing in-progress operation banner (OG-019) and checkout.
   existing checkout plumbing.
 - Read the state from `git bisect visualize`/`git rev-list` rather than parsing
   localized prose.
+
+## Implementation notes (2026-09-20)
+
+- Rust: `bisect_start` / `bisect_mark` / `bisect_reset` (argv-only) and
+  `bisect_state`, which detects `.git/BISECT_START`, reads HEAD and computes the
+  remaining commits with `git rev-list --count <bad> --not <goods>` from the
+  `refs/bisect/*` refs — no localized output is parsed.
+- Frontend: a `bisect` store, a **Start Bisect** dialog (bad defaults to HEAD,
+  good commits as a list) opened from Repository → **Bisect…**, and a banner
+  with Good/Bad/Skip/Reset while a bisect is active.
+- Tests: the Rust start/mark/state/reset over a scripted history; the store.
+- Verified: `typecheck`, `lint`, `format:check`, `npm test` (73 files, 528
+  tests), `cargo test`, `cargo clippy -D warnings`, `cargo fmt --check`.

@@ -42,6 +42,13 @@ vi.mock("./lib/bridge/app", () => ({
   openRepoInNewWindow: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock("./lib/bridge/bisect", () => ({
+  bisectStart: vi.fn().mockResolvedValue(undefined),
+  bisectMark: vi.fn().mockResolvedValue(undefined),
+  bisectReset: vi.fn().mockResolvedValue(undefined),
+  bisectState: vi.fn().mockResolvedValue({ active: false, current: null, remaining: null }),
+}));
+
 vi.mock("./lib/bridge/opener", () => ({
   openExternal: vi.fn().mockResolvedValue(undefined),
   openTerminal: vi.fn().mockResolvedValue(undefined),
@@ -985,6 +992,17 @@ describe("App", () => {
     act(() => menuMock.handler?.("create-repo"));
 
     expect(screen.getByRole("dialog", { name: "Create Repository" })).toBeInTheDocument();
+  });
+
+  it("opens the Bisect dialog from the native menu", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Choose folder" }));
+    await findCommitRow();
+    act(() => menuMock.handler?.("bisect"));
+
+    expect(screen.getByRole("dialog", { name: "Start Bisect" })).toBeInTheDocument();
   });
 
   it("opens the Apply Patch dialog from the native menu", async () => {
