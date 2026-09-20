@@ -916,6 +916,79 @@ body {
   border-color: var(--accent);
 }
 
+.welcome-recents {
+  margin-top: 20px;
+  text-align: left;
+}
+
+.welcome-recents h2 {
+  margin: 0 0 8px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.welcome-recents-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.welcome-recent {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+}
+
+.empty-state .welcome-recent-open {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+  margin-top: 0;
+  padding: 8px 10px;
+  background: var(--bg-panel);
+  text-align: left;
+}
+
+.empty-state .welcome-recent-open:hover {
+  border-color: var(--accent);
+}
+
+.welcome-recent-name {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.welcome-recent-path {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.empty-state .welcome-recent-remove {
+  margin-top: 0;
+  padding: 0 8px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--text-muted);
+}
+
+.empty-state .welcome-recent-remove:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
 .history {
   display: flex;
   flex: 1;
