@@ -1,11 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { confirmDestructive } from "../bridge/dialog";
 import { listRefs, logPage } from "../bridge/log";
-import { branchTracking, checkoutRef, deleteBranch, trackingCommits } from "../bridge/refs";
+import {
+  branchTracking,
+  checkoutRef,
+  deleteBranch,
+  mergeBranch,
+  trackingCommits,
+} from "../bridge/refs";
 import { statusRepo } from "../bridge/status";
 import type { RefEntry, StatusReport } from "../bridge/types";
 import { useRefsStore } from "./refs";
 import { useStatusStore } from "./status";
+import { useUiStore } from "./ui";
 
 vi.mock("../bridge/refs", () => ({
   branchTracking: vi.fn(),
@@ -14,6 +21,7 @@ vi.mock("../bridge/refs", () => ({
   createBranch: vi.fn(),
   renameBranch: vi.fn(),
   deleteBranch: vi.fn(),
+  mergeBranch: vi.fn(),
 }));
 
 vi.mock("../bridge/log", () => ({
@@ -142,6 +150,48 @@ describe("useRefsStore", () => {
     await useRefsStore.getState().checkout("/tmp/repo", remote);
 
     expect(checkoutRef).toHaveBeenCalledWith("/tmp/repo", "origin/remota", true);
+  });
+
+  it("fusiona una rama en la actual y refresca", async () => {
+    vi.mocked(mergeBranch).mockResolvedValue({ conflicted: false, output: "Fast-forward\n" });
+    await useRefsStore.getState().load("/tmp/repo");
+
+    const result = await useRefsStore.getState().merge("/tmp/repo", "feature", false);
+
+    expect(mergeBranch).toHaveBeenCalledWith("/tmp/repo", "feature", false);
+    expect(result?.conflicted).toBe(false);
+    expect(useUiStore.getState().outputLines.join("\n")).toContain("Merged feature");
+  });
+
+  it("un merge con conflicto no es un error y lo comunica", async () => {
+    vi.mocked(mergeBranch).mockResolvedValue({
+      conflicted: true,
+      output: "CONFLICT (content): Merge conflict in a.txt\n",
+    });
+    await useRefsStore.getState().load("/tmp/repo");
+
+    const result = await useRefsStore.getState().merge("/tmp/repo", "feature", true);
+
+    expect(mergeBranch).toHaveBeenCalledWith("/tmp/repo", "feature", true);
+    expect(result?.conflicted).toBe(true);
+    expect(useRefsStore.getState().error).toBeNull();
+    expect(useUiStore.getState().outputLines.join("\n")).toContain("Merge conflicts from feature");
+  });
+
+  it("expone el fallo real de un merge", async () => {
+    vi.mocked(mergeBranch).mockRejectedValue({
+      kind: "command_failed",
+      exit_code: 128,
+      stdout: "",
+      stderr: "fatal: not something we can merge",
+      args: ["merge", "otra"],
+    });
+    await useRefsStore.getState().load("/tmp/repo");
+
+    const result = await useRefsStore.getState().merge("/tmp/repo", "otra", false);
+
+    expect(result).toBeNull();
+    expect(useRefsStore.getState().error).toContain("not something we can merge");
   });
 
   it("avisa si hay cambios sin commitear y respeta la cancelación", async () => {

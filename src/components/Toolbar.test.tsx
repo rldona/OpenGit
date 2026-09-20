@@ -31,7 +31,13 @@ const REPO: RepoInfo = {
   git_version: "2.50.1",
 };
 
-const handlers = { onFetch: vi.fn(), onPull: vi.fn(), onPush: vi.fn(), onRefresh: vi.fn() };
+const handlers = {
+  onFetch: vi.fn(),
+  onPull: vi.fn(),
+  onPush: vi.fn(),
+  onMerge: vi.fn(),
+  onRefresh: vi.fn(),
+};
 
 function entries(count: number) {
   return Array.from({ length: count }, (_, index) => ({

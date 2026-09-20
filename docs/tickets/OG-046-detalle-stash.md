@@ -1,7 +1,7 @@
 # OG-046 · Detalle de stash como vista
 
 - **Milestone:** M7 — Paridad SourceTree (fase 2)
-- **Estado:** in progress
+- **Estado:** done
 - **Depende de:** OG-030, OG-044
 - **Referencias:** ROADMAP.md, OG-030
 

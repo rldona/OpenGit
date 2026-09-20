@@ -189,6 +189,54 @@ pub fn cherry_pick(runner: &Runner, repo: &Path, hash: &str) -> Result<(), GitEr
         .map(|_| ())
 }
 
+/// Resultado de un merge. Un conflicto no es un error de git: deja la
+/// operación a medias y el flujo de OG-019/OG-020 toma el relevo.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct MergeResult {
+    pub conflicted: bool,
+    /// Salida combinada de git, para el panel de Output.
+    pub output: String,
+}
+
+/// `git merge --no-edit [--no-ff] <rev>` sobre la rama actual.
+pub fn merge_branch(
+    runner: &Runner,
+    repo: &Path,
+    rev: &str,
+    no_ff: bool,
+) -> Result<MergeResult, GitError> {
+    validate_ref_name(runner, repo, rev)?;
+    let mut args: Vec<OsString> = vec!["merge".into(), "--no-edit".into()];
+    if no_ff {
+        args.push("--no-ff".into());
+    }
+    args.push("--end-of-options".into());
+    args.push(rev.into());
+    let output = runner.run(&GitCommand::new(args.clone()).cwd(repo).write())?;
+    // El exit code no distingue conflicto de error: manda MERGE_HEAD.
+    let conflicted = repo_op_state(runner, repo)?.merge;
+    if !output.success() && !conflicted {
+        return Err(GitError::CommandFailed {
+            exit_code: output.exit_code(),
+            stdout: output.stdout_lossy(),
+            stderr: output.stderr_lossy(),
+            args: args
+                .iter()
+                .map(|arg| arg.to_string_lossy().into_owned())
+                .collect(),
+        });
+    }
+    let mut text = output.stdout_lossy();
+    let stderr = output.stderr_lossy();
+    if !stderr.trim().is_empty() {
+        text.push_str(&stderr);
+    }
+    Ok(MergeResult {
+        conflicted,
+        output: text,
+    })
+}
+
 /// Crea el commit de reversión del commit indicado (mensaje por defecto).
 pub fn revert_commit(runner: &Runner, repo: &Path, hash: &str) -> Result<(), GitError> {
     validate_commit_hash(hash)?;

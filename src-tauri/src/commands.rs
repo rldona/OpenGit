@@ -495,6 +495,18 @@ pub fn cherry_pick(path: String, hash: String, state: State<'_, AppState>) -> Re
 }
 
 #[tauri::command]
+pub fn merge_branch(
+    path: String,
+    rev: String,
+    no_ff: bool,
+    state: State<'_, AppState>,
+) -> Result<crate::git::MergeResult, GitError> {
+    pause_while(&state, || {
+        crate::git::merge_branch(&state.runner, Path::new(&path), &rev, no_ff)
+    })
+}
+
+#[tauri::command]
 pub fn revert_commit(
     path: String,
     hash: String,

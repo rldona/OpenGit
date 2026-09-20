@@ -3,7 +3,16 @@ import { classifyRef, formatAuthor, formatCommitDate, shortRefName } from "../li
 import { ROW_HEIGHT, graphWidth as graphWidthFor, visibleLaneCount } from "../lib/graph/layout";
 import { sameRange, visibleRange, type VisibleRange } from "../lib/graph/viewport";
 import { copyText } from "../lib/clipboard";
-import { COLUMN_LABELS, loadColumnWidths, saveColumnWidths, type ColumnName } from "../lib/columns";
+import {
+  COLUMN_LABELS,
+  loadColumnWidths,
+  nextSort,
+  saveColumnWidths,
+  sortCommits,
+  type ColumnName,
+  type SortColumn,
+  type SortOrder,
+} from "../lib/columns";
 import { LAYOUT_KEYS } from "../lib/layout";
 import { useCommitActions } from "../lib/hooks/useCommitActions";
 import { useContextMenu } from "../lib/hooks/useContextMenu";
@@ -34,6 +43,8 @@ export function HistoryView() {
   const [widths, setWidths] = useState(loadColumnWidths);
   const setWidth = (column: ColumnName, width: number) =>
     setWidths((current) => ({ ...current, [column]: width }));
+  // `null` = orden topológico de git, el único donde el grafo encaja (OG-045).
+  const [sort, setSort] = useState<SortOrder | null>(null);
 
   useEffect(() => {
     saveColumnWidths(widths);
@@ -50,6 +61,8 @@ export function HistoryView() {
 
   const root = repo?.root ?? null;
   const rows = layout.rows;
+  // Orden de presentación: topológico de git o el elegido en la cabecera (OG-045).
+  const displayed = useMemo(() => sortCommits(commits, sort), [commits, sort]);
   const changes = useStatusStore((state) => state.report?.entries.length ?? 0);
   // La fila "Uncommitted changes" solo tiene sentido con cambios pendientes.
   const showWorktree = changes > 0;
@@ -100,12 +113,12 @@ export function HistoryView() {
       return;
     }
     handledReveal.current = revealRequest;
-    const { selected: hash, commits: list } = useLogStore.getState();
+    const { selected: hash } = useLogStore.getState();
     const scroller = scrollRef.current;
     if (!hash || !scroller) {
       return;
     }
-    const index = list.findIndex((commit) => commit.hash === hash);
+    const index = displayed.findIndex((commit) => commit.hash === hash);
     if (index < 0) {
       return;
     }
@@ -114,7 +127,7 @@ export function HistoryView() {
       (index + commitOffset) * ROW_HEIGHT - Math.round(scroller.clientHeight / 3),
     );
     updateRange();
-  }, [revealRequest, commitOffset, updateRange]);
+  }, [revealRequest, displayed, commitOffset, updateRange]);
 
   // Medido sobre el rango visible, no sobre todo el historial: ver OG-047.
   const laneCount = visibleLaneCount(
@@ -122,7 +135,10 @@ export function HistoryView() {
     Math.max(0, range.start - commitOffset),
     Math.max(0, range.end - commitOffset),
   );
-  const graphWidth = graphWidthFor(laneCount);
+  // Ordenar por columna rompe la coherencia del grafo: se oculta y Description
+  // aprovecha el ancho (decisión anotada en OG-045).
+  const sorted = sort !== null;
+  const graphWidth = sorted ? 0 : graphWidthFor(laneCount);
 
   const visible = Array.from({ length: Math.max(0, range.end - range.start) }, (_, offset) => {
     const index = range.start + offset;
@@ -133,13 +149,13 @@ export function HistoryView() {
     return {
       index,
       worktree: false as const,
-      commit: commits[commitIndex],
+      commit: displayed[commitIndex],
       row: rows[commitIndex],
     };
   });
   const selectedCommit =
     selected && !worktreeSelected
-      ? (commits.find((commit) => commit.hash === selected) ?? null)
+      ? (displayed.find((commit) => commit.hash === selected) ?? null)
       : null;
   // Solo ramas locales: incluir `refs/remotes/` volcaba aquí las miles de
   // ramas del remoto y dejaba el desplegable inservible.
@@ -182,10 +198,14 @@ export function HistoryView() {
       >
         <div className="history-list-wrap">
           <div className="commit-header">
-            <span className="commit-header-graph" style={{ width: graphWidth }}>
-              Graph
-            </span>
-            <span className="commit-header-cell">Description</span>
+            {!sorted && (
+              <span className="commit-header-graph" style={{ width: graphWidth }}>
+                Graph
+              </span>
+            )}
+            <div className="commit-header-cell commit-header-description">
+              <SortButton column="description" label="Description" sort={sort} onSort={setSort} />
+            </div>
             {(Object.keys(COLUMN_LABELS) as ColumnName[]).map((column) => (
               <div
                 key={column}
@@ -198,19 +218,26 @@ export function HistoryView() {
                   width={widths[column]}
                   onResize={(width) => setWidth(column, width)}
                 />
-                {COLUMN_LABELS[column]}
+                <SortButton
+                  column={column}
+                  label={COLUMN_LABELS[column]}
+                  sort={sort}
+                  onSort={setSort}
+                />
               </div>
             ))}
           </div>
-          <GraphCanvas
-            rows={rows}
-            colors={layout.colors}
-            laneCount={laneCount}
-            selected={selected}
-            scrollRef={scrollRef}
-            offset={commitOffset}
-            worktree={showWorktree}
-          />
+          {!sorted && (
+            <GraphCanvas
+              rows={rows}
+              colors={layout.colors}
+              laneCount={laneCount}
+              selected={selected}
+              scrollRef={scrollRef}
+              offset={commitOffset}
+              worktree={showWorktree}
+            />
+          )}
           <div className="history-list" ref={scrollRef} onScroll={updateRange}>
             <div className="history-inner" style={{ height: totalRows * ROW_HEIGHT }}>
               {visible.map((row) => {
@@ -312,6 +339,32 @@ export function HistoryView() {
 
       {commitMenu.menu}
     </div>
+  );
+}
+
+function SortButton({
+  column,
+  label,
+  sort,
+  onSort,
+}: {
+  column: SortColumn;
+  label: string;
+  sort: SortOrder | null;
+  onSort: (order: SortOrder | null) => void;
+}) {
+  const active = sort?.column === column;
+  const indicator = active ? (sort.direction === "asc" ? "▲" : "▼") : "";
+  return (
+    <button
+      type="button"
+      className={`commit-header-sort${active ? " active" : ""}`}
+      aria-label={`Sort by ${label}`}
+      onClick={() => onSort(nextSort(sort, column))}
+    >
+      {label}
+      {indicator !== "" && <span className="commit-header-indicator">{indicator}</span>}
+    </button>
   );
 }
 

@@ -127,6 +127,7 @@ vi.mock("./lib/bridge/refs", () => ({
   createBranch: vi.fn(),
   renameBranch: vi.fn(),
   deleteBranch: vi.fn(),
+  mergeBranch: vi.fn().mockResolvedValue({ conflicted: false, output: "" }),
 }));
 
 vi.mock("./lib/bridge/tags", () => ({
@@ -309,6 +310,53 @@ describe("App", () => {
 
     expect(screen.getByRole("dialog", { name: "Pull" })).toBeInTheDocument();
     expect(startRemoteJob).not.toHaveBeenCalled();
+  });
+
+  it("ordena la tabla por columnas y vuelve al orden topológico", async () => {
+    const user = userEvent.setup();
+    vi.mocked(logPage).mockResolvedValue([
+      { ...COMMIT, hash: "cccc0001", subject: "c commit", author_time: 100 },
+      { ...COMMIT, hash: "aaaa0002", subject: "a commit", author_time: 300 },
+      { ...COMMIT, hash: "bbbb0003", subject: "b commit", author_time: 200 },
+    ]);
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Choose folder" }));
+    await screen.findAllByText("c commit");
+
+    const subjects = () =>
+      Array.from(document.querySelectorAll(".commit-row:not(.worktree-row) .commit-subject")).map(
+        (node) => node.textContent,
+      );
+
+    expect(subjects()).toEqual(["c commit", "a commit", "b commit"]);
+    expect(document.querySelector(".history-graph")).not.toBeNull();
+
+    // Ascendente por descripción: el grafo se oculta.
+    await user.click(screen.getByRole("button", { name: "Sort by Description" }));
+    expect(subjects()).toEqual(["a commit", "b commit", "c commit"]);
+    expect(document.querySelector(".history-graph")).toBeNull();
+
+    // Descendente.
+    await user.click(screen.getByRole("button", { name: "Sort by Description" }));
+    expect(subjects()).toEqual(["c commit", "b commit", "a commit"]);
+
+    // Tercer clic: vuelve el topológico y el grafo.
+    await user.click(screen.getByRole("button", { name: "Sort by Description" }));
+    expect(subjects()).toEqual(["c commit", "a commit", "b commit"]);
+    expect(document.querySelector(".history-graph")).not.toBeNull();
+  });
+
+  it("el botón Merge abre el diálogo de ramas", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Choose folder" }));
+    await findCommitRow();
+
+    await user.click(screen.getByRole("button", { name: "Merge" }));
+
+    expect(screen.getByRole("dialog", { name: "Merge" })).toBeInTheDocument();
   });
 
   it("el botón Fetch abre el diálogo de opciones", async () => {
