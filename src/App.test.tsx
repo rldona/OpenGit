@@ -16,6 +16,7 @@ import { statusRepo } from "./lib/bridge/status";
 import type { Commit, RepoInfo, StatusReport } from "./lib/bridge/types";
 import { useDiffStore } from "./lib/stores/diff";
 import { useCommitStore } from "./lib/stores/commit";
+import { useExtrasStore } from "./lib/stores/extras";
 import { useLogStore } from "./lib/stores/log";
 import { useRepoStore } from "./lib/stores/repo";
 import { useStatusStore } from "./lib/stores/status";
@@ -59,6 +60,8 @@ vi.mock("./lib/bridge/repo", () => ({
   recentRepos: vi.fn(),
   removeRecentRepo: vi.fn(),
   closeRepo: vi.fn(),
+  submoduleStatus: vi.fn().mockResolvedValue([]),
+  worktreeList: vi.fn().mockResolvedValue([]),
 }));
 
 vi.mock("./lib/bridge/log", () => ({
@@ -186,6 +189,7 @@ describe("App", () => {
     });
     useRepoStore.setState({ repo: null, recents: [], loading: false, error: null });
     useCommitStore.getState().reset();
+    useExtrasStore.getState().reset();
     useLogStore.getState().reset();
     useStatusStore.getState().reset();
     useDiffStore.getState().reset();

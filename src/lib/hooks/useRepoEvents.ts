@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { subscribeRepoEvents } from "../bridge/events";
+import { useExtrasStore } from "../stores/extras";
 import { useLogStore } from "../stores/log";
 import { useRefsStore } from "../stores/refs";
 import { useStashStore } from "../stores/stash";
@@ -25,12 +26,16 @@ export function useRepoEvents(root: string | null): void {
     const reloadStashes = () => {
       void useStashStore.getState().refresh(root);
     };
+    const reloadExtras = () => {
+      void useExtrasStore.getState().refresh(root);
+    };
     void subscribeRepoEvents({
       onRefsChanged: () => {
         reloadLog();
         reloadRefs();
         reloadStatus();
         reloadStashes();
+        reloadExtras();
       },
       onIndexChanged: reloadStatus,
       onWorktreeChanged: reloadStatus,
@@ -39,6 +44,7 @@ export function useRepoEvents(root: string | null): void {
         reloadRefs();
         reloadStatus();
         reloadStashes();
+        reloadExtras();
       },
     })
       .then((functions) => {

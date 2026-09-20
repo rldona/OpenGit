@@ -3,12 +3,16 @@ mod numstat;
 mod refs;
 mod stash;
 mod status;
+mod submodules;
+mod worktrees;
 
 pub use log::parse_log;
 pub use numstat::parse_numstat;
 pub use refs::parse_refs;
 pub use stash::parse_stash_list;
 pub use status::parse_status;
+pub use submodules::parse_submodule_status;
+pub use worktrees::parse_worktree_list;
 
 /// Divide por `sep` descartando el registro vacío final (terminador).
 pub(crate) fn split_records(data: &[u8], sep: u8) -> Vec<&[u8]> {

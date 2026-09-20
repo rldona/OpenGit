@@ -566,6 +566,22 @@ pub fn recent_repos(state: State<'_, AppState>) -> Result<Vec<RecentRepo>, GitEr
 }
 
 #[tauri::command]
+pub fn submodule_status(
+    path: String,
+    state: State<'_, AppState>,
+) -> Result<Vec<crate::git::Submodule>, GitError> {
+    crate::git::submodule_status(&state.runner, Path::new(&path))
+}
+
+#[tauri::command]
+pub fn worktree_list(
+    path: String,
+    state: State<'_, AppState>,
+) -> Result<Vec<crate::git::Worktree>, GitError> {
+    crate::git::worktree_list(&state.runner, Path::new(&path))
+}
+
+#[tauri::command]
 pub fn remove_recent_repo(path: String, state: State<'_, AppState>) -> Result<(), GitError> {
     state.recents.lock().map_err(lock_error)?.remove(&path)
 }

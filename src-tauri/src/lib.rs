@@ -71,7 +71,9 @@ pub fn run() {
             commands::discard_path,
             commands::delete_untracked,
             commands::recent_repos,
-            commands::remove_recent_repo
+            commands::remove_recent_repo,
+            commands::submodule_status,
+            commands::worktree_list
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
