@@ -1,7 +1,7 @@
 # OG-008 · Sidebar de branches/tags y checkout
 
 - **Milestone:** M1 — MVP local
-- **Estado:** in-progress
+- **Estado:** done
 - **Depende de:** OG-003, OG-010
 - **Referencias:** docs/architecture/overview.md
 
@@ -43,4 +43,4 @@ El panel lateral es el patrón de navegación de SourceTree: branches locales, r
 - UI: `RefsSidebar` sustituye los placeholders del sidebar con Branches (indicador de actual, ahead/behind, crear/renombrar/borrar en línea), Remotes agrupados por remoto y Tags (anotado vs ligero). Filtro único para todo el árbol y confirmación por nombre para `-D`.
 - El checkout avisa si hay cambios sin commitear y permite cancelar; al terminar refresca refs, status y grafo.
 - Tests: 6 de Rust (tracking ahead/behind, checkout local y remoto, crear/renombrar/borrar, force delete, nombres inválidos) y 12 de frontend (store de refs y sidebar).
-- Pendiente para cerrar: PR y CI verde (comparte PR con OG-014).
+- Cerrado el 2026-09-18 con CI verde (Frontend 30 s, Rust 1m22s) en el PR #10, junto con OG-014. Con esto queda completo M1.

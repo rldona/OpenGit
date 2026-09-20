@@ -14,21 +14,22 @@ Documentación, decisiones y esqueleto ejecutable.
 
 **Salida:** `npm run tauri dev` abre la app; CI en verde. ✅
 
-## M1 — MVP local
+## M1 — MVP local ✅ _(cerrado el 2026-09-18)_
 
 Todo lo necesario para trabajar sin tocar el terminal en repos locales.
 
-- [ ] Abrir repositorio + lista de recientes.
-- [ ] Adaptador git en Rust (ejecución con argv, parseo `-z`, cancelación, errores tipados).
-- [ ] Vista de log con grafo en canvas, refs y carga incremental.
-- [ ] Vista de diff con resaltado y detección de binarios/renombrados.
-- [ ] Stage/unstage por hunk, por línea y por selección.
-- [ ] Panel de commit (amend, hooks visibles).
-- [ ] Sidebar de branches/tags + checkout.
-- [ ] Working tree status con stage por fichero.
-- [ ] Watcher de `.git` con debounce y refresco no bloqueante.
+- [x] Abrir repositorio + lista de recientes (OG-002).
+- [x] Adaptador git en Rust (ejecución con argv, parseo `-z`, cancelación, errores tipados) (OG-003).
+- [x] Vista de log con grafo en canvas, refs y carga incremental (OG-004, OG-013).
+- [x] Vista de diff con resaltado y detección de binarios/renombrados (OG-005).
+- [x] Stage/unstage por hunk, por línea y por selección (OG-006).
+- [x] Panel de commit (amend, hooks visibles) (OG-007).
+- [x] Sidebar de branches/tags + checkout (OG-008).
+- [x] Working tree status con stage por fichero (OG-009).
+- [x] Watcher de `.git` con debounce y refresco no bloqueante (OG-010).
+- [x] UI en inglés (OG-014).
 
-**Salida:** commit, stage por hunks, cambio de rama y navegación de historial en un repo de 10 000 commits sin que la UI se arrastre.
+**Salida:** commit, stage por hunks, cambio de rama y navegación de historial en un repo de 10 000 commits sin que la UI se arrastre. ✅
 
 ## M2 — Remotos
 

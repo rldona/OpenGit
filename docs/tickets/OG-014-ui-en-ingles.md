@@ -1,7 +1,7 @@
 # OG-014 · UI en inglés (pre-i18n)
 
 - **Milestone:** M1 — MVP local
-- **Estado:** in-progress
+- **Estado:** done
 - **Depende de:** —
 - **Referencias:** AGENTS.md
 
@@ -29,4 +29,4 @@ La app nació con los textos de UI en español. La convención del proyecto es c
 
 - Se tradujeron componentes (`App`, `HistoryView`, `StatusView`, `CommitPanel`, `DiffView`, `PatchView`), stores (`repo`, `status`, `commit`), mensajes de `formatGitError`, diálogos nativos y los mensajes de error del núcleo Rust.
 - `AGENTS.md` fija la regla: UI en inglés, documentación en español.
-- Pendiente para cerrar: PR y CI verde (va en el PR de OG-008).
+- Cerrado el 2026-09-18 con CI verde (Frontend 30 s, Rust 1m22s) en el PR #10, junto con OG-008.

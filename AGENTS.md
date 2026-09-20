@@ -19,7 +19,7 @@ React UI (WebView)  →  Tauri IPC (invoke/events)  →  Rust core  →  binario
 
 ## Desarrollo
 
-Estado actual: **M0 en curso**. El esqueleto Tauri 2 + React existe (OG-001); todavía no hay llamadas reales a git.
+Estado actual: **M1 completado** (2026-09-18). La app abre repos, historial con grafo, diff, stage por hunks, commit, status, refs con checkout y watcher en vivo. Siguiente: M2 (remotos, OG-011).
 
 ```bash
 npm install
