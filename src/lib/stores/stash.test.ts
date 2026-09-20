@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { statusRepo } from "../bridge/status";
-import { stashApply, stashDrop, stashList, stashPush } from "../bridge/stash";
+import { stashApply, stashDrop, stashList, stashPush, stashShow } from "../bridge/stash";
 import type { StatusReport, Stash } from "../bridge/types";
 import { useStashStore } from "./stash";
 import { useUiStore } from "./ui";
@@ -10,6 +10,7 @@ vi.mock("../bridge/stash", () => ({
   stashPush: vi.fn(),
   stashApply: vi.fn(),
   stashDrop: vi.fn(),
+  stashShow: vi.fn(),
 }));
 
 vi.mock("../bridge/status", () => ({
@@ -47,6 +48,7 @@ describe("useStashStore", () => {
     vi.mocked(stashPush).mockResolvedValue(undefined);
     vi.mocked(stashApply).mockResolvedValue(undefined);
     vi.mocked(stashDrop).mockResolvedValue(undefined);
+    vi.mocked(stashShow).mockResolvedValue("diff --git a/a.txt b/a.txt\n+dos\n");
     vi.mocked(statusRepo).mockResolvedValue(CLEAN);
   });
 
@@ -99,5 +101,33 @@ describe("useStashStore", () => {
     await useStashStore.getState().drop("/tmp/repo", "stash@{0}");
 
     expect(stashDrop).toHaveBeenCalledWith("/tmp/repo", "stash@{0}");
+  });
+
+  it("openDiff carga el parche del stash", async () => {
+    await useStashStore.getState().openDiff("/tmp/repo", "stash@{0}");
+
+    expect(stashShow).toHaveBeenCalledWith("/tmp/repo", "stash@{0}");
+    expect(useStashStore.getState().diffReference).toBe("stash@{0}");
+    expect(useStashStore.getState().diffPatch).toContain("+dos");
+    expect(useStashStore.getState().diffLoading).toBe(false);
+    expect(useStashStore.getState().diffError).toBeNull();
+  });
+
+  it("openDiff registra el error", async () => {
+    vi.mocked(stashShow).mockRejectedValue(new Error("boom"));
+
+    await useStashStore.getState().openDiff("/tmp/repo", "stash@{0}");
+
+    expect(useStashStore.getState().diffError).toContain("boom");
+    expect(useStashStore.getState().diffLoading).toBe(false);
+  });
+
+  it("closeDiff limpia la referencia y el parche", async () => {
+    await useStashStore.getState().openDiff("/tmp/repo", "stash@{0}");
+
+    useStashStore.getState().closeDiff();
+
+    expect(useStashStore.getState().diffReference).toBeNull();
+    expect(useStashStore.getState().diffPatch).toBe("");
   });
 });

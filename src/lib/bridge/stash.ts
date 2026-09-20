@@ -21,3 +21,8 @@ export function stashApply(path: string, reference: string, drop: boolean): Prom
 export function stashDrop(path: string, reference: string): Promise<void> {
   return invoke<void>("stash_drop", { path, reference });
 }
+
+/** Parche completo del stash, incluidos los untracked guardados con `-u`. */
+export function stashShow(path: string, reference: string): Promise<string> {
+  return invoke<string>("stash_show", { path, reference });
+}

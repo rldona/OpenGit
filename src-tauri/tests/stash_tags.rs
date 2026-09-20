@@ -5,7 +5,8 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use opengit_lib::git::{
-    stash_apply, stash_drop, stash_list, stash_push, status, tag_create, tag_delete, Runner,
+    stash_apply, stash_drop, stash_list, stash_push, stash_show, status, tag_create, tag_delete,
+    Runner,
 };
 use opengit_lib::jobs::{start, JobKind, JobManager, RemoteJobEvent};
 use support::{git, TempDir, TestRepo};
@@ -176,5 +177,33 @@ fn push_de_un_tag_al_remoto() {
     assert_eq!(
         git(remote.path(), &["cat-file", "-t", "refs/tags/v2.0.0"]).stdout,
         b"tag\n"
+    );
+}
+
+#[test]
+fn stash_show_incluye_tracked_y_untracked() {
+    let repo = TestRepo::init();
+    commit_file(&repo, "a.txt", "uno\n", "base");
+
+    repo.write("a.txt", b"dos\n");
+    repo.write("nuevo.txt", b"sin trackear\n");
+    stash_push(&runner(), repo.path(), Some("mi stash"), true).expect("stash");
+
+    let patch = stash_show(&runner(), repo.path(), "stash@{0}").expect("show");
+    assert!(patch.contains("a.txt"), "{patch}");
+    assert!(patch.contains("+dos"), "{patch}");
+    assert!(patch.contains("nuevo.txt"), "{patch}");
+    assert!(patch.contains("+sin trackear"), "{patch}");
+}
+
+#[test]
+fn stash_show_valida_la_referencia() {
+    let repo = TestRepo::init();
+    commit_file(&repo, "a.txt", "uno\n", "base");
+
+    let error = stash_show(&runner(), repo.path(), "HEAD").expect_err("referencia inválida");
+    assert!(
+        format!("{error}").contains("invalid stash reference"),
+        "{error}"
     );
 }

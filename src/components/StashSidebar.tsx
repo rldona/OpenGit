@@ -3,6 +3,7 @@ import { confirmDestructive } from "../lib/bridge/dialog";
 import { formatDateTime } from "../lib/format";
 import { useRepoStore } from "../lib/stores/repo";
 import { useStashStore } from "../lib/stores/stash";
+import { StashDiffDialog } from "./StashDiffDialog";
 
 export function StashSidebar() {
   const root = useRepoStore((state) => state.repo?.root ?? null);
@@ -13,6 +14,7 @@ export function StashSidebar() {
   const apply = useStashStore((state) => state.apply);
   const pop = useStashStore((state) => state.pop);
   const drop = useStashStore((state) => state.drop);
+  const openDiff = useStashStore((state) => state.openDiff);
 
   const [form, setForm] = useState(false);
   const [message, setMessage] = useState("");
@@ -85,6 +87,9 @@ export function StashSidebar() {
               <span className="refs-stash-date muted">{formatDateTime(stash.timestamp)}</span>
             </span>
             <span className="refs-actions">
+              <button type="button" onClick={() => root && void openDiff(root, stash.reference)}>
+                Diff
+              </button>
               <button type="button" onClick={() => root && void apply(root, stash.reference)}>
                 Apply
               </button>
@@ -108,6 +113,7 @@ export function StashSidebar() {
           {error}
         </p>
       )}
+      <StashDiffDialog />
     </section>
   );
 }
