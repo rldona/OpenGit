@@ -1,51 +1,51 @@
-# OG-024 · Submódulos y worktrees en modo lectura
+# OG-024 · Submodules and worktrees in read-only mode
 
-- **Milestone:** M5 — Pulido
-- **Estado:** done
-- **Depende de:** OG-010
-- **Referencias:** ROADMAP.md
+- **Milestone:** M5 — Polish
+- **Status:** done
+- **Depends on:** OG-010
+- **References:** ROADMAP.md
 
-## Contexto
+## Context
 
-Un repo con submódulos o varios worktrees no muestra esa información en la app: para abrir un worktree hay que usar el selector de carpetas y los submódulos son invisibles.
+A repo with submodules or several worktrees does not show that information in the app: to open a worktree you have to use the folder selector and the submodules are invisible.
 
-## Alcance (v1)
+## Scope (v1)
 
-- Backend: `submodule_status` (`git submodule status`, sin recursión) y `worktree_list` (`git worktree list --porcelain`), con parsers puros.
-- Sidebar: secciones **Submodules** y **Worktrees**, visibles solo si hay entradas.
-  - Submodule: path, commit corto y estado (**Clean**, **Different commit**, **Not initialized**, **Conflict**).
-  - Worktree: path, rama (o **detached**), marca del worktree actual y aviso si está **locked** o **bare**.
-- Abrir un worktree o un submódulo inicializado como repositorio con el `open` existente; el actual no se ofrece.
-- Refresco con los eventos del watcher y con el atajo Refresh (`mod+R`).
-- Solo lectura: no se añaden, quitan ni actualizan submódulos, ni se crean o borran worktrees.
+- Backend: `submodule_status` (`git submodule status`, without recursion) and `worktree_list` (`git worktree list --porcelain`), with pure parsers.
+- Sidebar: **Submodules** and **Worktrees** sections, visible only if there are entries.
+  - Submodule: path, short commit and state (**Clean**, **Different commit**, **Not initialized**, **Conflict**).
+  - Worktree: path, branch (or **detached**), mark of the current worktree and warning if it is **locked** or **bare**.
+- Open a worktree or an initialized submodule as a repository with the existing `open`; the current one is not offered.
+- Refresh with watcher events and with the Refresh shortcut (`mod+R`).
+- Read-only: submodules are not added, removed or updated, and worktrees are not created or deleted.
 
-## Criterios de aceptación
+## Acceptance criteria
 
-- [x] Repo con dos worktrees (rama y detached): se listan con su rama y el actual marcado.
-- [x] Submodule: **Clean** al día, **Not initialized** tras `deinit` y **Different commit** al avanzar el submódulo; el commit mostrado es el del índice/HEAD del sub.
-- [x] Click en worktree o submódulo inicializado abre ese repo y el sidebar se refresca.
-- [x] Parser robusto: path con espacios, `(describe)` final, entradas `bare`/`locked` y líneas de estado `+`/`-`/`U`.
-- [x] Tests: parsers unitarios, integración Rust con repos temporales y frontend (store y sidebar).
+- [x] Repo with two worktrees (branch and detached): they are listed with their branch and the current one marked.
+- [x] Submodule: **Clean** when up to date, **Not initialized** after `deinit` and **Different commit** when the submodule advances; the commit shown is the one from the sub's index/HEAD.
+- [x] Clicking a worktree or an initialized submodule opens that repo and the sidebar refreshes.
+- [x] Robust parser: path with spaces, trailing `(describe)`, `bare`/`locked` entries and `+`/`-`/`U` status lines.
+- [x] Tests: unit parsers, Rust integration with temporary repos and frontend (store and sidebar).
 
-## Fuera de alcance
+## Out of scope
 
-- `submodule add/update/sync/deinit` y `worktree add/remove/prune/lock` desde la app.
-- Submódulos recursivos o anidados más allá del primer nivel.
-- Mostrar el contenido de los submódulos en File status o en el diff.
+- `submodule add/update/sync/deinit` and `worktree add/remove/prune/lock` from the app.
+- Recursive or nested submodules beyond the first level.
+- Showing the content of submodules in File status or in the diff.
 
-## Notas técnicas
+## Technical notes
 
-- `git submodule status` no tiene modo `-z`: se parsea por líneas (char de estado + SHA + path + `(describe)` final). El `describe` se detecta con `rfind(" (")` exigiendo que la línea acabe en `)`.
-- Worktrees con `--porcelain`: bloques separados por línea vacía (`worktree`, `HEAD`, `branch`, `detached`, `bare`, `locked`).
-- El estado del submódulo respecto al índice del superproyecto: ` ` al día, `+` distinto commit, `-` sin inicializar, `U` conflicto.
-- Un worktree puede apuntar a un subdirectorio del repo principal; no se abre solo, el usuario decide (mismo flujo que `open`).
+- `git submodule status` has no `-z` mode: it is parsed by lines (state char + SHA + path + trailing `(describe)`). The `describe` is detected with `rfind(" (")` requiring the line to end in `)`.
+- Worktrees with `--porcelain`: blocks separated by an empty line (`worktree`, `HEAD`, `branch`, `detached`, `bare`, `locked`).
+- The submodule state relative to the superproject index: ` ` up to date, `+` different commit, `-` not initialized, `U` conflict.
+- A worktree can point to a subdirectory of the main repo; it is not opened on its own, the user decides (same flow as `open`).
 
-## Notas de implementación (2026-09-18)
+## Implementation notes (2026-09-18)
 
-- Rust: modelos `Submodule`/`SubmoduleState` y `Worktree`; parsers `parse_submodule_status` y `parse_worktree_list`; comandos `submodule_status` y `worktree_list`.
-- Los parsers son estrictos: una línea o estado desconocido devuelve `InvalidOutput` en vez de inventar datos.
-- Frontend: `ExtrasSidebar` sobre el store `extras`; solo aparece si hay submódulos, más de un worktree o un error; el worktree actual y los submódulos sin inicializar se muestran deshabilitados.
-- El refresh del atajo `mod+R` y los eventos del watcher (refs/refresco) recargan las listas.
-- En tests, `git submodule add` local exige `protocol.file.allow=always` y el avance se commitea en el clon del submódulo (no en el repo origen); anotado en `.ai/memory/git-quirks.md`.
-- Tests: 104 Rust (5 de parsers y 2 de integración nuevos), 169 frontend (8 nuevos de store y sidebar).
-- Cerrado el 2026-09-18 con CI verde (Frontend 28 s, Rust 1m29s) en el PR #20.
+- Rust: `Submodule`/`SubmoduleState` and `Worktree` models; `parse_submodule_status` and `parse_worktree_list` parsers; `submodule_status` and `worktree_list` commands.
+- The parsers are strict: an unknown line or state returns `InvalidOutput` instead of making up data.
+- Frontend: `ExtrasSidebar` on top of the `extras` store; it only appears if there are submodules, more than one worktree or an error; the current worktree and non-initialized submodules are shown disabled.
+- The `mod+R` shortcut refresh and the watcher events (refs/refresh) reload the lists.
+- In tests, a local `git submodule add` requires `protocol.file.allow=always` and the advance is committed in the submodule clone (not in the origin repo); noted in `.ai/memory/git-quirks.md`.
+- Tests: 104 Rust (5 parser and 2 integration new), 169 frontend (8 new for store and sidebar).
+- Closed on 2026-09-18 with green CI (Frontend 28 s, Rust 1m29s) in PR #20.

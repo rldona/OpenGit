@@ -1,45 +1,45 @@
-# OG-002 · Abrir repositorio y recientes
+# OG-002 · Open repository and recents
 
-- **Milestone:** M1 — MVP local
-- **Estado:** done
-- **Depende de:** OG-001, OG-003
-- **Referencias:** docs/architecture/overview.md
+- **Milestone:** M1 — Local MVP
+- **Status:** done
+- **Depends on:** OG-001, OG-003
+- **References:** docs/architecture/overview.md
 
-## Contexto
+## Context
 
-Punto de entrada de la app: elegir una carpeta y validarla como repositorio git, con una lista de recientes para volver a los habituales.
+The app's entry point: choose a folder and validate it as a git repository, with a list of recents to return to the usual ones.
 
-## Alcance
+## Scope
 
-- Selector de carpeta nativo (Tauri dialog).
-- Validación del directorio como repo git (incluye subcarpetas de un repo).
-- Lista de recientes persistida (ruta, última apertura), con eliminar de la lista.
-- Estados de error claros: no es un repo, repo sin commits, repo en estado raro (`HEAD` inválido), git no instalado o versión < 2.34.
-- Detección de subcarpeta: ofrecer abrir la raíz del repo.
+- Native folder picker (Tauri dialog).
+- Validation of the directory as a git repo (includes subfolders of a repo).
+- Persisted recents list (path, last opened), with remove from the list.
+- Clear error states: not a repo, repo without commits, repo in a weird state (invalid `HEAD`), git not installed or version < 2.34.
+- Subfolder detection: offer to open the repo root.
 
-## Criterios de aceptación
+## Acceptance criteria
 
-- [x] Abrir un repo con historial muestra la raíz detectada y entra en la vista principal. _(validación en `repo::open` + vista con nombre, ruta, rama y HEAD)_
-- [x] Repo vacío (sin commits) se abre sin errores y con estado vacío explícito. _(tests de Rust + mensaje en la UI)_
-- [x] Versión insuficiente de git produce un error legible, no un crash. _(`GitError::GitTooOld`; sin test automatizado con un git antiguo)_
-- [x] Los recientes persisten entre reinicios y no contienen rutas duplicadas. _(`recent_repos.json` en el directorio de datos; test de deduplicación y recarga)_
-- [x] Repo en detached HEAD se abre correctamente. _(test de Rust)_
+- [x] Opening a repo with history shows the detected root and enters the main view. _(validation in `repo::open` + view with name, path, branch and HEAD)_
+- [x] Empty repo (without commits) opens without errors and with an explicit empty state. _(Rust tests + message in the UI)_
+- [x] An insufficient git version produces a readable error, not a crash. _(`GitError::GitTooOld`; no automated test with an old git)_
+- [x] Recents persist between restarts and do not contain duplicate paths. _(`recent_repos.json` in the data directory; dedup and reload test)_
+- [x] Repo in detached HEAD opens correctly. _(Rust test)_
 
-## Fuera de alcance
+## Out of scope
 
-- Clonar repositorios.
-- Repos bare (solo se mostrará un aviso de no soportado de momento).
+- Cloning repositories.
+- Bare repos (only a not-supported notice will be shown for now).
 
-## Notas técnicas
+## Technical notes
 
-- Validación con `git rev-parse --show-toplevel --is-inside-work-tree -z`-equivalente (salida simple, sin ambigüedad de rutas) y `git rev-parse --verify HEAD` para "sin commits".
-- Persistencia en el directorio de datos de la app (Tauri store), nunca en el repo del usuario.
+- Validation with the equivalent of `git rev-parse --show-toplevel --is-inside-work-tree -z` (simple output, no path ambiguity) and `git rev-parse --verify HEAD` for "without commits".
+- Persistence in the app data directory (Tauri store), never in the user's repo.
 
-## Notas de implementación (2026-09-18)
+## Implementation notes (2026-09-18)
 
-- Rust: módulo `src/repo/` con `open()` (raíz, nombre, commits, rama/detached/HEAD, versión de git) y `recents::Recents` (JSON, tope de 10, deduplicado por ruta). Comandos Tauri en `src/commands.rs`: `git_version`, `open_repo`, `recent_repos`, `remove_recent_repo`; estado en `AppState` (runner + recientes).
-- Validación: `rev-parse --is-inside-work-tree` distingue no-repo (exit ≠ 0), bare (`false`) y work tree (`true`); `symbolic-ref --short -q HEAD` + `rev-parse --verify --quiet HEAD` cubren rama, detached, repo vacío y HEAD inválido.
-- Dependencias nuevas justificadas por el ticket: `tauri-plugin-dialog` (selector nativo) y `serde_json` (persistencia de recientes).
-- UI: botón en toolbar + estado vacío, lista de recientes en el sidebar (con quitar), resumen del repo abierto y errores en banner; todo el output de la app pasa al panel de salida.
-- Tests: 7 de Rust (repo + recientes) y 7 de frontend (App y stores); `cargo clippy -D warnings`, `rustfmt`, ESLint, Prettier, `tsc` y build limpios.
-- Cerrado el 2026-09-18: CI verde (Frontend 18 s, Rust 1m4s) tras corregir el lock con `registry=https://registry.npmjs.org/` en el `.npmrc` del repo (el Artifactory corporativo rompía CI).
+- Rust: `src/repo/` module with `open()` (root, name, commits, branch/detached/HEAD, git version) and `recents::Recents` (JSON, cap of 10, dedup by path). Tauri commands in `src/commands.rs`: `git_version`, `open_repo`, `recent_repos`, `remove_recent_repo`; state in `AppState` (runner + recents).
+- Validation: `rev-parse --is-inside-work-tree` distinguishes non-repo (exit ≠ 0), bare (`false`) and work tree (`true`); `symbolic-ref --short -q HEAD` + `rev-parse --verify --quiet HEAD` cover branch, detached, empty repo and invalid HEAD.
+- New dependencies justified by the ticket: `tauri-plugin-dialog` (native picker) and `serde_json` (recents persistence).
+- UI: button in the toolbar + empty state, recents list in the sidebar (with remove), summary of the opened repo and errors in a banner; all app output goes to the output panel.
+- Tests: 7 Rust (repo + recents) and 7 frontend (App and stores); `cargo clippy -D warnings`, `rustfmt`, ESLint, Prettier, `tsc` and build clean.
+- Closed on 2026-09-18: CI green (Frontend 18 s, Rust 1m4s) after fixing the lock with `registry=https://registry.npmjs.org/` in the repo's `.npmrc` (the corporate Artifactory broke CI).

@@ -1,44 +1,44 @@
-# OG-054 · Comparar commits y ramas
+# OG-054 · Compare commits and branches
 
-- **Milestone:** M8 — Paridad SourceTree (fase 3)
-- **Estado:** ready
-- **Depende de:** OG-005, OG-037
-- **Referencias:** ROADMAP.md, OG-039
+- **Milestone:** M8 — SourceTree parity (phase 3)
+- **Status:** ready
+- **Depends on:** OG-005, OG-037
+- **References:** ROADMAP.md, OG-039
 
-## Contexto
+## Context
 
-Hoy el diff siempre es "algo contra su padre" (commit) o "contra HEAD"
-(working tree). SourceTree deja seleccionar dos commits o dos ramas y ver el
-diff **entre ellos**, que es la forma de responder "¿qué cambia esta rama
-respecto a main?" sin checkout.
+Today the diff is always "something against its parent" (commit) or "against HEAD"
+(working tree). SourceTree lets you select two commits or two branches and see the
+diff **between them**, which is the way to answer "what does this branch change
+with respect to main?" without checkout.
 
-## Alcance
+## Scope
 
-- Selección múltiple en la tabla de commits (Ctrl/Cmd+clic, máximo dos) con
-  indicación visual y orden base → comparado.
-- "Compare selected" en el menú contextual de commits y de ramas de la
-  sidebar; reutiliza la vista Diff con un target nuevo `compare`.
-- Cabecera del panel con `base..rev` y botón para salir de la comparación.
-- Backend: `diff_numstat` y `diff_file` aceptan el par base/rev (hoy `rev` es
-  único: `git diff <base> <rev> -- <file>`).
+- Multi-selection in the commit table (Ctrl/Cmd+click, maximum two) with
+  visual indication and base → compared order.
+- "Compare selected" in the context menu of commits and of sidebar branches;
+  it reuses the Diff view with a new `compare` target.
+- Panel header with `base..rev` and a button to exit the comparison.
+- Backend: `diff_numstat` and `diff_file` accept the base/rev pair (today `rev` is
+  single: `git diff <base> <rev> -- <file>`).
 
-## Criterios de aceptación
+## Acceptance criteria
 
-- [ ] Seleccionar dos commits y "Compare selected" abre el diff entre ambos.
-- [ ] Lo mismo con dos ramas (Ctrl/Cmd+clic en la sidebar).
-- [ ] El panel indica base y comparado, y volver deja la vista como estaba.
-- [ ] Ficheros añadidos/borrados/renombrados se listan y se abren bien.
-- [ ] Tests de parser/comando en Rust y de UI con el bridge mockeado.
+- [ ] Selecting two commits and "Compare selected" opens the diff between them.
+- [ ] Same with two branches (Ctrl/Cmd+click in the sidebar).
+- [ ] The panel indicates base and compared, and going back leaves the view as it was.
+- [ ] Added/deleted/renamed files are listed and open correctly.
+- [ ] Parser/command tests in Rust and UI tests with the mocked bridge.
 
-## Fuera de alcance
+## Out of scope
 
-- Historial de comparaciones.
-- Comparar más de dos refs.
-- Merge tool de tres vías.
+- Comparison history.
+- Comparing more than two refs.
+- Three-way merge tool.
 
-## Notas técnicas
+## Technical notes
 
-- Extender el diff store con `target: { kind: "compare", base, rev }` y un
-  comando que reutilice `parse_numstat`/`diff_file` con dos revisiones.
-- La selección múltiple no debe romper el detalle de un commit: con dos
-  filas marcadas, el panel inferior pasa a mínimo (o se bloquea).
+- Extend the diff store with `target: { kind: "compare", base, rev }` and a
+  command that reuses `parse_numstat`/`diff_file` with two revisions.
+- Multi-selection must not break the detail of a commit: with two
+  rows marked, the bottom panel becomes minimal (or is blocked).

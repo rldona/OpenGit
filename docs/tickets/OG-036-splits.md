@@ -1,52 +1,52 @@
-# OG-036 · Splits redimensionables
+# OG-036 · Resizable splits
 
-- **Milestone:** M6 — Paridad visual con SourceTree
-- **Estado:** done
-- **Depende de:** OG-035
-- **Referencias:** ROADMAP.md
+- **Milestone:** M6 — Visual parity with SourceTree
+- **Status:** done
+- **Depends on:** OG-035
+- **References:** ROADMAP.md
 
-## Contexto
+## Context
 
-Los paneles tienen anchos/altos fijos (sidebar 240 px, lista de diff 280 px, salida de altura variable). En SourceTree cada división se arrastra y el tamaño se conserva.
+The panels have fixed widths/heights (sidebar 240 px, diff list 280 px, output of variable height). In SourceTree every split is dragged and the size is preserved.
 
-## Alcance
+## Scope
 
-- Componente `SplitPane` reutilizable:
-  - horizontal (columnas) o vertical (filas), con el panel fijo al principio o al final;
-  - divisor arrastrable con pointer events, mínimo/máximo y `role="separator"` con `aria-valuenow`;
-  - redimensionado por teclado con las flechas (±10 px, con Shift ±40);
-  - estado plegado (sin divisor) para paneles que se ocultan.
-- Persistencia del tamaño por clave en `localStorage` (`opengit.layout.*`), con helpers puros en `lib/layout.ts`.
-- Aplicado a:
-  - sidebar ↔ contenido (`opengit.layout.sidebar`);
-  - salida ↔ resto de la ventana (`opengit.layout.output`, vertical, al final, plegable);
-  - lista de ficheros ↔ diff (`opengit.layout.diff-files`);
-  - lista de commits ↔ detalle del commit (`opengit.layout.history-detail`, plegable sin selección).
+- Reusable `SplitPane` component:
+  - horizontal (columns) or vertical (rows), with the fixed panel at the start or the end;
+  - draggable divider with pointer events, minimum/maximum and `role="separator"` with `aria-valuenow`;
+  - keyboard resizing with the arrows (±10 px, with Shift ±40);
+  - collapsed state (no divider) for panels that are hidden.
+- Size persistence by key in `localStorage` (`opengit.layout.*`), with pure helpers in `lib/layout.ts`.
+- Applied to:
+  - sidebar ↔ content (`opengit.layout.sidebar`);
+  - output ↔ rest of the window (`opengit.layout.output`, vertical, at the end, collapsible);
+  - file list ↔ diff (`opengit.layout.diff-files`);
+  - commit list ↔ commit detail (`opengit.layout.history-detail`, collapsible when there is no selection).
 
-## Criterios de aceptación
+## Acceptance criteria
 
-- [x] Arrastrar cada divisor redimensiona el panel correspondiente dentro de sus límites.
-- [x] Las flechas del divisor ajustan el tamaño con el foco puesto.
-- [x] Los tamaños sobreviven a un remount de la vista (localStorage) y los valores corruptos caen al tamaño por defecto.
-- [x] Los paneles plegables no muestran divisor cuando están ocultos.
-- [x] Tests: helpers de layout, componente (teclado y persistencia) y render de las cuatro integraciones.
+- [x] Dragging each divider resizes the corresponding panel within its limits.
+- [x] The divider arrows adjust the size when focused.
+- [x] The sizes survive a remount of the view (localStorage) and corrupt values fall back to the default size.
+- [x] Collapsible panels do not show a divider when hidden.
+- [x] Tests: layout helpers, component (keyboard and persistence) and rendering of the four integrations.
 
-## Fuera de alcance
+## Out of scope
 
-- Doble clic para resetear al tamaño por defecto y snap a posiciones predefinidas.
-- Splits anidados configurables por el usuario o layouts guardables.
-- Redimensionar columnas internas de la tabla de commits (llega con OG-037).
+- Double click to reset to the default size and snap to predefined positions.
+- Nested splits configurable by the user or saveable layouts.
+- Resizing internal columns of the commit table (arrives with OG-037).
 
-## Notas técnicas
+## Technical notes
 
-- El tamaño vive en un `useState` inicializado desde `localStorage`; el drag escucha `pointermove`/`pointerup` en `window` para no perder el gesto al salir del divisor.
-- `SplitPane` no impone el layout externo: cada integración le pasa su `className` (`panes`, `diff-body`, `history-body`) para heredar los `flex` existentes.
-- Los anchos fijos de CSS (`.sidebar`, `.diff-files`) pasan a ser tamaños por defecto del componente.
+- The size lives in a `useState` initialized from `localStorage`; the drag listens to `pointermove`/`pointerup` on `window` to avoid losing the gesture when leaving the divider.
+- `SplitPane` does not impose the outer layout: each integration passes its `className` (`panes`, `diff-body`, `history-body`) to inherit the existing `flex`.
+- The fixed CSS widths (`.sidebar`, `.diff-files`) become default sizes of the component.
 
-## Notas de implementación (2026-09-18)
+## Implementation notes (2026-09-18)
 
-- `lib/layout.ts`: `LAYOUT_KEYS`, `clampSize`, `loadSize` y `saveSize` (valores corruptos o fuera de rango caen al fallback o se limitan).
-- `SplitPane`: divisor con pointer events (escucha en `window` para no perder el gesto), teclado ±10/±40, `role="separator"` con `aria-*`, y modo plegado sin divisor.
-- Integraciones: sidebar↔contenido y salida (vertical, plegable al ocultar Output) en App; lista↔diff en DiffView; lista↔detalle en HistoryView (plegado sin selección). Se quitaron los anchos fijos de `.sidebar`, `.diff-files` y `.commit-detail`.
-- Tests: 218 frontend (4 de layout y 7 de SplitPane) y 120 Rust intactos.
-- Cerrado el 2026-09-18 con CI verde (Frontend 37 s, Rust 2m7s) en el PR #33.
+- `lib/layout.ts`: `LAYOUT_KEYS`, `clampSize`, `loadSize` and `saveSize` (corrupt or out-of-range values fall back or are clamped).
+- `SplitPane`: divider with pointer events (listens on `window` to avoid losing the gesture), keyboard ±10/±40, `role="separator"` with `aria-*`, and collapsed mode without a divider.
+- Integrations: sidebar↔content and output (vertical, collapsible when hiding Output) in App; list↔diff in DiffView; list↔detail in HistoryView (collapsed without selection). The fixed widths of `.sidebar`, `.diff-files` and `.commit-detail` were removed.
+- Tests: 218 frontend (4 layout and 7 SplitPane) and 120 Rust untouched.
+- Closed on 2026-09-18 with green CI (Frontend 37 s, Rust 2m7s) in PR #33.

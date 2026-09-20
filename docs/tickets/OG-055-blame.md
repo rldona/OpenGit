@@ -1,45 +1,45 @@
-# OG-055 · Blame por línea
+# OG-055 · Per-line blame
 
-- **Milestone:** M8 — Paridad SourceTree (fase 3)
-- **Estado:** ready
-- **Depende de:** OG-005, OG-037
-- **Referencias:** ROADMAP.md, OG-053
+- **Milestone:** M8 — SourceTree parity (phase 3)
+- **Status:** ready
+- **Depends on:** OG-005, OG-037
+- **References:** ROADMAP.md, OG-053
 
-## Contexto
+## Context
 
-Ante una línea rara, la pregunta es siempre "¿quién y cuándo la escribió y en
-qué commit?". El historial por fichero (OG-053) acerca, pero no responde por
-línea; blame sí, y SourceTree lo tiene.
+Faced with a weird line, the question is always "who and when wrote it and in
+which commit?". The per-file history (OG-053) gets closer, but does not answer per
+line; blame does, and SourceTree has it.
 
-## Alcance
+## Scope
 
-- Comando Rust `blame_file(path, file)` con `git blame --line-porcelain -M`
-  (detección de líneas movidas dentro del fichero) y parser propio con
-  fixtures; nunca parsear salida "humana".
-- Vista de blame: número de línea, autor, fecha relativa y hash corto, con el
-  contenido de la línea.
-- Clic en una línea salta al commit en el historial (reutiliza `select`).
-- "Blame" en el menú contextual de ficheros del historial y del status.
+- Rust command `blame_file(path, file)` with `git blame --line-porcelain -M`
+  (detection of lines moved within the file) and its own parser with
+  fixtures; never parse "human" output.
+- Blame view: line number, author, relative date and short hash, with the
+  content of the line.
+- Clicking a line jumps to the commit in the history (reuses `select`).
+- "Blame" in the context menu of files in history and status.
 
-## Criterios de aceptación
+## Acceptance criteria
 
-- [ ] Abrir el blame de un fichero muestra una fila por línea con autor,
-      fecha y commit.
-- [ ] Clic en una fila abre ese commit en el historial, seleccionado.
-- [ ] Binario o fichero sin trackear: mensaje claro, sin error crudo.
-- [ ] Ficheros grandes responden sin bloquear la UI.
-- [ ] Tests de parser con fixtures y de vista con el bridge mockeado.
+- [ ] Opening the blame of a file shows one row per line with author,
+      date and commit.
+- [ ] Clicking a row opens that commit in the history, selected.
+- [ ] Binary or untracked file: clear message, no raw error.
+- [ ] Large files respond without blocking the UI.
+- [ ] Parser tests with fixtures and view tests with the mocked bridge.
 
-## Fuera de alcance
+## Out of scope
 
-- Anotaciones ignorando blancos (`-w`, `-M` ya cubierto).
-- Culpar rangos de líneas.
-- Vista de blame lado a lado con el contenido original.
+- Annotations ignoring whitespace (`-w`, `-M` already covered).
+- Blaming line ranges.
+- Side-by-side blame view with the original content.
 
-## Notas técnicas
+## Technical notes
 
-- `--line-porcelain` es estable y está pensado para parsers; separar registros
-  por cabeceras de commit repetidas y quedarse con la última.
-- El hash de cada línea llega en la cabecera; la fecha y autor pueden venir de
-  la cabecera o de un bloque `author`/`author-time` posterior: documentar el
-  parser con un fixture real.
+- `--line-porcelain` is stable and designed for parsers; separate records
+  by repeated commit headers and keep the last one.
+- The hash of each line arrives in the header; the date and author can come from
+  the header or from a later `author`/`author-time` block: document the
+  parser with a real fixture.

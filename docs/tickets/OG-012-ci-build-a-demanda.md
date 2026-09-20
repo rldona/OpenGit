@@ -1,41 +1,41 @@
-# OG-012 · CI: separar validación de PR y build multiplataforma a demanda
+# OG-012 · CI: separate PR validation and on-demand multi-platform build
 
-- **Milestone:** M0 — Fundación
-- **Estado:** done
-- **Depende de:** OG-001
-- **Referencias:** .github/workflows/ci.yml, .github/workflows/build.yml
+- **Milestone:** M0 — Foundation
+- **Status:** done
+- **Depends on:** OG-001
+- **References:** .github/workflows/ci.yml, .github/workflows/build.yml
 
-## Contexto
+## Context
 
-Cada push al PR lanzaba builds en macOS, Windows y Linux (~8 min de reloj, con macOS facturando a 10×). Para cambios de UI, docs o tests, esperar los tres artefactos es desproporcionado.
+Every push to the PR launched builds on macOS, Windows and Linux (~8 min of wall clock, with macOS billing at 10×). For UI, docs or test changes, waiting for the three artifacts is disproportionate.
 
-## Alcance
+## Scope
 
-- `ci.yml` (desarrollo, en cada PR y push a `main`): solo frontend + Rust en Ubuntu. Sin matriz.
-- `paths-ignore` para que los cambios que solo tocan documentación no lancen CI.
-- `build.yml` (a demanda, `workflow_dispatch`): matriz macOS/Windows/Linux con `--no-bundle` y subida de artefactos.
-- Documentar cómo lanzarlo.
+- `ci.yml` (development, on every PR and push to `main`): frontend + Rust only on Ubuntu. No matrix.
+- `paths-ignore` so that changes that only touch documentation do not launch CI.
+- `build.yml` (on demand, `workflow_dispatch`): macOS/Windows/Linux matrix with `--no-bundle` and artifact upload.
+- Document how to launch it.
 
-## Criterios de aceptación
+## Acceptance criteria
 
-- [x] Un PR de código da señal en ~3 min (frontend + Rust). _(Frontend 15 s, Rust 3m21s)_
-- [x] Un PR solo de docs no lanza CI. _(por diseño con `paths-ignore`; en un PR mixto el diff incluye código y sí lanza el CI rápido)_
-- [x] `build.yml` se lanza a demanda y sube el binario de cada SO como artefacto. _(run 35322143811 en `main`)_
-- [x] Guía de desarrollo actualizada.
+- [x] A code PR gives a signal in ~3 min (frontend + Rust). _(Frontend 15 s, Rust 3m21s)_
+- [x] A docs-only PR does not launch CI. _(by design with `paths-ignore`; in a mixed PR the diff includes code and does launch the fast CI)_
+- [x] `build.yml` is launched on demand and uploads the binary of each OS as an artifact. _(run 35322143811 on `main`)_
+- [x] Development guide updated.
 
-## Fuera de alcance
+## Out of scope
 
-- Firma de artefactos e instaladores completos (M5).
-- Releases automáticas en tags y changelog (M5).
+- Artifact signing and full installers (M5).
+- Automatic releases on tags and changelog (M5).
 
-## Notas técnicas
+## Technical notes
 
-- `actions/upload-artifact@v7` (node24), un artefacto por SO: `opengit-macos`, `opengit-linux`, `opengit-windows`.
-- El build usa el perfil release de Cargo (lto, strip), así que valida el binario real, no solo `cargo check`.
-- Si algún día se activan required checks, revisar el `paths-ignore`: un workflow que no se dispara deja el check en espera.
+- `actions/upload-artifact@v7` (node24), one artifact per OS: `opengit-macos`, `opengit-linux`, `opengit-windows`.
+- The build uses Cargo's release profile (lto, strip), so it validates the real binary, not just `cargo check`.
+- If required checks are ever enabled, review the `paths-ignore`: a workflow that does not trigger leaves the check waiting.
 
-## Notas de cierre (2026-09-18)
+## Closing notes (2026-09-18)
 
-- Verificado con el run 35322143811 de `build.yml` en `main`: los 3 SO en verde y artefactos subidos (`opengit-macos` 1,70 MB, `opengit-linux` 1,76 MB, `opengit-windows` 1,71 MB).
-- Matiz observado: `paths-ignore` se evalúa sobre el diff completo del PR. Un push que solo toca docs dentro de un PR con código no evita el run; el filtro solo aplica a PRs exclusivamente documentales (y a pushes de docs a `main`).
-- `workflow_dispatch` exige que el workflow esté en la rama por defecto, por eso la verificación se hizo tras mergear el PR #1.
+- Verified with run 35322143811 of `build.yml` on `main`: the 3 OSes green and artifacts uploaded (`opengit-macos` 1.70 MB, `opengit-linux` 1.76 MB, `opengit-windows` 1.71 MB).
+- Nuance observed: `paths-ignore` is evaluated on the full PR diff. A push that only touches docs inside a PR with code does not avoid the run; the filter only applies to documentation-only PRs (and to docs pushes to `main`).
+- `workflow_dispatch` requires the workflow to be on the default branch, which is why verification was done after merging PR #1.

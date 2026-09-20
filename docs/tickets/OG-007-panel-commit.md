@@ -1,47 +1,47 @@
-# OG-007 · Panel de commit
+# OG-007 · Commit panel
 
-- **Milestone:** M1 — MVP local
-- **Estado:** done
-- **Depende de:** OG-006, OG-009
-- **Referencias:** ADR-0003
+- **Milestone:** M1 — Local MVP
+- **Status:** done
+- **Depends on:** OG-006, OG-009
+- **References:** ADR-0003
 
-## Contexto
+## Context
 
-Cerrar el ciclo básico: stage, mensaje y commit, con la información necesaria para confiar en lo que se va a commitear.
+Close the basic cycle: stage, message and commit, with the information needed to trust what is going to be committed.
 
-## Alcance
+## Scope
 
-- Área de mensaje con contador de caracteres y validación de "no vacío".
-- Lista de cambios staged antes de commitear.
-- Amend del último commit con aviso explícito de reescritura.
-- Stage y commit de ficheros no trackeados desde el panel.
-- Salida de hooks (`pre-commit`, `commit-msg`) visible cuando fallan.
-- Detección de merge/rebase en curso: ofrecer continuar o abortar (M4 completa la experiencia, aquí solo el aviso).
+- Message area with character counter and "not empty" validation.
+- List of staged changes before committing.
+- Amend of the last commit with an explicit rewrite warning.
+- Stage and commit of untracked files from the panel.
+- Hook output (`pre-commit`, `commit-msg`) visible when they fail.
+- Detection of merge/rebase in progress: offer to continue or abort (M4 completes the experience, here only the notice).
 
-## Criterios de aceptación
+## Acceptance criteria
 
-- [x] Commit normal con hooks correctos y con hook que falla (error legible con la salida del hook). _(`command_failed` incluye stdout y stderr; test con hook que falla)_
-- [x] Amend actualiza el mensaje y el contenido staged del último commit. _(test: el contador de commits no cambia y el árbol del commit se actualiza)_
-- [x] Sin cambios staged, el commit se rechaza con un mensaje claro. _(validación en el store, con test)_
-- [x] Mensajes con UTF-8, multilínea y comillas llegan intactos al commit. _(mensaje por stdin con `--file=-`; test comparando `%B` byte a byte)_
-- [x] Tras commitear, grafo, status y diff se reflejan solos (evento del watcher OG-010). _(además del watcher, el store refresca status y recarga el log al terminar)_
+- [x] Normal commit with correct hooks and with a failing hook (readable error with the hook output). _(`command_failed` includes stdout and stderr; test with a failing hook)_
+- [x] Amend updates the message and the staged content of the last commit. _(test: the commit counter does not change and the commit tree is updated)_
+- [x] Without staged changes, the commit is rejected with a clear message. _(validation in the store, with test)_
+- [x] Messages with UTF-8, multiline and quotes reach the commit intact. _(message via stdin with `--file=-`; test comparing `%B` byte by byte)_
+- [x] After committing, graph, status and diff reflect themselves (OG-010 watcher event). _(besides the watcher, the store refreshes status and reloads the log when finished)_
 
-## Fuera de alcance
+## Out of scope
 
-- Firma GPG/SSH (se hará si algún día hace falta).
-- Plantillas de mensaje, co-autores y trailers de equipo (posible M3).
+- GPG/SSH signing (will be done if it is ever needed).
+- Message templates, co-authors and team trailers (possible M3).
 
-## Notas técnicas
+## Technical notes
 
-- El mensaje se pasa por stdin o `-F -`, nunca interpolado en `-m` dentro de un shell; con `-m` hay que escapar, con stdin no.
-- `git commit` sin `--no-verify`: los hooks del usuario mandan.
-- Para amend, confirmación en UI la primera vez (regla 1 de AGENTS.md no aplica porque no es destructivo irreversible, pero sí reescribe historia local).
+- The message is passed via stdin or `-F -`, never interpolated in `-m` inside a shell; with `-m` it must be escaped, with stdin it must not.
+- `git commit` without `--no-verify`: the user's hooks rule.
+- For amend, UI confirmation the first time (rule 1 of AGENTS.md does not apply because it is not irreversibly destructive, but it does rewrite local history).
 
-## Notas de implementación (2026-09-18)
+## Implementation notes (2026-09-18)
 
-- Rust: `git::commit` (mensaje por stdin con `--file=-`, `--amend` opcional, sin `--no-verify`), `git::last_commit_message` (precarga del amend) y `git::repo_op_state` (MERGE_HEAD, rebase-merge/-apply, CHERRY_PICK_HEAD/REVERT_HEAD). Comandos `commit_message`, `commit_repo` y `repo_op_state`.
-- `GitError::CommandFailed` ahora lleva también `stdout`: los hooks escriben ahí su salida y antes se perdía. El frontend muestra stderr y cae a stdout si está vacío.
-- UI: `CommitPanel` al pie de File status, con lista compacta de lo staged, checkbox de amend (con confirmación nativa y mensaje precargado), textarea con contador, validaciones y aviso de merge/rebase/cherry-pick en curso (deshabilita el botón; las acciones de continuar/abortar llegan en M4).
-- El stage de untracked ya se cubre desde File status (OG-009); el panel refleja el index en vivo.
-- Tests: 5 de Rust (UTF-8 multilínea, sin staged, amend, hook que falla, merge en curso) y 10 de frontend (store + panel).
-- Cerrado el 2026-09-18 con CI verde (Frontend 23 s, Rust 1m4s) en el PR #9.
+- Rust: `git::commit` (message via stdin with `--file=-`, optional `--amend`, without `--no-verify`), `git::last_commit_message` (amend preload) and `git::repo_op_state` (MERGE_HEAD, rebase-merge/-apply, CHERRY_PICK_HEAD/REVERT_HEAD). Commands `commit_message`, `commit_repo` and `repo_op_state`.
+- `GitError::CommandFailed` now also carries `stdout`: hooks write their output there and before it was lost. The frontend shows stderr and falls back to stdout if it is empty.
+- UI: `CommitPanel` at the foot of File status, with a compact list of what is staged, amend checkbox (with native confirmation and preloaded message), textarea with counter, validations and notice of merge/rebase/cherry-pick in progress (disables the button; continue/abort actions come in M4).
+- The stage of untracked is already covered from File status (OG-009); the panel reflects the index live.
+- Tests: 5 Rust (UTF-8 multiline, no staged, amend, failing hook, merge in progress) and 10 frontend (store + panel).
+- Closed on 2026-09-18 with green CI (Frontend 23 s, Rust 1m4s) in PR #9.

@@ -1,47 +1,50 @@
-# OG-060 · Drag & drop para merge y staging
+# OG-060 · Drag & drop for merge and staging
 
-- **Milestone:** M8 — Paridad SourceTree (fase 3)
-- **Estado:** ready
-- **Depende de:** OG-049, OG-044, OG-009
-- **Referencias:** ROADMAP.md, OG-038
+- **Milestone:** M8 — SourceTree parity (phase 3)
+- **Status:** ready
+- **Depends on:** OG-049, OG-044, OG-009
+- **References:** ROADMAP.md, OG-038
 
-## Contexto
+## Context
 
-SourceTree permite arrastrar una rama sobre el historial para fusionarla y
-arrastrar ficheros entre Staged y Unstaged para moverlos del index. Hoy todo
-pasa por menús contextuales o checkboxes: funciona, pero se echa en falta el
-gesto.
+SourceTree allows dragging a branch onto the history to merge it and dragging
+files between Staged and Unstaged to move them in or out of the index. Today
+everything goes through context menus or checkboxes: it works, but the gesture
+is missed.
 
-## Alcance
+## Scope
 
-- Arrastrar una rama de la sidebar y soltarla sobre la lista de commits (o la
-  fila de HEAD): pide confirmación indicando origen y destino y ejecuta el
-  merge de OG-049.
-- Arrastrar filas de ficheros entre las secciones Staged y Unstaged de la
-  ventana de commit: stage al soltar en Staged y unstage al soltar en
-  Unstaged.
-- Feedback visual durante el arrastre (destino resaltado) y cancelación con
+- Drag a branch from the sidebar and drop it onto the commit list (or the
+  HEAD row): ask for confirmation indicating source and destination and run
+  the merge from OG-049.
+- Drag file rows between the Staged and Unstaged sections of the commit
+  window: stage on drop into Staged and unstage on drop into Unstaged.
+- Visual feedback during the drag (highlighted target) and cancellation with
   Escape.
 
-## Criterios de aceptación
+## Acceptance criteria
 
-- [ ] Arrastrar una rama y soltarla sobre el historial abre la confirmación y,
-      aceptada, fusiona en la rama actual.
-- [ ] Soltar la rama actual o una no fusionable no hace nada (sin confirmación).
-- [ ] Arrastrar un fichero a la otra sección lo mueve del índice y refresca.
-- [ ] Con el ratón (pointer events), sin romper el click normal de selección.
-- [ ] Tests con eventos de puntero sobre la UI mockeada.
+- [ ] Dragging a branch and dropping it onto the history opens the confirmation
+      and, if accepted, merges into the current branch.
+- [ ] Dropping the current branch or a non-mergeable one does nothing (no
+      confirmation).
+- [ ] Dragging a file to the other section moves it in or out of the index and
+      refreshes.
+- [ ] With the mouse (pointer events), without breaking the normal selection
+      click.
+- [ ] Tests with pointer events on the mocked UI.
 
-## Fuera de alcance
+## Out of scope
 
-- Arrastrar hunks o líneas.
-- Arrastrar entre repositorios distintos.
-- Reordenar columnas por arrastre.
+- Dragging hunks or lines.
+- Dragging between different repositories.
+- Reordering columns by dragging.
 
-## Notas técnicas
+## Technical notes
 
-- Usar Pointer Events (ya se usan en splits y columnas) y `dataTransfer` solo
-  para tipar el payload; en WebView el DnD nativo puede ser inconsistente, así
-  que valorar un arrastre propio (pointermove + hit test) si falla.
-- El merge reutiliza `useMergeBranch` (confirmación + vista de conflictos).
-- Para staging, las filas ya saben su sección; el drop solo decide la acción.
+- Use Pointer Events (already used in splits and columns) and `dataTransfer`
+  only to type the payload; in the WebView native DnD can be inconsistent, so
+  consider a custom drag (pointermove + hit test) if it fails.
+- The merge reuses `useMergeBranch` (confirmation + conflict view).
+- For staging, the rows already know their section; the drop only decides the
+  action.

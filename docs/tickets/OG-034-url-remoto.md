@@ -1,46 +1,46 @@
-# OG-034 · Abrir la URL del remoto
+# OG-034 · Open the remote URL
 
-- **Milestone:** M5 — Pulido
-- **Estado:** done
-- **Depende de:** OG-008
-- **Referencias:** ROADMAP.md
+- **Milestone:** M5 — Polish
+- **Status:** done
+- **Depends on:** OG-008
+- **References:** ROADMAP.md
 
-## Contexto
+## Context
 
-La app muestra ramas remotas pero no la URL del remoto, y el roadmap permite como único extra de hosting «abrir la URL del remoto». Hoy hay que copiarla desde el terminal.
+The app shows remote branches but not the remote URL, and the roadmap allows as the only hosting extra "open the remote URL". Today you have to copy it from the terminal.
 
-## Alcance
+## Scope
 
-- Backend: `remote_urls` lista los remotos con `git remote` + `git remote get-url <name>` y calcula una URL web cuando es posible.
-  - Conversión pura `remote_web_url`: `https://`, `http://`, `ssh://`, `git://` y formato scp (`git@host:org/repo.git`) → `https://host/org/repo`; las rutas locales y `file://` no son abribles.
-- UI: botón **↗** junto al nombre de cada remoto en el sidebar de refs cuando su URL web existe; abre el navegador del sistema.
-- Apertura con `tauri-plugin-opener` (nueva dependencia justificada: Tauri 2 no expone apertura de URLs externas sin plugin) y permiso de capability limitado a `http://` y `https://`.
-- Los remotos se cargan en el store `extras` junto al resto de metadatos del repo.
+- Backend: `remote_urls` lists the remotes with `git remote` + `git remote get-url <name>` and computes a web URL when possible.
+  - Pure conversion `remote_web_url`: `https://`, `http://`, `ssh://`, `git://` and scp format (`git@host:org/repo.git`) → `https://host/org/repo`; local paths and `file://` are not openable.
+- UI: **↗** button next to each remote name in the refs sidebar when its web URL exists; opens the system browser.
+- Opening with `tauri-plugin-opener` (new dependency justified: Tauri 2 does not expose opening external URLs without a plugin) and capability permission limited to `http://` and `https://`.
+- The remotes are loaded in the `extras` store along with the rest of the repo metadata.
 
-## Criterios de aceptación
+## Acceptance criteria
 
-- [x] `remote_web_url` convierte https/scp/ssh/git y rechaza rutas locales y `file://`.
-- [x] `remote_urls` lista nombre, URL y URL web de cada remoto del repo.
-- [x] El sidebar muestra el botón solo para remotos con URL web y llama al opener con esa URL.
-- [x] La capability limita la apertura a `http`/`https`.
-- [x] Tests: unidad de la conversión, integración de `remote_urls`, store y sidebar.
+- [x] `remote_web_url` converts https/scp/ssh/git and rejects local paths and `file://`.
+- [x] `remote_urls` lists name, URL and web URL of each remote in the repo.
+- [x] The sidebar shows the button only for remotes with a web URL and calls the opener with that URL.
+- [x] The capability limits opening to `http`/`https`.
+- [x] Tests: conversion unit, `remote_urls` integration, store and sidebar.
 
-## Fuera de alcance
+## Out of scope
 
-- Clonar, añadir o editar remotos.
-- Abrir ficheros locales o rutas `file://` (queda restringido a http/https).
-- Integraciones de hosting (PRs, issues).
+- Cloning, adding or editing remotes.
+- Opening local files or `file://` paths (restricted to http/https).
+- Hosting integrations (PRs, issues).
 
-## Notas técnicas
+## Technical notes
 
-- **Dependencia nueva justificada:** `tauri-plugin-opener` (crate 2 y `@tauri-apps/plugin-opener`) es la vía oficial de Tauri 2 para abrir URLs en el navegador del sistema; evita `window.open`, que abriría una ventana del WebView.
-- El permiso va con scope explícito: `{ "identifier": "opener:allow-open-url", "allow": [{ "url": "https://*" }, { "url": "http://*" }] }`.
-- La conversión no valida que el host exista; solo normaliza el texto. Los remotos sin URL web simplemente no muestran botón.
+- **New dependency justified:** `tauri-plugin-opener` (crate 2 and `@tauri-apps/plugin-opener`) is the official Tauri 2 way to open URLs in the system browser; it avoids `window.open`, which would open a WebView window.
+- The permission goes with an explicit scope: `{ "identifier": "opener:allow-open-url", "allow": [{ "url": "https://*" }, { "url": "http://*" }] }`.
+- The conversion does not validate that the host exists; it only normalizes the text. Remotes without a web URL simply do not show a button.
 
-## Notas de implementación (2026-09-18)
+## Implementation notes (2026-09-18)
 
-- Rust: `remote_web_url` (https, ssh con puerto, scp, git://; rechaza rutas locales, unidades Windows y `file://`) y `remote_urls` con `git remote` + `get-url` por nombre; comando registrado.
-- Plugin `tauri-plugin-opener` (crate y npm) con capability scope a http/https; hallazgo anotado en `.ai/memory/tauri.md`.
-- UI: `RefsSidebar` lee los remotos del store `extras` y pinta **↗** por remoto con URL web; el resto no muestra botón.
-- Tests: 120 Rust (3 nuevos) y 204 frontend (2 en el sidebar).
-- Cerrado el 2026-09-18 con CI verde (Frontend 39 s, Rust 3m56s; incluye compilar el plugin nuevo) en el PR #31.
+- Rust: `remote_web_url` (https, ssh with port, scp, git://; rejects local paths, Windows drives and `file://`) and `remote_urls` with `git remote` + `get-url` per name; command registered.
+- Plugin `tauri-plugin-opener` (crate and npm) with capability scope to http/https; finding noted in `.ai/memory/tauri.md`.
+- UI: `RefsSidebar` reads the remotes from the `extras` store and renders **↗** per remote with a web URL; the rest show no button.
+- Tests: 120 Rust (3 new) and 204 frontend (2 in the sidebar).
+- Closed on 2026-09-18 with green CI (Frontend 39 s, Rust 3m56s; includes compiling the new plugin) in PR #31.
