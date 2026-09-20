@@ -16,7 +16,7 @@ pub use status::parse_status;
 pub use submodules::parse_submodule_status;
 pub use worktrees::parse_worktree_list;
 
-/// Divide por `sep` descartando el registro vacío final (terminador).
+/// Splits on `sep` dropping the final empty record (terminator).
 pub(crate) fn split_records(data: &[u8], sep: u8) -> Vec<&[u8]> {
     let mut records: Vec<&[u8]> = data.split(|byte| *byte == sep).collect();
     if records.last().is_some_and(|last| last.is_empty()) {
@@ -25,12 +25,12 @@ pub(crate) fn split_records(data: &[u8], sep: u8) -> Vec<&[u8]> {
     records
 }
 
-/// Divide por `sep` conservando campos vacíos (incluido el último).
+/// Splits on `sep` keeping empty fields (including the last one).
 pub(crate) fn split_fields(data: &[u8], sep: u8) -> Vec<&[u8]> {
     data.split(|byte| *byte == sep).collect()
 }
 
-/// Divide como `str::splitn`: la última pieza conserva el resto.
+/// Splits like `str::splitn`: the last piece keeps the rest.
 pub(crate) fn splitn(data: &[u8], sep: u8, n: usize) -> Vec<&[u8]> {
     let mut pieces = Vec::new();
     let mut start = 0;

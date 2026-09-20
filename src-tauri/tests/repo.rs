@@ -19,7 +19,7 @@ fn canonical(path: &std::path::Path) -> String {
 }
 
 #[test]
-fn abre_repo_con_historial() {
+fn opens_repo_with_history() {
     let repo = TestRepo::init();
     repo.write("a.txt", b"a\n");
     repo.git_ok(&["add", "."]);
@@ -40,7 +40,7 @@ fn abre_repo_con_historial() {
 }
 
 #[test]
-fn lee_la_identidad_efectiva_de_git() {
+fn reads_the_effective_git_identity() {
     let repo = TestRepo::init();
 
     let ident = git::author_ident(&runner(), repo.path()).expect("identidad");
@@ -50,7 +50,7 @@ fn lee_la_identidad_efectiva_de_git() {
 }
 
 #[test]
-fn desde_subcarpeta_devuelve_la_raiz() {
+fn from_subfolder_returns_the_root() {
     let repo = TestRepo::init();
     repo.write("a/b/c.txt", b"x\n");
     repo.git_ok(&["add", "."]);
@@ -62,7 +62,7 @@ fn desde_subcarpeta_devuelve_la_raiz() {
 }
 
 #[test]
-fn abre_repo_sin_commits() {
+fn opens_repo_without_commits() {
     let repo = TestRepo::init();
 
     let info = repo::open(&runner(), repo.path()).expect("abrir repo sin commits");
@@ -74,7 +74,7 @@ fn abre_repo_sin_commits() {
 }
 
 #[test]
-fn abre_repo_en_detached_head() {
+fn opens_repo_in_detached_head() {
     let repo = TestRepo::init();
     repo.write("a.txt", b"a\n");
     repo.git_ok(&["add", "."]);
@@ -90,7 +90,7 @@ fn abre_repo_en_detached_head() {
 }
 
 #[test]
-fn rechaza_repositorio_bare() {
+fn rejects_bare_repository() {
     let dir = TempDir::new("bare");
     let output = git(dir.path(), &["init", "--bare", "-q"]);
     assert!(output.status.success());
@@ -101,21 +101,21 @@ fn rechaza_repositorio_bare() {
 }
 
 #[test]
-fn rechaza_carpeta_que_no_es_repo_y_ruta_inexistente() {
+fn rejects_non_repo_folder_and_missing_path() {
     let dir = TempDir::new("plana");
 
-    let error = repo::open(&runner(), dir.path()).expect_err("no es repo");
+    let error = repo::open(&runner(), dir.path()).expect_err("not a repo");
     assert!(
         matches!(error, GitError::NotARepository { .. }),
         "{error:?}"
     );
 
-    let error = repo::open(&runner(), &dir.path().join("no-existe")).expect_err("no existe");
+    let error = repo::open(&runner(), &dir.path().join("no-existe")).expect_err("does not exist");
     assert!(matches!(error, GitError::PathNotFound { .. }), "{error:?}");
 }
 
 #[test]
-fn stage_unstage_y_discard_sobre_repo_real() {
+fn stage_unstage_and_discard_on_real_repo() {
     let repo = TestRepo::init();
     repo.write("a.txt", b"uno\n");
     repo.git_ok(&["add", "."]);
@@ -146,7 +146,7 @@ fn stage_unstage_y_discard_sobre_repo_real() {
 }
 
 #[test]
-fn borra_untracked_y_rechaza_rutas_fuera_del_repo() {
+fn deletes_untracked_and_rejects_paths_outside_the_repo() {
     let repo = TestRepo::init();
     repo.write("suelto.txt", b"x\n");
     ops::remove_untracked(repo.path(), "suelto.txt").expect("borrar untracked");
@@ -160,7 +160,7 @@ fn borra_untracked_y_rechaza_rutas_fuera_del_repo() {
 }
 
 #[test]
-fn recientes_sin_duplicados_y_persistidos() {
+fn recents_without_duplicates_and_persisted() {
     let dir = TempDir::new("recents");
     let file = dir.path().join("recent_repos.json");
     let store = Recents::new(&file);
@@ -192,7 +192,7 @@ fn recientes_sin_duplicados_y_persistidos() {
 }
 
 #[test]
-fn remote_urls_lista_nombre_url_y_web() {
+fn remote_urls_lists_name_url_and_web() {
     let repo = TestRepo::init();
     repo.write("a.txt", b"a\n");
     repo.git_ok(&["add", "."]);

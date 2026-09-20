@@ -27,11 +27,11 @@ fn conflicted_merge(repo: &TestRepo) {
     repo.git_ok(&["checkout", "-q", "main"]);
     commit_file(repo, "a.txt", "main\n", "cambio main");
     let merge = repo.git(&["merge", "otro"]);
-    assert!(!merge.status.success(), "el merge debe quedar en conflicto");
+    assert!(!merge.status.success(), "the merge must remain in conflict");
 }
 
 #[test]
-fn merge_en_conflicto_se_aborta() {
+fn conflicted_merge_is_aborted() {
     let repo = TestRepo::init();
     conflicted_merge(&repo);
     let main_head = head(&repo);
@@ -51,7 +51,7 @@ fn merge_en_conflicto_se_aborta() {
 }
 
 #[test]
-fn merge_resuelto_se_continua() {
+fn resolved_merge_is_continued() {
     let repo = TestRepo::init();
     conflicted_merge(&repo);
 
@@ -73,12 +73,12 @@ fn merge_resuelto_se_continua() {
     assert_eq!(
         parents.split_whitespace().count(),
         3,
-        "merge commit con dos padres"
+        "merge commit with two parents"
     );
 }
 
 #[test]
-fn rebase_en_conflicto_muestra_progreso_y_se_aborta() {
+fn conflicted_rebase_shows_progress_and_is_aborted() {
     let repo = TestRepo::init();
     commit_file(&repo, "a.txt", "base\n", "base");
     repo.git_ok(&["checkout", "-q", "-b", "feature"]);
@@ -91,7 +91,7 @@ fn rebase_en_conflicto_muestra_progreso_y_se_aborta() {
     let rebase = repo.git(&["rebase", "main"]);
     assert!(
         !rebase.status.success(),
-        "el rebase debe quedar en conflicto"
+        "the rebase must remain in conflict"
     );
 
     let state = repo_op_state(&runner(), repo.path()).unwrap();
@@ -111,7 +111,7 @@ fn rebase_en_conflicto_muestra_progreso_y_se_aborta() {
 }
 
 #[test]
-fn rebase_resuelto_se_continua() {
+fn resolved_rebase_is_continued() {
     let repo = TestRepo::init();
     commit_file(&repo, "a.txt", "base\n", "base");
     repo.git_ok(&["checkout", "-q", "-b", "feature"]);
@@ -140,7 +140,7 @@ fn rebase_resuelto_se_continua() {
 }
 
 #[test]
-fn cherry_pick_en_conflicto_se_aborta() {
+fn conflicted_cherry_pick_is_aborted() {
     let repo = TestRepo::init();
     commit_file(&repo, "a.txt", "base\n", "base");
     repo.git_ok(&["checkout", "-q", "-b", "feature"]);
@@ -162,23 +162,23 @@ fn cherry_pick_en_conflicto_se_aborta() {
 }
 
 #[test]
-fn sin_operacion_abort_continue_y_skip_fallan() {
+fn without_an_operation_abort_continue_and_skip_fail() {
     let repo = TestRepo::init();
     commit_file(&repo, "a.txt", "uno\n", "base");
 
-    let abort = repo_op_abort(&runner(), repo.path()).expect_err("sin operación");
+    let abort = repo_op_abort(&runner(), repo.path()).expect_err("no operation");
     assert!(
         format!("{abort}").contains("no operation in progress"),
         "{abort}"
     );
 
-    let cont = repo_op_continue(&runner(), repo.path()).expect_err("sin operación");
+    let cont = repo_op_continue(&runner(), repo.path()).expect_err("no operation");
     assert!(
         format!("{cont}").contains("no operation in progress"),
         "{cont}"
     );
 
-    let skip = repo_op_skip(&runner(), repo.path()).expect_err("sin operación");
+    let skip = repo_op_skip(&runner(), repo.path()).expect_err("no operation");
     assert!(
         format!("{skip}").contains("no operation in progress"),
         "{skip}"
@@ -186,7 +186,7 @@ fn sin_operacion_abort_continue_y_skip_fallan() {
 }
 
 #[test]
-fn cherry_pick_en_conflicto_se_salta() {
+fn conflicted_cherry_pick_is_skipped() {
     let repo = TestRepo::init();
     commit_file(&repo, "a.txt", "base\n", "base");
     repo.git_ok(&["checkout", "-q", "-b", "feature"]);
@@ -201,7 +201,7 @@ fn cherry_pick_en_conflicto_se_salta() {
     repo_op_skip(&runner(), repo.path()).expect("skip");
 
     assert!(repo_op_state(&runner(), repo.path()).unwrap().is_clean());
-    assert_eq!(head(&repo), main_head, "el commit saltado no se aplica");
+    assert_eq!(head(&repo), main_head, "the skipped commit is not applied");
     assert_eq!(
         repo.git_ok(&["log", "-1", "--format=%s"]).stdout,
         b"cambio main\n"
@@ -209,7 +209,7 @@ fn cherry_pick_en_conflicto_se_salta() {
 }
 
 #[test]
-fn rebase_en_conflicto_se_salta_y_termina() {
+fn conflicted_rebase_is_skipped_and_finishes() {
     let repo = TestRepo::init();
     commit_file(&repo, "a.txt", "base\n", "base");
     repo.git_ok(&["checkout", "-q", "-b", "feature"]);
@@ -224,7 +224,7 @@ fn rebase_en_conflicto_se_salta_y_termina() {
     repo_op_skip(&runner(), repo.path()).expect("skip");
 
     assert!(repo_op_state(&runner(), repo.path()).unwrap().is_clean());
-    assert_eq!(head(&repo), main_head, "el patch saltado no se aplica");
+    assert_eq!(head(&repo), main_head, "the skipped patch is not applied");
     assert_eq!(
         std::fs::read_to_string(repo.path().join("a.txt")).unwrap(),
         "main\n"
@@ -232,15 +232,15 @@ fn rebase_en_conflicto_se_salta_y_termina() {
 }
 
 #[test]
-fn merge_en_conflicto_no_se_puede_saltar() {
+fn conflicted_merge_cannot_be_skipped() {
     let repo = TestRepo::init();
     conflicted_merge(&repo);
 
-    let error = repo_op_skip(&runner(), repo.path()).expect_err("merge sin skip");
+    let error = repo_op_skip(&runner(), repo.path()).expect_err("merge without skip");
     assert!(format!("{error}").contains("merge has no skip"), "{error}");
     assert_eq!(
         repo_op_state(&runner(), repo.path()).unwrap().operation(),
         Some("merge"),
-        "el merge sigue en curso"
+        "the merge is still in progress"
     );
 }

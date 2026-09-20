@@ -8,7 +8,7 @@ fn runner() -> Runner {
 }
 
 #[test]
-fn commit_con_mensaje_utf8_multilinea_y_comillas() {
+fn commit_with_multiline_utf8_message_and_quotes() {
     let repo = TestRepo::init();
     repo.write("a.txt", b"uno\n");
     repo.git_ok(&["add", "."]);
@@ -23,7 +23,7 @@ fn commit_con_mensaje_utf8_multilinea_y_comillas() {
 }
 
 #[test]
-fn sin_cambios_staged_el_commit_falla_con_mensaje() {
+fn commit_without_staged_changes_fails_with_message() {
     let repo = TestRepo::init();
     repo.write("a.txt", b"uno\n");
     repo.git_ok(&["add", "."]);
@@ -31,7 +31,7 @@ fn sin_cambios_staged_el_commit_falla_con_mensaje() {
     repo.write("a.txt", b"dos\n");
 
     let error =
-        commit(&runner(), repo.path(), "no debería crearse", false).expect_err("sin staged");
+        commit(&runner(), repo.path(), "no debería crearse", false).expect_err("nothing staged");
 
     let text = format!("{error}");
     assert!(
@@ -42,11 +42,11 @@ fn sin_cambios_staged_el_commit_falla_con_mensaje() {
 }
 
 #[test]
-fn amend_actualiza_mensaje_y_contenido() {
+fn amend_updates_message_and_content() {
     let repo = TestRepo::init();
     repo.write("a.txt", b"uno\n");
     repo.git_ok(&["add", "."]);
-    commit(&runner(), repo.path(), "primero", false).expect("commit inicial");
+    commit(&runner(), repo.path(), "primero", false).expect("initial commit");
 
     repo.write("a.txt", b"uno\nmas\n");
     repo.git_ok(&["add", "a.txt"]);
@@ -62,7 +62,7 @@ fn amend_actualiza_mensaje_y_contenido() {
 
 #[cfg(unix)]
 #[test]
-fn hook_que_falla_deja_su_salida_visible() {
+fn failing_hook_leaves_its_output_visible() {
     use std::os::unix::fs::PermissionsExt;
 
     let repo = TestRepo::init();
@@ -76,14 +76,14 @@ fn hook_que_falla_deja_su_salida_visible() {
 
     repo.write("a.txt", b"dos\n");
     repo.git_ok(&["add", "."]);
-    let error = commit(&runner(), repo.path(), "con hook roto", false).expect_err("hook falla");
+    let error = commit(&runner(), repo.path(), "con hook roto", false).expect_err("hook fails");
     let text = format!("{error}");
     assert!(text.contains("hook dice no"), "{text}");
     assert_eq!(repo.git_ok(&["rev-list", "--count", "HEAD"]).stdout, b"1\n");
 }
 
 #[test]
-fn detecta_merge_en_curso() {
+fn detects_merge_in_progress() {
     let repo = TestRepo::init();
     repo.write("a.txt", b"base\n");
     repo.git_ok(&["add", "."]);
@@ -100,9 +100,9 @@ fn detecta_merge_en_curso() {
     assert!(!clean.merge && !clean.rebase && !clean.cherry_pick);
 
     let merge = repo.git(&["merge", "otra"]);
-    assert!(!merge.status.success(), "el merge debe quedar en conflicto");
+    assert!(!merge.status.success(), "the merge must remain in conflict");
 
     let state = repo_op_state(&runner(), repo.path()).unwrap();
-    assert!(state.merge, "debe detectar MERGE_HEAD");
+    assert!(state.merge, "must detect MERGE_HEAD");
     assert!(!state.rebase);
 }

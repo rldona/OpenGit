@@ -24,7 +24,7 @@ fn commit_file(repo: &TestRepo, name: &str, content: &str, message: &str) {
 }
 
 #[test]
-fn tracking_sin_upstream_y_con_ahead() {
+fn tracking_without_upstream_and_with_ahead() {
     let repo = TestRepo::init();
     commit_file(&repo, "a.txt", "uno\n", "c1");
     let c1 = head_hash(&repo);
@@ -45,7 +45,7 @@ fn tracking_sin_upstream_y_con_ahead() {
 }
 
 #[test]
-fn tracking_con_behind() {
+fn tracking_with_behind() {
     let repo = TestRepo::init();
     commit_file(&repo, "a.txt", "uno\n", "c1");
     let c1 = head_hash(&repo);
@@ -63,7 +63,7 @@ fn tracking_con_behind() {
 }
 
 #[test]
-fn checkout_local_y_remoto_con_tracking() {
+fn checkout_local_and_remote_with_tracking() {
     let repo = TestRepo::init();
     commit_file(&repo, "a.txt", "uno\n", "c1");
     let c1 = head_hash(&repo);
@@ -97,7 +97,7 @@ fn checkout_local_y_remoto_con_tracking() {
 }
 
 #[test]
-fn crear_renombrar_y_borrar_ramas() {
+fn create_rename_and_delete_branches() {
     let repo = TestRepo::init();
     commit_file(&repo, "a.txt", "uno\n", "c1");
     let c1 = head_hash(&repo);
@@ -122,14 +122,14 @@ fn crear_renombrar_y_borrar_ramas() {
 }
 
 #[test]
-fn borrar_rama_sin_mergear_requiere_force() {
+fn deleting_an_unmerged_branch_requires_force() {
     let repo = TestRepo::init();
     commit_file(&repo, "a.txt", "uno\n", "c1");
     repo.git_ok(&["checkout", "-q", "-b", "suelta"]);
     commit_file(&repo, "b.txt", "suelto\n", "c2");
     repo.git_ok(&["checkout", "-q", "main"]);
 
-    let error = delete_branch(&runner(), repo.path(), "suelta", false).expect_err("no mergeada");
+    let error = delete_branch(&runner(), repo.path(), "suelta", false).expect_err("not merged");
     assert!(format!("{error}").contains("not fully merged"), "{error}");
 
     delete_branch(&runner(), repo.path(), "suelta", true).expect("force");
@@ -140,7 +140,7 @@ fn borrar_rama_sin_mergear_requiere_force() {
 }
 
 #[test]
-fn nombres_de_rama_invalidos_fallan() {
+fn invalid_branch_names_fail() {
     let repo = TestRepo::init();
     commit_file(&repo, "a.txt", "uno\n", "c1");
     let c1 = head_hash(&repo);
@@ -150,13 +150,13 @@ fn nombres_de_rama_invalidos_fallan() {
 }
 
 #[test]
-fn tracking_commits_separa_entrantes_y_salientes() {
+fn tracking_commits_split_incoming_and_outgoing() {
     let repo = TestRepo::init();
     commit_file(&repo, "a.txt", "base\n", "base");
     let base = head_hash(&repo);
     repo.git_ok(&["update-ref", "refs/remotes/origin/main", &base]);
 
-    // El commit remoto sale de la base, no del commit local.
+    // The remote commit comes from the base, not from the local commit.
     repo.git_ok(&["checkout", "-q", "-b", "origen"]);
     commit_file(&repo, "b.txt", "remoto\n", "remoto");
     let remote = head_hash(&repo);
@@ -174,10 +174,10 @@ fn tracking_commits_separa_entrantes_y_salientes() {
 
     assert!(
         tracking_commits(&runner(), repo.path(), "HEAD..x").is_err(),
-        "el rango no es una ref válida"
+        "the range is not a valid ref"
     );
     assert!(
         tracking_commits(&runner(), repo.path(), "--all").is_err(),
-        "las opciones no son refs"
+        "options are not refs"
     );
 }

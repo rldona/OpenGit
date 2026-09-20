@@ -1,7 +1,7 @@
-//! Trabajos de red (fetch/pull/push) con salida en streaming y cancelación.
+//! Network jobs (fetch/pull/push) with streamed output and cancellation.
 //!
-//! El progreso de git es best-effort: la verdad es el exit code. Las
-//! credenciales las resuelve el helper del sistema; nunca se piden en la app.
+//! Git progress is best-effort: the truth is the exit code. The
+//! system helper resolves credentials; the app never asks for them.
 
 use std::collections::HashMap;
 use std::ffi::OsString;
@@ -28,13 +28,13 @@ pub enum JobKind {
     Pull {
         remote: Option<String>,
         branch: Option<String>,
-        /// `--rebase` en lugar de merge.
+        /// `--rebase` instead of a merge.
         rebase: bool,
-        /// `--no-ff`: commit de merge aunque el fast-forward fuera posible.
+        /// `--no-ff`: merge commit even when a fast-forward was possible.
         no_ff: bool,
-        /// `--no-commit`: deja los cambios mergeados sin commitear.
+        /// `--no-commit`: leaves the merged changes uncommitted.
         no_commit: bool,
-        /// `--log`: incluye los asuntos de los commits fusionados en el merge commit.
+        /// `--log`: includes the subjects of merged commits in the merge commit.
         include_messages: bool,
     },
     Push {
@@ -71,7 +71,7 @@ pub enum RemoteJobEvent {
     },
 }
 
-/// Registro de trabajos en marcha, para poder cancelarlos por id.
+/// Registry of running jobs, so they can be cancelled by id.
 #[derive(Default)]
 pub struct JobManager {
     counter: AtomicU64,
@@ -99,7 +99,7 @@ impl JobManager {
         }
     }
 
-    /// Marca el job para cancelar; el proceso lo detecta en menos de 100 ms.
+    /// Marks the job for cancellation; the process notices in under 100 ms.
     pub fn cancel(&self, id: &str) -> bool {
         if let Ok(jobs) = self.jobs.lock() {
             if let Some(token) = jobs.get(id) {
@@ -111,7 +111,7 @@ impl JobManager {
     }
 }
 
-/// Construye el comando de git del job (sin ejecutarlo).
+/// Builds the git command for the job (without running it).
 pub fn command_for(runner: &Runner, repo: &Path, kind: &JobKind) -> Result<GitCommand, GitError> {
     let mut args: Vec<OsString> = Vec::new();
     match kind {
@@ -189,8 +189,8 @@ pub fn command_for(runner: &Runner, repo: &Path, kind: &JobKind) -> Result<GitCo
         .env("GIT_PROGRESS_DELAY", "0"))
 }
 
-/// Arranca el job en un hilo. Devuelve su token de cancelación (ya registrado
-/// en el manager con `id`), para que la UI pueda abortarlo.
+/// Starts the job in a thread. Returns its cancellation token (already registered
+/// in the manager with `id`), so the UI can abort it.
 pub fn start<F>(
     manager: &JobManager,
     id: &str,

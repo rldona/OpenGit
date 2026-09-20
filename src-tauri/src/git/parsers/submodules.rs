@@ -3,11 +3,11 @@ use crate::git::models::{Submodule, SubmoduleState};
 
 use super::text;
 
-/// Parsea `git submodule status` (una línea por submódulo, sin recursión).
+/// Parses `git submodule status` (one line per submodule, no recursion).
 ///
-/// Formato: `[ +-U]<sha> <path>[ (describe)]`. El path puede contener espacios,
-/// así que el `describe` se busca como el último ` (` y solo si la línea acaba
-/// en `)`.
+/// Format: `[ +-U]<sha> <path>[ (describe)]`. The path can contain spaces,
+/// so `describe` is looked up as the last ` (` and only if the line ends
+/// in `)`.
 pub fn parse_submodule_status(data: &[u8]) -> Result<Vec<Submodule>, GitError> {
     let mut submodules = Vec::new();
     for line in text(data).lines() {

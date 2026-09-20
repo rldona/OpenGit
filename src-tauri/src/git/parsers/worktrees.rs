@@ -3,11 +3,11 @@ use crate::git::models::Worktree;
 
 use super::text;
 
-/// Parsea `git worktree list --porcelain`.
+/// Parses `git worktree list --porcelain`.
 ///
-/// Bloques separados por línea vacía; claves: `worktree`, `HEAD`, `branch`,
-/// `detached`, `bare`, `locked` (con motivo opcional). `prunable` y extensiones
-/// futuras se ignoran.
+/// Blocks separated by an empty line; keys: `worktree`, `HEAD`, `branch`,
+/// `detached`, `bare`, `locked` (with optional reason). `prunable` and future
+/// extensions are ignored.
 pub fn parse_worktree_list(data: &[u8]) -> Result<Vec<Worktree>, GitError> {
     let mut worktrees = Vec::new();
     let mut current: Option<Worktree> = None;

@@ -1,4 +1,4 @@
-//! Operaciones de escritura sobre el working tree y el index (OG-009).
+//! Write operations on the working tree and the index (OG-009).
 
 use std::ffi::OsString;
 use std::path::{Component, Path, PathBuf};
@@ -14,7 +14,7 @@ fn paths_args(files: &[&str]) -> Vec<OsString> {
     args
 }
 
-/// `git add -A -- <paths>`: stage de ficheros nuevos, modificados o renombrados.
+/// `git add -A -- <paths>`: stages new, modified or renamed files.
 pub fn stage_paths(runner: &Runner, repo: &Path, files: &[&str]) -> Result<(), GitError> {
     let mut args: Vec<OsString> = vec!["add".into(), "-A".into()];
     args.extend(paths_args(files));
@@ -23,7 +23,7 @@ pub fn stage_paths(runner: &Runner, repo: &Path, files: &[&str]) -> Result<(), G
         .map(|_| ())
 }
 
-/// `git restore --staged -- <paths>`: devuelve el contenido del index a HEAD.
+/// `git restore --staged -- <paths>`: resets the index content to HEAD.
 pub fn unstage_paths(runner: &Runner, repo: &Path, files: &[&str]) -> Result<(), GitError> {
     let mut args: Vec<OsString> = vec!["restore".into(), "--staged".into()];
     args.extend(paths_args(files));
@@ -32,8 +32,8 @@ pub fn unstage_paths(runner: &Runner, repo: &Path, files: &[&str]) -> Result<(),
         .map(|_| ())
 }
 
-/// `git restore --source=HEAD --staged --worktree -- <paths>`: descarta
-/// cambios staged y unstaged de los ficheros indicados (destructivo).
+/// `git restore --source=HEAD --staged --worktree -- <paths>`: discards
+/// staged and unstaged changes of the given files (destructive).
 pub fn discard_paths(runner: &Runner, repo: &Path, files: &[&str]) -> Result<(), GitError> {
     let mut args: Vec<OsString> = vec![
         "restore".into(),
@@ -59,7 +59,7 @@ pub(crate) fn relative_path(file: &str) -> Result<PathBuf, GitError> {
     Ok(relative.to_path_buf())
 }
 
-/// Borra un fichero sin trackear, validando que la ruta es relativa al repo.
+/// Deletes an untracked file, validating that the path is repo-relative.
 pub fn remove_untracked(repo: &Path, file: &str) -> Result<(), GitError> {
     let relative = relative_path(file)?;
     std::fs::remove_file(repo.join(relative)).map_err(|error| GitError::Io {
@@ -67,7 +67,7 @@ pub fn remove_untracked(repo: &Path, file: &str) -> Result<(), GitError> {
     })
 }
 
-/// Lee un fichero del working tree; `binary = true` si no es UTF-8.
+/// Reads a working-tree file; `binary = true` when it is not UTF-8.
 pub fn read_worktree_file(repo: &Path, file: &str) -> Result<(String, bool), GitError> {
     let relative = relative_path(file)?;
     let bytes = std::fs::read(repo.join(relative)).map_err(|error| GitError::Io {
@@ -79,7 +79,7 @@ pub fn read_worktree_file(repo: &Path, file: &str) -> Result<(String, bool), Git
     }
 }
 
-/// Escribe el contenido resuelto y lo pasa al index.
+/// Writes the resolved content and stages it into the index.
 pub fn write_and_stage(
     runner: &Runner,
     repo: &Path,

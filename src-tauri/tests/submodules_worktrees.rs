@@ -27,7 +27,7 @@ fn same_path(left: &str, right: &Path) -> bool {
 }
 
 #[test]
-fn worktrees_lista_rama_detached_locked_y_actual() {
+fn worktrees_list_branch_detached_locked_and_current() {
     let repo = TestRepo::init();
     commit_file(&repo, "a.txt", "uno\n", "base");
     let base = head_hash(&repo);
@@ -97,7 +97,7 @@ fn worktrees_lista_rama_detached_locked_y_actual() {
 }
 
 #[test]
-fn submodule_estado_clean_modified_y_uninitialized() {
+fn submodule_state_clean_modified_and_uninitialized() {
     let source = TestRepo::init();
     commit_file(&source, "lib.txt", "lib\n", "sub base");
 
@@ -119,7 +119,7 @@ fn submodule_estado_clean_modified_y_uninitialized() {
     );
     assert!(
         added.status.success(),
-        "submodule add falló: {}",
+        "submodule add failed: {}",
         String::from_utf8_lossy(&added.stderr)
     );
     super_repo.git_ok(&["commit", "-q", "-m", "add sub"]);

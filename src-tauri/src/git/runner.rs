@@ -13,24 +13,24 @@ use super::version::GitVersion;
 
 pub const DEFAULT_TIMEOUT: Duration = Duration::from_secs(30);
 
-/// Recibe cada línea (o fragmento separado por `\r`, típico del progreso).
+/// Receives each line (or fragment separated by `\r`, typical of progress).
 pub type StreamSink = Arc<dyn Fn(StreamKind, String) + Send + Sync>;
 const KILL_GRACE: Duration = Duration::from_millis(500);
 
-/// Cómo se conecta stdin del proceso.
+/// How the process stdin is connected.
 #[derive(Debug, Clone, Default)]
 pub enum StdinMode {
-    /// Cerrado: los comandos que lean de stdin reciben EOF.
+    /// Closed: commands reading from stdin get EOF.
     #[default]
     Null,
-    /// Se escriben los bytes y se cierra.
+    /// The bytes are written and it is closed.
     Bytes(Vec<u8>),
-    /// Se mantiene abierto mientras viva el proceso. Solo para tests que
-    /// necesitan un comando bloqueado que poder cancelar.
+    /// Kept open while the process lives. Only for tests that need a
+    /// blocked command they can cancel.
     Open,
 }
 
-/// Una invocación de git: argumentos separados, cwd y entorno controlado.
+/// A git invocation: separate arguments, cwd and controlled environment.
 #[derive(Debug, Clone)]
 pub struct GitCommand {
     args: Vec<OsString>,
@@ -82,7 +82,7 @@ impl GitCommand {
         self
     }
 
-    /// Los comandos que escriben en el repo necesitan locks; las lecturas no.
+    /// Commands that write to the repo need locks; reads do not.
     pub fn write(mut self) -> Self {
         self.write = true;
         self
@@ -125,7 +125,7 @@ impl GitOutput {
     }
 }
 
-/// Ejecuta el binario de git. No conoce repositorios ni parsers.
+/// Runs the git binary. It knows nothing about repositories or parsers.
 #[derive(Debug, Clone)]
 pub struct Runner {
     binary: PathBuf,
@@ -138,7 +138,7 @@ impl Runner {
         }
     }
 
-    /// Usa `git` del PATH.
+    /// Uses `git` from PATH.
     pub fn locate() -> Self {
         Self::new("git")
     }
@@ -152,12 +152,12 @@ impl Runner {
         GitVersion::parse(&output.stdout_lossy())
     }
 
-    /// Ejecuta y devuelve la salida tal cual, aunque git falle.
+    /// Runs and returns the output as-is, even if git fails.
     pub fn run(&self, cmd: &GitCommand) -> Result<GitOutput, GitError> {
         self.spawn(cmd)?.wait(cmd.timeout)
     }
 
-    /// Ejecuta y convierte un exit code distinto de cero en `CommandFailed`.
+    /// Runs and turns a non-zero exit code into `CommandFailed`.
     pub fn run_checked(&self, cmd: &GitCommand) -> Result<GitOutput, GitError> {
         let output = self.run(cmd)?;
         if output.success() {
@@ -172,13 +172,13 @@ impl Runner {
         }
     }
 
-    /// Lanza el proceso en su propio grupo (Unix) para poder matar el árbol.
+    /// Spawns the process in its own group (Unix) so the tree can be killed.
     pub fn spawn(&self, cmd: &GitCommand) -> Result<GitProcess, GitError> {
         self.spawn_inner(cmd, None)
     }
 
-    /// Igual que `spawn`, pero cada línea de stdout/stderr se entrega al sink
-    /// en cuanto llega (para fetch/pull/push con progreso).
+    /// Same as `spawn`, but each stdout/stderr line is delivered to the sink
+    /// as soon as it arrives (for fetch/pull/push with progress).
     pub fn spawn_streaming(
         &self,
         cmd: &GitCommand,
@@ -243,8 +243,14 @@ impl Runner {
             }
         };
 
-        let stdout = child.stdout.take().expect("stdout fue redirigido a pipe");
-        let stderr = child.stderr.take().expect("stderr fue redirigido a pipe");
+        let stdout = child
+            .stdout
+            .take()
+            .expect("stdout was redirected to a pipe");
+        let stderr = child
+            .stderr
+            .take()
+            .expect("stderr was redirected to a pipe");
         let stdout_sink = sink.clone();
         let stdout_handle =
             thread::spawn(move || read_stream(stdout, stdout_sink, StreamKind::Stdout));
@@ -276,7 +282,7 @@ impl Runner {
     }
 }
 
-/// Flujo de salida del proceso.
+/// Process output stream.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum StreamKind {
     Stdout,
@@ -292,8 +298,8 @@ impl StreamKind {
     }
 }
 
-/// Proceso de git en marcha, cancelable y con timeout. La cancelación puede
-/// llegar desde fuera a través del token (`Arc<AtomicBool>`).
+/// Running git process, cancellable and with timeout. Cancellation can
+/// arrive from outside through the token (`Arc<AtomicBool>`).
 pub struct GitProcess {
     pid: u32,
     exited: Arc<AtomicBool>,
@@ -312,7 +318,7 @@ impl GitProcess {
         self.pid
     }
 
-    /// Token compartible para cancelar el proceso desde otro hilo.
+    /// Shareable token to cancel the process from another thread.
     pub fn cancel_token(&self) -> Arc<AtomicBool> {
         Arc::clone(&self.cancel)
     }
@@ -389,14 +395,14 @@ impl GitProcess {
     }
 }
 
-/// Lee un flujo separando por `\n` o `\r` (el progreso de git usa CR):
-/// cada fragmento va al sink y todo se acumula para el resultado final.
+/// Reads a stream splitting on `\n` or `\r` (git progress uses CR):
+/// each fragment goes to the sink and everything is accumulated for the final result.
 fn read_stream(
     mut reader: impl Read,
     sink: Option<StreamSink>,
     kind: StreamKind,
 ) -> io::Result<Vec<u8>> {
-    // Sin sink no se toca ni un byte: hay parches CRLF que deben sobrevivir.
+    // Without a sink not a single byte is touched: there are CRLF patches that must survive.
     if sink.is_none() {
         let mut collected = Vec::new();
         reader.read_to_end(&mut collected)?;
@@ -447,8 +453,8 @@ fn join_reader(handle: JoinHandle<io::Result<Vec<u8>>>) -> Result<Vec<u8>, GitEr
     }
 }
 
-/// Termina el proceso y sus hijos: SIGTERM al grupo y, si no muere,
-/// SIGKILL tras un periodo de gracia. En Windows usa `taskkill /T`.
+/// Terminates the process and its children: SIGTERM to the group and, if it
+/// does not die, SIGKILL after a grace period. On Windows it uses `taskkill /T`.
 fn kill_tree(pid: u32) {
     #[cfg(unix)]
     unsafe {
