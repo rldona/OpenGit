@@ -47,6 +47,7 @@ Convenciones: documentación e issues en español; código, ramas y commits en i
 8. **Sin operaciones de red en tests.** Los tests de git usan repos temporales creados por el propio test.
 9. No dejes la UI bloqueada: nada de llamadas síncronas a git en el hilo de la interfaz.
 10. Si dudas entre "feature nueva" y "que no se rompa lo que hay": primero lo segundo.
+11. **Firma de commits:** siempre `Raúl López <rldona@users.noreply.github.com>` (noreply de GitHub). Nunca correos corporativos ni identidades ajenas; el repo fija `user.name`/`user.email` en su config local.
 
 ## Testing
 
