@@ -1,7 +1,7 @@
 # OG-110 · Port FlupCode color palettes
 
 - **Milestone:** Next
-- **Status:** ready
+- **Status:** done
 - **Depends on:** OG-022, OG-067, OG-105
 - **References:** OG-022, `src/lib/theme.ts`, `src/lib/stores/theme.ts`, `src/components/SettingsWindow.tsx`, `src/styles/global.css`, `index.html`, FlupCode `packages/harness/src/styles/tokens.css`
 
@@ -42,26 +42,26 @@ do not change fonts or the diff syntax highlighting.
 
 ## Acceptance criteria
 
-- [ ] Settings → Appearance shows a "Color palette" selector with Default,
+- [x] Settings → Appearance shows a "Color palette" selector with Default,
       Purple, Classic, Sublime, Sublime Dark, GitHub, Copilot and Vercel.
-- [ ] Selecting a non-default palette and confirming sets
+- [x] Selecting a non-default palette and confirming sets
       `document.documentElement.dataset.palette` to that name; selecting
       Default removes the attribute.
-- [ ] The palette is persisted in `opengit.palette` and restored on the next
+- [x] The palette is persisted in `opengit.palette` and restored on the next
       launch without a flash of the default palette after React mounts.
-- [ ] Every paired palette (`purple`, `classic`, `sublime`, `github`,
+- [x] Every paired palette (`purple`, `classic`, `sublime`, `github`,
       `copilot`) has a light and a dark variant and follows the existing
       light/dark/system selector.
-- [ ] `sublime-dark` and `vercel` render their dark colors regardless of the
+- [x] `sublime-dark` and `vercel` render their dark colors regardless of the
       light/dark selector, and force `color-scheme: dark` so native controls
       and scrollbars stay dark.
-- [ ] The `default` option shows FlupCode's Classic colors (swapped on
+- [x] The `default` option shows FlupCode's Classic colors (swapped on
       purpose); OpenGit's original light and dark themes are preserved
       byte-for-byte under the `classic` option instead.
-- [ ] Fonts (`--font-ui`, `--font-mono`) and diff syntax/terminal/inline-code
+- [x] Fonts (`--font-ui`, `--font-mono`) and diff syntax/terminal/inline-code
       colors (`fc-syn-*`, `fc-terminal-*`, `fc-code-inline`) are unchanged by
       every palette.
-- [ ] `npm run lint`, `npm run typecheck` and `npm run test` are green.
+- [x] `npm run lint`, `npm run typecheck` and `npm run test` are green.
 
 ## Out of scope
 
