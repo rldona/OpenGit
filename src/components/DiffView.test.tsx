@@ -72,45 +72,48 @@ describe("DiffView", () => {
     );
     useRepoStore.setState({ repo: REPO, recents: [], loading: false, error: null });
     useDiffStore.getState().reset();
-    useUiStore.setState({ fileTree: true });
+    useUiStore.setState({ fileTree: false });
   });
 
-  it("lista los ficheros y muestra el editor del seleccionado", async () => {
-    render(<DiffView />);
-
-    expect(await screen.findByText("a.txt")).toBeInTheDocument();
-    expect(screen.getByText("bin.bin")).toBeInTheDocument();
-    expect(await screen.findByTestId("diff-editor")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Side by side" })).toBeInTheDocument();
-  });
-
-  it("filtra los ficheros por ruta", async () => {
+  it("arranca en Unified y en modo lista, no en side by side ni en árbol", async () => {
     const user = userEvent.setup();
-    vi.mocked(diffNumstat).mockResolvedValue([
-      { path: "src/a.ts", orig_path: null, binary: false, added: 1, deleted: 0 },
-      { path: "docs/b.md", orig_path: null, binary: false, added: 2, deleted: 0 },
-    ]);
-    vi.mocked(statusRepo).mockResolvedValue({
-      ...REPORT,
-      entries: [
-        { kind: "ordinary", xy: ".M", path: "src/a.ts", orig_path: null },
-        { kind: "ordinary", xy: ".M", path: "docs/b.md", orig_path: null },
-      ],
-    });
     render(<DiffView />);
-    await screen.findByText("a.ts");
-    expect(screen.getByText("b.md")).toBeInTheDocument();
 
-    await user.type(screen.getByLabelText("Filter files"), "docs");
-    expect(screen.queryByText("a.ts")).not.toBeInTheDocument();
-    expect(screen.getByText("b.md")).toBeInTheDocument();
+    expect(await screen.findAllByText("a.txt")).not.toHaveLength(0);
+    expect(screen.getByText("bin.bin")).toBeInTheDocument();
+    // La ruta sale también en la cabecera del panel derecho (estilo SourceTree).
+    expect(document.querySelector(".diff-pane-path")).toHaveTextContent("a.txt");
+    expect(screen.getByRole("button", { name: "Unified" })).toHaveClass("active");
+    expect(screen.getByRole("button", { name: "List" })).toHaveClass("active");
+    expect(screen.queryByTestId("diff-editor")).not.toBeInTheDocument();
 
-    await user.type(screen.getByLabelText("Filter files"), "zzz");
-    expect(screen.getByText("No files match")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Side by side" }));
+
+    expect(await screen.findByTestId("diff-editor")).toBeInTheDocument();
+  });
+
+  it("encabeza el panel del parche con la ruta del fichero y sus contadores", async () => {
+    render(<DiffView />);
+    await screen.findAllByText("a.txt");
+
+    const head = document.querySelector(".diff-pane-head") as HTMLElement;
+    expect(head).toHaveTextContent("a.txt");
+    expect(head).toHaveTextContent("+1");
+    expect(head).toHaveTextContent("-1");
+  });
+
+  it("no pinta las cabeceras del parche sobre el primer hunk", async () => {
+    render(<DiffView />);
+    await screen.findAllByText("a.txt");
+
+    // `diff --git`, `index`, `---` y `+++` se ocultan: la ruta ya está arriba.
+    expect(screen.queryByText(/^diff --git/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^index /)).not.toBeInTheDocument();
   });
 
   it("agrupa en árbol, agrega contadores y pliega directorios", async () => {
     const user = userEvent.setup();
+    useUiStore.setState({ fileTree: true });
     vi.mocked(diffNumstat).mockResolvedValue([
       { path: "src/a.ts", orig_path: null, binary: false, added: 2, deleted: 1 },
       { path: "src/b.ts", orig_path: null, binary: false, added: 3, deleted: 0 },

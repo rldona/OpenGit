@@ -17,6 +17,8 @@ type StatusState = {
   select: (path: string | null) => void;
   stage: (file: string, origFile: string | null) => Promise<void>;
   unstage: (file: string, origFile: string | null) => Promise<void>;
+  stageMany: (files: Array<{ path: string; orig_path: string | null }>) => Promise<void>;
+  unstageMany: (files: Array<{ path: string; orig_path: string | null }>) => Promise<void>;
   discard: (file: string, origFile: string | null) => Promise<void>;
   removeUntracked: (file: string) => Promise<void>;
   reset: () => void;
@@ -75,6 +77,34 @@ export const useStatusStore = create<StatusState>((set, get) => ({
     try {
       await unstagePath(root, file, origFile);
       output(`Unstage: ${file}`);
+      await get().refresh(root);
+    } catch (error) {
+      set({ error: formatGitError(error) });
+    }
+  },
+
+  stageMany: async (files) => {
+    const { root } = get();
+    if (!root || files.length === 0) return;
+    try {
+      for (const file of files) {
+        await stagePath(root, file.path, file.orig_path);
+      }
+      output(`Staged ${files.length} file(s)`);
+      await get().refresh(root);
+    } catch (error) {
+      set({ error: formatGitError(error) });
+    }
+  },
+
+  unstageMany: async (files) => {
+    const { root } = get();
+    if (!root || files.length === 0) return;
+    try {
+      for (const file of files) {
+        await unstagePath(root, file.path, file.orig_path);
+      }
+      output(`Unstaged ${files.length} file(s)`);
       await get().refresh(root);
     } catch (error) {
       set({ error: formatGitError(error) });

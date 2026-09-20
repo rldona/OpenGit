@@ -20,8 +20,9 @@ type StashState = {
   apply: (root: string, reference: string) => Promise<void>;
   pop: (root: string, reference: string) => Promise<void>;
   drop: (root: string, reference: string) => Promise<void>;
-  openDiff: (root: string, reference: string) => Promise<void>;
-  closeDiff: () => void;
+  /** Carga el parche del stash para la vista embebida (OG-046). */
+  select: (root: string, reference: string) => Promise<void>;
+  clearSelection: () => void;
   reset: () => void;
 };
 
@@ -87,6 +88,9 @@ export const useStashStore = create<StashState>((set, get) => ({
     try {
       await stashApply(root, reference, true);
       output(`Popped ${reference}`);
+      // Al hacer pop (o drop) los `stash@{n}` se renumeran: la referencia
+      // seleccionada deja de ser fiable.
+      get().clearSelection();
       await get().refresh(root);
       await useStatusStore.getState().refresh(root);
     } catch (error) {
@@ -100,13 +104,14 @@ export const useStashStore = create<StashState>((set, get) => ({
     try {
       await stashDrop(root, reference);
       output(`Dropped ${reference}`);
+      get().clearSelection();
       await get().refresh(root);
     } catch (error) {
       set({ error: formatGitError(error) });
     }
   },
 
-  openDiff: async (root, reference) => {
+  select: async (root, reference) => {
     set({ diffReference: reference, diffPatch: "", diffLoading: true, diffError: null });
     try {
       const patch = await stashShow(root, reference);
@@ -116,7 +121,8 @@ export const useStashStore = create<StashState>((set, get) => ({
     }
   },
 
-  closeDiff: () => set({ diffReference: null, diffPatch: "", diffLoading: false, diffError: null }),
+  clearSelection: () =>
+    set({ diffReference: null, diffPatch: "", diffLoading: false, diffError: null }),
 
   reset: () =>
     set({

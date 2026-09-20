@@ -49,6 +49,39 @@ export type GraphLayout = {
 export const LANE_WIDTH = 14;
 export const ROW_HEIGHT = 28;
 
+/** Tope de lanes pintadas: más allá el grafo se recorta en vez de empujar el texto. */
+export const MAX_GRAPH_LANES = 12;
+/** El ancho se redondea a bloques para que el texto no tiemble al hacer scroll. */
+const LANE_BLOCK = 4;
+const GRAPH_PADDING = 16;
+
+/**
+ * Lanes necesarias para pintar `rows[start..end)`.
+ *
+ * Se mide sobre el rango visible, no sobre todo el historial: si en algún punto
+ * del repo hay 27 ramas abiertas, calcularlo globalmente indentaría *todas* las
+ * filas cientos de píxeles aunque en pantalla solo se vean cuatro lanes.
+ */
+export function visibleLaneCount(rows: GraphRow[], start: number, end: number): number {
+  let max = 1;
+  for (let index = Math.max(0, start); index < Math.min(rows.length, end); index += 1) {
+    const row = rows[index];
+    max = Math.max(max, row.lane + 1, row.before.length, row.after.length);
+  }
+  return Math.min(max, MAX_GRAPH_LANES);
+}
+
+/**
+ * Ancho de la columna del grafo, redondeado al alza a bloques de `LANE_BLOCK`.
+ * El redondeo es la histéresis: sin él, cruzar un merge al hacer scroll movería
+ * el texto de todas las filas en horizontal.
+ */
+export function graphWidth(laneCount: number): number {
+  const capped = Math.min(Math.max(laneCount, 1), MAX_GRAPH_LANES);
+  const blocks = Math.ceil(capped / LANE_BLOCK) * LANE_BLOCK;
+  return Math.min(blocks, MAX_GRAPH_LANES) * LANE_WIDTH + GRAPH_PADDING;
+}
+
 export const GRAPH_COLORS = [
   "#5b8def",
   "#e0a458",

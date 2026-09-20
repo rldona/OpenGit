@@ -53,11 +53,21 @@ export type Commit = {
   author_time: number;
   refs: string[];
   subject: string;
+  /** Cuerpo del mensaje (`%b`), sin el asunto. Cadena vacía si no hay. */
+  body: string;
 };
 
 export type JobKind =
   | { kind: "fetch"; prune: boolean; remote: string | null }
-  | { kind: "pull" }
+  | {
+      kind: "pull";
+      remote: string | null;
+      branch: string | null;
+      rebase: boolean;
+      no_ff: boolean;
+      no_commit: boolean;
+      include_messages: boolean;
+    }
   | { kind: "push"; remote: string | null; set_upstream: boolean }
   | { kind: "push_tag"; remote: string | null; tag: string };
 
@@ -79,6 +89,12 @@ export type JobFinishedEvent = {
   success: boolean;
   exit_code: number;
   cancelled: boolean;
+};
+
+/** Identidad efectiva que git usaría al firmar un commit. */
+export type AuthorIdent = {
+  name: string;
+  email: string;
 };
 
 export type BranchTracking = {

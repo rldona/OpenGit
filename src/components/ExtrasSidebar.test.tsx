@@ -77,12 +77,12 @@ describe("ExtrasSidebar", () => {
   it("lista submódulos con su estado y worktrees con su rama", async () => {
     render(<ExtrasSidebar />);
 
-    expect(screen.getByRole("heading", { name: "Submodules" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Submodules" })).toBeInTheDocument();
     expect(screen.getByText("vendor/lib")).toBeInTheDocument();
     expect(screen.getByText("Different commit")).toBeInTheDocument();
     expect(screen.getByText("Not initialized")).toBeInTheDocument();
 
-    expect(screen.getByRole("heading", { name: "Worktrees" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Worktrees" })).toBeInTheDocument();
     expect(screen.getByText("current")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /wt-topic/ })).toBeInTheDocument();
   });
@@ -128,7 +128,7 @@ describe("ExtrasSidebar", () => {
   it("muestra la sección Git LFS con la versión instalada", async () => {
     render(<ExtrasSidebar />);
 
-    expect(screen.getByRole("heading", { name: "Git LFS" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Git LFS" })).toBeInTheDocument();
     expect(screen.getByText("git-lfs/3.5.1")).toBeInTheDocument();
   });
 

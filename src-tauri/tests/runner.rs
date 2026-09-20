@@ -127,6 +127,37 @@ fn cancelar_no_deja_huerfanos() {
 }
 
 #[test]
+fn log_page_no_incluye_los_commits_internos_del_stash() {
+    let repo = TestRepo::init();
+    repo.write("a.txt", b"uno\n");
+    repo.git_ok(&["add", "."]);
+    repo.git_ok(&["commit", "-q", "-m", "base"]);
+
+    repo.write("a.txt", b"dos\n");
+    repo.git_ok(&["stash", "push", "-m", "guardado"]);
+
+    let commits = log_page(&runner(), repo.path(), 0, 50, None, None).expect("log page");
+
+    // `git log --all` arrastraría `refs/stash`: el commit del stash y su commit
+    // interno "index on <rama>: …", que en el historial no pintan nada.
+    assert_eq!(commits.len(), 1, "solo debería verse el commit base");
+    assert_eq!(commits[0].subject, "base");
+    assert!(
+        !commits.iter().any(|commit| commit
+            .refs
+            .iter()
+            .any(|reference| reference.contains("stash"))),
+        "ninguna ref de stash debe llegar al historial"
+    );
+
+    // Y el stash sigue existiendo: lo que cambia es el historial, no el repo.
+    let stash_list = repo.git_ok(&["stash", "list"]);
+    assert!(!String::from_utf8_lossy(&stash_list.stdout)
+        .trim()
+        .is_empty());
+}
+
+#[test]
 fn status_y_log_page_sobre_repo_real() {
     let repo = TestRepo::init();
     assert!(!has_commits(&runner(), repo.path()).expect("has_commits"));

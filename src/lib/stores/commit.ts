@@ -3,7 +3,8 @@ import { commitMessage, commitRepo, repoOpState } from "../bridge/commit";
 import { confirmDestructive } from "../bridge/dialog";
 import { formatGitError } from "../bridge/errors";
 import { repoOpAbort, repoOpContinue, repoOpSkip } from "../bridge/ops";
-import type { FileStatus, RepoOpState, StatusReport } from "../bridge/types";
+import { authorIdent } from "../bridge/repo";
+import type { AuthorIdent, FileStatus, RepoOpState, StatusReport } from "../bridge/types";
 import { useLogStore } from "./log";
 import { useRefsStore } from "./refs";
 import { useStatusStore } from "./status";
@@ -32,6 +33,8 @@ type CommitState = {
   root: string | null;
   message: string;
   amend: boolean;
+  /** Identidad de git config, para la cabecera del panel de commit. */
+  author: AuthorIdent | null;
   opState: RepoOpState;
   loading: boolean;
   error: string | null;
@@ -63,6 +66,7 @@ export const useCommitStore = create<CommitState>((set, get) => ({
   root: null,
   message: "",
   amend: false,
+  author: null,
   opState: EMPTY_OP_STATE,
   loading: false,
   error: null,
@@ -73,6 +77,13 @@ export const useCommitStore = create<CommitState>((set, get) => ({
       set({ opState: await repoOpState(root) });
     } catch (error) {
       set({ error: formatGitError(error) });
+    }
+    try {
+      set({ author: await authorIdent(root) });
+    } catch {
+      // Sin identidad configurada el commit fallará al hacer git commit: el
+      // panel simplemente no pinta autor y el error real se ve al intentarlo.
+      set({ author: null });
     }
   },
 
@@ -168,6 +179,7 @@ export const useCommitStore = create<CommitState>((set, get) => ({
       root: null,
       message: "",
       amend: false,
+      author: null,
       opState: EMPTY_OP_STATE,
       loading: false,
       error: null,

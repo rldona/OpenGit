@@ -63,6 +63,13 @@ function indexByPath(diffs: FileDiff[]): Map<string, FileDiff> {
   return map;
 }
 
+/**
+ * Token de la última petición de apertura. Al navegar rápido por el historial
+ * se encadenan `openCommit`; sin esto, una respuesta lenta de un commit anterior
+ * puede pisar la del commit que el usuario tiene seleccionado ahora.
+ */
+let openToken = 0;
+
 export const useDiffStore = create<DiffState>((set, get) => ({
   root: null,
   target: null,
@@ -70,13 +77,14 @@ export const useDiffStore = create<DiffState>((set, get) => ({
   selected: null,
   patch: "",
   binary: false,
-  mode: "side",
+  mode: "unified",
   reversed: false,
   selectedLines: [],
   loading: false,
   error: null,
 
   openWorktree: async (root) => {
+    const token = ++openToken;
     set({ root, target: { kind: "worktree" }, loading: true, error: null, reversed: false });
     try {
       const [report, unstaged, staged] = await Promise.all([
@@ -84,6 +92,9 @@ export const useDiffStore = create<DiffState>((set, get) => ({
         diffNumstat(root, false),
         diffNumstat(root, true),
       ]);
+      if (token !== openToken) {
+        return;
+      }
       const stagedMap = indexByPath(staged);
       const unstagedMap = indexByPath(unstaged);
       const files: DiffFileEntry[] = [];
@@ -123,6 +134,9 @@ export const useDiffStore = create<DiffState>((set, get) => ({
         await get().selectFile(files[0]);
       }
     } catch (error) {
+      if (token !== openToken) {
+        return;
+      }
       set({ loading: false, error: formatGitError(error) });
     }
   },
@@ -140,6 +154,7 @@ export const useDiffStore = create<DiffState>((set, get) => ({
   },
 
   openCommit: async (root, rev) => {
+    const token = ++openToken;
     set({
       root,
       target: { kind: "commit", rev },
@@ -153,6 +168,9 @@ export const useDiffStore = create<DiffState>((set, get) => ({
     });
     try {
       const diffs = await commitFiles(root, rev);
+      if (token !== openToken) {
+        return;
+      }
       const files: DiffFileEntry[] = diffs.map((diff) => ({
         key: `commit:${diff.path}`,
         path: diff.path,
@@ -168,6 +186,9 @@ export const useDiffStore = create<DiffState>((set, get) => ({
         await get().selectFile(files[0]);
       }
     } catch (error) {
+      if (token !== openToken) {
+        return;
+      }
       set({ loading: false, error: formatGitError(error) });
     }
   },
@@ -269,7 +290,7 @@ export const useDiffStore = create<DiffState>((set, get) => ({
       selected: null,
       patch: "",
       binary: false,
-      mode: "side",
+      mode: "unified",
       reversed: false,
       selectedLines: [],
       loading: false,

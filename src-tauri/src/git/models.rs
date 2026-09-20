@@ -12,6 +12,8 @@ pub struct Commit {
     /// Refs decoradas por `%D` (HEAD, ramas, tags, remotos).
     pub refs: Vec<String>,
     pub subject: String,
+    /// Cuerpo del mensaje (`%b`), sin el asunto. Vacío si el commit no tiene.
+    pub body: String,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -136,6 +138,13 @@ pub struct Remote {
     pub url: String,
     /// Equivalente `https://…`; `None` para rutas locales o `file://`.
     pub web_url: Option<String>,
+}
+
+/// Identidad efectiva con la que git firmaría un commit (`git var GIT_AUTHOR_IDENT`).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct AuthorIdent {
+    pub name: String,
+    pub email: String,
 }
 
 /// Commits que faltan por llegar del upstream y por subir a él.

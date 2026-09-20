@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { colorForKey, layoutPage, type GraphInput } from "./layout";
+import {
+  MAX_GRAPH_LANES,
+  colorForKey,
+  graphWidth,
+  layoutPage,
+  visibleLaneCount,
+  type GraphInput,
+  type GraphRow,
+} from "./layout";
 
 function commit(hash: string, parents: string[] = [], refs: string[] = []): GraphInput {
   return { hash, parents, refs };
@@ -96,5 +104,55 @@ describe("layoutPage", () => {
     expect(rows).toHaveLength(10_000);
     expect(rows.every((row) => row.lane === 0)).toBe(true);
     expect(lanes).toHaveLength(0);
+  });
+});
+
+function row(lane: number): GraphRow {
+  const lanes = Array.from({ length: lane + 1 }, (_, id) => ({ id, expects: null }));
+  return { hash: `h${lane}`, lane, laneId: lane, before: lanes, after: lanes, edges: [] };
+}
+
+describe("visibleLaneCount", () => {
+  it("mide solo el rango visible, no todo el historial", () => {
+    // 27 lanes al final del historial no deben indentar las filas de arriba.
+    const rows = [row(0), row(1), row(2), row(26)];
+
+    expect(visibleLaneCount(rows, 0, 3)).toBe(3);
+    expect(visibleLaneCount(rows, 3, 4)).toBe(MAX_GRAPH_LANES);
+  });
+
+  it("nunca baja de una lane ni supera el tope", () => {
+    expect(visibleLaneCount([], 0, 0)).toBe(1);
+    expect(visibleLaneCount([row(99)], 0, 1)).toBe(MAX_GRAPH_LANES);
+  });
+
+  it("tolera rangos fuera de los límites", () => {
+    const rows = [row(0), row(1)];
+
+    expect(visibleLaneCount(rows, -5, 99)).toBe(2);
+  });
+});
+
+describe("graphWidth", () => {
+  it("redondea a bloques para que el texto no tiemble al hacer scroll", () => {
+    // Cruzar de 1 a 4 lanes no debe mover el texto ni un píxel.
+    const uno = graphWidth(1);
+
+    expect(graphWidth(2)).toBe(uno);
+    expect(graphWidth(3)).toBe(uno);
+    expect(graphWidth(4)).toBe(uno);
+    expect(graphWidth(5)).toBeGreaterThan(uno);
+  });
+
+  it("aplica el tope por muchas lanes que haya", () => {
+    expect(graphWidth(999)).toBe(graphWidth(MAX_GRAPH_LANES));
+  });
+
+  it("crece de forma monótona", () => {
+    const anchos = [1, 4, 5, 8, 9, 12].map(graphWidth);
+
+    for (let i = 1; i < anchos.length; i += 1) {
+      expect(anchos[i]).toBeGreaterThanOrEqual(anchos[i - 1]);
+    }
   });
 });
