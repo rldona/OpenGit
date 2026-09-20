@@ -8,7 +8,13 @@ function asPayload(error: unknown): GitErrorPayload | null {
 }
 
 function text(value: unknown): string {
-  return typeof value === "string" ? value : JSON.stringify(value);
+  if (typeof value === "string") {
+    return value;
+  }
+  if (value === undefined || value === null) {
+    return "";
+  }
+  return JSON.stringify(value);
 }
 
 /** Convierte el error serializado de Rust en un mensaje para la UI. */
@@ -22,8 +28,12 @@ export function formatGitError(error: unknown): string {
       return `No se encontró el binario de git: ${text(payload.binary)}`;
     case "spawn":
       return `No se pudo ejecutar git: ${text(payload.message)}`;
-    case "command_failed":
-      return `git falló con código ${text(payload.exit_code)}: ${text(payload.stderr).trim()}`;
+    case "command_failed": {
+      const stderr = text(payload.stderr).trim();
+      const stdout = text(payload.stdout).trim();
+      const detail = stderr || stdout;
+      return `git falló con código ${text(payload.exit_code)}${detail ? `: ${detail}` : ""}`;
+    }
     case "timeout":
       return "git no respondió a tiempo";
     case "cancelled":

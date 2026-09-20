@@ -13,6 +13,8 @@ pub enum GitError {
     /// Git terminó con código distinto de cero.
     CommandFailed {
         exit_code: i32,
+        /// Salida estándar (los hooks escriben aquí sus mensajes).
+        stdout: String,
         stderr: String,
         args: Vec<String>,
     },
@@ -54,12 +56,20 @@ impl fmt::Display for GitError {
             }
             Self::Spawn { message } => write!(f, "no se pudo ejecutar git: {message}"),
             Self::CommandFailed {
-                exit_code, stderr, ..
+                exit_code,
+                stdout,
+                stderr,
+                ..
             } => {
-                if stderr.trim().is_empty() {
+                let detail = [stdout.trim(), stderr.trim()]
+                    .into_iter()
+                    .filter(|part| !part.is_empty())
+                    .collect::<Vec<_>>()
+                    .join("\n");
+                if detail.is_empty() {
                     write!(f, "git falló con código {exit_code}")
                 } else {
-                    write!(f, "git falló con código {exit_code}: {}", stderr.trim())
+                    write!(f, "git falló con código {exit_code}: {detail}")
                 }
             }
             Self::Timeout { timeout_ms, .. } => {

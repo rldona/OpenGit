@@ -164,6 +164,7 @@ impl Runner {
         } else {
             Err(GitError::CommandFailed {
                 exit_code: output.exit_code(),
+                stdout: output.stdout_lossy(),
                 stderr: output.stderr_lossy(),
                 args: cmd.args(),
             })

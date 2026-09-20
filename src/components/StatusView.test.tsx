@@ -25,6 +25,18 @@ vi.mock("../lib/bridge/diff", () => ({
   diffFile: vi.fn(),
   commitFiles: vi.fn(),
   diffNumstat: vi.fn().mockResolvedValue([]),
+  stageSelection: vi.fn(),
+}));
+
+vi.mock("../lib/bridge/commit", () => ({
+  commitMessage: vi.fn().mockResolvedValue(""),
+  commitRepo: vi.fn(),
+  repoOpState: vi.fn().mockResolvedValue({ merge: false, rebase: false, cherry_pick: false }),
+}));
+
+vi.mock("../lib/bridge/log", () => ({
+  logPage: vi.fn().mockResolvedValue([]),
+  listRefs: vi.fn().mockResolvedValue([]),
 }));
 
 const REPO: RepoInfo = {
