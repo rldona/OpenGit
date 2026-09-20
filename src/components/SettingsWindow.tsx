@@ -1,0 +1,255 @@
+import { useEffect, useState } from "react";
+import {
+  configGet,
+  configSet,
+  configUnset,
+  ignoreExcludePath,
+  openPath,
+} from "../lib/bridge/settings";
+import { useRepoStore } from "../lib/stores/repo";
+import { useSettingsStore } from "../lib/stores/settings";
+import { useThemeStore } from "../lib/stores/theme";
+import type { ThemePreference } from "../lib/theme";
+import { Icon, type IconName } from "./Icon";
+
+type Tab = "advanced" | "appearance";
+
+type UserInfo = {
+  /** Use the global identity instead of a repository-local one. */
+  useGlobal: boolean;
+  localName: string;
+  localEmail: string;
+  globalName: string;
+  globalEmail: string;
+};
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+/**
+ * Settings modal (OG-067), SourceTree-style: title and tabs in the header, the
+ * tab body and Cancel/OK. Only the tabs implemented so far are shown; Remotes,
+ * Security and Commit Template land in follow-ups, in that order.
+ */
+export function SettingsWindow({ onClose }: { onClose: () => void }) {
+  const root = useRepoStore((state) => state.repo?.root ?? null);
+  const autoRefresh = useSettingsStore((state) => state.autoRefresh);
+  const setAutoRefresh = useSettingsStore((state) => state.setAutoRefresh);
+  const theme = useThemeStore((state) => state.preference);
+  const setTheme = useThemeStore((state) => state.setPreference);
+
+  const tabs: Array<{ id: Tab; label: string; icon: IconName }> = [
+    ...(root ? [{ id: "advanced" as const, label: "Advanced", icon: "settings" as const }] : []),
+    { id: "appearance", label: "Appearance", icon: "theme" },
+  ];
+  const [tab, setTab] = useState<Tab>(root ? "advanced" : "appearance");
+
+  const [draftTheme, setDraftTheme] = useState<ThemePreference>(theme);
+  const [draftAutoRefresh, setDraftAutoRefresh] = useState(autoRefresh);
+  const [ignorePath, setIgnorePath] = useState("");
+  const [user, setUser] = useState<UserInfo | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (!root) {
+      return;
+    }
+    void ignoreExcludePath(root)
+      .then(setIgnorePath)
+      .catch(() => setIgnorePath(""));
+    void Promise.all([
+      configGet(root, "user.name", "local"),
+      configGet(root, "user.email", "local"),
+      configGet(root, "user.name", "global"),
+      configGet(root, "user.email", "global"),
+    ])
+      .then(([localName, localEmail, globalName, globalEmail]) =>
+        setUser({
+          useGlobal: localName === null && localEmail === null,
+          localName: localName ?? "",
+          localEmail: localEmail ?? "",
+          globalName: globalName ?? "",
+          globalEmail: globalEmail ?? "",
+        }),
+      )
+      .catch((err: unknown) => setError(errorMessage(err)));
+  }, [root]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
+  const active = tabs.find((item) => item.id === tab) ?? tabs[0];
+
+  const submit = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      if (root && user) {
+        if (user.useGlobal) {
+          await configUnset(root, "user.name", "local");
+          await configUnset(root, "user.email", "local");
+        } else {
+          await setLocal(root, "user.name", user.localName);
+          await setLocal(root, "user.email", user.localEmail);
+        }
+      }
+      if (draftAutoRefresh !== autoRefresh) {
+        setAutoRefresh(draftAutoRefresh);
+      }
+      setTheme(draftTheme);
+      onClose();
+    } catch (err) {
+      setError(errorMessage(err));
+      setBusy(false);
+    }
+  };
+
+  const shownName = user?.useGlobal ? user.globalName : (user?.localName ?? "");
+  const shownEmail = user?.useGlobal ? user.globalEmail : (user?.localEmail ?? "");
+
+  return (
+    <div className="modal-overlay">
+      <div className="settings-window" role="dialog" aria-modal="true" aria-label="Settings">
+        <header className="settings-header">
+          <h2 className="settings-title">{active.label}</h2>
+          <div className="settings-tabs" role="tablist">
+            {tabs.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                role="tab"
+                aria-selected={tab === item.id}
+                className={`settings-tab${tab === item.id ? " active" : ""}`}
+                onClick={() => setTab(item.id)}
+              >
+                <Icon name={item.icon} size={20} />
+                <span>{item.label}</span>
+              </button>
+            ))}
+          </div>
+        </header>
+
+        <div className="settings-body">
+          {error && (
+            <p role="alert" className="error-banner">
+              {error}
+            </p>
+          )}
+
+          {tab === "advanced" && root && user && (
+            <>
+              <section className="settings-section">
+                <h3>Repository-specific ignore list</h3>
+                <div className="settings-row">
+                  <input
+                    className="settings-input"
+                    aria-label="Ignore file"
+                    readOnly
+                    value={ignorePath}
+                  />
+                  <button
+                    type="button"
+                    disabled={ignorePath === ""}
+                    onClick={() =>
+                      void openPath(ignorePath).catch((err) => setError(errorMessage(err)))
+                    }
+                  >
+                    Edit
+                  </button>
+                </div>
+              </section>
+
+              <section className="settings-section">
+                <h3>User information</h3>
+                <label className="settings-check">
+                  <input
+                    type="checkbox"
+                    checked={user.useGlobal}
+                    onChange={(event) => setUser({ ...user, useGlobal: event.target.checked })}
+                  />
+                  Use global user settings
+                </label>
+                <label className="settings-field">
+                  <span>Full Name:</span>
+                  <input
+                    aria-label="Full Name"
+                    value={shownName}
+                    disabled={user.useGlobal}
+                    onChange={(event) => setUser({ ...user, localName: event.target.value })}
+                  />
+                </label>
+                <label className="settings-field">
+                  <span>Email address:</span>
+                  <input
+                    aria-label="Email address"
+                    value={shownEmail}
+                    disabled={user.useGlobal}
+                    onChange={(event) => setUser({ ...user, localEmail: event.target.value })}
+                  />
+                </label>
+              </section>
+
+              <section className="settings-section">
+                <h3>Miscellaneous</h3>
+                <label className="settings-check">
+                  <input
+                    type="checkbox"
+                    checked={draftAutoRefresh}
+                    onChange={(event) => setDraftAutoRefresh(event.target.checked)}
+                  />
+                  Automatically refresh (if disabled you must manually refresh this repository)
+                </label>
+              </section>
+            </>
+          )}
+
+          {tab === "appearance" && (
+            <section className="settings-section">
+              <h3>Theme</h3>
+              <label className="settings-field">
+                <span>Appearance:</span>
+                <select
+                  aria-label="Theme"
+                  value={draftTheme}
+                  onChange={(event) => setDraftTheme(event.target.value as ThemePreference)}
+                >
+                  <option value="system">System</option>
+                  <option value="light">Light</option>
+                  <option value="dark">Dark</option>
+                </select>
+              </label>
+            </section>
+          )}
+        </div>
+
+        <footer className="remote-dialog-actions settings-footer">
+          <button type="button" onClick={onClose}>
+            Cancel
+          </button>
+          <button type="button" className="primary" disabled={busy} onClick={() => void submit()}>
+            OK
+          </button>
+        </footer>
+      </div>
+    </div>
+  );
+}
+
+/** Writes a repository-local value; an empty one is removed instead. */
+async function setLocal(root: string, key: string, value: string): Promise<void> {
+  const trimmed = value.trim();
+  if (trimmed === "") {
+    await configUnset(root, key, "local");
+  } else {
+    await configSet(root, key, trimmed, "local");
+  }
+}

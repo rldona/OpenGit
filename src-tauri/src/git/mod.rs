@@ -21,7 +21,7 @@ pub use runner::{GitCommand, GitOutput, GitProcess, Runner, StdinMode, DEFAULT_T
 pub use version::{GitVersion, MINIMUM_GIT_VERSION};
 
 use std::ffi::OsString;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
@@ -594,6 +594,102 @@ pub fn author_ident(runner: &Runner, repo: &Path) -> Result<AuthorIdent, GitErro
         }),
         _ => Err(GitError::invalid("could not parse the git author identity")),
     }
+}
+
+/// Scope of a git config entry.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ConfigScope {
+    Local,
+    Global,
+}
+
+impl ConfigScope {
+    fn flag(self) -> &'static str {
+        match self {
+            Self::Local => "--local",
+            Self::Global => "--global",
+        }
+    }
+}
+
+fn validate_config_key(key: &str) -> Result<(), GitError> {
+    let valid = !key.is_empty()
+        && key.len() <= 128
+        && key
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || matches!(c, '-' | '.' | '_'));
+    if !valid {
+        return Err(GitError::invalid(format!("invalid config key: {key}")));
+    }
+    Ok(())
+}
+
+/// Reads a git config value; `None` when it is not set.
+pub fn config_get(
+    runner: &Runner,
+    repo: &Path,
+    key: &str,
+    scope: ConfigScope,
+) -> Result<Option<String>, GitError> {
+    validate_config_key(key)?;
+    let output = runner.run(&GitCommand::new(["config", scope.flag(), "--get", key]).cwd(repo))?;
+    if !output.success() {
+        return Ok(None);
+    }
+    Ok(Some(
+        output
+            .stdout_lossy()
+            .trim_end_matches(['\r', '\n'])
+            .to_string(),
+    ))
+}
+
+/// Writes a git config value in the given scope.
+pub fn config_set(
+    runner: &Runner,
+    repo: &Path,
+    key: &str,
+    value: &str,
+    scope: ConfigScope,
+) -> Result<(), GitError> {
+    validate_config_key(key)?;
+    runner
+        .run_checked(
+            &GitCommand::new(["config", scope.flag(), key, value])
+                .cwd(repo)
+                .write(),
+        )
+        .map(|_| ())
+}
+
+/// Removes a git config value; a missing entry is not an error.
+pub fn config_unset(
+    runner: &Runner,
+    repo: &Path,
+    key: &str,
+    scope: ConfigScope,
+) -> Result<(), GitError> {
+    validate_config_key(key)?;
+    let _ = runner.run(
+        &GitCommand::new(["config", scope.flag(), "--unset", key])
+            .cwd(repo)
+            .write(),
+    )?;
+    Ok(())
+}
+
+/// Absolute path of the repository-specific ignore file (`info/exclude`).
+pub fn ignore_exclude_path(runner: &Runner, repo: &Path) -> Result<String, GitError> {
+    let output = runner
+        .run_checked(&GitCommand::new(["rev-parse", "--git-path", "info/exclude"]).cwd(repo))?;
+    let path = output.stdout_lossy().trim().to_string();
+    let path = if Path::new(&path).is_absolute() {
+        PathBuf::from(path)
+    } else {
+        repo.join(path)
+    };
+    Ok(path.to_string_lossy().into_owned())
 }
 
 fn rev_list(runner: &Runner, repo: &Path, range: &str) -> Result<Vec<String>, GitError> {
