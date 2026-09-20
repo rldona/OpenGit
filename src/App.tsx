@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { DiffView } from "./components/DiffView";
 import { HistoryView } from "./components/HistoryView";
 import { StatusView } from "./components/StatusView";
 import { getAppVersion } from "./lib/bridge/core";
@@ -122,6 +123,15 @@ function App() {
                     History
                   </button>
                 </li>
+                <li>
+                  <button
+                    type="button"
+                    className={`view-button${activeView === "diff" ? " active" : ""}`}
+                    onClick={() => setActiveView("diff")}
+                  >
+                    Diff
+                  </button>
+                </li>
               </ul>
             ) : (
               <p className="muted">Sin repositorio</p>
@@ -145,6 +155,8 @@ function App() {
           {repo ? (
             activeView === "status" ? (
               <StatusView />
+            ) : activeView === "diff" ? (
+              <DiffView />
             ) : (
               <HistoryView />
             )

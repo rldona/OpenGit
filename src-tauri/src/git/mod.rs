@@ -94,3 +94,73 @@ pub fn diff_numstat(runner: &Runner, repo: &Path, cached: bool) -> Result<Vec<Fi
     let output = runner.run_checked(&GitCommand::new(args).cwd(repo))?;
     parse_numstat(&output.stdout)
 }
+
+/// Ficheros tocados por un commit (numstat con renombrados).
+pub fn commit_files(runner: &Runner, repo: &Path, rev: &str) -> Result<Vec<FileDiff>, GitError> {
+    let args: Vec<OsString> = vec![
+        "diff-tree".into(),
+        "--no-commit-id".into(),
+        "--numstat".into(),
+        "-z".into(),
+        "-r".into(),
+        "-M".into(),
+        "--root".into(),
+        "--end-of-options".into(),
+        rev.into(),
+    ];
+    let output = runner.run_checked(&GitCommand::new(args).cwd(repo))?;
+    parse_numstat(&output.stdout)
+}
+
+/// Parche de un fichero del working tree o del index (`staged`), opcionalmente
+/// invertido (`-R`) para el "reverse hunk".
+pub fn worktree_file_diff(
+    runner: &Runner,
+    repo: &Path,
+    file: &str,
+    staged: bool,
+    reversed: bool,
+) -> Result<String, GitError> {
+    let mut args: Vec<OsString> = vec![
+        "diff".into(),
+        "--no-color".into(),
+        "--no-ext-diff".into(),
+        "-M".into(),
+    ];
+    if staged {
+        args.push("--cached".into());
+    }
+    if reversed {
+        args.push("-R".into());
+    }
+    args.push("--".into());
+    args.push(file.into());
+    let output = runner.run_checked(&GitCommand::new(args).cwd(repo))?;
+    Ok(output.stdout_lossy())
+}
+
+/// Parche de un fichero dentro de un commit (funciona también en el commit raíz).
+pub fn commit_file_diff(
+    runner: &Runner,
+    repo: &Path,
+    rev: &str,
+    file: &str,
+    reversed: bool,
+) -> Result<String, GitError> {
+    let mut args: Vec<OsString> = vec![
+        "show".into(),
+        "--no-color".into(),
+        "--no-ext-diff".into(),
+        "-M".into(),
+        "--format=".into(),
+    ];
+    if reversed {
+        args.push("-R".into());
+    }
+    args.push("--end-of-options".into());
+    args.push(rev.into());
+    args.push("--".into());
+    args.push(file.into());
+    let output = runner.run_checked(&GitCommand::new(args).cwd(repo))?;
+    Ok(output.stdout_lossy())
+}

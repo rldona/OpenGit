@@ -30,6 +30,14 @@ export type Commit = {
   subject: string;
 };
 
+export type FileDiff = {
+  path: string;
+  orig_path: string | null;
+  binary: boolean;
+  added: number | null;
+  deleted: number | null;
+};
+
 export type StatusKind = "ordinary" | "renamed" | "unmerged" | "untracked" | "ignored";
 
 export type FileStatus = {

@@ -7,8 +7,10 @@ import { pickDirectory } from "./lib/bridge/dialog";
 import { subscribeRepoEvents } from "./lib/bridge/events";
 import { listRefs, logPage } from "./lib/bridge/log";
 import { openRepo, recentRepos } from "./lib/bridge/repo";
+import { commitFiles, diffFile, diffNumstat } from "./lib/bridge/diff";
 import { statusRepo } from "./lib/bridge/status";
 import type { Commit, RepoInfo, StatusReport } from "./lib/bridge/types";
+import { useDiffStore } from "./lib/stores/diff";
 import { useLogStore } from "./lib/stores/log";
 import { useRepoStore } from "./lib/stores/repo";
 import { useStatusStore } from "./lib/stores/status";
@@ -46,6 +48,16 @@ vi.mock("./lib/bridge/status", () => ({
 
 vi.mock("./lib/bridge/events", () => ({
   subscribeRepoEvents: vi.fn().mockResolvedValue([]),
+}));
+
+vi.mock("./lib/bridge/diff", () => ({
+  diffFile: vi.fn(),
+  commitFiles: vi.fn(),
+  diffNumstat: vi.fn(),
+}));
+
+vi.mock("./components/DiffEditor", () => ({
+  DiffEditor: () => <div data-testid="diff-editor" />,
 }));
 
 const REPO: RepoInfo = {
@@ -89,9 +101,15 @@ describe("App", () => {
     vi.mocked(listRefs).mockResolvedValue([]);
     vi.mocked(logPage).mockResolvedValue([COMMIT]);
     vi.mocked(statusRepo).mockResolvedValue(REPORT);
+    vi.mocked(commitFiles).mockResolvedValue([
+      { path: "a.txt", orig_path: null, binary: false, added: 1, deleted: 0 },
+    ]);
+    vi.mocked(diffNumstat).mockResolvedValue([]);
+    vi.mocked(diffFile).mockResolvedValue("diff --git a/a.txt b/a.txt\n@@ -1 +1 @@\n-a\n+b\n");
     useRepoStore.setState({ repo: null, recents: [], loading: false, error: null });
     useLogStore.getState().reset();
     useStatusStore.getState().reset();
+    useDiffStore.getState().reset();
     useUiStore.setState({
       outputOpen: true,
       outputLines: ["OpenGit listo."],
@@ -139,6 +157,19 @@ describe("App", () => {
 
     expect(screen.getByRole("complementary", { name: "Detalle del commit" })).toBeInTheDocument();
     expect(screen.getByText("aaaa0000")).toBeInTheDocument();
+  });
+
+  it("abre el diff de un commit desde el detalle", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Seleccionar carpeta" }));
+    await user.click(await screen.findByText("commit de prueba"));
+    await user.click(screen.getByRole("button", { name: "Ver diff" }));
+
+    expect(commitFiles).toHaveBeenCalledWith("/tmp/mi-repo", "aaaa0000");
+    expect(await screen.findByTestId("diff-editor")).toBeInTheDocument();
+    expect(screen.getByText("a.txt")).toBeInTheDocument();
   });
 
   it("alterna el panel de salida", async () => {
