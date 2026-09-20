@@ -20,9 +20,36 @@ export type ClassifiedPatchLine = {
   text: string;
   type: PatchLineType;
   hunk: number | null;
+  /** Número de línea en la versión original; `null` si no existe ahí. */
+  oldLine: number | null;
+  /** Número de línea en la versión nueva; `null` si no existe ahí. */
+  newLine: number | null;
 };
 
-/** Clasifica las líneas del parche para pintarlas y seleccionarlas. */
+export type HunkHeader = {
+  oldStart: number;
+  oldCount: number;
+  newStart: number;
+  newCount: number;
+  section: string;
+};
+
+/** Parsea `@@ -a[,b] +c[,d] @@ sección`; `null` si no encaja. */
+export function parseHunkHeader(text: string): HunkHeader | null {
+  const match = /^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@ ?(.*)$/.exec(text);
+  if (!match) {
+    return null;
+  }
+  return {
+    oldStart: Number.parseInt(match[1], 10),
+    oldCount: match[2] === undefined ? 1 : Number.parseInt(match[2], 10),
+    newStart: Number.parseInt(match[3], 10),
+    newCount: match[4] === undefined ? 1 : Number.parseInt(match[4], 10),
+    section: match[5] ?? "",
+  };
+}
+
+/** Clasifica las líneas del parche para pintarlas, seleccionarlas y numerarlas. */
 export function classifyPatchLines(patch: string): ClassifiedPatchLine[] {
   const raw = patch.split("\n");
   if (raw.length > 0 && raw[raw.length - 1] === "") {
@@ -30,25 +57,40 @@ export function classifyPatchLines(patch: string): ClassifiedPatchLine[] {
   }
   let hunk = -1;
   let inHunk = false;
+  let oldLine = 0;
+  let newLine = 0;
+
   return raw.map((text, index) => {
     if (text.startsWith("@@")) {
       hunk += 1;
       inHunk = true;
-      return { index, text, type: "hunk", hunk };
+      const header = parseHunkHeader(text);
+      if (header) {
+        oldLine = header.oldStart;
+        newLine = header.newStart;
+      }
+      return { index, text, type: "hunk", hunk, oldLine: null, newLine: null };
     }
     if (!inHunk) {
-      return { index, text, type: "meta", hunk: null };
+      return { index, text, type: "meta", hunk: null, oldLine: null, newLine: null };
     }
     if (text.startsWith("+") && !text.startsWith("+++")) {
-      return { index, text, type: "add", hunk };
+      const line = { index, text, type: "add" as const, hunk, oldLine: null, newLine };
+      newLine += 1;
+      return line;
     }
     if (text.startsWith("-") && !text.startsWith("---")) {
-      return { index, text, type: "del", hunk };
+      const line = { index, text, type: "del" as const, hunk, oldLine, newLine: null };
+      oldLine += 1;
+      return line;
     }
     if (text.startsWith("\\")) {
-      return { index, text, type: "meta", hunk };
+      return { index, text, type: "meta", hunk, oldLine: null, newLine: null };
     }
-    return { index, text, type: "context", hunk };
+    const line = { index, text, type: "context" as const, hunk, oldLine, newLine };
+    oldLine += 1;
+    newLine += 1;
+    return line;
   });
 }
 

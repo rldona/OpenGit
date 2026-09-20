@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { confirmDestructive } from "../lib/bridge/dialog";
 import { copyText } from "../lib/clipboard";
 import { LAYOUT_KEYS } from "../lib/layout";
@@ -35,6 +35,7 @@ export function DiffView() {
   const fileTree = useUiStore((state) => state.fileTree);
   const setFileTree = useUiStore((state) => state.setFileTree);
   const fileMenu = useContextMenu();
+  const [fileFilter, setFileFilter] = useState("");
 
   useEffect(() => {
     // Solo carga el working tree si no hay un objetivo previo (p. ej. un commit).
@@ -45,6 +46,15 @@ export function DiffView() {
 
   const label = target?.kind === "commit" ? `commit ${target.rev.slice(0, 7)}` : "Working tree";
   const pointer = selected && !selected.untracked && !binary ? parseLfsPointerPatch(patch) : null;
+  const needle = fileFilter.trim().toLowerCase();
+  const visibleFiles =
+    needle === ""
+      ? files
+      : files.filter(
+          (entry) =>
+            entry.path.toLowerCase().includes(needle) ||
+            (entry.orig_path?.toLowerCase().includes(needle) ?? false),
+        );
   // Con el parche invertido los índices de hunk/línea no corresponden al diff
   // que el backend vuelve a leer, así que no se ofrecen acciones de parche.
   const patchActions = target?.kind === "worktree" && !reversed;
@@ -175,10 +185,22 @@ export function DiffView() {
         label="Resize file list"
       >
         <div className="diff-files">
+          <div className="diff-files-search">
+            <input
+              type="search"
+              aria-label="Filter files"
+              placeholder="Filter…"
+              value={fileFilter}
+              onChange={(event) => setFileFilter(event.target.value)}
+            />
+          </div>
           {files.length === 0 && <p className="muted status-empty">No changes to show</p>}
+          {files.length > 0 && visibleFiles.length === 0 && (
+            <p className="muted status-empty">No files match</p>
+          )}
           {fileTree ? (
             <FileTree
-              items={files}
+              items={visibleFiles}
               pathOf={(entry) => entry.path}
               renderFile={(entry, name) => renderFileEntry(entry, name)}
               renderDirExtra={(dir) => {
@@ -198,7 +220,7 @@ export function DiffView() {
               }}
             />
           ) : (
-            files.map((entry) => (
+            visibleFiles.map((entry) => (
               <div key={entry.key} className="diff-file-row">
                 {renderFileEntry(entry)}
               </div>
