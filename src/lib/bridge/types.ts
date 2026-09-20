@@ -238,6 +238,15 @@ export type GpgKey = {
   expires: number | null;
 };
 
+/** One entry of the reflog (OG-089). */
+export type ReflogEntry = {
+  hash: string;
+  selector: string;
+  subject: string;
+  author: string;
+  time: number;
+};
+
 /** Working-tree search query (`git grep`, OG-093). */
 export type GrepQuery = {
   pattern: string;

@@ -130,6 +130,7 @@ pub fn run() {
             commands::gitignore_templates,
             commands::close_repo,
             commands::grep_worktree,
+            commands::reflog,
             commands::format_patch,
             commands::apply_patch,
             commands::log_page,

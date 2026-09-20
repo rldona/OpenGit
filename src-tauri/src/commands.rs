@@ -731,6 +731,16 @@ pub fn cherry_pick(path: String, hash: String, state: State<'_, AppState>) -> Re
     })
 }
 
+/// Reads the reflog, newest first (OG-089).
+#[tauri::command]
+pub fn reflog(
+    path: String,
+    limit: usize,
+    state: State<'_, AppState>,
+) -> Result<Vec<crate::git::ReflogEntry>, GitError> {
+    crate::git::reflog(&state.runner, Path::new(&path), limit)
+}
+
 /// Cherry-picks several commits or a range (OG-096).
 #[tauri::command]
 pub fn cherry_pick_range(

@@ -1,8 +1,8 @@
 mod support;
 
 use opengit_lib::git::{
-    cherry_pick, cherry_pick_range, repo_op_state, reset, reset_mixed, revert_commit, status,
-    ResetMode, Runner,
+    cherry_pick, cherry_pick_range, reflog, repo_op_state, reset, reset_mixed, revert_commit,
+    status, ResetMode, Runner,
 };
 use support::TestRepo;
 
@@ -219,4 +219,27 @@ fn revert_merge_commit_needs_a_mainline() {
 
     // Mainline 1 is `main`, so the feature changes are undone.
     assert!(!repo.path().join("feature.txt").exists());
+}
+
+#[test]
+fn reflog_lists_entries_newest_first() {
+    let repo = TestRepo::init();
+    commit_file(&repo, "a.txt", "uno\n", "base");
+    commit_file(&repo, "a.txt", "dos\n", "second");
+
+    let entries = reflog(&runner(), repo.path(), 10).expect("reflog");
+
+    assert!(entries.len() >= 2, "{entries:?}");
+    // `%gs` prefixes the reflog action ("commit: second").
+    assert!(
+        entries[0].subject.ends_with("second"),
+        "{}",
+        entries[0].subject
+    );
+    assert!(
+        entries[0].selector.starts_with("HEAD@{"),
+        "{}",
+        entries[0].selector
+    );
+    assert_eq!(entries[0].hash, head(&repo));
 }
