@@ -181,7 +181,7 @@ pub fn git_version(state: State<'_, AppState>) -> Result<GitVersion, GitError> {
 }
 
 /// Validates the folder, returns the repo info, adds it to recents and
-/// starts watching `.git` (stopping the previous watcher).
+/// starts watching the working tree and `.git` (stopping the previous watcher).
 #[tauri::command]
 pub fn open_repo(
     app: AppHandle,
@@ -202,11 +202,15 @@ pub fn open_repo(
         previous.stop();
     }
     let auto_refresh = Arc::clone(&state.auto_refresh);
-    if let Ok(handle) = watch::start(PathBuf::from(&info.root), move |kind| {
-        if auto_refresh.load(Ordering::SeqCst) {
-            let _ = app.emit(kind.event_name(), event_root.clone());
-        }
-    }) {
+    if let Ok(handle) = watch::start(
+        state.runner.clone(),
+        PathBuf::from(&info.root),
+        move |kind| {
+            if auto_refresh.load(Ordering::SeqCst) {
+                let _ = app.emit(kind.event_name(), event_root.clone());
+            }
+        },
+    ) {
         *guard = Some(handle);
     }
     Ok(info)

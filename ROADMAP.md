@@ -173,6 +173,17 @@ Bring recent projects back as a shortcut on the empty state.
 
 **Exit:** reopen a project in one click from the home screen. ✅
 
+## M13 — Live working tree ✅ _(closed 2026-09-20)_
+
+The status list should react to external edits, like SourceTree, instead of
+waiting for a manual refresh.
+
+- [x] Watch the working tree (filtering git-ignored paths) so saving a file
+  updates "Uncommitted changes" live (OG-080).
+
+**Exit:** editing a file outside the app refreshes the list without pressing
+Refresh. ✅
+
 ## Translating documentation and comments to English
 
 Since 2026-09-19 the convention is **English for documentation, code and
