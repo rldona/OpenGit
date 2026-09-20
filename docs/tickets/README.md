@@ -128,4 +128,4 @@ One file per ticket, named `OG-NNN-slug.md`. Every change in the repository star
 | [OG-093](OG-093-search-working-tree.md) | Search the working tree (git grep) | M18 | done |
 | [OG-094](OG-094-patches.md) | Create and apply patches | M18 | done |
 | [OG-095](OG-095-word-diff-whitespace.md) | Word-level diff and ignore-whitespace options | M18 | done |
-| [OG-096](OG-096-cherry-pick-range.md) | Cherry-pick several commits or a range | M18 | ready |
+| [OG-096](OG-096-cherry-pick-range.md) | Cherry-pick several commits or a range | M18 | done |
