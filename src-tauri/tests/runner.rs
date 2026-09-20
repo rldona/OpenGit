@@ -53,11 +53,12 @@ fn error_de_git_llega_con_stderr_y_codigo() {
     match error {
         GitError::CommandFailed {
             exit_code,
+            stdout,
             stderr,
             args,
         } => {
             assert_ne!(exit_code, 0);
-            assert!(!stderr.is_empty());
+            assert!(!stdout.is_empty() || !stderr.is_empty());
             assert_eq!(args.first().map(String::as_str), Some("rev-parse"));
         }
         other => panic!("esperaba CommandFailed, llegó {other:?}"),

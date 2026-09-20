@@ -5,6 +5,7 @@ import { useRepoStore } from "../lib/stores/repo";
 import { useDiffStore } from "../lib/stores/diff";
 import { useStatusStore } from "../lib/stores/status";
 import { useUiStore } from "../lib/stores/ui";
+import { CommitPanel } from "./CommitPanel";
 
 type SectionKey = "conflicts" | "staged" | "unstaged" | "untracked";
 
@@ -180,6 +181,7 @@ export function StatusView() {
             </section>
           ))}
       </div>
+      <CommitPanel />
     </div>
   );
 }

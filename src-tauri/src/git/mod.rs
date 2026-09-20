@@ -17,11 +17,96 @@ pub use version::{GitVersion, MINIMUM_GIT_VERSION};
 use std::ffi::OsString;
 use std::path::Path;
 
+use serde::Serialize;
+
 /// Formato de una línea de log: campos separados por `%x1f`, commits por `-z`.
 pub const LOG_FORMAT: &str = "%H%x1f%P%x1f%an%x1f%ae%x1f%at%x1f%D%x1f%s";
 /// Formato de `for-each-ref`: campos separados por NUL.
 pub const REFS_FORMAT: &str =
     "%(refname)%00%(objectname)%00%(objecttype)%00%(upstream)%00%(upstream:track)";
+
+/// Resultado de crear un commit.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct CommitResult {
+    pub hash: String,
+    pub subject: String,
+}
+
+/// Operación de git a medias en el repo (merge, rebase, cherry-pick/revert).
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize)]
+pub struct RepoOpState {
+    pub merge: bool,
+    pub rebase: bool,
+    pub cherry_pick: bool,
+}
+
+/// Mensaje del último commit, para precargar el amend.
+pub fn last_commit_message(runner: &Runner, repo: &Path) -> Result<String, GitError> {
+    let output = runner.run_checked(&GitCommand::new(["log", "-1", "--format=%B"]).cwd(repo))?;
+    Ok(output.stdout_lossy().trim_end().to_string())
+}
+
+/// Crea el commit con el mensaje por stdin (nunca interpolado en `-m`).
+/// No se pasa `--no-verify`: los hooks del usuario mandan.
+pub fn commit(
+    runner: &Runner,
+    repo: &Path,
+    message: &str,
+    amend: bool,
+) -> Result<CommitResult, GitError> {
+    let mut args: Vec<OsString> = vec!["commit".into(), "--file=-".into()];
+    if amend {
+        args.push("--amend".into());
+    }
+    let output = runner.run(
+        &GitCommand::new(args.clone())
+            .cwd(repo)
+            .write()
+            .stdin_bytes(message.as_bytes().to_vec()),
+    )?;
+    if !output.success() {
+        return Err(GitError::CommandFailed {
+            exit_code: output.exit_code(),
+            stdout: output.stdout_lossy(),
+            stderr: output.stderr_lossy(),
+            args: args
+                .iter()
+                .map(|arg| arg.to_string_lossy().into_owned())
+                .collect(),
+        });
+    }
+    let hash = runner
+        .run_checked(&GitCommand::new(["rev-parse", "--short", "HEAD"]).cwd(repo))?
+        .stdout_lossy()
+        .trim()
+        .to_string();
+    let subject = runner
+        .run_checked(&GitCommand::new(["log", "-1", "--format=%s"]).cwd(repo))?
+        .stdout_lossy()
+        .trim()
+        .to_string();
+    Ok(CommitResult { hash, subject })
+}
+
+/// Detecta merge, rebase o cherry-pick/revert en curso.
+pub fn repo_op_state(runner: &Runner, repo: &Path) -> Result<RepoOpState, GitError> {
+    let git_dir = runner
+        .run_checked(&GitCommand::new(["rev-parse", "--git-dir"]).cwd(repo))?
+        .stdout_lossy()
+        .trim()
+        .to_string();
+    let git_dir = if Path::new(&git_dir).is_absolute() {
+        std::path::PathBuf::from(git_dir)
+    } else {
+        repo.join(git_dir)
+    };
+    Ok(RepoOpState {
+        merge: git_dir.join("MERGE_HEAD").exists(),
+        rebase: git_dir.join("rebase-merge").exists() || git_dir.join("rebase-apply").exists(),
+        cherry_pick: git_dir.join("CHERRY_PICK_HEAD").exists()
+            || git_dir.join("REVERT_HEAD").exists(),
+    })
+}
 
 /// Página de historial en orden topológico. Con `rev = None` recorre todas las
 /// refs; con `Some(rev)` solo la rama o ref indicada.
