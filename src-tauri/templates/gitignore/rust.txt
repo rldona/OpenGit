@@ -1,0 +1,13 @@
+# Build output
+/target/
+
+# Rust tooling
+**/*.rs.bk
+
+# Environment
+.env
+
+# Editor and OS
+.DS_Store
+.idea/
+.vscode/

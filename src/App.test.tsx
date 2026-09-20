@@ -79,6 +79,8 @@ vi.mock("./lib/bridge/repo", () => ({
   remoteSetUrl: vi.fn().mockResolvedValue(undefined),
   remoteRename: vi.fn().mockResolvedValue(undefined),
   remoteRemove: vi.fn().mockResolvedValue(undefined),
+  initRepo: vi.fn().mockResolvedValue(undefined),
+  gitignoreTemplates: vi.fn().mockResolvedValue([]),
 }));
 
 vi.mock("./lib/bridge/log", () => ({
@@ -947,6 +949,14 @@ describe("App", () => {
     act(() => menuMock.handler?.("clone-repo"));
 
     expect(screen.getByRole("dialog", { name: "Clone Repository" })).toBeInTheDocument();
+  });
+
+  it("opens the Create dialog from the native menu", () => {
+    render(<App />);
+
+    act(() => menuMock.handler?.("create-repo"));
+
+    expect(screen.getByRole("dialog", { name: "Create Repository" })).toBeInTheDocument();
   });
 
   it("shows the file history band and returns to the full log", async () => {

@@ -28,6 +28,7 @@ fn build_menu(app: &tauri::App) -> tauri::Result<()> {
     let file_menu = SubmenuBuilder::new(app, "File")
         .item(&MenuItemBuilder::with_id("open-repo", "Open Repository…").build(app)?)
         .item(&MenuItemBuilder::with_id("clone-repo", "Clone Repository…").build(app)?)
+        .item(&MenuItemBuilder::with_id("create-repo", "Create Repository…").build(app)?)
         .item(&MenuItemBuilder::with_id("close-repo", "Close Repository").build(app)?)
         .separator()
         .close_window()
@@ -108,6 +109,8 @@ pub fn run() {
             commands::app_version,
             commands::git_version,
             commands::open_repo,
+            commands::init_repo,
+            commands::gitignore_templates,
             commands::close_repo,
             commands::log_page,
             commands::list_refs,

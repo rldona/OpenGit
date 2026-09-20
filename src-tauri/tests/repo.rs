@@ -224,3 +224,55 @@ fn remote_urls_lists_name_url_and_web() {
         .expect("local");
     assert_eq!(local.web_url, None);
 }
+
+#[test]
+fn gitignore_templates_are_available() {
+    let templates = repo::gitignore_templates();
+
+    assert!(templates.iter().any(|t| t.id == "rust" && t.name == "Rust"));
+    assert!(templates.iter().any(|t| t.id == "node"));
+}
+
+#[test]
+fn init_creates_repository_without_history() {
+    let dir = TempDir::new("init-empty");
+    let path = dir.path().join("project");
+
+    repo::init(&runner(), &path, "trunk", None, false).expect("crear repo");
+
+    let info = repo::open(&runner(), &path).expect("abrir repo creado");
+    assert_eq!(info.branch.as_deref(), Some("trunk"));
+    assert!(!info.has_commits);
+    assert!(!path.join(".gitignore").exists());
+}
+
+#[test]
+fn init_with_template_and_first_commit() {
+    // `repo::init` commits with the process environment; give it an identity
+    // without touching the user's global git config.
+    std::env::set_var("GIT_AUTHOR_NAME", "OpenGit Test");
+    std::env::set_var("GIT_AUTHOR_EMAIL", "test@opengit.dev");
+    std::env::set_var("GIT_COMMITTER_NAME", "OpenGit Test");
+    std::env::set_var("GIT_COMMITTER_EMAIL", "test@opengit.dev");
+
+    let dir = TempDir::new("init-commit");
+    let path = dir.path().join("project");
+
+    repo::init(&runner(), &path, "main", Some("rust"), true).expect("crear repo");
+
+    let info = repo::open(&runner(), &path).expect("abrir repo creado");
+    assert_eq!(info.branch.as_deref(), Some("main"));
+    assert!(info.has_commits);
+    assert!(path.join(".gitignore").exists());
+}
+
+#[test]
+fn init_rejects_non_empty_destination() {
+    let dir = TempDir::new("init-nonempty");
+    std::fs::write(dir.path().join("file.txt"), b"x").expect("escribir fichero");
+
+    let error = repo::init(&runner(), dir.path(), "main", None, false)
+        .expect_err("un destino no vacío debe fallar");
+
+    assert!(error.to_string().contains("not empty"));
+}

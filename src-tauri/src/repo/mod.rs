@@ -78,6 +78,120 @@ pub fn open(runner: &Runner, path: &Path) -> Result<RepoInfo, GitError> {
     })
 }
 
+/// `.gitignore` template offered when creating a repository (OG-086).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct GitignoreTemplate {
+    pub id: String,
+    pub name: String,
+}
+
+const GITIGNORE_TEMPLATES: &[(&str, &str, &str)] = &[
+    (
+        "node",
+        "Node.js",
+        include_str!("../../templates/gitignore/node.txt"),
+    ),
+    (
+        "rust",
+        "Rust",
+        include_str!("../../templates/gitignore/rust.txt"),
+    ),
+    (
+        "python",
+        "Python",
+        include_str!("../../templates/gitignore/python.txt"),
+    ),
+    ("go", "Go", include_str!("../../templates/gitignore/go.txt")),
+];
+
+/// Templates for the "Create repository" dialog.
+pub fn gitignore_templates() -> Vec<GitignoreTemplate> {
+    GITIGNORE_TEMPLATES
+        .iter()
+        .map(|(id, name, _)| GitignoreTemplate {
+            id: (*id).to_string(),
+            name: (*name).to_string(),
+        })
+        .collect()
+}
+
+fn gitignore_content(id: &str) -> Option<&'static str> {
+    GITIGNORE_TEMPLATES
+        .iter()
+        .find(|(template_id, _, _)| *template_id == id)
+        .map(|(_, _, content)| *content)
+}
+
+/// Creates a repository at `path` with an initial branch, an optional
+/// `.gitignore` template and an optional first commit.
+pub fn init(
+    runner: &Runner,
+    path: &Path,
+    branch: &str,
+    template: Option<&str>,
+    initial_commit: bool,
+) -> Result<(), GitError> {
+    if branch.trim().is_empty() {
+        return Err(GitError::invalid("the initial branch name is required"));
+    }
+
+    let parent = if path.exists() {
+        if !path.is_dir() {
+            return Err(GitError::invalid(
+                "the destination exists and is not a folder",
+            ));
+        }
+        let mut entries = std::fs::read_dir(path).map_err(|error| {
+            GitError::invalid(format!("could not read the destination: {error}"))
+        })?;
+        if entries.next().is_some() {
+            return Err(GitError::invalid("the destination folder is not empty"));
+        }
+        path.parent()
+            .filter(|parent| !parent.as_os_str().is_empty())
+            .map(Path::to_path_buf)
+            .unwrap_or_else(|| PathBuf::from("."))
+    } else {
+        let parent = path
+            .parent()
+            .filter(|parent| !parent.as_os_str().is_empty())
+            .ok_or_else(|| GitError::invalid("the destination needs a parent folder"))?;
+        if !parent.is_dir() {
+            return Err(GitError::invalid(
+                "the destination's parent folder does not exist",
+            ));
+        }
+        parent.to_path_buf()
+    };
+
+    crate::git::validate_ref_name(runner, &parent, branch)?;
+
+    let mut args: Vec<std::ffi::OsString> = vec!["init".into(), "-b".into(), branch.into()];
+    args.push(path.as_os_str().to_os_string());
+    runner.run_checked(&GitCommand::new(args).cwd(&parent).write())?;
+
+    if let Some(content) = template.and_then(gitignore_content) {
+        std::fs::write(path.join(".gitignore"), content)
+            .map_err(|error| GitError::invalid(format!("could not write .gitignore: {error}")))?;
+    }
+
+    if initial_commit {
+        crate::git::author_ident(runner, path).map_err(|_| {
+            GitError::invalid(
+                "configure your name and email in Settings before creating the first commit",
+            )
+        })?;
+        runner.run_checked(&GitCommand::new(["add", "-A"]).cwd(path).write())?;
+        runner.run_checked(
+            &GitCommand::new(["commit", "--allow-empty", "-m", "Initial commit"])
+                .cwd(path)
+                .write(),
+        )?;
+    }
+
+    Ok(())
+}
+
 fn head_info(
     runner: &Runner,
     repo: &Path,
