@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { useCommitStore } from "../stores/commit";
 import { useRefsStore } from "../stores/refs";
 import { useUiStore } from "../stores/ui";
-import type { MergeResult } from "../bridge/types";
+import type { MergeOptions, MergeResult } from "../bridge/types";
 
 /**
  * Fusiona una rama en la actual y deja la UI donde toca: recarga el estado de
@@ -14,11 +14,11 @@ export function useMergeBranch(root: string | null) {
   const setActiveView = useUiStore((state) => state.setActiveView);
 
   return useCallback(
-    async (rev: string, noFf: boolean): Promise<MergeResult | null> => {
+    async (rev: string, options: MergeOptions): Promise<MergeResult | null> => {
       if (!root) {
         return null;
       }
-      const result = await merge(root, rev, noFf);
+      const result = await merge(root, rev, options);
       if (result) {
         await useCommitStore.getState().load(root);
         if (result.conflicted) {

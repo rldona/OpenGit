@@ -112,6 +112,8 @@ plus the merge loose ends and drag gestures.
 - [ ] Merge strategies (`--squash`, `-X ours/theirs`) and Merge in the native menu (OG-059).
 - [ ] Drag & drop: branch to merge and files between staged/unstaged (OG-060).
 - [x] Image preview and comparison (before/after) (OG-061).
+- [x] Merge window with the log picker ("Merge From Log") (OG-063).
+- [x] Clicking a branch selects its commit in the history (OG-064).
 - [x] Refresh button: include stashes and give feedback (OG-065).
 
 **Exit:** search and navigate history without touching the terminal, and run a
