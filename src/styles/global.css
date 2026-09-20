@@ -1632,6 +1632,173 @@ body {
   height: 100%;
 }
 
+/* Merge window (OG-063): log picker plus branch picker, options at the bottom. */
+.merge-window {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(1000px, calc(100vw - 40px));
+  height: min(88vh, 780px);
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-panel);
+  box-shadow: var(--shadow);
+}
+
+.merge-tabs {
+  display: flex;
+  flex-shrink: 0;
+  gap: 6px;
+}
+
+.merge-tab {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.merge-tab.active {
+  border-color: var(--accent);
+  background: rgb(59 130 246 / 12%);
+  color: var(--text);
+}
+
+.merge-tab-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.merge-tab-slot {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.merge-tab-slot.hidden {
+  display: none;
+}
+
+.merge-tab-panel {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  min-height: 0;
+}
+
+.merge-log-toolbar {
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.merge-log-toolbar select,
+.merge-log-toolbar input[type="search"] {
+  padding: 3px 6px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-elevated);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+}
+
+.merge-log-toolbar label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.merge-log-wrap {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+
+.merge-log-list {
+  position: relative;
+  flex: 1.15;
+  min-height: 0;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+}
+
+.merge-log-inner {
+  position: relative;
+}
+
+.merge-graph {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.merge-log-row {
+  position: absolute;
+  right: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 28px;
+  padding-right: 10px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.merge-log-row:hover {
+  background: var(--hover);
+}
+
+.merge-log-row.selected {
+  background: var(--row-selected);
+}
+
+.merge-preview {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+}
+
+.merge-preview > .diff-files {
+  width: 280px;
+  flex-shrink: 0;
+}
+
+.merge-options {
+  flex-shrink: 0;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
 /* Image preview: checkerboard so transparency reads, Before/After labels. */
 .image-diff {
   display: flex;

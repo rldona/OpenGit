@@ -198,23 +198,60 @@ pub struct MergeResult {
     pub output: String,
 }
 
-/// `git merge --no-edit [--no-ff] <rev>` onto the current branch.
+/// Merge options, mirroring the merge window checkboxes.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MergeOptions {
+    /// `--no-ff`: merge commit even when a fast-forward was possible.
+    pub no_ff: bool,
+    /// `--no-commit`: stop before committing the merge.
+    pub no_commit: bool,
+    /// `--log`: include the merged commits' subjects in the merge commit.
+    pub include_messages: bool,
+    /// `--rebase` instead of a merge.
+    pub rebase: bool,
+}
+
+fn merge_args(rev: &str, options: MergeOptions) -> Vec<OsString> {
+    // `git merge` has no `--rebase`: the checkbox is a rebase of the current
+    // branch onto the picked rev, which is what SourceTree runs here.
+    if options.rebase {
+        return vec!["rebase".into(), "--end-of-options".into(), rev.into()];
+    }
+    let mut args: Vec<OsString> = vec!["merge".into(), "--no-edit".into()];
+    if options.no_ff {
+        args.push("--no-ff".into());
+    }
+    if options.no_commit {
+        args.push("--no-commit".into());
+    }
+    if options.include_messages {
+        args.push("--log".into());
+    }
+    args.push("--end-of-options".into());
+    args.push(rev.into());
+    args
+}
+
+/// Whether the index has unmerged entries, which is what defines a conflict:
+/// `MERGE_HEAD` also exists after a clean `--no-commit` merge.
+fn has_unmerged(runner: &Runner, repo: &Path) -> Result<bool, GitError> {
+    let output = runner.run(&GitCommand::new(["ls-files", "--unmerged"]).cwd(repo))?;
+    Ok(!output.stdout_lossy().trim().is_empty())
+}
+
+/// `git merge --no-edit [flags] <rev>` onto the current branch.
 pub fn merge_branch(
     runner: &Runner,
     repo: &Path,
     rev: &str,
-    no_ff: bool,
+    options: MergeOptions,
 ) -> Result<MergeResult, GitError> {
     validate_ref_name(runner, repo, rev)?;
-    let mut args: Vec<OsString> = vec!["merge".into(), "--no-edit".into()];
-    if no_ff {
-        args.push("--no-ff".into());
-    }
-    args.push("--end-of-options".into());
-    args.push(rev.into());
+    let args = merge_args(rev, options);
     let output = runner.run(&GitCommand::new(args.clone()).cwd(repo).write())?;
-    // The exit code does not distinguish conflict from error: MERGE_HEAD decides.
-    let conflicted = repo_op_state(runner, repo)?.merge;
+    // The exit code does not distinguish conflict from error: unmerged entries do.
+    let conflicted = has_unmerged(runner, repo)?;
     if !output.success() && !conflicted {
         return Err(GitError::CommandFailed {
             exit_code: output.exit_code(),
@@ -1299,4 +1336,58 @@ pub fn commit_file_diff(
     args.push(file.into());
     let output = runner.run_checked(&GitCommand::new(args).cwd(repo))?;
     Ok(output.stdout_lossy())
+}
+
+#[cfg(test)]
+mod merge_args_tests {
+    use super::*;
+
+    fn args_of(options: MergeOptions) -> Vec<String> {
+        merge_args("feature", options)
+            .iter()
+            .map(|arg| arg.to_string_lossy().into_owned())
+            .collect()
+    }
+
+    #[test]
+    fn merge_without_flags() {
+        assert_eq!(
+            args_of(MergeOptions::default()),
+            vec!["merge", "--no-edit", "--end-of-options", "feature"]
+        );
+    }
+
+    #[test]
+    fn merge_with_the_window_checkboxes() {
+        assert_eq!(
+            args_of(MergeOptions {
+                no_ff: true,
+                no_commit: true,
+                include_messages: true,
+                rebase: false,
+            }),
+            vec![
+                "merge",
+                "--no-edit",
+                "--no-ff",
+                "--no-commit",
+                "--log",
+                "--end-of-options",
+                "feature"
+            ]
+        );
+    }
+
+    #[test]
+    fn rebase_ignores_the_merge_only_flags() {
+        assert_eq!(
+            args_of(MergeOptions {
+                no_ff: true,
+                no_commit: true,
+                include_messages: true,
+                rebase: true,
+            }),
+            vec!["rebase", "--end-of-options", "feature"]
+        );
+    }
 }

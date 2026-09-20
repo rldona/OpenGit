@@ -5,7 +5,7 @@ import { DiffView } from "./components/DiffView";
 import { ExtrasSidebar } from "./components/ExtrasSidebar";
 import { FetchDialog } from "./components/FetchDialog";
 import { HistoryView } from "./components/HistoryView";
-import { MergeDialog } from "./components/MergeDialog";
+import { MergeWindow } from "./components/MergeWindow";
 import { OpBanner } from "./components/OpBanner";
 import { PullDialog } from "./components/PullDialog";
 import { RebaseView } from "./components/RebaseView";
@@ -269,7 +269,7 @@ function App() {
 
       {repo && fetchOpen && <FetchDialog onClose={() => setFetchOpen(false)} />}
       {repo && pullOpen && <PullDialog onClose={() => setPullOpen(false)} />}
-      {repo && mergeOpen && <MergeDialog onClose={() => setMergeOpen(false)} />}
+      {repo && mergeOpen && <MergeWindow onClose={() => setMergeOpen(false)} />}
       <RemoteJobModal />
 
       {repo && <OpBanner />}
