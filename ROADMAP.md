@@ -72,7 +72,7 @@ Acercar el chasis y los paneles a la UX de SourceTree sin perder el rendimiento 
 - [x] Splits redimensionables entre sidebar, lista y paneles, con tamaños persistidos (OG-036).
 - [x] Tabla de commits con cabecera (Graph, Description, Commit, Author, Date) y refs coloreadas (OG-037).
 - [x] Menús contextuales en commits, refs y ficheros (OG-038).
-- [ ] Paneles de status/diff estilo SourceTree: columnas, cabecera por hunk con Reverse, búsqueda en el panel (OG-039).
+- [x] Paneles de status/diff estilo SourceTree: columnas, cabecera por hunk con Reverse, búsqueda en el panel (OG-039).
 - [ ] Commits entrantes/salientes con badges ↓/↑ por rama (OG-040).
 
 ## Fuera de alcance
