@@ -65,4 +65,4 @@ Un fichero por ticket, nombrado `OG-NNN-slug.md`. Todo cambio del repositorio na
 | [OG-030](OG-030-diff-stash.md) | Diff de stash | M5 | done |
 | [OG-031](OG-031-descartar-hunks.md) | Descartar hunks y líneas | M5 | done |
 | [OG-032](OG-032-arbol-ficheros.md) | Árbol de ficheros en diff y status | M5 | done |
-| [OG-033](OG-033-skip.md) | `--skip` en rebase y cherry-pick | M5 | in-progress |
+| [OG-033](OG-033-skip.md) | `--skip` en rebase y cherry-pick | M5 | done |

@@ -1,7 +1,7 @@
 # OG-033 · `--skip` en rebase y cherry-pick
 
 - **Milestone:** M5 — Pulido (v2 de OG-019)
-- **Estado:** in-progress
+- **Estado:** done
 - **Depende de:** OG-019, OG-021
 - **Referencias:** ROADMAP.md
 
@@ -40,4 +40,4 @@ El banner de operaciones (OG-019) permite Abort y Continue, pero no **saltar** e
 - Rust: `repo_op_skip` rechaza `merge` con `merge has no skip: resolve the conflicts or abort`; el comando `repo_op_skip` se registra junto a abort/continue.
 - UI: botón **Skip** en el banner solo cuando la operación no es merge; el store `commit` añade `skipOp` con el mismo refresco que abort/continue y salida "Operation skipped".
 - Tests: 117 Rust (3 de integración) y 202 frontend (2 de banner y 1 de store).
-- Pendiente para cerrar: PR y CI verde.
+- Cerrado el 2026-09-18 con CI verde (Frontend 40 s, Rust 1m54s) en el PR #30.
