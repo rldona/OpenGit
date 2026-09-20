@@ -731,10 +731,6 @@ body {
   border: 1px solid var(--border);
   border-bottom-color: transparent;
   border-radius: 6px 6px 0 0;
-  background: transparent;
-}
-
-.repo-tab:hover {
   background: var(--hover);
 }
 
@@ -748,10 +744,6 @@ body {
   text-overflow: ellipsis;
   white-space: nowrap;
   cursor: pointer;
-}
-
-.repo-tab-open:hover {
-  color: var(--text);
 }
 
 .repo-tab.active {
