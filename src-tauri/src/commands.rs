@@ -374,6 +374,16 @@ pub fn diff_file(
     }
 }
 
+/// Preview of an untracked file as a new-file patch (OG-071).
+#[tauri::command]
+pub fn untracked_file_diff(
+    path: String,
+    file: String,
+    state: State<'_, AppState>,
+) -> Result<String, GitError> {
+    crate::git::untracked_file_diff(&state.runner, Path::new(&path), &file)
+}
+
 #[tauri::command]
 pub fn commit_files(
     path: String,

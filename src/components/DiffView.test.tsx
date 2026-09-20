@@ -2,7 +2,14 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { confirmDestructive } from "../lib/bridge/dialog";
-import { diffFile, diffNumstat, discardSelection, imageBlob, imagePair } from "../lib/bridge/diff";
+import {
+  diffFile,
+  diffNumstat,
+  discardSelection,
+  imageBlob,
+  imagePair,
+  untrackedFileDiff,
+} from "../lib/bridge/diff";
 import { statusRepo } from "../lib/bridge/status";
 import type { RepoInfo, StatusReport } from "../lib/bridge/types";
 import { useDiffStore } from "../lib/stores/diff";
@@ -21,6 +28,7 @@ vi.mock("../lib/bridge/dialog", () => ({
 
 vi.mock("../lib/bridge/diff", () => ({
   diffFile: vi.fn(),
+  untrackedFileDiff: vi.fn(),
   commitFiles: vi.fn(),
   diffNumstat: vi.fn(),
   stageSelection: vi.fn(),
@@ -234,6 +242,36 @@ describe("DiffView", () => {
 
     expect(screen.queryByRole("button", { name: "Stage hunk" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Discard hunk" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Stage file" })).not.toBeInTheDocument();
+  });
+
+  it("previews an untracked file read-only with its counters", async () => {
+    const user = userEvent.setup();
+    vi.mocked(statusRepo).mockResolvedValue({
+      ...REPORT,
+      entries: [{ kind: "untracked", xy: "?", path: "nuevo.txt", orig_path: null }],
+    });
+    vi.mocked(untrackedFileDiff).mockResolvedValue(
+      [
+        "diff --git a/nuevo.txt b/nuevo.txt",
+        "new file mode 100644",
+        "index 0000000..70e300c",
+        "--- /dev/null",
+        "+++ b/nuevo.txt",
+        "@@ -0,0 +1,2 @@",
+        "+hola",
+        "+mundo",
+      ].join("\n"),
+    );
+    render(<DiffView />);
+
+    // The single untracked file is selected automatically on open.
+    expect(await screen.findByText("+hola")).toBeInTheDocument();
+    expect(untrackedFileDiff).toHaveBeenCalledWith("/tmp/repo", "nuevo.txt");
+    expect(screen.queryByText(/no diff yet/)).not.toBeInTheDocument();
+    const head = document.querySelector(".diff-pane-head") as HTMLElement;
+    expect(head).toHaveTextContent("+2");
+    expect(screen.queryByRole("button", { name: "Stage hunk" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Stage file" })).not.toBeInTheDocument();
   });
 });

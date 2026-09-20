@@ -110,6 +110,7 @@ pub fn run() {
             commands::blame_file,
             commands::status_repo,
             commands::diff_file,
+            commands::untracked_file_diff,
             commands::commit_files,
             commands::diff_numstat,
             commands::compare_numstat,

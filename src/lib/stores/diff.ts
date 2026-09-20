@@ -7,6 +7,7 @@ import {
   diffNumstat,
   discardSelection,
   stageSelection,
+  untrackedFileDiff,
   type HunkSelection,
 } from "../bridge/diff";
 import { formatGitError } from "../bridge/errors";
@@ -258,7 +259,15 @@ export const useDiffStore = create<DiffState>((set, get) => ({
     const mode = get().modeByFile[entry.key] ?? autoMode(entry);
     set({ selectedLines: [], mode });
     if (entry.untracked) {
-      set({ selected: entry, patch: "", binary: false });
+      // Read-only preview as a new-file patch (OG-071); staging from the
+      // preview stays disabled in applySelection/discardSelection below.
+      set({ selected: entry, loading: true, error: null });
+      try {
+        const patch = await untrackedFileDiff(root, entry.path);
+        set({ patch, binary: isBinaryPatch(patch), loading: false });
+      } catch (error) {
+        set({ patch: "", binary: false, loading: false, error: formatGitError(error) });
+      }
       return;
     }
     set({ selected: entry, loading: true, error: null });
