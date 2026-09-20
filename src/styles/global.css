@@ -1668,3 +1668,52 @@ body {
   margin: 0;
   color: var(--text-muted);
 }
+
+.extra-open {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 2px 0;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.extra-open:disabled {
+  color: var(--text-muted);
+  cursor: default;
+}
+
+.extra-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.extra-flag {
+  padding: 0 5px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.extra-state {
+  margin-left: auto;
+  color: var(--text-muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.extra-state.modified,
+.extra-state.uninitialized {
+  color: var(--warning-text);
+}
+
+.extra-state.conflict {
+  color: var(--danger-text);
+}

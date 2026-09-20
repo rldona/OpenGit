@@ -83,3 +83,10 @@
   - La acción `reword` abre el editor de mensajes, que choca con el `GIT_EDITOR=true` que usamos para aceptar los mensajes por defecto del squash. Se resuelve emitiendo `pick <sha>` + `exec git commit --amend -F '<mensaje>'`; así cada reword (en v1, uno) tiene su mensaje sin editor.
   - En un squash, el asunto resultante es el del commit **anterior** (el que recibe), no el del squashado: `pick c1; squash c2` deja el asunto de c1 y el mensaje de c2 en el cuerpo.
 - **Implicación:** el todo-list es un detalle interno de `interactive_rebase`; cualquier cambio debe cubrir squash/fixup, drop, reword, reordenar y conflicto con abort.
+
+## Submódulos locales: `protocol.file.allow` y dónde vive el clon
+
+- **Fecha:** 2026-09-18
+- **Contexto:** tests de `git submodule status` (OG-024) con repos locales, sin red.
+- **Hallazgo:** desde git 2.38.1 el protocolo `file://` está restringido y `git submodule add <ruta-local>` falla sin `-c protocol.file.allow=always`. Además, un commit en el repo origen **no mueve el submódulo**: `submodule add` clona en `<super>/.git/modules/<path>`; el estado `+` (different commit) solo aparece al commitear dentro de `super/<path>`. El `-` de `deinit` y el espacio de clean se calculan contra el gitlink del índice del superproyecto.
+- **Implicación:** los tests de submódulos usan `protocol.file.allow=always` y commitean en el clon del submódulo (no en el repo origen).

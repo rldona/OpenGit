@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { ConflictView } from "./components/ConflictView";
 import { DiffView } from "./components/DiffView";
+import { ExtrasSidebar } from "./components/ExtrasSidebar";
 import { HistoryView } from "./components/HistoryView";
 import { OpBanner } from "./components/OpBanner";
 import { RebaseView } from "./components/RebaseView";
@@ -14,6 +15,7 @@ import { useJobEvents } from "./lib/hooks/useJobEvents";
 import { useRepoEvents } from "./lib/hooks/useRepoEvents";
 import { useShortcuts } from "./lib/hooks/useShortcuts";
 import { hasActiveOperation, stagedEntries, useCommitStore } from "./lib/stores/commit";
+import { useExtrasStore } from "./lib/stores/extras";
 import { useLogStore } from "./lib/stores/log";
 import { useRefsStore } from "./lib/stores/refs";
 import { useRemoteStore } from "./lib/stores/remote";
@@ -130,6 +132,7 @@ function App() {
     void useLogStore.getState().reload(root);
     void useStatusStore.getState().refresh(root);
     void useRefsStore.getState().refresh(root);
+    void useExtrasStore.getState().refresh(root);
   };
 
   const commitStaged = () => {
@@ -327,6 +330,8 @@ function App() {
               <p className="muted">No repository open</p>
             </section>
           )}
+
+          <ExtrasSidebar />
         </aside>
 
         <main className="content" aria-label="History">

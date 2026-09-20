@@ -80,3 +80,40 @@ pub struct FileDiff {
     pub added: Option<u64>,
     pub deleted: Option<u64>,
 }
+
+/// Estado del submódulo respecto al índice del superproyecto.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum SubmoduleState {
+    /// ` `: al día con el commit registrado.
+    Clean,
+    /// `+`: el submódulo está en un commit distinto del registrado.
+    Modified,
+    /// `-`: no inicializado.
+    Uninitialized,
+    /// `U`: conflicto de merge.
+    Conflict,
+}
+
+/// Entrada de `git submodule status`.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct Submodule {
+    pub path: String,
+    /// Commit registrado en el índice del superproyecto.
+    pub head: String,
+    pub state: SubmoduleState,
+    /// Descripción de git (`heads/main`, un tag, ...), si la da.
+    pub describe: Option<String>,
+}
+
+/// Entrada de `git worktree list --porcelain`.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct Worktree {
+    pub path: String,
+    pub head: String,
+    /// Ref completa (`refs/heads/main`); `None` si está detached.
+    pub branch: Option<String>,
+    pub detached: bool,
+    pub bare: bool,
+    pub locked: bool,
+}

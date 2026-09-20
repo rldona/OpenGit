@@ -1,4 +1,7 @@
-use opengit_lib::git::{parse_log, parse_numstat, parse_refs, parse_status, GitError, StatusKind};
+use opengit_lib::git::{
+    parse_log, parse_numstat, parse_refs, parse_status, parse_submodule_status,
+    parse_worktree_list, GitError, StatusKind, SubmoduleState,
+};
 
 const LOG_TOPO: &[u8] = include_bytes!("fixtures/log_topo.bin");
 const STATUS_V2: &[u8] = include_bytes!("fixtures/status_v2.bin");
@@ -170,6 +173,92 @@ fn numstat_parsea_binarios_renombrados_y_contadores() {
 fn numstat_con_formato_inesperado_falla() {
     assert!(matches!(
         parse_numstat(b"1\t2\0"),
+        Err(GitError::InvalidOutput { .. })
+    ));
+}
+
+const SUBMODULE_STATUS: &str = concat!(
+    " 3bf01e312f333ee5aaaec23656a0809ff381da58 vendor/lib con espacio (heads/main)\n",
+    "+3c8ad3c5346b0eaebe648460a94e56d8048af540 otro (v1.2.3)\n",
+    "-abcdef0123456789abcdef0123456789abcdef01 sin-inicializar\n",
+    "U0123456789abcdef0123456789abcdef01234567 conflicto\n",
+);
+
+#[test]
+fn submodule_status_parsea_estados_y_describe() {
+    let submodules = parse_submodule_status(SUBMODULE_STATUS.as_bytes()).expect("parsear");
+
+    assert_eq!(submodules.len(), 4);
+
+    let clean = &submodules[0];
+    assert_eq!(clean.path, "vendor/lib con espacio");
+    assert_eq!(clean.state, SubmoduleState::Clean);
+    assert_eq!(clean.describe.as_deref(), Some("heads/main"));
+    assert_eq!(clean.head.len(), 40);
+
+    let modified = &submodules[1];
+    assert_eq!(modified.state, SubmoduleState::Modified);
+    assert_eq!(modified.describe.as_deref(), Some("v1.2.3"));
+
+    let uninitialized = &submodules[2];
+    assert_eq!(uninitialized.state, SubmoduleState::Uninitialized);
+    assert_eq!(uninitialized.describe, None);
+
+    assert_eq!(submodules[3].state, SubmoduleState::Conflict);
+}
+
+#[test]
+fn submodule_status_vacio_y_errores() {
+    assert!(parse_submodule_status(b"").expect("vacío").is_empty());
+    assert!(matches!(
+        parse_submodule_status(b"sin-formato\n"),
+        Err(GitError::InvalidOutput { .. })
+    ));
+    let unknown_state = format!("X{} path\n", "0".repeat(40));
+    assert!(matches!(
+        parse_submodule_status(unknown_state.as_bytes()),
+        Err(GitError::InvalidOutput { .. })
+    ));
+}
+
+#[test]
+fn submodule_status_con_parentesis_sin_cerrar_es_path() {
+    let line = format!(" {} weird (path\n", "a".repeat(40));
+    let submodules = parse_submodule_status(line.as_bytes()).expect("parsear");
+    assert_eq!(submodules[0].path, "weird (path");
+    assert_eq!(submodules[0].describe, None);
+}
+
+const WORKTREE_LIST: &str = concat!(
+    "worktree /repo/main\nHEAD 4548364992033545b5291a9883214f55ac7b6c94\nbranch refs/heads/main\n\n",
+    "worktree /repo/detached\nHEAD 4548364992033545b5291a9883214f55ac7b6c94\ndetached\n\n",
+    "worktree /repo/locked\nHEAD 4548364992033545b5291a9883214f55ac7b6c94\nbranch refs/heads/locked\nlocked mantenimiento\n\n",
+    "worktree /repo/bare\nHEAD 4548364992033545b5291a9883214f55ac7b6c94\nbare\n",
+);
+
+#[test]
+fn worktree_list_parsea_ramas_detached_locked_y_bare() {
+    let worktrees = parse_worktree_list(WORKTREE_LIST.as_bytes()).expect("parsear");
+
+    assert_eq!(worktrees.len(), 4);
+    assert_eq!(worktrees[0].path, "/repo/main");
+    assert_eq!(worktrees[0].branch.as_deref(), Some("refs/heads/main"));
+    assert!(!worktrees[0].detached && !worktrees[0].bare && !worktrees[0].locked);
+
+    assert!(worktrees[1].detached);
+    assert_eq!(worktrees[1].branch, None);
+
+    assert!(worktrees[2].locked);
+    assert_eq!(worktrees[2].branch.as_deref(), Some("refs/heads/locked"));
+
+    assert!(worktrees[3].bare);
+}
+
+#[test]
+fn worktree_list_vacio_y_error() {
+    assert!(parse_worktree_list(b"").expect("vacío").is_empty());
+    assert!(matches!(
+        parse_worktree_list(b"branch refs/heads/main\n"),
         Err(GitError::InvalidOutput { .. })
     ));
 }
