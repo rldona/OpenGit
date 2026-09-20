@@ -2,8 +2,6 @@
   <img src="assets/open-git-logo-trans.png" alt="OpenGit" width="140" />
 </p>
 
-<h1 align="center">OpenGit</h1>
-
 <p align="center">
   Desktop Git client for Windows, macOS and Linux, inspired by SourceTree's UX:
   a readable graph, hunk staging and a sidebar with everything you touch daily.
@@ -20,6 +18,20 @@
 <p align="center">
   <img src="assets/opengit-screenshot.png" alt="OpenGit showing the history with graph, files and diff" width="100%" />
 </p>
+
+---
+
+### Contents
+
+- [Download](#download)
+- [Features](#features)
+- [Status](#status)
+- [Stack](#stack)
+- [Principles](#principles)
+- [Repository layout](#repository-layout)
+- [Documentation](#documentation)
+- [Quick start](#quick-start)
+- [License](#license)
 
 ## Download
 
