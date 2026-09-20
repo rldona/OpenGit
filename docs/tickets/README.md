@@ -105,3 +105,4 @@ One file per ticket, named `OG-NNN-slug.md`. Every change in the repository star
 | [OG-070](OG-070-tabs-plus-shortcuts.md) | Tab strip plus button and switching shortcuts | Next | done |
 | [OG-071](OG-071-untracked-preview.md) | Preview untracked files in the diff view | Next | done |
 | [OG-072](OG-072-live-worktree-list.md) | Live worktree file list on watcher events | Next | done |
+| [OG-073](OG-073-submodule-env-race.md) | Fix submodule test env race in CI | Next | done |
