@@ -2,7 +2,7 @@
 
 A milestone closes when its tickets are `done` and its exit criteria are met. Tickets live in [`docs/tickets/`](docs/tickets/README.md).
 
-**Current state:** latest release **v0.6.2** (2026-09-20), with in-app auto-updates and remembered tabs. M0–M15 are closed; the next milestone starts from this file.
+**Current state:** latest release **v0.6.2** (2026-09-20), with in-app auto-updates and remembered tabs. M0–M15 are closed; **M16 (repository lifecycle)** is defined and not started.
 
 ## M0 — Foundation ✅ _(closed 2026-09-18)_
 
@@ -208,6 +208,21 @@ with a Settings toggle to turn it off.
 
 **Exit:** relaunching restores the same tabs; the recents home only shows when
 there is no session to restore. ✅
+
+## M16 — Repository lifecycle
+
+Bring repositories into the app: clone a remote and create a new one, instead
+of only opening folders that already exist.
+
+- [ ] Clone a repository from the app, with progress, cancel and options
+  (OG-085).
+- [ ] Create (init) a repository, with an initial branch and optional first
+  commit and `.gitignore` (OG-086).
+- [ ] Clone and Create entry points on the home screen (OG-087).
+- [ ] Open a repository in a new window (OG-088, optional).
+
+**Exit:** with no repository on disk, clone or create one and start working
+without leaving the app.
 
 ## Translating documentation and comments to English
 
