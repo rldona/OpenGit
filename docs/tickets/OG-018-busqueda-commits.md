@@ -1,7 +1,7 @@
 # OG-018 · Búsqueda de commits
 
 - **Milestone:** M3 — Historial avanzado
-- **Estado:** in-progress
+- **Estado:** done
 - **Depende de:** OG-004
 - **Referencias:** ROADMAP.md
 
@@ -42,4 +42,4 @@ Con historiales largos, encontrar un commit por su mensaje, su autor o los fiche
 
 - Rust: `LogSearch { grep, author, path }` y `log_page` ampliado; el comando `log_page` acepta `search`. Tests de grep literal (con metacaracteres), autor, ruta, combinación y paginación.
 - Frontend: tres campos compactos en la toolbar del historial (Message, Author, File) con Search/Clear; el store aplica la búsqueda sobre load/loadMore/reload; en modo búsqueda el layout pinta nodos sin lanes.
-- Pendiente para cerrar: PR y CI verde.
+- Cerrado el 2026-09-18 con CI verde (Frontend 29 s, Rust 2m3s) en el PR #14. Con esto queda completo M3.
