@@ -248,6 +248,16 @@ pub fn close_repo(state: State<'_, AppState>) -> Result<(), GitError> {
     Ok(())
 }
 
+/// Searches the working tree with `git grep` (OG-093).
+#[tauri::command]
+pub fn grep_worktree(
+    path: String,
+    query: crate::git::GrepQuery,
+    state: State<'_, AppState>,
+) -> Result<crate::git::GrepResult, GitError> {
+    crate::git::grep_worktree(&state.runner, Path::new(&path), &query)
+}
+
 #[tauri::command]
 pub fn log_page(
     path: String,

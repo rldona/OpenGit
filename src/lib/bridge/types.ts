@@ -238,6 +238,28 @@ export type GpgKey = {
   expires: number | null;
 };
 
+/** Working-tree search query (`git grep`, OG-093). */
+export type GrepQuery = {
+  pattern: string;
+  case_sensitive: boolean;
+  whole_word: boolean;
+  regex: boolean;
+  path: string | null;
+  max_results: number | null;
+};
+
+/** One match of a working-tree search. */
+export type GrepMatch = {
+  path: string;
+  line: number;
+  text: string;
+};
+
+export type GrepResult = {
+  matches: GrepMatch[];
+  truncated: boolean;
+};
+
 /** `.gitignore` template for the "Create repository" dialog (OG-086). */
 export type GitignoreTemplate = {
   id: string;

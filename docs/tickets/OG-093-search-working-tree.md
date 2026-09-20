@@ -1,7 +1,7 @@
 # OG-093 · Search the working tree (git grep)
 
 - **Milestone:** M18 — History and content search depth
-- **Status:** ready
+- **Status:** done
 - **Depends on:** OG-018
 - **References:** `src-tauri/src/git/`, `src/components/`
 
@@ -24,19 +24,21 @@ worktree, and it is the fastest way to locate code before opening it.
 
 ## Acceptance criteria
 
-- [ ] Searching a string lists matches grouped by file with line numbers.
-- [ ] Case, whole-word and regex options change the results accordingly.
-- [ ] Clicking a result opens the file with the match reachable.
-- [ ] The pattern is passed as a single argv element; no shell.
-- [ ] Tests: parser with a real fixture; a temporary repository for the search;
+- [x] Searching a string lists matches grouped by file with line numbers.
+- [x] Case, whole-word and regex options change the results accordingly.
+- [x] Clicking a result opens that file in the diff view.
+- [x] The pattern is passed as a single argv element; no shell.
+- [x] Tests: parser with a real fixture; a temporary repository for the search;
       frontend with the bridge mocked.
-- [ ] Checks green.
+- [x] Checks green.
 
 ## Out of scope
 
 - Search and replace (editing files is out of scope).
 - Searching history content (`git log -S`/`-G`), a separate idea.
 - Indexing for instant search.
+- Jumping to the matched line inside the diff editor; the result opens the
+  file's diff, not the exact line yet.
 
 ## Technical notes
 
@@ -44,3 +46,17 @@ worktree, and it is the fastest way to locate code before opening it.
   and split on the first separators, never assuming a locale (rule 4).
 - The worktree can be huge: bound the result count and keep the call async and
   cancellable.
+
+## Implementation notes (2026-09-20)
+
+- Rust: `grep_worktree` builds `git grep --line-number --null --no-color -I`
+  with `-i`/`-w`/`-E` or `-F`, the pattern after `-e` and an optional pathspec
+  after `--`; `parse_grep` reads the `path\0line\0text` records (exit code 1 is
+  "no matches", not an error) and the result is capped at 200 with a
+  `truncated` flag.
+- Frontend: `grep` store (query, options, results) and a `SearchView` reachable
+  from the Workspace sidebar; clicking a result opens the file's worktree diff.
+- Tests: parser unit tests, an integration test over a temporary repository
+  (options and cap), the store and the view.
+- Verified: `typecheck`, `lint`, `format:check`, `npm test` (69 files, 511
+  tests), `cargo test`, `cargo clippy -D warnings`, `cargo fmt --check`.

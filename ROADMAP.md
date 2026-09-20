@@ -242,8 +242,8 @@ a merge without the terminal.
 Search what is in the working tree, move changes around as patches and compare
 history with more detail.
 
-- [ ] Search the working tree (`git grep`) with results that open the file or
-  the diff (OG-093).
+- [x] Search the working tree (`git grep`) with results that open the file's
+  diff (OG-093).
 - [ ] Create and apply patches (`format-patch`, `am`/`apply`) (OG-094).
 - [ ] Word-level diff and ignore-whitespace options (OG-095).
 - [ ] Cherry-pick several commits or a range (OG-096).
