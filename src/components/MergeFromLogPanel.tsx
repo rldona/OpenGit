@@ -140,7 +140,10 @@ export function MergeFromLogPanel({ root, onPick }: Props) {
     const index = target ? commits.findIndex((commit) => commit.hash === target) : -1;
     if (target !== null && index >= 0) {
       setPicked(target);
-      scrollRef.current?.scrollTo({ top: index * ROW_HEIGHT });
+      const scroller = scrollRef.current;
+      if (scroller) {
+        scroller.scrollTop = index * ROW_HEIGHT;
+      }
       return;
     }
     // Not in the loaded page: reload pointing at the ref and pick its head.
