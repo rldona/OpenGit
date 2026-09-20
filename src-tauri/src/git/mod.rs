@@ -2001,6 +2001,51 @@ pub fn commit_file_diff(
     Ok(output.stdout_lossy())
 }
 
+/// One entry of the reflog (OG-089).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct ReflogEntry {
+    pub hash: String,
+    pub selector: String,
+    pub subject: String,
+    pub author: String,
+    pub time: i64,
+}
+
+const REFLOG_FORMAT: &str = "%H\x1f%gd\x1f%gs\x1f%an\x1f%at";
+
+fn parse_reflog(text: &str) -> Vec<ReflogEntry> {
+    text.lines()
+        .filter(|line| !line.trim().is_empty())
+        .filter_map(|line| {
+            let mut parts = line.split('\u{1f}');
+            let hash = parts.next()?.trim();
+            let selector = parts.next()?.trim();
+            let subject = parts.next()?.trim();
+            let author = parts.next()?.trim();
+            let time = parts.next()?.trim().parse::<i64>().ok()?;
+            if hash.is_empty() {
+                return None;
+            }
+            Some(ReflogEntry {
+                hash: hash.to_string(),
+                selector: selector.to_string(),
+                subject: subject.to_string(),
+                author: author.to_string(),
+                time,
+            })
+        })
+        .collect()
+}
+
+/// Reads the reflog, newest first (OG-089).
+pub fn reflog(runner: &Runner, repo: &Path, limit: usize) -> Result<Vec<ReflogEntry>, GitError> {
+    let mut args: Vec<OsString> = vec!["reflog".into()];
+    args.push(format!("--format={REFLOG_FORMAT}").into());
+    args.push(format!("-n{limit}").into());
+    let output = runner.run_checked(&GitCommand::new(args).cwd(repo))?;
+    Ok(parse_reflog(&output.stdout_lossy()))
+}
+
 /// Options for a working-tree search (`git grep`, OG-093).
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct GrepQuery {
