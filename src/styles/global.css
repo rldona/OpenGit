@@ -3730,6 +3730,11 @@ body {
   opacity: 0.5;
 }
 
+.hook-editor {
+  min-height: 240px;
+  font-family: var(--font-mono);
+}
+
 /* Security tab of the Settings modal (OG-067 phase 4). */
 .settings-key {
   margin-top: 12px;

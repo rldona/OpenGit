@@ -1,16 +1,19 @@
 import { useEffect, useState } from "react";
-import type { SubmoduleState } from "../lib/bridge/types";
+import type { Hook, SubmoduleState } from "../lib/bridge/types";
 import { confirmDestructive } from "../lib/bridge/dialog";
 import { formatGitError } from "../lib/bridge/errors";
+import { hookSetEnabled } from "../lib/bridge/hooks";
 import { worktreeRemove, submoduleSync, submoduleUpdate } from "../lib/bridge/repo";
 import { shortRefName } from "../lib/format";
 import { useExtrasStore } from "../lib/stores/extras";
+import { useHooksStore } from "../lib/stores/hooks";
 import { useRemoteStore } from "../lib/stores/remote";
 import { useRepoStore } from "../lib/stores/repo";
 import { useStatusStore } from "../lib/stores/status";
 import { useUiStore } from "../lib/stores/ui";
 import { useContextMenu } from "../lib/hooks/useContextMenu";
 import { CollapsibleSection } from "./CollapsibleSection";
+import { HookDialog } from "./HookDialog";
 import { LfsDialog } from "./LfsDialog";
 import { WorktreeDialog } from "./WorktreeDialog";
 
@@ -39,17 +42,22 @@ export function ExtrasSidebar() {
   const lfs = useExtrasStore((state) => state.lfs);
   const error = useExtrasStore((state) => state.error);
   const load = useExtrasStore((state) => state.load);
+  const hooks = useHooksStore((state) => state.hooks);
+  const loadHooks = useHooksStore((state) => state.load);
   const sectionMenu = useContextMenu();
   const [worktreeDialog, setWorktreeDialog] = useState(false);
   const [worktreeError, setWorktreeError] = useState<string | null>(null);
   const [submoduleError, setSubmoduleError] = useState<string | null>(null);
   const [lfsDialog, setLfsDialog] = useState<"track" | "migrate" | null>(null);
+  const [hookDialog, setHookDialog] = useState<Hook | null>(null);
+  const [hookError, setHookError] = useState<string | null>(null);
 
   useEffect(() => {
     if (root) {
       void load(root);
+      void loadHooks(root);
     }
-  }, [root, load]);
+  }, [root, load, loadHooks]);
 
   const runSubmodule = async (action: "update" | "sync", path: string) => {
     if (!root) {
@@ -86,6 +94,21 @@ export function ExtrasSidebar() {
     void useRemoteStore.getState().start(root, { kind: "lfs_pull", remote: null });
   };
 
+  const toggleHook = async (hook: Hook) => {
+    if (!root) {
+      return;
+    }
+    try {
+      await hookSetEnabled(root, hook.name, !hook.active);
+      await useHooksStore.getState().refresh(root);
+      useUiStore
+        .getState()
+        .appendOutput(`${hook.active ? "Disabled" : "Enabled"} hook ${hook.name}`);
+    } catch (err) {
+      setHookError(formatGitError(err));
+    }
+  };
+
   const removeWorktree = async (path: string) => {
     if (!root) {
       return;
@@ -120,8 +143,9 @@ export function ExtrasSidebar() {
   }
   const showSubmodules = submodules.length > 0;
   const showWorktrees = worktrees.length >= 1;
+  const showHooks = hooks.length > 0;
   const showLfs = lfs !== null && (lfs.installed || lfs.configured);
-  if (!showSubmodules && !showWorktrees && !showLfs && !error) {
+  if (!showSubmodules && !showWorktrees && !showHooks && !showLfs && !error) {
     return null;
   }
 
@@ -229,6 +253,41 @@ export function ExtrasSidebar() {
         </CollapsibleSection>
       )}
 
+      {showHooks && (
+        <CollapsibleSection id="hooks" title="Hooks" icon="hook">
+          <ul className="refs-list">
+            {hooks.map((hook) => (
+              <li key={hook.name} className="refs-item">
+                <button
+                  type="button"
+                  className="extra-open"
+                  title={hook.path}
+                  onClick={() => setHookDialog(hook)}
+                  onContextMenu={(event) =>
+                    sectionMenu.open(event, [
+                      { label: "Edit…", onSelect: () => setHookDialog(hook) },
+                      {
+                        label: hook.active ? "Disable" : "Enable",
+                        onSelect: () => void toggleHook(hook),
+                      },
+                    ])
+                  }
+                >
+                  <span className="extra-name">{hook.name}</span>
+                  <span className={`extra-state ${hook.active ? "clean" : "modified"}`}>
+                    {hook.active
+                      ? "Active"
+                      : hook.sample && !hook.installed
+                        ? "Sample"
+                        : "Disabled"}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </CollapsibleSection>
+      )}
+
       {showLfs && lfs && (
         <CollapsibleSection
           id="lfs"
@@ -292,8 +351,17 @@ export function ExtrasSidebar() {
         </section>
       )}
 
+      {hookError && (
+        <section className="sidebar-section">
+          <p role="alert" className="refs-error">
+            {hookError}
+          </p>
+        </section>
+      )}
+
       {worktreeDialog && <WorktreeDialog onClose={() => setWorktreeDialog(false)} />}
       {lfsDialog && <LfsDialog mode={lfsDialog} onClose={() => setLfsDialog(null)} />}
+      {hookDialog && <HookDialog hook={hookDialog} onClose={() => setHookDialog(null)} />}
       {sectionMenu.menu}
     </>
   );

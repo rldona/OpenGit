@@ -1,7 +1,7 @@
 # OG-098 · Hooks manager
 
 - **Milestone:** M19 — Git LFS & hooks
-- **Status:** ready
+- **Status:** done
 - **Depends on:** OG-067
 - **References:** `src-tauri/src/git/mod.rs` (`commit_template_read`/`write`)
 
@@ -27,24 +27,24 @@ output (OG-007); this ticket makes the hooks themselves manageable.
 - `hook_set_enabled(path, name, enabled)`:
   - enable: materialize the hook from `<name>.disabled` or from the `.sample`
     when the real file is missing, then mark it executable on Unix;
-  - disable: on Unix clear the executable bit; on Windows rename to
-    `<name>.disabled` (Git for Windows ignores the executable bit).
-- UI: a **Hooks** section (Settings or the extras sidebar) listing hooks with
-  an active/disabled marker, a preview/edit modal reusing the commit template
-  editor, and *Enable*/*Disable*/*Open in editor* actions.
+  - disable: rename to `<name>.disabled` (portable; Git ignores that name on
+    every platform).
+- UI: a **Hooks** section in the extras sidebar listing hooks with an
+  active/disabled/sample marker, an editor modal (textarea) with *Save* and
+  *Enable*/*Disable* actions, and the same enable/disable from the context menu.
 
 ## Acceptance criteria
 
-- [ ] `hooks_list` finds existing hooks, `.sample` files, respects
+- [x] `hooks_list` finds existing hooks, `.sample` files, respects
       `core.hooksPath` and reports the active flag correctly on Unix.
-- [ ] `hook_write` rejects names with path separators, `..` or a
+- [x] `hook_write` rejects names with path separators, `..` or a
       `.sample`/`.disabled` suffix, and writes the file unchanged.
-- [ ] Enabling a sample creates a working, executable hook; disabling makes Git
+- [x] Enabling a sample creates a working, executable hook; disabling makes Git
       ignore it without deleting its contents.
-- [ ] `hook_read` never escapes the hooks directory.
-- [ ] Tests: a temporary repository with a sample and an installed hook
+- [x] `hook_read` never escapes the hooks directory.
+- [x] Tests: a temporary repository with a sample and an installed hook
       (resolve, list, toggle), plus the frontend with the bridge mocked.
-- [ ] `npm run lint`, `npm run typecheck`, `npm run test`, `cargo test`,
+- [x] `npm run lint`, `npm run typecheck`, `npm run test`, `cargo test`,
       `cargo clippy -D warnings` and `cargo fmt --check` green.
 
 ## Out of scope
@@ -64,9 +64,28 @@ output (OG-007); this ticket makes the hooks themselves manageable.
   a direct child of the hooks directory.
 - `git rev-parse --git-path hooks` may return a relative path; resolve it
   against the repository root, like `ignore_exclude_path` does.
-- The `.disabled` rename is the portable switch; on Unix also honour the
-  executable bit because it is what Git actually checks.
+- The `.disabled` rename is the portable switch (git ignores any name it does
+  not know); on Unix, `active` additionally honours the executable bit, which
+  is what Git actually checks.
+- A hooks directory configured outside the repository (`core.hooksPath`) is
+  listed read-only: writes/enable return a readable error.
 
-## Implementation notes
+## Implementation notes (2026-09-21)
 
-_(filled in when the ticket closes)_
+- Rust: `hooks_directory` resolves `git rev-parse --git-path hooks` (relative
+  paths against the repo), `validate_hook_name` allows a single safe segment and
+  rejects `..`, separators and the `.sample`/`.disabled` suffixes, and
+  `hooks_list` groups `<name>`, `<name>.sample` and `<name>.disabled`.
+- `hook_read` falls back to `.disabled` and then to `.sample`; `hook_write`
+  replaces a stale `.disabled` and sets the executable bit on Unix;
+  `hook_set_enabled` materializes from `.disabled`/`.sample` or renames to
+  `.disabled`. An external `core.hooksPath` can be listed but not written.
+- Frontend: `hooksList`/`hookRead`/`hookWrite`/`hookSetEnabled` bridge, a small
+  `useHooksStore`, a **Hooks** section in the extras sidebar (Active/Sample/
+  Disabled badge) and a `HookDialog` textarea editor with Save and
+  Enable/Disable.
+- Tests: a temporary repository for listing, enable-from-sample, disable (keeping
+  the contents), sample fallback, name validation and the external-hooks
+  rejection; the sidebar section, the toggle and the editor on the frontend.
+  Verified `lint`, `typecheck`, `format:check`, `npm test` (535), `cargo test`,
+  `cargo clippy -D warnings` and `cargo fmt --check`.

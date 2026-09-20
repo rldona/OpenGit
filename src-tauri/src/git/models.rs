@@ -122,6 +122,23 @@ pub struct Worktree {
     pub locked: bool,
 }
 
+/// A Git hook in the repository's hooks directory (OG-098).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct Hook {
+    /// Hook name (e.g. `pre-commit`), without `.sample`/`.disabled`.
+    pub name: String,
+    /// Absolute path of the hook file that exists, if any.
+    pub path: String,
+    /// A real hook file exists (`<name>` or `<name>.disabled`).
+    pub installed: bool,
+    /// Git would run it (installed and executable on Unix).
+    pub active: bool,
+    /// A `<name>.sample` is available.
+    pub sample: bool,
+    /// The hook is disabled by the `.disabled` rename.
+    pub disabled: bool,
+}
+
 /// Git LFS status in the repository.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct LfsStatus {
@@ -132,7 +149,7 @@ pub struct LfsStatus {
     /// Some tracked `.gitattributes` uses `filter=lfs`.
     pub configured: bool,
     /// Active `filter=lfs` patterns, prefixed with their `.gitattributes`
-    /// directory (OG-098).
+    /// directory (OG-097).
     pub patterns: Vec<String>,
 }
 

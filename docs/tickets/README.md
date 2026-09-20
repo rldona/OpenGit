@@ -130,7 +130,7 @@ One file per ticket, named `OG-NNN-slug.md`. Every change in the repository star
 | [OG-095](OG-095-word-diff-whitespace.md) | Word-level diff and ignore-whitespace options | M18 | done |
 | [OG-096](OG-096-cherry-pick-range.md) | Cherry-pick several commits or a range | M18 | done |
 | [OG-097](OG-097-lfs-track-pull-migrate.md) | Git LFS: track, pull and migration | M19 | done |
-| [OG-098](OG-098-hooks-manager.md) | Hooks manager | M19 | ready |
+| [OG-098](OG-098-hooks-manager.md) | Hooks manager | M19 | done |
 | [OG-099](OG-099-i18n-framework.md) | Internationalization (framework + Spanish locale) | M20 | backlog |
 | [OG-100](OG-100-language-selector.md) | Language selector in Settings | M20 | backlog |
 | [OG-101](OG-101-flaky-watcher-test.md) | Stabilize the watcher ignore test | Next | done |
