@@ -16,6 +16,7 @@ type Props = {
   onPush: () => void;
   onMerge: () => void;
   onRefresh: () => void;
+  refreshing?: boolean;
 };
 
 function ToolButton({
@@ -42,7 +43,14 @@ function ToolButton({
   );
 }
 
-export function Toolbar({ onFetch, onPull, onPush, onMerge, onRefresh }: Props) {
+export function Toolbar({
+  onFetch,
+  onPull,
+  onPush,
+  onMerge,
+  onRefresh,
+  refreshing = false,
+}: Props) {
   const repo = useRepoStore((state) => state.repo);
   const loading = useRepoStore((state) => state.loading);
   const pickAndOpen = useRepoStore((state) => state.pickAndOpen);
@@ -114,7 +122,12 @@ export function Toolbar({ onFetch, onPull, onPush, onMerge, onRefresh }: Props) 
             <ToolButton icon="branch" label="Branch" onClick={requestNewBranch} />
             <ToolButton icon="merge" label="Merge" onClick={onMerge} />
             <ToolButton icon="stash" label="Stash" onClick={requestNewStash} />
-            <ToolButton icon="refresh" label="Refresh" onClick={onRefresh} />
+            <ToolButton
+              icon="refresh"
+              label={refreshing ? "Refreshing…" : "Refresh"}
+              disabled={refreshing}
+              onClick={onRefresh}
+            />
           </>
         ) : (
           <ToolButton

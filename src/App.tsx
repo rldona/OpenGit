@@ -25,8 +25,8 @@ import { useJobEvents } from "./lib/hooks/useJobEvents";
 import { useRepoEvents } from "./lib/hooks/useRepoEvents";
 import { useShortcuts, type ShortcutHandlers } from "./lib/hooks/useShortcuts";
 import { LAYOUT_KEYS } from "./lib/layout";
+import { refreshRepo } from "./lib/refresh";
 import { hasActiveOperation, stagedEntries, useCommitStore } from "./lib/stores/commit";
-import { useExtrasStore } from "./lib/stores/extras";
 import { useLogStore } from "./lib/stores/log";
 import { useRefsStore } from "./lib/stores/refs";
 import { useRemoteStore } from "./lib/stores/remote";
@@ -70,6 +70,7 @@ function App() {
   const [pullOpen, setPullOpen] = useState(false);
   const [fetchOpen, setFetchOpen] = useState(false);
   const [mergeOpen, setMergeOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const runFetch = () => {
     if (repo) {
@@ -125,15 +126,18 @@ function App() {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
 
-  const refreshAll = () => {
-    const root = useRepoStore.getState().repo?.root;
-    if (!root) {
+  const refreshAll = async () => {
+    const opened = useRepoStore.getState().repo;
+    if (!opened) {
       return;
     }
-    void useLogStore.getState().reload(root);
-    void useStatusStore.getState().refresh(root);
-    void useRefsStore.getState().refresh(root);
-    void useExtrasStore.getState().refresh(root);
+    setRefreshing(true);
+    try {
+      await refreshRepo(opened.root);
+      useUiStore.getState().appendOutput(`Refreshed ${opened.name}`);
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   const commitStaged = () => {
@@ -208,7 +212,7 @@ function App() {
         void runPush();
         break;
       case "refresh":
-        refreshAll();
+        void refreshAll();
         break;
       case "documentation":
         void openExternal(PROJECT_URL);
@@ -262,7 +266,8 @@ function App() {
         onPull={runPull}
         onPush={() => void runPush()}
         onMerge={runMerge}
-        onRefresh={refreshAll}
+        onRefresh={() => void refreshAll()}
+        refreshing={refreshing}
       />
 
       <ShortcutsHelp />
