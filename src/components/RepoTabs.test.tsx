@@ -62,8 +62,8 @@ function dragTab(name: string) {
 
 describe("RepoTabs", () => {
   const realActions = (() => {
-    const { open, closeTab, moveTab, pickAndOpen } = useRepoStore.getState();
-    return { open, closeTab, moveTab, pickAndOpen };
+    const { open, closeTab, moveTab, renameTab, pickAndOpen } = useRepoStore.getState();
+    return { open, closeTab, moveTab, renameTab, pickAndOpen };
   })();
 
   beforeEach(() => {
@@ -260,5 +260,149 @@ describe("RepoTabs", () => {
     await user.click(await screen.findByRole("menuitem", { name: "Open in New Window" }));
 
     expect(openRepoInNewWindow).toHaveBeenCalledWith(REPO_B.root);
+  });
+
+  it("offers to rename a tab from the context menu", async () => {
+    const user = userEvent.setup();
+    useRepoStore.setState({ repo: REPO_A, openTabs: tabs() });
+    render(<RepoTabs />);
+
+    await user.pointer({
+      keys: "[MouseRight]",
+      target: screen.getByRole("tab", { name: "repo-b" }),
+    });
+    await user.click(await screen.findByRole("menuitem", { name: "Rename the tab" }));
+
+    expect(screen.getByRole("textbox", { name: "Rename repo-b" })).toBeInTheDocument();
+  });
+
+  it("prefills the rename input and selects the text", async () => {
+    const user = userEvent.setup();
+    useRepoStore.setState({ repo: REPO_A, openTabs: tabs() });
+    render(<RepoTabs />);
+
+    await user.pointer({
+      keys: "[MouseRight]",
+      target: screen.getByRole("tab", { name: "repo-a" }),
+    });
+    await user.click(await screen.findByRole("menuitem", { name: "Rename the tab" }));
+
+    const input = screen.getByRole("textbox", { name: "Rename repo-a" }) as HTMLInputElement;
+    expect(input).toHaveValue("repo-a");
+    expect(input.selectionStart).toBe(0);
+    expect(input.selectionEnd).toBe("repo-a".length);
+  });
+
+  it("commits the rename on Enter", async () => {
+    const user = userEvent.setup();
+    const renameTab = vi.fn();
+    useRepoStore.setState({ repo: REPO_A, openTabs: tabs(), renameTab });
+    render(<RepoTabs />);
+
+    await user.pointer({
+      keys: "[MouseRight]",
+      target: screen.getByRole("tab", { name: "repo-a" }),
+    });
+    await user.click(await screen.findByRole("menuitem", { name: "Rename the tab" }));
+    const input = screen.getByRole("textbox", { name: "Rename repo-a" });
+    await user.clear(input);
+    await user.type(input, "Alpha{Enter}");
+
+    expect(renameTab).toHaveBeenCalledWith(REPO_A.root, "Alpha");
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+  });
+
+  it("cancels the rename with Escape without committing", async () => {
+    const user = userEvent.setup();
+    const renameTab = vi.fn();
+    useRepoStore.setState({ repo: REPO_A, openTabs: tabs(), renameTab });
+    render(<RepoTabs />);
+
+    await user.pointer({
+      keys: "[MouseRight]",
+      target: screen.getByRole("tab", { name: "repo-a" }),
+    });
+    await user.click(await screen.findByRole("menuitem", { name: "Rename the tab" }));
+    const input = screen.getByRole("textbox", { name: "Rename repo-a" });
+
+    fireEvent.keyDown(input, { key: "Escape" });
+
+    expect(renameTab).not.toHaveBeenCalled();
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "repo-a" })).toBeInTheDocument();
+  });
+
+  it("commits the rename on blur", async () => {
+    const user = userEvent.setup();
+    const renameTab = vi.fn();
+    useRepoStore.setState({ repo: REPO_A, openTabs: tabs(), renameTab });
+    render(<RepoTabs />);
+
+    await user.pointer({
+      keys: "[MouseRight]",
+      target: screen.getByRole("tab", { name: "repo-a" }),
+    });
+    await user.click(await screen.findByRole("menuitem", { name: "Rename the tab" }));
+    const input = screen.getByRole("textbox", { name: "Rename repo-a" });
+    await user.clear(input);
+    await user.type(input, "Renamed");
+    fireEvent.blur(input);
+
+    expect(renameTab).toHaveBeenCalledWith(REPO_A.root, "Renamed");
+  });
+
+  it("never starts a drag from the rename input", async () => {
+    const user = userEvent.setup();
+    const moveTab = vi.fn();
+    useRepoStore.setState({ repo: REPO_A, openTabs: tabs(), moveTab });
+    stubDropTarget(`tab:${REPO_B.root}`);
+    render(<RepoTabs />);
+
+    await user.pointer({
+      keys: "[MouseRight]",
+      target: screen.getByRole("tab", { name: "repo-a" }),
+    });
+    await user.click(await screen.findByRole("menuitem", { name: "Rename the tab" }));
+    const input = screen.getByRole("textbox", { name: "Rename repo-a" });
+
+    fireEvent.pointerDown(input, { button: 0, clientX: 0, clientY: 0 });
+    fireEvent.pointerMove(document, { clientX: 30, clientY: 30 });
+    fireEvent.pointerUp(document, { clientX: 30, clientY: 30 });
+
+    expect(moveTab).not.toHaveBeenCalled();
+  });
+
+  it("renders a custom title instead of the folder name", () => {
+    useRepoStore.setState({
+      repo: REPO_A,
+      openTabs: [{ ...tabs()[0], title: "Custom" }, tabs()[1]],
+    });
+    render(<RepoTabs />);
+
+    expect(screen.getByRole("tab", { name: "Custom" })).toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: "repo-a" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Close Custom" })).toBeInTheDocument();
+  });
+
+  it("resets to the folder name when the rename is empty", async () => {
+    const user = userEvent.setup();
+    useRepoStore.setState({
+      repo: REPO_A,
+      openTabs: [{ ...tabs()[0], title: "Custom" }],
+    });
+    render(<RepoTabs />);
+
+    expect(screen.getByRole("tab", { name: "Custom" })).toBeInTheDocument();
+
+    await user.pointer({
+      keys: "[MouseRight]",
+      target: screen.getByRole("tab", { name: "Custom" }),
+    });
+    await user.click(await screen.findByRole("menuitem", { name: "Rename the tab" }));
+    const input = screen.getByRole("textbox", { name: "Rename Custom" });
+    await user.clear(input);
+    await user.type(input, "{Enter}");
+
+    expect(screen.getByRole("tab", { name: "repo-a" })).toBeInTheDocument();
   });
 });

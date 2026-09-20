@@ -188,7 +188,7 @@ describe("SettingsWindow", () => {
   it("enables restoring the open tabs from the General tab on OK", async () => {
     const user = userEvent.setup();
     useRepoStore.setState({
-      openTabs: [{ path: "/tmp/repo", name: "repo", opened_at: 1 }],
+      openTabs: [{ path: "/tmp/repo", name: "repo", opened_at: 1, title: "My repo" }],
     });
     render(<SettingsWindow onClose={() => {}} />);
 
@@ -201,7 +201,10 @@ describe("SettingsWindow", () => {
 
     expect(useSettingsStore.getState().restoreTabs).toBe(true);
     expect(localStorage.getItem(RESTORE_TABS_STORAGE_KEY)).toBe("true");
-    expect(loadStoredSession()).toEqual({ paths: ["/tmp/repo"], active: "/tmp/repo" });
+    expect(loadStoredSession()).toEqual({
+      tabs: [{ path: "/tmp/repo", title: "My repo" }],
+      active: "/tmp/repo",
+    });
   });
 
   it("disabling the preference clears the stored session", async () => {

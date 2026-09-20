@@ -112,6 +112,8 @@ export const en = {
     close: "Close {name}",
     openAnother: "Open another repository",
     openInNewWindow: "Open in New Window",
+    rename: "Rename the tab",
+    renameAria: "Rename {name}",
   },
   toolbar: {
     noRepo: "No repository open",

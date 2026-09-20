@@ -57,7 +57,7 @@ const PROJECT_URL = "https://github.com/rldona/OpenGit";
 
 /** Whether a stored session should be reopened on this launch (OG-082/OG-084). */
 function shouldRestoreSession(): boolean {
-  return useSettingsStore.getState().restoreTabs && (loadStoredSession()?.paths.length ?? 0) > 0;
+  return useSettingsStore.getState().restoreTabs && (loadStoredSession()?.tabs.length ?? 0) > 0;
 }
 
 function App() {
@@ -159,7 +159,7 @@ function App() {
       // Otherwise reopen the previous session when the preference is on (OG-082).
       const session = shouldRestoreSession() ? loadStoredSession() : null;
       if (session !== null) {
-        await useRepoStore.getState().restoreSession(session.paths, session.active);
+        await useRepoStore.getState().restoreSession(session.tabs, session.active);
       }
       if (!cancelled) {
         setRestoringSession(false);
