@@ -393,6 +393,30 @@ pub fn delete_branch(
     })
 }
 
+#[derive(Clone, Serialize)]
+pub struct ConflictFile {
+    pub content: String,
+    pub binary: bool,
+}
+
+#[tauri::command]
+pub fn read_conflict_file(path: String, file: String) -> Result<ConflictFile, GitError> {
+    let (content, binary) = ops::read_worktree_file(Path::new(&path), &file)?;
+    Ok(ConflictFile { content, binary })
+}
+
+#[tauri::command]
+pub fn resolve_conflict(
+    path: String,
+    file: String,
+    content: String,
+    state: State<'_, AppState>,
+) -> Result<(), GitError> {
+    pause_while(&state, || {
+        ops::write_and_stage(&state.runner, Path::new(&path), &file, &content)
+    })
+}
+
 #[tauri::command]
 pub fn repo_op_abort(path: String, state: State<'_, AppState>) -> Result<(), GitError> {
     pause_while(&state, || {

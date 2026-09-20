@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { confirmDestructive } from "../lib/bridge/dialog";
 import type { FileStatus } from "../lib/bridge/types";
 import { useRepoStore } from "../lib/stores/repo";
+import { useConflictStore } from "../lib/stores/conflict";
 import { useDiffStore } from "../lib/stores/diff";
 import { useStatusStore } from "../lib/stores/status";
 import { useUiStore } from "../lib/stores/ui";
@@ -58,6 +59,7 @@ export function StatusView() {
   const discard = useStatusStore((state) => state.discard);
   const removeUntracked = useStatusStore((state) => state.removeUntracked);
   const openWorktreeFile = useDiffStore((state) => state.openWorktreeFile);
+  const openConflict = useConflictStore((state) => state.open);
   const setActiveView = useUiStore((state) => state.setActiveView);
 
   const root = repo?.root ?? null;
@@ -67,6 +69,11 @@ export function StatusView() {
       return;
     }
     select(entry.path);
+    if (entry.kind === "unmerged") {
+      await openConflict(root, entry.path);
+      setActiveView("conflict");
+      return;
+    }
     await openWorktreeFile(root, entry.path, staged);
     setActiveView("diff");
   };
