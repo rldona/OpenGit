@@ -257,7 +257,6 @@ function App() {
         void openExternal(PROJECT_URL);
         break;
       case "check-updates":
-      case "check-updates-help":
         void useUpdateStore.getState().check({ manual: true });
         break;
       default:
