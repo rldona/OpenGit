@@ -1,14 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { confirmDestructive } from "../lib/bridge/dialog";
 import { formatDateTime, shortRefName } from "../lib/format";
 import { LANE_WIDTH, ROW_HEIGHT } from "../lib/graph/layout";
 import { sameRange, visibleRange, type VisibleRange } from "../lib/graph/viewport";
+import { copyText } from "../lib/clipboard";
 import { LAYOUT_KEYS } from "../lib/layout";
+import { useCommitActions } from "../lib/hooks/useCommitActions";
+import { useContextMenu } from "../lib/hooks/useContextMenu";
 import type { Commit, LogSearch } from "../lib/bridge/types";
-import { useRefsStore } from "../lib/stores/refs";
-import { useDiffStore } from "../lib/stores/diff";
 import { useLogStore } from "../lib/stores/log";
-import { useRebaseStore } from "../lib/stores/rebase";
 import { useRepoStore } from "../lib/stores/repo";
 import { useUiStore } from "../lib/stores/ui";
 import { GraphCanvas } from "./GraphCanvas";
@@ -36,6 +35,8 @@ export function HistoryView() {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [range, setRange] = useState<VisibleRange>({ start: 0, end: 0 });
   const [searchForm, setSearchForm] = useState<LogSearch>({ grep: "", author: "", path: "" });
+  const commitActions = useCommitActions();
+  const commitMenu = useContextMenu();
 
   const searchActive =
     storedSearch.grep !== "" || storedSearch.author !== "" || storedSearch.path !== "";
@@ -210,6 +211,28 @@ export function HistoryView() {
                     className={`commit-row${selected === row.hash ? " selected" : ""}`}
                     style={{ top: index * ROW_HEIGHT, paddingLeft: graphWidth }}
                     onClick={() => select(row.hash)}
+                    onContextMenu={(event) =>
+                      commitMenu.open(event, [
+                        {
+                          label: "View diff",
+                          onSelect: () => void commitActions.showDiff(commit),
+                        },
+                        {
+                          label: "Cherry-pick",
+                          onSelect: () => void commitActions.cherryPick(commit),
+                        },
+                        { label: "Revert", onSelect: () => void commitActions.revert(commit) },
+                        {
+                          label: "Reset to here",
+                          onSelect: () => void commitActions.reset(commit),
+                        },
+                        {
+                          label: "Interactive rebase from here",
+                          onSelect: () => void commitActions.rebase(commit),
+                        },
+                        { label: "Copy hash", onSelect: () => void copyText(commit.hash) },
+                      ])
+                    }
                   >
                     <span className="commit-refs">{renderRefs(commit.refs)}</span>
                     <span className="commit-subject" title={commit.subject}>
@@ -230,6 +253,8 @@ export function HistoryView() {
           <CommitDetail commit={selectedCommit} onClose={() => select(null)} />
         ) : null}
       </SplitPane>
+
+      {commitMenu.menu}
     </div>
   );
 }
@@ -265,58 +290,7 @@ function RefBadge({ value }: { value: string }) {
 }
 
 function CommitDetail({ commit, onClose }: { commit: Commit; onClose: () => void }) {
-  const root = useRepoStore((state) => state.repo?.root ?? null);
-  const openCommit = useDiffStore((state) => state.openCommit);
-  const setActiveView = useUiStore((state) => state.setActiveView);
-  const currentBranch = useRefsStore((state) => state.current);
-  const cherryPick = useLogStore((state) => state.cherryPick);
-  const revert = useLogStore((state) => state.revert);
-  const resetTo = useLogStore((state) => state.resetTo);
-  const openRebase = useRebaseStore((state) => state.open);
-
-  const short = commit.hash.slice(0, 7);
-
-  const showDiff = async () => {
-    if (!root) {
-      return;
-    }
-    await openCommit(root, commit.hash);
-    setActiveView("diff");
-  };
-
-  const confirmCherryPick = async () => {
-    if (
-      root &&
-      (await confirmDestructive(`Cherry-pick ${short} onto ${currentBranch ?? "HEAD"}?`))
-    ) {
-      await cherryPick(root, commit.hash);
-    }
-  };
-
-  const confirmRevert = async () => {
-    if (root && (await confirmDestructive(`Create a revert commit for ${short}?`))) {
-      await revert(root, commit.hash);
-    }
-  };
-
-  const startRebase = async () => {
-    if (!root) {
-      return;
-    }
-    await openRebase(root, commit.hash);
-    setActiveView("rebase");
-  };
-
-  const confirmReset = async () => {
-    if (
-      root &&
-      (await confirmDestructive(
-        `Move ${currentBranch ?? "HEAD"} to ${short}? Changes are kept in the working tree, unstaged.`,
-      ))
-    ) {
-      await resetTo(root, commit.hash);
-    }
-  };
+  const actions = useCommitActions();
 
   return (
     <aside className="commit-detail" aria-label="Commit details">
@@ -336,19 +310,31 @@ function CommitDetail({ commit, onClose }: { commit: Commit; onClose: () => void
         {commit.parents.length} parent(s) · {commit.refs.length} ref(s)
       </p>
       <div className="detail-actions">
-        <button type="button" className="detail-action" onClick={() => void showDiff()}>
+        <button
+          type="button"
+          className="detail-action"
+          onClick={() => void actions.showDiff(commit)}
+        >
           View diff
         </button>
-        <button type="button" className="detail-action" onClick={() => void confirmCherryPick()}>
+        <button
+          type="button"
+          className="detail-action"
+          onClick={() => void actions.cherryPick(commit)}
+        >
           Cherry-pick
         </button>
-        <button type="button" className="detail-action" onClick={() => void confirmRevert()}>
+        <button type="button" className="detail-action" onClick={() => void actions.revert(commit)}>
           Revert
         </button>
-        <button type="button" className="detail-action danger" onClick={() => void confirmReset()}>
+        <button
+          type="button"
+          className="detail-action danger"
+          onClick={() => void actions.reset(commit)}
+        >
           Reset to here
         </button>
-        <button type="button" className="detail-action" onClick={() => void startRebase()}>
+        <button type="button" className="detail-action" onClick={() => void actions.rebase(commit)}>
           Interactive rebase from here
         </button>
       </div>
