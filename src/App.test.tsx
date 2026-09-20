@@ -254,6 +254,19 @@ describe("App", () => {
     expect(screen.queryByRole("region", { name: "Output" })).not.toBeInTheDocument();
   });
 
+  it("lists recent projects on the home and opens one directly", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    const recent = await screen.findByRole("button", { name: /^mi-repo/ });
+    expect(recent).toHaveAttribute("title", "/tmp/mi-repo");
+    expect(screen.getByText("Recent Projects")).toBeInTheDocument();
+
+    await user.click(recent);
+
+    expect(openRepo).toHaveBeenCalledWith("/tmp/mi-repo");
+  });
+
   it("opens the chosen repository and shows the history", async () => {
     const user = userEvent.setup();
     useUiStore.setState({ outputOpen: true });
