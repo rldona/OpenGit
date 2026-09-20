@@ -933,6 +933,18 @@ body {
   font-size: 12px;
 }
 
+.welcome-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.welcome-actions button {
+  margin-top: 0;
+}
+
 .empty-state button {
   margin-top: 12px;
   padding: 6px 12px;
