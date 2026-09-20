@@ -130,6 +130,7 @@ pub fn run() {
             commands::cherry_pick,
             commands::revert_commit,
             commands::reset_mixed,
+            commands::merge_branch,
             commands::tag_create,
             commands::tag_delete,
             commands::stash_list,

@@ -4,6 +4,7 @@ import { confirmDestructive } from "../lib/bridge/dialog";
 import { openExternal } from "../lib/bridge/opener";
 import type { RefEntry } from "../lib/bridge/types";
 import { parseTrack } from "../lib/format";
+import { useMergeBranch } from "../lib/hooks/useMergeBranch";
 import { useExtrasStore } from "../lib/stores/extras";
 import { useLogStore } from "../lib/stores/log";
 import { useRefsStore } from "../lib/stores/refs";
@@ -65,6 +66,15 @@ export function RefsSidebar() {
       useCollapseStore.getState().set("branches", false);
     }
   }, [newBranchRequest]);
+
+  const runMerge = useMergeBranch(root);
+
+  const confirmMerge = async (rev: string) => {
+    const target = current ?? "HEAD";
+    if (await confirmDestructive(`Merge ${rev} into ${target}?`)) {
+      await runMerge(rev, false);
+    }
+  };
 
   // Pulsar una tag localiza su commit en el historial y lo selecciona.
   const reveal = (ref: RefEntry) => {
@@ -224,6 +234,11 @@ export function RefsSidebar() {
                     onContextMenu={(event) =>
                       refMenu.open(event, [
                         { label: "Checkout", onSelect: () => root && void checkout(root, ref) },
+                        {
+                          label: `Merge into ${current ?? "HEAD"}`,
+                          disabled: current === short,
+                          onSelect: () => void confirmMerge(short),
+                        },
                         {
                           label: "Rename",
                           onSelect: () => {

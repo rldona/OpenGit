@@ -77,7 +77,7 @@ Acercar el chasis y los paneles a la UX de SourceTree sin perder el rendimiento 
 
 **Salida:** menú nativo, toolbar con iconos, splits persistidos, tabla de commits con cabecera, menús contextuales, paneles con numeración y badges de tracking. ✅
 
-## M7 — Paridad SourceTree (fase 2)
+## M7 — Paridad SourceTree (fase 2) ✅ _(cerrado el 2026-09-19)_
 
 Segunda pasada sobre el chasis. Ordenado por cuánto pesa en la percepción al abrir la app, no por tamaño del cambio: comparando capturas contra SourceTree, lo que más distancia marca es el acabado visual y la sidebar, no dónde está cada panel.
 
@@ -86,12 +86,14 @@ Segunda pasada sobre el chasis. Ordenado por cuánto pesa en la percepción al a
 - [x] Ancho del grafo por rango visible, sin huecos muertos (OG-047).
 - [x] Identidad visual: badges con glifo y color, iconos de sección, fechas relativas, autor con email (OG-048).
 - [x] Barra superior con acciones a la izquierda (badge en Commit) y utilidades a la derecha (OG-041).
-- [ ] Vista de commit dedicada con staged/unstaged, preview y editor de mensaje (OG-043).
-- [ ] Detalle de stash embebido en lugar de modal (OG-046).
-- [ ] Columnas ordenables y redimensionables en la tabla de commits (OG-045).
-- [ ] Merge de ramas: iniciar `git merge`, no solo abortarlo o continuarlo (OG-049).
+- [x] Ventana de commit con staged/unstaged, preview y editor de mensaje (OG-043).
+- [x] Detalle de stash embebido en lugar de modal (OG-046).
+- [x] Columnas ordenables y redimensionables en la tabla de commits (OG-045).
+- [x] Merge de ramas: iniciar `git merge`, no solo abortarlo o continuarlo (OG-049).
+- [x] Pull y Fetch con diálogo de opciones y ventana de progreso/error compartida (OG-050).
+- [x] Tags clicables que localizan su commit y bordes de la tabla alineados (OG-051).
 
-**Salida:** abrir la app junto a SourceTree y que la diferencia esté en el detalle, no en el primer vistazo.
+**Salida:** abrir la app junto a SourceTree y que la diferencia esté en el detalle, no en el primer vistazo. ✅
 
 ## Fuera de alcance
 

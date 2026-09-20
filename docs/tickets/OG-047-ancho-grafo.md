@@ -1,7 +1,7 @@
 # OG-047 · Ancho del grafo por rango visible
 
 - **Milestone:** M7 — Paridad SourceTree (fase 2)
-- **Estado:** ready
+- **Estado:** done
 - **Depende de:** OG-044
 - **Referencias:** ROADMAP.md, OG-004, OG-037
 

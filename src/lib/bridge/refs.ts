@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { BranchTracking, TrackingCommits } from "./types";
+import type { BranchTracking, MergeResult, TrackingCommits } from "./types";
 
 export function branchTracking(path: string): Promise<BranchTracking> {
   return invoke<BranchTracking>("branch_tracking", { path });
@@ -25,4 +25,9 @@ export function renameBranch(path: string, old: string, newName: string): Promis
 /** `force = false` usa `-d`; `-D` solo tras confirmación explícita. */
 export function deleteBranch(path: string, name: string, force: boolean): Promise<void> {
   return invoke<void>("delete_branch", { path, name, force });
+}
+
+/** Fusiona `rev` en la rama actual; un conflicto no es un error. */
+export function mergeBranch(path: string, rev: string, noFf: boolean): Promise<MergeResult> {
+  return invoke<MergeResult>("merge_branch", { path, rev, noFf });
 }

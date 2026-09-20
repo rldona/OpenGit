@@ -1,7 +1,7 @@
 # OG-041 · Barra superior de ventana
 
 - **Milestone:** M7 — Paridad SourceTree (fase 2)
-- **Estado:** in-progress
+- **Estado:** done
 - **Depende de:** OG-035, OG-044
 - **Bloquea parcialmente:** OG-049 (el botón Merge), OG-043 (destino del botón Commit)
 - **Referencias:** ROADMAP.md, OG-035

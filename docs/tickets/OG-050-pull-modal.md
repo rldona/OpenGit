@@ -1,7 +1,7 @@
 # OG-050 · Pull con diálogo y ventana de progreso
 
 - **Milestone:** M7 — Paridad SourceTree (fase 2)
-- **Estado:** in progress
+- **Estado:** done
 - **Depende de:** OG-017, OG-041
 - **Referencias:** ROADMAP.md, OG-039
 
@@ -30,11 +30,11 @@ Este ticket replica ese flujo para Pull.
 
 ## Criterios de aceptación
 
-- [ ] Pull abre el diálogo con remoto y rama por defecto (upstream si existe).
-- [ ] OK lanza el job y se ve el progreso; Cancel lo aborta.
-- [ ] Un fallo muestra la salida completa y no se queda sin mensaje.
-- [ ] Las opciones del diálogo llegan a git (test de `command_for`).
-- [ ] Tests de UI con el bridge mockeado.
+- [x] Pull abre el diálogo con remoto y rama por defecto (upstream si existe).
+- [x] OK lanza el job y se ve el progreso; Cancel lo aborta.
+- [x] Un fallo muestra la salida completa y no se queda sin mensaje.
+- [x] Las opciones del diálogo llegan a git (test de `command_for`).
+- [x] Tests de UI con el bridge mockeado.
 
 ## Fuera de alcance
 
