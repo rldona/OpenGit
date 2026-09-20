@@ -1,7 +1,7 @@
 # OG-027 · Arreglar la subida de artefactos del release
 
 - **Milestone:** M5 — Pulido (seguimiento de OG-026)
-- **Estado:** in-progress
+- **Estado:** done
 - **Depende de:** OG-026
 - **Referencias:** ROADMAP.md
 
@@ -31,4 +31,4 @@ El primer tag `v0.1.0` construyó los tres bundles correctamente, pero el job `r
 - Causa: `upload-artifact` conserva subcarpetas (`deb/`, `appimage/`, `msi/`, `nsis/`), así que `artifacts/*/*` expandía directorios en el runner.
 - Fix: lista explícita con `find -type f -print0` y array de bash (compatible con bash 3.2), usado en los dos caminos (crear y re-subir).
 - Verificación real sin recompilar: `gh run download 35352127966` y el mismo bucle contra el borrador existente; quedan los 5 artefactos. El workflow corregido se validará end-to-end en el próximo tag.
-- Pendiente para cerrar: PR y CI verde.
+- Cerrado el 2026-09-18 con CI verde (Frontend 36 s, Rust 1m20s) en el PR #23.
