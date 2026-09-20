@@ -1,7 +1,7 @@
 # OG-108 · Rename repository tabs inline
 
 - **Milestone:** —
-- **Status:** ready
+- **Status:** done
 - **Depends on:** OG-069, OG-082, OG-107
 - **References:** OG-070, `src/components/RepoTabs.tsx`, `src/lib/tabs.ts`, `src/lib/stores/repo.ts`, `src/styles/global.css`
 
@@ -27,14 +27,14 @@ cannot be told apart, so there is no way to keep a meaningful name on a tab.
 
 ## Acceptance criteria
 
-- [ ] The tab context menu offers "Rename the tab" for every tab.
-- [ ] Choosing it renders an inline input prefilled with the current label and
+- [x] The tab context menu offers "Rename the tab" for every tab.
+- [x] Choosing it renders an inline input prefilled with the current label and
       with the text selected.
-- [ ] Enter and blur commit the rename; Escape cancels without committing.
-- [ ] An empty rename resets the label to the repository folder name.
-- [ ] A custom label renders instead of the folder name and survives a tab
+- [x] Enter and blur commit the rename; Escape cancels without committing.
+- [x] An empty rename resets the label to the repository folder name.
+- [x] A custom label renders instead of the folder name and survives a tab
       switch and a reopen.
-- [ ] With `restoreTabs` on the custom label is persisted and restored; with it
+- [x] With `restoreTabs` on the custom label is persisted and restored; with it
       off nothing is written and the stored session stays absent.
 
 ## Out of scope
