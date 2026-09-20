@@ -105,13 +105,15 @@ describe("useRepoStore", () => {
 
     await useRepoStore.getState().closeTab(REPO.root);
 
-    expect(removeRecentRepo).toHaveBeenCalledWith(REPO.root);
     expect(useRepoStore.getState().openTabs.map((tab) => tab.path)).toEqual([other.root]);
     expect(useRepoStore.getState().repo?.root).toBe(other.root);
+    // Closing a tab must not erase the project from history (OG-079).
+    expect(removeRecentRepo).not.toHaveBeenCalled();
   });
 
-  it("closing the last tab returns to the empty state", async () => {
+  it("closing the last tab returns to the empty state and keeps history", async () => {
     vi.mocked(openRepo).mockResolvedValue(REPO);
+    vi.mocked(recentRepos).mockResolvedValue([{ path: REPO.root, name: REPO.name, opened_at: 1 }]);
 
     await useRepoStore.getState().open(REPO.root);
     await useRepoStore.getState().closeTab(REPO.root);
@@ -119,6 +121,23 @@ describe("useRepoStore", () => {
     expect(useRepoStore.getState().repo).toBeNull();
     expect(useRepoStore.getState().openTabs).toEqual([]);
     expect(closeRepo).toHaveBeenCalled();
+    expect(useRepoStore.getState().recents.map((recent) => recent.path)).toEqual([REPO.root]);
+  });
+
+  it("removing a recent only updates history, without closing the repo or dropping tabs", async () => {
+    const other = { path: "/tmp/other", name: "other", opened_at: 2 };
+    vi.mocked(openRepo).mockResolvedValue(REPO);
+
+    await useRepoStore.getState().open(REPO.root);
+    useRepoStore.setState({
+      recents: [{ path: REPO.root, name: REPO.name, opened_at: 1 }, other],
+    });
+    await useRepoStore.getState().removeRecent(other.path);
+
+    expect(removeRecentRepo).toHaveBeenCalledWith(other.path);
+    expect(useRepoStore.getState().recents.map((recent) => recent.path)).toEqual([REPO.root]);
+    expect(useRepoStore.getState().repo?.root).toBe(REPO.root);
+    expect(useRepoStore.getState().openTabs.map((tab) => tab.path)).toEqual([REPO.root]);
   });
 
   it("switches tabs cyclically in both directions", async () => {
