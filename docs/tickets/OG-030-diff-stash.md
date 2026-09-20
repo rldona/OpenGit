@@ -1,7 +1,7 @@
 # OG-030 · Diff de stash
 
 - **Milestone:** M5 — Pulido (v2 de OG-016)
-- **Estado:** in-progress
+- **Estado:** done
 - **Depende de:** OG-016, OG-005
 - **Referencias:** ROADMAP.md
 
@@ -40,4 +40,4 @@ El sidebar de stashes permite aplicar, pop y drop, pero no hay forma de ver qué
 - Rust: `stash_show` reutiliza `validate_stash_reference`; test de integración con tracked + untracked y referencia inválida.
 - Frontend: botón **Diff** en cada fila del sidebar, `StashDiffDialog` con `DiffEditor` unificado y solo lectura; estados cargando, error y "No changes in this stash".
 - Tests: 112 Rust (2 nuevos) y 184 frontend (4 nuevos entre store y sidebar; se conservaron los tests previos del store al fusionar el fichero).
-- Pendiente para cerrar: PR y CI verde.
+- Cerrado el 2026-09-18 con CI verde (Frontend 38 s, Rust 1m30s) en el PR #27.
