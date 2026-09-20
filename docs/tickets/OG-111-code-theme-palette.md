@@ -1,7 +1,7 @@
 # OG-111 · Add the "Code" colour palette
 
 - **Milestone:** Next
-- **Status:** ready
+- **Status:** done
 - **Depends on:** OG-110
 - **References:** OG-110, `src/lib/theme.ts`, `src/styles/global.css`, `src/components/SettingsWindow.tsx`, `index.html`, `src/lib/i18n/messages.ts`, `src/lib/i18n/messages.es.ts`, FlupCode `packages/harness/src/styles/tokens.css`
 
@@ -25,15 +25,15 @@ other paired palettes, so it follows the existing light/dark/system selector.
 
 ## Acceptance criteria
 
-- [ ] Settings → Appearance lists "Code" after Vercel.
-- [ ] Selecting Code and confirming sets `data-palette="code"`; Default removes
+- [x] Settings → Appearance lists "Code" after Vercel.
+- [x] Selecting Code and confirming sets `data-palette="code"`; Default removes
       the attribute.
-- [ ] Code has a light and a dark variant and follows the light/dark/system
+- [x] Code has a light and a dark variant and follows the light/dark/system
       selector.
-- [ ] Values are copied literally from FlupCode's `[data-fc-theme="code"]` /
+- [x] Values are copied literally from FlupCode's `[data-fc-theme="code"]` /
       `[data-fc-theme="code"].fc-dark` blocks and mapped with the OG-110 token
       rules.
-- [ ] `npm run lint`, `npm run typecheck` and `npm run test` are green.
+- [x] `npm run lint`, `npm run typecheck` and `npm run test` are green.
 
 ## Out of scope
 
