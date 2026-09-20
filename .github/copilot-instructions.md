@@ -1,11 +1,11 @@
 # Copilot instructions
 
-La fuente única de instrucciones del proyecto es [`AGENTS.md`](../AGENTS.md). Resumen operativo:
+The single source of project instructions is [`AGENTS.md`](../AGENTS.md). Operational summary:
 
-- OpenGit: cliente Git de escritorio multiplataforma (Tauri 2 + Rust + React + TypeScript).
-- El motor es el binario `git` del sistema; nunca se reimplementa git.
-- Documentación en español; código, ramas y commits en inglés (Conventional Commits).
-- Todo cambio nace de un ticket `OG-NNN` en `docs/tickets/`.
-- Prohibido: operaciones destructivas sin confirmación, commits/push sin pedirlo, interpolar entrada en shell, parsear salida humana de git, secretos en el repo.
-- Parseo siempre con `-z` / `--porcelain=v2`. Tests de git contra repos temporales, nunca contra la red.
-- Decisiones con coste alto de revertir → ADR en `docs/decisions/`.
+- OpenGit: cross-platform desktop Git client (Tauri 2 + Rust + React + TypeScript).
+- The engine is the system `git` binary; git is never reimplemented.
+- Documentation, code and comments in English; same for branches, commits and everything written to git (Conventional Commits).
+- Every change starts from an `OG-NNN` ticket in `docs/tickets/`.
+- Forbidden: destructive operations without confirmation, commits/pushes without being asked, interpolating input into a shell, parsing human-readable git output, secrets in the repository.
+- Always parse with `-z` / `--porcelain=v2`. Git tests run against temporary repositories, never against the network.
+- Decisions with a high cost to revert → ADR in `docs/decisions/`.

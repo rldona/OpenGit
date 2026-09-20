@@ -1,5 +1,5 @@
 # CLAUDE.md
 
-Compatibilidad con Claude Code. La fuente única de instrucciones es `AGENTS.md`.
+Compatibility with Claude Code. The single source of instructions is `AGENTS.md`.
 
 @AGENTS.md
