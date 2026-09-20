@@ -163,6 +163,16 @@ applications.
 **Exit:** get notified of v0.4.0 from v0.3.1, and open any listed file
 outside the app. ✅
 
+## M12 — Home shortcuts
+
+Bring recent projects back as a shortcut on the empty state.
+
+- [x] Recent projects on the welcome screen with direct open and
+  per-item removal; the sidebar stays hidden while no repository is
+  open (OG-079).
+
+**Exit:** reopen a project in one click from the home screen. ✅
+
 ## Translating documentation and comments to English
 
 Since 2026-09-19 the convention is **English for documentation, code and

@@ -27,9 +27,9 @@ Installers are published on [Releases](https://github.com/rldona/OpenGit/release
 
 | OS | Download | Format |
 | --- | --- | --- |
-| **Windows** | [OpenGit_x64-setup.exe](https://github.com/rldona/OpenGit/releases/download/v0.4.0/OpenGit_0.4.0_x64-setup.exe) · [OpenGit_x64.msi](https://github.com/rldona/OpenGit/releases/download/v0.4.0/OpenGit_0.4.0_x64_en-US.msi) | Installer / MSI |
-| **macOS** (Apple Silicon) | [OpenGit_aarch64.dmg](https://github.com/rldona/OpenGit/releases/download/v0.4.0/OpenGit_0.4.0_aarch64.dmg) | DMG |
-| **Linux** | [OpenGit_amd64.deb](https://github.com/rldona/OpenGit/releases/download/v0.4.0/OpenGit_0.4.0_amd64.deb) · [OpenGit_amd64.AppImage](https://github.com/rldona/OpenGit/releases/download/v0.4.0/OpenGit_0.4.0_amd64.AppImage) | Debian / AppImage |
+| **Windows** | [OpenGit_x64-setup.exe](https://github.com/rldona/OpenGit/releases/download/v0.5.0/OpenGit_0.5.0_x64-setup.exe) · [OpenGit_x64.msi](https://github.com/rldona/OpenGit/releases/download/v0.5.0/OpenGit_0.5.0_x64_en-US.msi) | Installer / MSI |
+| **macOS** (Apple Silicon) | [OpenGit_aarch64.dmg](https://github.com/rldona/OpenGit/releases/download/v0.5.0/OpenGit_0.5.0_aarch64.dmg) | DMG |
+| **Linux** | [OpenGit_amd64.deb](https://github.com/rldona/OpenGit/releases/download/v0.5.0/OpenGit_0.5.0_amd64.deb) · [OpenGit_amd64.AppImage](https://github.com/rldona/OpenGit/releases/download/v0.5.0/OpenGit_0.5.0_amd64.AppImage) | Debian / AppImage |
 
 The binaries are **not signed or notarized** (certificates cost money and this personal project does not pay for them), so the OS will warn you on first launch:
 
