@@ -16,6 +16,7 @@ pub use version::{GitVersion, MINIMUM_GIT_VERSION};
 
 use std::ffi::OsString;
 use std::path::Path;
+use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 
@@ -24,6 +25,145 @@ pub const LOG_FORMAT: &str = "%H%x1f%P%x1f%an%x1f%ae%x1f%at%x1f%D%x1f%s";
 /// Formato de `for-each-ref`: campos separados por NUL.
 pub const REFS_FORMAT: &str =
     "%(refname)%00%(objectname)%00%(objecttype)%00%(upstream)%00%(upstream:track)";
+
+/// Commit del plan de rebase interactivo.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct PlanCommit {
+    pub hash: String,
+    pub short: String,
+    pub subject: String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum TodoAction {
+    Pick,
+    Reword,
+    Squash,
+    Fixup,
+    Drop,
+}
+
+impl TodoAction {
+    /// Acción que se escribe en el todo-list de git.
+    fn as_git(self) -> &'static str {
+        match self {
+            // El reword se resuelve con `exec git commit --amend -F` después del pick.
+            Self::Pick | Self::Reword => "pick",
+            Self::Squash => "squash",
+            Self::Fixup => "fixup",
+            Self::Drop => "drop",
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+pub struct TodoItem {
+    pub hash: String,
+    pub action: TodoAction,
+}
+
+/// Commits de `base..HEAD` en orden cronológico (el que se reescribe primero).
+pub fn rebase_plan(runner: &Runner, repo: &Path, base: &str) -> Result<Vec<PlanCommit>, GitError> {
+    validate_commit_hash(base)?;
+    let args: Vec<OsString> = vec![
+        "log".into(),
+        "--reverse".into(),
+        "--format=%H%x1f%s".into(),
+        "--end-of-options".into(),
+        format!("{base}..HEAD").into(),
+    ];
+    let output = runner.run_checked(&GitCommand::new(args).cwd(repo))?;
+    let mut plan = Vec::new();
+    for line in output.stdout_lossy().lines() {
+        if line.is_empty() {
+            continue;
+        }
+        let (hash, subject) = line.split_once('\u{1f}').unwrap_or((line, ""));
+        let short = hash.chars().take(12).collect::<String>();
+        plan.push(PlanCommit {
+            hash: hash.to_string(),
+            short,
+            subject: subject.to_string(),
+        });
+    }
+    Ok(plan)
+}
+
+fn shell_quote(value: &str) -> String {
+    format!("'{}'", value.replace('\'', "'\\''"))
+}
+
+/// Ejecuta el rebase interactivo inyectando el todo-list con `GIT_SEQUENCE_EDITOR`.
+/// El fichero vive en el directorio de datos de la app, nunca en el repo.
+pub fn interactive_rebase(
+    runner: &Runner,
+    repo: &Path,
+    data_dir: &Path,
+    base: &str,
+    todos: &[TodoItem],
+    reword_message: Option<&str>,
+) -> Result<(), GitError> {
+    validate_commit_hash(base)?;
+    if todos.is_empty() {
+        return Err(GitError::invalid("rebase plan is empty"));
+    }
+    for item in todos {
+        validate_commit_hash(&item.hash)?;
+    }
+
+    let rewords = todos
+        .iter()
+        .filter(|item| item.action == TodoAction::Reword)
+        .count();
+    if rewords > 1 {
+        return Err(GitError::invalid("only one reword is supported"));
+    }
+    let message = reword_message.map(str::trim).unwrap_or("");
+    if rewords == 1 && message.is_empty() {
+        return Err(GitError::invalid("reword needs a message"));
+    }
+
+    std::fs::create_dir_all(data_dir).map_err(|error| GitError::Io {
+        message: error.to_string(),
+    })?;
+
+    let mut todo = String::new();
+    for item in todos {
+        todo.push_str(item.action.as_git());
+        todo.push(' ');
+        todo.push_str(&item.hash);
+        todo.push('\n');
+        if item.action == TodoAction::Reword {
+            let message_file = data_dir.join("rebase-message.txt");
+            std::fs::write(&message_file, message).map_err(|error| GitError::Io {
+                message: error.to_string(),
+            })?;
+            todo.push_str("exec git commit --amend -F ");
+            todo.push_str(&shell_quote(&message_file.display().to_string()));
+            todo.push('\n');
+        }
+    }
+
+    let todo_file = data_dir.join("rebase-todo.txt");
+    std::fs::write(&todo_file, todo).map_err(|error| GitError::Io {
+        message: error.to_string(),
+    })?;
+
+    runner
+        .run_checked(
+            &GitCommand::new(["rebase", "-i", base])
+                .cwd(repo)
+                .write()
+                .timeout(Duration::from_secs(600))
+                .env(
+                    "GIT_SEQUENCE_EDITOR",
+                    format!("cp {}", shell_quote(&todo_file.display().to_string())),
+                )
+                .env("GIT_EDITOR", "true"),
+        )
+        .map(|_| ())
+}
 
 fn validate_commit_hash(hash: &str) -> Result<(), GitError> {
     let valid = (4..=64).contains(&hash.len()) && hash.chars().all(|c| c.is_ascii_hexdigit());

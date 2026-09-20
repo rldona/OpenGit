@@ -7,6 +7,7 @@ import type { Commit, LogSearch } from "../lib/bridge/types";
 import { useRefsStore } from "../lib/stores/refs";
 import { useDiffStore } from "../lib/stores/diff";
 import { useLogStore } from "../lib/stores/log";
+import { useRebaseStore } from "../lib/stores/rebase";
 import { useRepoStore } from "../lib/stores/repo";
 import { useUiStore } from "../lib/stores/ui";
 import { GraphCanvas } from "./GraphCanvas";
@@ -234,6 +235,7 @@ function CommitDetail({ commit, onClose }: { commit: Commit; onClose: () => void
   const cherryPick = useLogStore((state) => state.cherryPick);
   const revert = useLogStore((state) => state.revert);
   const resetTo = useLogStore((state) => state.resetTo);
+  const openRebase = useRebaseStore((state) => state.open);
 
   const short = commit.hash.slice(0, 7);
 
@@ -258,6 +260,14 @@ function CommitDetail({ commit, onClose }: { commit: Commit; onClose: () => void
     if (root && (await confirmDestructive(`Create a revert commit for ${short}?`))) {
       await revert(root, commit.hash);
     }
+  };
+
+  const startRebase = async () => {
+    if (!root) {
+      return;
+    }
+    await openRebase(root, commit.hash);
+    setActiveView("rebase");
   };
 
   const confirmReset = async () => {
@@ -300,6 +310,9 @@ function CommitDetail({ commit, onClose }: { commit: Commit; onClose: () => void
         </button>
         <button type="button" className="detail-action danger" onClick={() => void confirmReset()}>
           Reset to here
+        </button>
+        <button type="button" className="detail-action" onClick={() => void startRebase()}>
+          Interactive rebase from here
         </button>
       </div>
     </aside>
