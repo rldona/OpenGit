@@ -1,7 +1,7 @@
 # OG-003 · Adaptador git en Rust: runner y parsers
 
 - **Milestone:** M1 — MVP local
-- **Estado:** in-progress
+- **Estado:** done
 - **Depende de:** OG-001
 - **Referencias:** ADR-0003, skill `git-cli-parsing`
 
@@ -47,4 +47,4 @@ Todo el resto de la app depende de una capa única y segura para ejecutar git y 
 - El runner lanza los procesos en su propio grupo (`process_group(0)`), envía SIGTERM y escala a SIGKILL tras 500 ms de gracia.
 - `GitProcess::cancel` está pensado para llamarse antes de `wait`; para cancelar desde la UI habrá que envolverlo (OG-011) o exponer un handle compartido.
 - Fixtures regenerables con `src-tauri/tests/fixtures/generate.sh` (determinista); los formatos exactos de `status` y `numstat` con `-z` quedaron documentados en `.ai/memory/git-quirks.md`.
-- Pendiente para cerrar: PR y CI verde.
+- Cerrado el 2026-09-18: PR #2 con CI verde (Frontend 14 s, Rust 1m32s) tras reescribir el historial para firmar los commits con el noreply de GitHub.
