@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   refreshExtras: vi.fn().mockResolvedValue(undefined),
   refreshStash: vi.fn().mockResolvedValue(undefined),
   refreshOpState: vi.fn().mockResolvedValue(undefined),
+  refreshWorktree: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("./stores/log", () => ({
@@ -27,6 +28,9 @@ vi.mock("./stores/stash", () => ({
 vi.mock("./stores/commit", () => ({
   useCommitStore: { getState: () => ({ refreshOpState: mocks.refreshOpState }) },
 }));
+vi.mock("./stores/diff", () => ({
+  useDiffStore: { getState: () => ({ refreshWorktree: mocks.refreshWorktree }) },
+}));
 
 import { refreshRepo } from "./refresh";
 
@@ -44,6 +48,7 @@ describe("refreshRepo", () => {
     expect(mocks.refreshExtras).toHaveBeenCalledWith("/tmp/repo");
     expect(mocks.refreshStash).toHaveBeenCalledWith("/tmp/repo");
     expect(mocks.refreshOpState).toHaveBeenCalledWith("/tmp/repo");
+    expect(mocks.refreshWorktree).toHaveBeenCalledWith("/tmp/repo");
   });
 
   it("waits for every store before resolving", async () => {

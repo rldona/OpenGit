@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { subscribeRepoEvents } from "../bridge/events";
 import { refreshRepo } from "../refresh";
+import { useDiffStore } from "../stores/diff";
 import { useStatusStore } from "../stores/status";
 
 /** Connects watcher events to the stores (OG-010). */
@@ -18,8 +19,11 @@ export function useRepoEvents(root: string | null): void {
         action();
       }
     };
-    const reloadStatus = () => {
+    // Index and worktree changes move the badge and the file list together
+    // (OG-072): refreshing only the status froze the list behind the badge.
+    const reloadWorktree = () => {
       void useStatusStore.getState().refresh(root);
+      void useDiffStore.getState().refreshWorktree(root);
     };
     void subscribeRepoEvents({
       // Ref changes can move anything (HEAD, tracking, branches), so the whole
@@ -27,8 +31,8 @@ export function useRepoEvents(root: string | null): void {
       onRefsChanged: only(() => {
         void refreshRepo(root);
       }),
-      onIndexChanged: only(reloadStatus),
-      onWorktreeChanged: only(reloadStatus),
+      onIndexChanged: only(reloadWorktree),
+      onWorktreeChanged: only(reloadWorktree),
       onRefreshed: only(() => {
         void refreshRepo(root);
       }),
