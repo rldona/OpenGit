@@ -741,6 +741,10 @@ body {
   background: var(--hover);
 }
 
+.repo-tab:hover {
+  filter: brightness(1.3);
+}
+
 .repo-tab-open {
   overflow: hidden;
   padding: 7px 10px;
@@ -751,6 +755,10 @@ body {
   text-overflow: ellipsis;
   white-space: nowrap;
   cursor: pointer;
+}
+
+.repo-tab-open:hover {
+  color: var(--text);
 }
 
 .repo-tab.active {
