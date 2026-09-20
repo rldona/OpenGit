@@ -1,26 +1,43 @@
-# ADR-0006 · Editor de diff basado en CodeMirror 6
+# ADR-0006 · Diff editor based on CodeMirror 6
 
-- **Estado:** aceptado
-- **Fecha:** 2026-09-18
-- **Decisores:** Raúl López
+- **Status:** accepted
+- **Date:** 2026-09-18
+- **Deciders:** Raúl López
 
-## Contexto
+## Context
 
-La vista de diff necesita: modo unificado y lado a lado, resaltado de sintaxis por lenguaje, números de línea, desplazamiento fluido con ficheros de miles de líneas y control total del tema (CSS propio). Todo debe funcionar offline dentro de la webview, sin servicios externos.
+The diff view needs: unified and side-by-side modes, syntax highlighting per
+language, line numbers, smooth scrolling with files of thousands of lines and
+full control of the theme (our own CSS). Everything must work offline inside the
+webview, without external services.
 
-## Decisión
+## Decision
 
-Usar **CodeMirror 6** (`@codemirror/state`, `@codemirror/view`, `@codemirror/language`, `@codemirror/merge` y `@codemirror/language-data`) como capa de presentación. **Git sigue siendo la fuente de verdad**: el contenido del diff es el parche que devuelve `git diff`; CodeMirror no calcula el diff, solo lo pinta.
+Use **CodeMirror 6** (`@codemirror/state`, `@codemirror/view`,
+`@codemirror/language`, `@codemirror/merge` and `@codemirror/language-data`) as
+the presentation layer. **Git remains the source of truth**: the diff content is
+the patch returned by `git diff`; CodeMirror does not compute the diff, it only
+paints it.
 
-## Alternativas consideradas
+## Alternatives considered
 
-- **Monaco** — más pesado (varios MB), pensado para edición tipo VS Code; su theming es más rígido y no aporta nada extra para un visor de solo lectura.
-- **Renderizador propio con resaltado (Shiki/Prism)** — habría que reimplementar virtualización, plegado y alineación; mucho más código para peor resultado.
-- **Diff calculado en el frontend (p. ej. `diff` de jsdiff)** — duplicaría la lógica de git y podría divergir de lo que se va a stagear (OG-006). Descartado por ADR-0003.
+- **Monaco** — heavier (several MB), designed for VS Code-style editing; its
+  theming is more rigid and it adds nothing for a read-only viewer.
+- **Custom renderer with highlighting (Shiki/Prism)** — virtualization, folding
+  and alignment would have to be reimplemented; much more code for a worse
+  result.
+- **Diff computed in the frontend (e.g. jsdiff's `diff`)** — would duplicate
+  git's logic and could diverge from what is going to be staged (OG-006).
+  Discarded by ADR-0003.
 
-## Consecuencias
+## Consequences
 
-- El bundle crece (CodeMirror 6 ~400 KB entre todos los paquetes) pero los lenguajes se cargan bajo demanda con `@codemirror/language-data`; es aceptable en una app de escritorio.
-- La alineación visual del modo lado a lado la calcula CodeMirror sobre los dos documentos derivados del parche: puede diferir cosméticamente del agrupado en hunks de git; el contenido (y lo que se stagea) sigue siendo el de git.
-- El modo unificado muestra el parche de git tal cual, con decoraciones de color por línea (`+`/`-`), sin reinterpretarlo.
-- Cambiar de editor más adelante tendría coste alto: requeriría otro ADR que sustituya a este.
+- The bundle grows (CodeMirror 6 ~400 KB across all packages) but languages are
+  loaded on demand with `@codemirror/language-data`; acceptable in a desktop app.
+- The visual alignment of side-by-side mode is computed by CodeMirror over the
+  two documents derived from the patch: it may differ cosmetically from git's
+  hunk grouping; the content (and what is staged) is still git's.
+- Unified mode shows the git patch as is, with per-line colour decorations
+  (`+`/`-`), without reinterpreting it.
+- Switching editors later would have a high cost: it would require another ADR
+  superseding this one.

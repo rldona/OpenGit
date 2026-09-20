@@ -1,76 +1,96 @@
-# Arquitectura de OpenGit
+# OpenGit architecture
 
-## Vista general
+## Overview
 
 ```
 ┌──────────────────────────────────────────────────────────┐
 │ React UI (WebView)                                       │
-│  Sidebar · Grafo/Log · Diff · Staging · Panel de salida  │
+│  Sidebar · Graph/Log · Diff · Staging · Output panel     │
 └──────────────▲───────────────────────────────────────────┘
                │ invoke(cmd, args) / events (Tauri IPC)
 ┌──────────────┴───────────────────────────────────────────┐
 │ Rust core (src-tauri)                                    │
-│  commands · parsers · repo watcher · jobs cancelables    │
+│  commands · parsers · repo watcher · cancellable jobs    │
 └──────────────▲───────────────────────────────────────────┘
-               │ spawn(argv, sin shell)
+               │ spawn(argv, no shell)
 ┌──────────────┴───────────────────────────────────────────┐
-│ binario git del sistema                                  │
+│ system git binary                                        │
 └──────────────────────────────────────────────────────────┘
 ```
 
-Principio rector: **la UI no sabe git**. Solo pinta modelos y lanza comandos. Toda la interacción con el repositorio ocurre en Rust.
+Guiding principle: **the UI does not know git**. It only paints models and
+issues commands. Every interaction with the repository happens in Rust.
 
-## Componentes
+## Components
 
 ### Frontend (`src/`)
 
-- **Vistas:** grafo/log, detalle de commit, diff (working/staged/commit), panel de staging, sidebar (branches, tags, remotes, stashes), panel de salida.
-- **Estado:** store por repositorio (repo abierto, refs, commits cargados, status, selección) y store global (recientes, preferencias, tema). La decisión de librería se toma en OG-001.
-- **Bridge:** capa fina sobre `invoke` y `listen` con tipos generados a mano al principio; los modelos se comparten con Rust vía TypeScript types.
-- **Sin reglas de negocio de git:** ningún comando se construye en la UI; se piden operaciones con nombre y parámetros validados en Rust.
+- **Views:** graph/log, commit detail, diff (working/staged/commit), staging
+  panel, sidebar (branches, tags, remotes, stashes), output panel.
+- **State:** per-repository store (open repo, refs, loaded commits, status,
+  selection) and global store (recents, preferences, theme). The library
+  decision is made in OG-001.
+- **Bridge:** thin layer over `invoke` and `listen` with hand-written types at
+  first; models are shared with Rust through TypeScript types.
+- **No git business rules:** no command is built in the UI; named operations
+  with parameters validated in Rust are requested instead.
 
-### Core Rust (`src-tauri/`)
+### Rust core (`src-tauri/`)
 
-- **Comandos Tauri:** API pública hacia la UI (`open_repo`, `log_page`, `diff`, `stage_hunk`, `commit`, `checkout`, `fetch`, `push`...).
-- **Runner de git:** lanza procesos con arrays de argumentos, entorno controlado, timeout y cancelación; devuelve `stdout`/`stderr`/exit code.
-- **Parsers:** funciones puras por comando (`-z` / `--porcelain=v2` / `--format`), cubiertas con fixtures. Nunca parsean salida localizada ni "humana".
-- **Watcher:** observa `.git` (HEAD, refs, index, MERGE_HEAD...) con debounce y emite eventos de "repo cambiado" a la UI.
-- **Errores:** enum tipado (`GitError`) con mensaje para UI, exit code y stderr; la UI decide cómo presentarlo.
+- **Tauri commands:** public API for the UI (`open_repo`, `log_page`, `diff`,
+  `stage_hunk`, `commit`, `checkout`, `fetch`, `push`...).
+- **Git runner:** spawns processes with argument arrays, a controlled
+  environment, timeout and cancellation; returns `stdout`/`stderr`/exit code.
+- **Parsers:** pure functions per command (`-z` / `--porcelain=v2` /
+  `--format`), covered with fixtures. They never parse localized or "human"
+  output.
+- **Watcher:** observes `.git` (HEAD, refs, index, MERGE_HEAD...) with
+  debounce and emits "repo changed" events to the UI.
+- **Errors:** typed enum (`GitError`) with a UI message, exit code and stderr;
+  the UI decides how to present it.
 
-### Modelo de refresco
+### Refresh model
 
 ```
-fs event en .git ──watch──► debounce (250 ms) ──► invalidar estado
-                                                      │
-UI pide datos ──invoke──► Rust ejecuta git ──► parsea ──► responde
-                                                      │
-eventos de progreso (fetch/pull/push) ──listen───────► panel de salida
+fs event in .git ──watch──► debounce (250 ms) ──► invalidate state
+                                                     │
+UI asks for data ──invoke──► Rust runs git ──► parses ──► responds
+                                                     │
+progress events (fetch/pull/push) ──listen──────────► output panel
 ```
 
-- No hay polling: watch + debounce. Durante operaciones lanzadas por la propia app, el watcher se pausa para evitar tormentas de eventos.
-- Las operaciones largas (fetch, pull, push, checkout gordo) emiten eventos de progreso y son cancelables.
+- No polling: watch + debounce. While the app itself runs operations, the
+  watcher is paused to avoid event storms.
+- Long operations (fetch, pull, push, big checkout) emit progress events and
+  are cancellable.
 
-## Modelo de datos mínimo
+## Minimal data model
 
-| Modelo | Origen git | Notas |
+| Model | Git source | Notes |
 | --- | --- | --- |
-| `Commit` | `git log --format=... -z` | hash, parents, autor, fecha, refs, subject |
-| `FileStatus` | `git status --porcelain=v2 -z` | índice vs HEAD vs working tree |
-| `FileDiff` | `git diff -z` + `--numstat` | hunks, binarios, renombrados |
-| `Ref` | `git for-each-ref --format=... -z` | locales, remotas, tags |
-| `Stash` | `git stash list --format=... -z` | mensaje, fecha, base |
+| `Commit` | `git log --format=... -z` | hash, parents, author, date, refs, subject |
+| `FileStatus` | `git status --porcelain=v2 -z` | index vs HEAD vs working tree |
+| `FileDiff` | `git diff -z` + `--numstat` | hunks, binaries, renames |
+| `Ref` | `git for-each-ref --format=... -z` | locals, remotes, tags |
+| `Stash` | `git stash list --format=... -z` | message, date, base |
 
-## Rendimiento
+## Performance
 
-- **Objetivo:** abrir un repo de 10 000 commits con primera pintura < 500 ms y scroll fluido (ver `ROADMAP.md` M1).
-- Historial paginado y layout de lanes incremental (ADR-0004).
-- Filas virtualizadas; el canvas solo dibuja el viewport.
-- `git status` es la consulta más frecuente: cachear y refrescar solo con cambios del watcher.
-- Presupuesto de errores: la UI nunca muestra un spinner infinito; todo comando tiene timeout y estado de error explícito.
+- **Goal:** open a 10,000-commit repository with first paint < 500 ms and
+  smooth scrolling (see `ROADMAP.md` M1).
+- Paginated history and incremental lane layout (ADR-0004).
+- Virtualized rows; the canvas only draws the viewport.
+- `git status` is the most frequent query: cache it and refresh only on
+  watcher changes.
+- Error budget: the UI never shows an endless spinner; every command has a
+  timeout and an explicit error state.
 
-## Seguridad
+## Security
 
-- Ejecución con `argv` separado; **prohibido** `sh -c` e interpolación de entrada del usuario.
-- Rutas y refs se validan y se pasan como argumentos, nunca concatenadas.
-- `GIT_TERMINAL_PROMPT=0`: si faltan credenciales, se falla con error claro en vez de quedarse colgado. Las credenciales las gestiona el credential helper del sistema (ADR-0003).
-- Sin telemetría ni red propia: solo lo que haga el git del usuario.
+- Execution with a separate `argv`; `sh -c` and interpolating user input are
+  **forbidden**.
+- Paths and refs are validated and passed as arguments, never concatenated.
+- `GIT_TERMINAL_PROMPT=0`: missing credentials fail with a clear error
+  instead of hanging. Credentials are handled by the system credential helper
+  (ADR-0003).
+- No telemetry and no network of our own: only whatever the user's git does.

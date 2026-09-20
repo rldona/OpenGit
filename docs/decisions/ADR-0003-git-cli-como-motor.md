@@ -1,26 +1,41 @@
-# ADR-0003 · El binario `git` del sistema como motor
+# ADR-0003 · The system `git` binary as the engine
 
-- **Estado:** aceptado
-- **Fecha:** 2026-09-18
-- **Decisores:** Raúl López
+- **Status:** accepted
+- **Date:** 2026-09-18
+- **Deciders:** Raúl López
 
-## Contexto
+## Context
 
-La app necesita leer historial, calcular diffs y ejecutar operaciones que escriben en el repositorio. Hay tres caminos habituales: invocar el `git` del sistema, enlazar `libgit2` o usar `gitoxide` (gix). La fidelidad con el comportamiento real de git (hooks, filtros, configuración, credenciales, LFS, submódulos) es un requisito de facto.
+The app needs to read history, compute diffs and run operations that write to
+the repository. There are three usual paths: invoking the system `git`, linking
+`libgit2` or using `gitoxide` (gix). Fidelity with git's real behaviour (hooks,
+filters, configuration, credentials, LFS, submodules) is a de facto requirement.
 
-## Decisión
+## Decision
 
-Usar el **binario `git` del sistema** para todas las operaciones de escritura y la mayoría de lectura. `gix` queda como opción futura solo para lecturas calientes, nunca como motor de escritura.
+Use the **system `git` binary** for all write operations and most reads. `gix`
+remains a future option for hot reads only, never as the write engine.
 
-## Alternativas consideradas
+## Alternatives considered
 
-- **libgit2 (`git2-rs`)** — rápida para leer, pero diverge de git en casos límite y no ejecuta hooks ni respeta toda la configuración; históricamente es la fuente de bugs sutiles en clientes gráficos.
-- **gitoxide (`gix`) puro** — excelente rendimiento y seguridad en memoria, pero cobertura incompleta en operaciones de escritura y en comportamientos dependientes de configuración.
+- **libgit2 (`git2-rs`)** — fast to read, but it diverges from git in edge cases
+  and does not run hooks or respect all configuration; historically it is the
+  source of subtle bugs in graphical clients.
+- **Pure gitoxide (`gix`)** — excellent performance and memory safety, but
+  incomplete coverage of write operations and configuration-dependent
+  behaviours.
 
-## Consecuencias
+## Consequences
 
-- Las credenciales, hooks, atributos, filtros LFS y `includeIf` funcionan "gratis" porque usa el git del usuario.
-- El rendimiento depende de `git`; en repos grandes se mitiga con consultas acotadas (`--max-count`, paginación) y sin parsear HTML/logs humanos.
-- Obligación de parseo robusto: `-z`, `--porcelain=v2`, `--format` con separadores NUL. Ver skill `git-cli-parsing`.
-- Versión mínima soportada: **git 2.34+**; se detecta al abrir repo y se avisa si es anterior.
-- Los procesos se lanzan con `GIT_TERMINAL_PROMPT=0` (nunca colgarse pidiendo credenciales por consola), `LC_ALL=C` y cancelación por kill del árbol de procesos.
+- Credentials, hooks, attributes, LFS filters and `includeIf` work "for free"
+  because it uses the user's git.
+- Performance depends on `git`; in large repositories it is mitigated with
+  bounded queries (`--max-count`, pagination) and by never parsing human or
+  HTML output.
+- Obligation of robust parsing: `-z`, `--porcelain=v2`, `--format` with NUL
+  separators. See the `git-cli-parsing` skill.
+- Minimum supported version: **git 2.34+**; it is detected when opening a repo
+  and the user is warned when it is older.
+- Processes are launched with `GIT_TERMINAL_PROMPT=0` (never hang asking for
+  credentials on the console), `LC_ALL=C` and cancellation by killing the
+  process tree.
