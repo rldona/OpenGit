@@ -127,6 +127,7 @@ ni features nuevas.
 - [ ] Tickets y ADRs (`docs/tickets/`, `docs/decisions/`).
 - [ ] Guías, arquitectura y `.ai/`.
 - [ ] Comentarios de código y mensajes de test (frontend y Rust).
+- [ ] Textos de PRs e issues antiguos (opcional: se editan en GitHub).
 
 ## Fuera de alcance
 
