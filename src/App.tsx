@@ -45,6 +45,11 @@ import { useUpdateStore } from "./lib/stores/update";
 
 const PROJECT_URL = "https://github.com/rldona/OpenGit";
 
+/** Whether a stored session should be reopened on this launch (OG-082/OG-084). */
+function shouldRestoreSession(): boolean {
+  return useSettingsStore.getState().restoreTabs && (loadStoredSession()?.paths.length ?? 0) > 0;
+}
+
 function App() {
   const outputOpen = useUiStore((state) => state.outputOpen);
   const toggleOutput = useUiStore((state) => state.toggleOutput);
@@ -117,15 +122,21 @@ function App() {
     void loadRecents();
   }, [loadRecents]);
 
+  // While a stored session is reopening, the home is suppressed so it does not
+  // flash before the tabs (OG-084).
+  const [restoringSession, setRestoringSession] = useState(shouldRestoreSession);
+
   useEffect(() => {
     // Reopen the previous session when the preference is on (OG-082).
-    if (!useSettingsStore.getState().restoreTabs) {
+    const session = shouldRestoreSession() ? loadStoredSession() : null;
+    if (session === null) {
+      setRestoringSession(false);
       return;
     }
-    const session = loadStoredSession();
-    if (session !== null && session.paths.length > 0) {
-      void useRepoStore.getState().restoreSession(session.paths, session.active);
-    }
+    void useRepoStore
+      .getState()
+      .restoreSession(session.paths, session.active)
+      .finally(() => setRestoringSession(false));
   }, []);
 
   useEffect(() => {
@@ -418,7 +429,7 @@ function App() {
               ) : (
                 <HistoryView />
               )
-            ) : (
+            ) : restoringSession ? null : (
               <Welcome loading={loading} onOpen={pickAndOpen} />
             )}
           </main>
