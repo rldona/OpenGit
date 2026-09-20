@@ -113,4 +113,5 @@ One file per ticket, named `OG-NNN-slug.md`. Every change in the repository star
 | [OG-078](OG-078-open-external.md) | Open working-tree files in external applications | Next | done |
 | [OG-079](OG-079-home-recent-projects.md) | Home screen with recent projects | Next | done |
 | [OG-080](OG-080-worktree-watch.md) | Watch the working tree for external edits | M13 | done |
-| [OG-081](OG-081-auto-updates.md) | In-app auto-updates | M14 | in-progress |
+| [OG-081](OG-081-auto-updates.md) | In-app auto-updates | M14 | done |
+| [OG-082](OG-082-remember-open-tabs.md) | Remember open repositories between sessions | M15 | done |

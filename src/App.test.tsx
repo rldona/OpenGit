@@ -23,7 +23,9 @@ import { useCommitStore } from "./lib/stores/commit";
 import { useExtrasStore } from "./lib/stores/extras";
 import { useLogStore } from "./lib/stores/log";
 import { useRepoStore } from "./lib/stores/repo";
+import { useSettingsStore } from "./lib/stores/settings";
 import { useStatusStore } from "./lib/stores/status";
+import { saveStoredSession } from "./lib/tabs";
 import { useRefsStore } from "./lib/stores/refs";
 import { useThemeStore } from "./lib/stores/theme";
 import { useUiStore } from "./lib/stores/ui";
@@ -231,6 +233,7 @@ describe("App", () => {
     });
     useRepoStore.setState({ repo: null, recents: [], openTabs: [], loading: false, error: null });
     useUpdateStore.getState().reset();
+    useSettingsStore.setState({ restoreTabs: false });
     // The updater plugin is mocked; the startup check never touches the network.
     vi.mocked(check).mockReset();
     vi.mocked(check).mockResolvedValue(null);
@@ -270,6 +273,15 @@ describe("App", () => {
     await user.click(recent);
 
     expect(openRepo).toHaveBeenCalledWith("/tmp/mi-repo");
+  });
+
+  it("restores the previous session when the preference is on", async () => {
+    useSettingsStore.setState({ restoreTabs: true });
+    saveStoredSession([{ path: "/tmp/mi-repo" }], "/tmp/mi-repo");
+    render(<App />);
+
+    await waitFor(() => expect(openRepo).toHaveBeenCalledWith("/tmp/mi-repo"));
+    expect(await screen.findByRole("tab", { name: "mi-repo" })).toBeInTheDocument();
   });
 
   it("opens the chosen repository and shows the history", async () => {

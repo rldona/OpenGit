@@ -193,7 +193,16 @@ downloads the right artifact and offers to restart into it.
   from the GitHub release; "Restart to install" modal (OG-081, ADR-0007).
 
 **Exit:** from a version with the updater installed, a published newer release
-is offered and installed without visiting GitHub.
+is offered and installed without visiting GitHub. ✅
+
+## M15 — Remember open tabs
+
+Bring back the repositories that were open when the app closed, as an opt-in
+preference.
+
+- [ ] Reopen the previous session from a Settings toggle (OG-082).
+
+**Exit:** with the preference on, relaunching restores the same tabs.
 
 ## Translating documentation and comments to English
 

@@ -2,13 +2,14 @@ import { create } from "zustand";
 import { setAutoRefresh as setAutoRefreshRequest } from "../bridge/settings";
 
 export const AUTO_REFRESH_STORAGE_KEY = "opengit.autoRefresh";
+export const RESTORE_TABS_STORAGE_KEY = "opengit.restoreTabs";
 
-function loadAutoRefresh(): boolean {
+function loadBoolean(key: string, fallback: boolean): boolean {
   try {
-    const stored = localStorage.getItem(AUTO_REFRESH_STORAGE_KEY);
-    return stored === null ? true : stored === "true";
+    const stored = localStorage.getItem(key);
+    return stored === null ? fallback : stored === "true";
   } catch {
-    return true;
+    return fallback;
   }
 }
 
@@ -16,10 +17,13 @@ type SettingsState = {
   /** Watcher events reach the UI (OG-067 "Automatically refresh"). */
   autoRefresh: boolean;
   setAutoRefresh: (enabled: boolean) => void;
+  /** Reopen the previous session's tabs on startup (OG-082). */
+  restoreTabs: boolean;
+  setRestoreTabs: (enabled: boolean) => void;
 };
 
 export const useSettingsStore = create<SettingsState>((set) => ({
-  autoRefresh: loadAutoRefresh(),
+  autoRefresh: loadBoolean(AUTO_REFRESH_STORAGE_KEY, true),
   setAutoRefresh: (enabled) => {
     try {
       localStorage.setItem(AUTO_REFRESH_STORAGE_KEY, String(enabled));
@@ -30,6 +34,15 @@ export const useSettingsStore = create<SettingsState>((set) => ({
     void setAutoRefreshRequest(enabled).catch(() => {
       // Without the backend (tests) the preference lives only in the store.
     });
+  },
+  restoreTabs: loadBoolean(RESTORE_TABS_STORAGE_KEY, false),
+  setRestoreTabs: (enabled) => {
+    try {
+      localStorage.setItem(RESTORE_TABS_STORAGE_KEY, String(enabled));
+    } catch {
+      // Without storage the preference lives only in memory.
+    }
+    set({ restoreTabs: enabled });
   },
 }));
 
