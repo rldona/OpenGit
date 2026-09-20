@@ -728,8 +728,14 @@ body {
   gap: 2px;
   max-width: 220px;
   margin-bottom: -1px;
-  border: 1px solid transparent;
+  border: 1px solid var(--border);
+  border-bottom-color: transparent;
   border-radius: 6px 6px 0 0;
+  background: transparent;
+}
+
+.repo-tab:hover {
+  background: var(--hover);
 }
 
 .repo-tab-open {
