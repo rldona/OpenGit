@@ -1,8 +1,16 @@
 import { create } from "zustand";
 import { formatGitError } from "../bridge/errors";
+import {
+  cherryPick as cherryPickRequest,
+  resetMixed,
+  revertCommit as revertRequest,
+} from "../bridge/history";
 import { listRefs, logPage } from "../bridge/log";
 import type { Commit, RefEntry } from "../bridge/types";
 import { emptyLayout, layoutPage, type GraphLayout } from "../graph/layout";
+import { useRefsStore } from "./refs";
+import { useStatusStore } from "./status";
+import { useUiStore } from "./ui";
 
 const PAGE_SIZE = 200;
 
@@ -21,8 +29,24 @@ type LogState = {
   loadMore: () => Promise<void>;
   setFilter: (root: string, rev: string | null) => Promise<void>;
   select: (hash: string | null) => void;
+  cherryPick: (root: string, hash: string) => Promise<void>;
+  revert: (root: string, hash: string) => Promise<void>;
+  resetTo: (root: string, hash: string) => Promise<void>;
   reset: () => void;
 };
+
+function output(line: string): void {
+  useUiStore.getState().appendOutput(line);
+}
+
+async function refreshAfterRewrite(root: string, reload: () => Promise<void>): Promise<void> {
+  await reload();
+  const refsRoot = useRefsStore.getState().root;
+  if (refsRoot) {
+    await useRefsStore.getState().refresh(refsRoot);
+  }
+  await useStatusStore.getState().refresh(root);
+}
 
 function toInput(commit: Commit) {
   return { hash: commit.hash, parents: commit.parents, refs: commit.refs };
@@ -112,6 +136,42 @@ export const useLogStore = create<LogState>((set, get) => ({
   },
 
   select: (hash) => set({ selected: hash }),
+
+  cherryPick: async (root, hash) => {
+    try {
+      await cherryPickRequest(root, hash);
+      output(`Cherry-picked ${hash.slice(0, 7)}`);
+      await refreshAfterRewrite(root, () => get().reload(root));
+    } catch (error) {
+      const message = formatGitError(error);
+      set({ error: message });
+      output(`Cherry-pick failed: ${message}`);
+    }
+  },
+
+  revert: async (root, hash) => {
+    try {
+      await revertRequest(root, hash);
+      output(`Reverted ${hash.slice(0, 7)}`);
+      await refreshAfterRewrite(root, () => get().reload(root));
+    } catch (error) {
+      const message = formatGitError(error);
+      set({ error: message });
+      output(`Revert failed: ${message}`);
+    }
+  },
+
+  resetTo: async (root, hash) => {
+    try {
+      await resetMixed(root, hash);
+      output(`Reset to ${hash.slice(0, 7)} (mixed)`);
+      await refreshAfterRewrite(root, () => get().reload(root));
+    } catch (error) {
+      const message = formatGitError(error);
+      set({ error: message });
+      output(`Reset failed: ${message}`);
+    }
+  },
 
   reset: () =>
     set({

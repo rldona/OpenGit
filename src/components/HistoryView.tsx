@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { confirmDestructive } from "../lib/bridge/dialog";
 import { formatDateTime, shortRefName } from "../lib/format";
 import { LANE_WIDTH, ROW_HEIGHT } from "../lib/graph/layout";
 import { sameRange, visibleRange, type VisibleRange } from "../lib/graph/viewport";
 import type { Commit } from "../lib/bridge/types";
+import { useRefsStore } from "../lib/stores/refs";
 import { useDiffStore } from "../lib/stores/diff";
 import { useLogStore } from "../lib/stores/log";
 import { useRepoStore } from "../lib/stores/repo";
@@ -170,6 +172,12 @@ function CommitDetail({ commit, onClose }: { commit: Commit; onClose: () => void
   const root = useRepoStore((state) => state.repo?.root ?? null);
   const openCommit = useDiffStore((state) => state.openCommit);
   const setActiveView = useUiStore((state) => state.setActiveView);
+  const currentBranch = useRefsStore((state) => state.current);
+  const cherryPick = useLogStore((state) => state.cherryPick);
+  const revert = useLogStore((state) => state.revert);
+  const resetTo = useLogStore((state) => state.resetTo);
+
+  const short = commit.hash.slice(0, 7);
 
   const showDiff = async () => {
     if (!root) {
@@ -177,6 +185,32 @@ function CommitDetail({ commit, onClose }: { commit: Commit; onClose: () => void
     }
     await openCommit(root, commit.hash);
     setActiveView("diff");
+  };
+
+  const confirmCherryPick = async () => {
+    if (
+      root &&
+      (await confirmDestructive(`Cherry-pick ${short} onto ${currentBranch ?? "HEAD"}?`))
+    ) {
+      await cherryPick(root, commit.hash);
+    }
+  };
+
+  const confirmRevert = async () => {
+    if (root && (await confirmDestructive(`Create a revert commit for ${short}?`))) {
+      await revert(root, commit.hash);
+    }
+  };
+
+  const confirmReset = async () => {
+    if (
+      root &&
+      (await confirmDestructive(
+        `Move ${currentBranch ?? "HEAD"} to ${short}? Changes are kept in the working tree, unstaged.`,
+      ))
+    ) {
+      await resetTo(root, commit.hash);
+    }
   };
 
   return (
@@ -196,9 +230,20 @@ function CommitDetail({ commit, onClose }: { commit: Commit; onClose: () => void
       <p className="muted">
         {commit.parents.length} parent(s) · {commit.refs.length} ref(s)
       </p>
-      <button type="button" className="detail-action" onClick={() => void showDiff()}>
-        View diff
-      </button>
+      <div className="detail-actions">
+        <button type="button" className="detail-action" onClick={() => void showDiff()}>
+          View diff
+        </button>
+        <button type="button" className="detail-action" onClick={() => void confirmCherryPick()}>
+          Cherry-pick
+        </button>
+        <button type="button" className="detail-action" onClick={() => void confirmRevert()}>
+          Revert
+        </button>
+        <button type="button" className="detail-action danger" onClick={() => void confirmReset()}>
+          Reset to here
+        </button>
+      </div>
     </aside>
   );
 }

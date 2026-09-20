@@ -1,11 +1,45 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { cherryPick, resetMixed, revertCommit } from "../bridge/history";
 import { listRefs, logPage } from "../bridge/log";
 import type { Commit } from "../bridge/types";
 import { useLogStore } from "./log";
+import { useUiStore } from "./ui";
 
 vi.mock("../bridge/log", () => ({
   logPage: vi.fn(),
   listRefs: vi.fn(),
+}));
+
+vi.mock("../bridge/history", () => ({
+  cherryPick: vi.fn(),
+  revertCommit: vi.fn(),
+  resetMixed: vi.fn(),
+}));
+
+vi.mock("../bridge/status", () => ({
+  statusRepo: vi.fn().mockResolvedValue({
+    head: "a",
+    branch: "main",
+    detached: false,
+    upstream: null,
+    ahead: 0,
+    behind: 0,
+    entries: [],
+  }),
+  stagePath: vi.fn(),
+  unstagePath: vi.fn(),
+  discardPath: vi.fn(),
+  deleteUntracked: vi.fn(),
+}));
+
+vi.mock("../bridge/refs", () => ({
+  branchTracking: vi
+    .fn()
+    .mockResolvedValue({ current: "main", upstream: null, ahead: 0, behind: 0 }),
+  checkoutRef: vi.fn(),
+  createBranch: vi.fn(),
+  renameBranch: vi.fn(),
+  deleteBranch: vi.fn(),
 }));
 
 const COMMIT: Commit = {
@@ -63,6 +97,47 @@ describe("useLogStore", () => {
 
     expect(useLogStore.getState().filter).toBe("refs/heads/main");
     expect(logPage).toHaveBeenLastCalledWith("/tmp/repo", 0, 200, "refs/heads/main");
+  });
+
+  it("hace cherry-pick y refresca log, refs y status", async () => {
+    vi.mocked(cherryPick).mockResolvedValue(undefined);
+    useUiStore.setState({ outputLines: [] });
+    await useLogStore.getState().load("/tmp/repo");
+    vi.mocked(logPage).mockClear();
+
+    await useLogStore.getState().cherryPick("/tmp/repo", "abcdef1234567890");
+
+    expect(cherryPick).toHaveBeenCalledWith("/tmp/repo", "abcdef1234567890");
+    expect(logPage).toHaveBeenCalled();
+    expect(listRefs).toHaveBeenCalled();
+    expect(useUiStore.getState().outputLines.join("\n")).toContain("Cherry-picked abcdef1");
+  });
+
+  it("expone el fallo de un cherry-pick en conflicto", async () => {
+    vi.mocked(cherryPick).mockRejectedValue({
+      kind: "command_failed",
+      exit_code: 1,
+      stdout: "",
+      stderr: "CONFLICT (content)",
+      args: ["cherry-pick"],
+    });
+    await useLogStore.getState().load("/tmp/repo");
+
+    await useLogStore.getState().cherryPick("/tmp/repo", "abcdef1234567890");
+
+    expect(useLogStore.getState().error).toContain("CONFLICT");
+  });
+
+  it("revierte y hace reset mixed", async () => {
+    vi.mocked(revertCommit).mockResolvedValue(undefined);
+    vi.mocked(resetMixed).mockResolvedValue(undefined);
+    await useLogStore.getState().load("/tmp/repo");
+
+    await useLogStore.getState().revert("/tmp/repo", "abcdef1234567890");
+    await useLogStore.getState().resetTo("/tmp/repo", "abcdef1234567890");
+
+    expect(revertCommit).toHaveBeenCalled();
+    expect(resetMixed).toHaveBeenCalledWith("/tmp/repo", "abcdef1234567890");
   });
 
   it("expone el error de git sin romper el estado", async () => {

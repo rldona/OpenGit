@@ -790,6 +790,22 @@ body {
   border-color: var(--accent);
 }
 
+.detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.detail-actions .detail-action {
+  margin-top: 0;
+}
+
+.detail-action.danger:hover {
+  border-color: #dc2626;
+  color: #fca5a5;
+}
+
 .patch-view {
   position: relative;
   height: 100%;
