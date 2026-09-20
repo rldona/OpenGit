@@ -702,6 +702,45 @@ fn resolve_git_path(runner: &Runner, repo: &Path, name: &str) -> Result<String, 
     Ok(path.to_string_lossy().into_owned())
 }
 
+/// Contents of the repository commit template; empty when there is none.
+pub fn commit_template_read(runner: &Runner, repo: &Path) -> Result<String, GitError> {
+    let Some(configured) = config_get(runner, repo, "commit.template", ConfigScope::Local)? else {
+        return Ok(String::new());
+    };
+    let path = if Path::new(&configured).is_absolute() {
+        PathBuf::from(configured)
+    } else {
+        repo.join(configured)
+    };
+    Ok(std::fs::read_to_string(path).unwrap_or_default())
+}
+
+/// Writes the repository commit template and points `commit.template` at it.
+/// Returns the path written, so the UI can show it.
+pub fn commit_template_write(
+    runner: &Runner,
+    repo: &Path,
+    contents: &str,
+) -> Result<String, GitError> {
+    let path = resolve_git_path(runner, repo, "commit-template.txt")?;
+    std::fs::write(&path, contents)
+        .map_err(|error| GitError::invalid(format!("cannot write the template: {error}")))?;
+    config_set(runner, repo, "commit.template", &path, ConfigScope::Local)?;
+    Ok(path)
+}
+
+/// Reads a small UTF-8 text file (the template "Import…").
+pub fn read_text_file(path: &str) -> Result<String, GitError> {
+    let target = Path::new(path);
+    let metadata = std::fs::metadata(target)
+        .map_err(|error| GitError::invalid(format!("cannot read {path}: {error}")))?;
+    if metadata.len() > 1024 * 1024 {
+        return Err(GitError::invalid("the file is too large (limit 1 MiB)"));
+    }
+    std::fs::read_to_string(target)
+        .map_err(|error| GitError::invalid(format!("cannot read {path}: {error}")))
+}
+
 fn validate_remote_name(name: &str) -> Result<(), GitError> {
     let valid = !name.is_empty()
         && name.len() <= 128

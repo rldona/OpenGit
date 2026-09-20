@@ -83,7 +83,7 @@ Phased, small reviewable PRs with CI green between them:
 - [x] Modal shell + Appearance + Advanced (config commands, ignore path,
       watcher switch).
 - [x] Remotes (OG-056 backend).
-- [ ] Commit Template.
+- [x] Commit Template.
 - [ ] Security (GPG).
 
 ### Phase 1 (done)
@@ -92,6 +92,15 @@ The modal opens from the gear with the tabs implemented so far (Advanced and
 Appearance). Advanced round-trips the repository-local identity, shows and
 opens `info/exclude`, and toggles the watcher; Appearance applies the theme on
 OK. The remaining tabs are added in the next phases, in the requested order.
+
+### Phase 3 (done)
+
+Commit Template tab between Remotes and Appearance: None / Default / Custom
+with the template editor and `Import…`. Custom writes the template to
+`<gitdir>/commit-template.txt` and points the repository-local
+`commit.template` at it; None and Default unset the local config so the global
+one applies. Backend: `commit_template_read`, `commit_template_write` and
+`read_text_file` (1 MiB cap).
 
 ### Phase 2 (done)
 

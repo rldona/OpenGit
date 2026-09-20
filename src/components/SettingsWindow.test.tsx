@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { confirmDestructive } from "../lib/bridge/dialog";
+import { confirmDestructive, pickFile } from "../lib/bridge/dialog";
 import {
   gitConfigPath,
   remoteAdd,
@@ -11,6 +11,8 @@ import {
   remoteUrls,
 } from "../lib/bridge/repo";
 import {
+  commitTemplateRead,
+  commitTemplateWrite,
   configGet,
   configSet,
   configUnset,
@@ -32,6 +34,9 @@ vi.mock("../lib/bridge/settings", () => ({
   ignoreExcludePath: vi.fn().mockResolvedValue("/tmp/repo/.git/info/exclude"),
   openPath: vi.fn().mockResolvedValue(undefined),
   setAutoRefresh: vi.fn().mockResolvedValue(undefined),
+  commitTemplateRead: vi.fn().mockResolvedValue(""),
+  commitTemplateWrite: vi.fn().mockResolvedValue("/tmp/repo/.git/commit-template.txt"),
+  readTextFile: vi.fn().mockResolvedValue("imported\n"),
 }));
 
 vi.mock("../lib/bridge/repo", () => ({
@@ -50,6 +55,7 @@ vi.mock("../lib/bridge/repo", () => ({
 
 vi.mock("../lib/bridge/dialog", () => ({
   pickDirectory: vi.fn(),
+  pickFile: vi.fn().mockResolvedValue("/tmp/template.txt"),
   confirmDestructive: vi.fn().mockResolvedValue(true),
 }));
 
@@ -119,7 +125,8 @@ describe("SettingsWindow", () => {
     await user.click(screen.getByRole("button", { name: "OK" }));
 
     expect(configSet).toHaveBeenCalledWith("/tmp/repo", "user.name", "Ana", "local");
-    expect(configUnset).not.toHaveBeenCalled();
+    expect(configUnset).not.toHaveBeenCalledWith("/tmp/repo", "user.name", "local");
+    expect(configUnset).not.toHaveBeenCalledWith("/tmp/repo", "user.email", "local");
     expect(onClose).toHaveBeenCalled();
   });
 
@@ -235,6 +242,55 @@ describe("SettingsWindow", () => {
 
     expect(gitConfigPath).toHaveBeenCalledWith("/tmp/repo");
     expect(openPath).toHaveBeenCalledWith("/tmp/repo/.git/config");
+  });
+
+  it("loads the commit template mode and disables the editor for None", async () => {
+    const user = userEvent.setup();
+    render(<SettingsWindow onClose={() => {}} />);
+
+    await user.click(screen.getByRole("tab", { name: "Commit Template" }));
+
+    expect(await screen.findByLabelText(/None/)).toBeChecked();
+    expect(screen.getByLabelText("Commit template")).toBeDisabled();
+    expect(commitTemplateRead).toHaveBeenCalledWith("/tmp/repo");
+  });
+
+  it("writes a custom commit template on OK", async () => {
+    const user = userEvent.setup();
+    render(<SettingsWindow onClose={() => {}} />);
+
+    await user.click(screen.getByRole("tab", { name: "Commit Template" }));
+    await user.click(await screen.findByLabelText(/Custom/));
+    const area = screen.getByLabelText("Commit template");
+    expect(area).toBeEnabled();
+    await user.type(area, "feat: ");
+    await user.click(screen.getByRole("button", { name: "OK" }));
+
+    expect(commitTemplateWrite).toHaveBeenCalledWith("/tmp/repo", "feat: ");
+  });
+
+  it("clears the local template when None is selected", async () => {
+    const user = userEvent.setup();
+    render(<SettingsWindow onClose={() => {}} />);
+
+    await user.click(screen.getByRole("tab", { name: "Commit Template" }));
+    await screen.findByLabelText(/None/);
+    await user.click(screen.getByRole("button", { name: "OK" }));
+
+    expect(configUnset).toHaveBeenCalledWith("/tmp/repo", "commit.template", "local");
+    expect(commitTemplateWrite).not.toHaveBeenCalled();
+  });
+
+  it("imports a template file into the editor", async () => {
+    const user = userEvent.setup();
+    render(<SettingsWindow onClose={() => {}} />);
+
+    await user.click(screen.getByRole("tab", { name: "Commit Template" }));
+    await user.click(await screen.findByRole("button", { name: "Import…" }));
+
+    expect(pickFile).toHaveBeenCalled();
+    expect(await screen.findByDisplayValue(/imported/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Custom/)).toBeChecked();
   });
 
   it("Cancel discards the changes", async () => {

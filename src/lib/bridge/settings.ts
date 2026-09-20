@@ -37,3 +37,18 @@ export function setAutoRefresh(enabled: boolean): Promise<void> {
 export function openPath(path: string): Promise<void> {
   return invoke<void>("open_path", { path });
 }
+
+/** Contents of the repository commit template; empty when there is none. */
+export function commitTemplateRead(path: string): Promise<string> {
+  return invoke<string>("commit_template_read", { path });
+}
+
+/** Writes the template and points `commit.template` at it; returns the path. */
+export function commitTemplateWrite(path: string, contents: string): Promise<string> {
+  return invoke<string>("commit_template_write", { path, contents });
+}
+
+/** Reads a small UTF-8 file (the template "Import…"). */
+export function readTextFile(path: string): Promise<string> {
+  return invoke<string>("read_text_file", { path });
+}
