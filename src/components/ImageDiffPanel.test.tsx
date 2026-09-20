@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { imageBlob, imagePair } from "../lib/bridge/diff";
 import { useDiffStore, type DiffFileEntry } from "../lib/stores/diff";
@@ -85,5 +85,33 @@ describe("ImageDiffPanel", () => {
     render(<ImageDiffPanel />);
 
     expect(await screen.findByRole("alert")).toHaveTextContent("boom");
+  });
+
+  it("keeps the images while the same file reloads", async () => {
+    render(<ImageDiffPanel />);
+    expect(await screen.findByAltText("After")).toBeInTheDocument();
+
+    // A watcher refresh rebuilds the entry object with the same key.
+    act(() => {
+      useDiffStore.setState({ selected: { ...ENTRY } });
+    });
+
+    expect(screen.queryByText("Loading…")).not.toBeInTheDocument();
+    expect(screen.getByAltText("After")).toBeInTheDocument();
+    expect(await screen.findByAltText("Before")).toBeInTheDocument();
+  });
+
+  it("clears the panel when another file is selected", async () => {
+    render(<ImageDiffPanel />);
+    expect(await screen.findByAltText("After")).toBeInTheDocument();
+
+    act(() => {
+      useDiffStore.setState({
+        selected: { ...ENTRY, key: "worktree:other.png", path: "other.png" },
+      });
+    });
+
+    expect(screen.getByText("Loading…")).toBeInTheDocument();
+    expect(await screen.findByAltText("After")).toBeInTheDocument();
   });
 });

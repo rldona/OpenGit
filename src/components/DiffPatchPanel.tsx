@@ -34,10 +34,11 @@ export function DiffPatchPanel() {
 
   const patchActions = target?.kind === "worktree" && !reversed;
   // Untracked files render a read-only new-file preview (OG-071): no staging
-  // or discard actions, no blame, no image preview.
+  // or discard actions, no blame. Images preview too, with only the after
+  // side from disk (OG-075); the backend already resolves untracked sides.
   const previewOnly = selected?.untracked === true;
   const pointer = selected && !previewOnly && !binary ? parseLfsPointerPatch(patch) : null;
-  const imagePreview = selected && !previewOnly && binary && isImagePath(selected.path);
+  const imagePreview = selected && binary && isImagePath(selected.path);
   const untrackedEmpty = previewOnly && !binary && patch !== "" && splitPatch(patch) === null;
   const untrackedCounts =
     previewOnly && !binary && patch !== "" && !untrackedEmpty ? patchCounts(patch) : null;

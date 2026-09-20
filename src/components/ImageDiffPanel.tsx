@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { imageBlob, imagePair, type ImageRequest } from "../lib/bridge/diff";
 import { useDiffStore } from "../lib/stores/diff";
 
@@ -25,21 +25,33 @@ export function ImageDiffPanel() {
   const mode = useDiffStore((state) => state.mode);
   const [images, setImages] = useState<Sides | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Latest request wins; older ones only revoke their own unpublished URLs.
+  const requestId = useRef(0);
+  // Blob URLs currently on screen; revoked when replaced or unmounted.
+  const published = useRef<string[]>([]);
+  // Only a different file clears the panel: re-selecting the same file
+  // (e.g. a watcher refresh rebuilding the entry) keeps the old images
+  // until the new ones land instead of flashing "Loading…" (OG-075).
+  const shownKey = useRef<string | null>(null);
 
   useEffect(() => {
     if (!root || !target || !selected) {
       return;
     }
+    if (shownKey.current !== selected.key) {
+      shownKey.current = selected.key;
+      setImages(null);
+    }
+    setError(null);
+    const id = ++requestId.current;
     let cancelled = false;
-    const urls: string[] = [];
     const request: ImageRequest = {
       path: root,
       file: selected.path,
       rev: target.kind === "commit" ? target.rev : null,
       staged: selected.staged,
     };
-    setImages(null);
-    setError(null);
+    const urls: string[] = [];
 
     void (async () => {
       try {
@@ -55,21 +67,32 @@ export function ImageDiffPanel() {
           urls.push(url);
           next[side] = url;
         }
-        if (!cancelled) {
-          setImages(next);
+        if (cancelled || requestId.current !== id) {
+          urls.forEach((url) => URL.revokeObjectURL(url));
+          return;
         }
+        published.current.forEach((url) => URL.revokeObjectURL(url));
+        published.current = urls;
+        setImages(next);
       } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : String(err));
+        if (cancelled || requestId.current !== id) {
+          return;
         }
+        setError(err instanceof Error ? err.message : String(err));
       }
     })();
 
     return () => {
       cancelled = true;
-      urls.forEach((url) => URL.revokeObjectURL(url));
     };
   }, [root, target, selected]);
+
+  useEffect(
+    () => () => {
+      published.current.forEach((url) => URL.revokeObjectURL(url));
+    },
+    [],
+  );
 
   const before = images?.before ?? null;
   const after = images?.after ?? null;
