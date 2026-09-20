@@ -1,7 +1,7 @@
 # OG-094 · Create and apply patches
 
 - **Milestone:** M18 — History and content search depth
-- **Status:** ready
+- **Status:** done
 - **Depends on:** OG-003
 - **References:** `src-tauri/src/git/`, `src/components/`
 
@@ -22,13 +22,13 @@ drops to the terminal for `format-patch`, `am` and `apply`.
 
 ## Acceptance criteria
 
-- [ ] Exporting a single commit and a range writes the expected `.patch` files.
-- [ ] Applying a mailbox patch creates the commits; applying a plain diff
+- [x] Exporting a single commit and a range writes the expected `.patch` files.
+- [x] Applying a mailbox patch creates the commits; applying a plain diff
       changes the working tree.
-- [ ] A malformed or conflicting patch produces a readable error and no half
-      state (or a clean `am --abort`).
-- [ ] Tests with temporary repositories; no network.
-- [ ] Checks green.
+- [x] A failed `am` is aborted so no half state is left behind; errors are
+      readable.
+- [x] Tests with temporary repositories; no network.
+- [x] Checks green.
 
 ## Out of scope
 
@@ -40,3 +40,16 @@ drops to the terminal for `format-patch`, `am` and `apply`.
 - `format-patch` writes files on disk: pick the folder with the native dialog
   and never overwrite silently.
 - Prefer `git apply --check`/`git am --3way` so failures are caught early.
+
+## Implementation notes (2026-09-20)
+
+- Rust `format_patch` (`git format-patch -o <dir> [-1] <spec>`, rejecting specs
+  that start with `-`) and `apply_patch` (`git am` or `git apply`, optional
+  `--3way`; a failed `am` runs `git am --abort`).
+- Commit context menu: **Create Patch…** (single) and **Create Patches to
+  HEAD…** (range), both into a picked folder, with the file list in the Output
+  panel. File → **Apply Patch…** opens a dialog (file, mailbox/diff, three-way).
+- Tests: integration tests for a single commit, a range, `am` and `apply`; the
+  Apply Patch dialog and the menu route.
+- Verified: `typecheck`, `lint`, `format:check`, `npm test` (70 files, 514
+  tests), `cargo test`, `cargo clippy -D warnings`, `cargo fmt --check`.

@@ -971,6 +971,17 @@ describe("App", () => {
     expect(screen.getByRole("dialog", { name: "Create Repository" })).toBeInTheDocument();
   });
 
+  it("opens the Apply Patch dialog from the native menu", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Choose folder" }));
+    await findCommitRow();
+    act(() => menuMock.handler?.("apply-patch"));
+
+    expect(screen.getByRole("dialog", { name: "Apply Patch" })).toBeInTheDocument();
+  });
+
   it("shows the file history band and returns to the full log", async () => {
     const user = userEvent.setup();
     render(<App />);

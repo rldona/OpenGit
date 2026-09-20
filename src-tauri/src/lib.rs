@@ -29,6 +29,7 @@ fn build_menu(app: &tauri::App) -> tauri::Result<()> {
         .item(&MenuItemBuilder::with_id("open-repo", "Open Repository…").build(app)?)
         .item(&MenuItemBuilder::with_id("clone-repo", "Clone Repository…").build(app)?)
         .item(&MenuItemBuilder::with_id("create-repo", "Create Repository…").build(app)?)
+        .item(&MenuItemBuilder::with_id("apply-patch", "Apply Patch…").build(app)?)
         .item(&MenuItemBuilder::with_id("close-repo", "Close Repository").build(app)?)
         .separator()
         .close_window()
@@ -113,6 +114,8 @@ pub fn run() {
             commands::gitignore_templates,
             commands::close_repo,
             commands::grep_worktree,
+            commands::format_patch,
+            commands::apply_patch,
             commands::log_page,
             commands::list_refs,
             commands::blame_file,
