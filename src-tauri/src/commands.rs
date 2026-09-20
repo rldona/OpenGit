@@ -806,9 +806,14 @@ pub fn revert_commit(
 }
 
 #[tauri::command]
-pub fn reset_mixed(path: String, hash: String, state: State<'_, AppState>) -> Result<(), GitError> {
+pub fn reset_to(
+    path: String,
+    hash: String,
+    mode: crate::git::ResetMode,
+    state: State<'_, AppState>,
+) -> Result<(), GitError> {
     pause_while(&state, || {
-        crate::git::reset_mixed(&state.runner, Path::new(&path), &hash)
+        crate::git::reset(&state.runner, Path::new(&path), &hash, mode)
     })
 }
 

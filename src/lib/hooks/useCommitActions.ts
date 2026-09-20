@@ -1,5 +1,6 @@
 import { confirmDestructive, pickDirectory } from "../bridge/dialog";
 import { formatGitError } from "../bridge/errors";
+import type { ResetMode } from "../bridge/history";
 import { formatPatch } from "../bridge/patch";
 import type { Commit } from "../bridge/types";
 import { useDiffStore } from "../stores/diff";
@@ -14,7 +15,7 @@ export type CommitActions = {
   cherryPick: (commit: Commit) => Promise<void>;
   cherryPickRange: (revs: string[], recordSource?: boolean) => Promise<void>;
   revert: (commit: Commit) => Promise<void>;
-  reset: (commit: Commit) => Promise<void>;
+  reset: (commit: Commit, mode: ResetMode) => Promise<void>;
   rebase: (commit: Commit) => Promise<void>;
   createPatch: (commit: Commit) => Promise<void>;
   createPatchesToHead: (commit: Commit) => Promise<void>;
@@ -87,14 +88,19 @@ export function useCommitActions(): CommitActions {
         await revert(root, commit.hash);
       }
     },
-    reset: async (commit) => {
-      if (
-        root &&
-        (await confirmDestructive(
-          `Move ${currentBranch ?? "HEAD"} to ${commit.hash.slice(0, 7)}? Changes are kept in the working tree, unstaged.`,
-        ))
-      ) {
-        await resetTo(root, commit.hash);
+    reset: async (commit, mode) => {
+      if (!root) {
+        return;
+      }
+      const short = commit.hash.slice(0, 7);
+      const message =
+        mode === "hard"
+          ? `Hard reset ${currentBranch ?? "HEAD"} to ${short}? Uncommitted changes are DISCARDED.`
+          : mode === "soft"
+            ? `Soft reset ${currentBranch ?? "HEAD"} to ${short}? Changes stay staged.`
+            : `Move ${currentBranch ?? "HEAD"} to ${short}? Changes are kept in the working tree, unstaged.`;
+      if (await confirmDestructive(message)) {
+        await resetTo(root, commit.hash, mode);
       }
     },
     rebase: async (commit) => {

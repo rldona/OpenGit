@@ -465,8 +465,16 @@ export function HistoryView() {
                           : []),
                         { label: "Revert", onSelect: () => void commitActions.revert(commit) },
                         {
-                          label: "Reset to here",
-                          onSelect: () => void commitActions.reset(commit),
+                          label: "Soft reset to here",
+                          onSelect: () => void commitActions.reset(commit, "soft"),
+                        },
+                        {
+                          label: "Mixed reset to here",
+                          onSelect: () => void commitActions.reset(commit, "mixed"),
+                        },
+                        {
+                          label: "Hard reset to here…",
+                          onSelect: () => void commitActions.reset(commit, "hard"),
                         },
                         {
                           label: "Interactive rebase from here",

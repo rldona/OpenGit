@@ -164,7 +164,7 @@ pub fn run() {
             commands::cherry_pick,
             commands::cherry_pick_range,
             commands::revert_commit,
-            commands::reset_mixed,
+            commands::reset_to,
             commands::merge_branch,
             commands::image_pair,
             commands::image_blob,
