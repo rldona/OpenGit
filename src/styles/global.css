@@ -714,7 +714,7 @@ body {
 .repo-tabs {
   display: flex;
   align-items: stretch;
-  gap: 4px;
+  gap: 8px;
   overflow-x: auto;
   padding: 4px 10px 0;
   background: var(--bg-panel);
