@@ -27,7 +27,7 @@ use std::time::Duration;
 use serde::{Deserialize, Serialize};
 
 /// Formato de una línea de log: campos separados por `%x1f`, commits por `-z`.
-pub const LOG_FORMAT: &str = "%H%x1f%P%x1f%an%x1f%ae%x1f%at%x1f%D%x1f%s";
+pub const LOG_FORMAT: &str = "%H%x1f%P%x1f%an%x1f%ae%x1f%at%x1f%D%x1f%s%x1f%b";
 /// Formato de `for-each-ref`: campos separados por NUL.
 pub const REFS_FORMAT: &str =
     "%(refname)%00%(objectname)%00%(objecttype)%00%(upstream)%00%(upstream:track)";
@@ -850,7 +850,14 @@ pub fn log_page(
             args.push("--end-of-options".into());
             args.push(rev.into());
         }
-        None => args.push("--all".into()),
+        None => {
+            // `--all` incluiría `refs/stash`, y con él el commit del stash y su
+            // commit interno "index on <rama>: …", que no pintan nada en el
+            // historial: los stashes tienen su propia sección.
+            // El `--exclude` afecta al `--all` que va justo detrás.
+            args.push("--exclude=refs/stash".into());
+            args.push("--all".into());
+        }
     }
 
     if let Some(path) = search

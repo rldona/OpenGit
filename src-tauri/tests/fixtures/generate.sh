@@ -29,9 +29,18 @@ g commit -q -m "feat(feature): añade fichero con espacios"
 g checkout -q main
 printf 'linea en main\n' >> README.md
 g commit -q -am "fix: linea en main"
+# Commit con cuerpo multilínea: %b mete saltos de línea dentro del registro,
+# que es justo lo que el parser tiene que aguantar sin partir el campo.
+printf 'con cuerpo\n' >> README.md
+g commit -q -am "feat: asunto con cuerpo
+
+Primera línea del cuerpo.
+Segunda línea con ñ y 日本.
+
+Refs: OG-044"
 g merge -q --no-ff feature -m "Merge branch 'feature'"
 g tag -a v1.0.0 -m "release 1.0.0"
-g log --topo-order --all --parents -z --format='%H%x1f%P%x1f%an%x1f%ae%x1f%at%x1f%D%x1f%s' > "$OUT/log_topo.bin"
+g log --topo-order --all --parents -z --format='%H%x1f%P%x1f%an%x1f%ae%x1f%at%x1f%D%x1f%s%x1f%b' > "$OUT/log_topo.bin"
 cd "$work"
 
 # --- status: staged, unstaged, rename, untracked, borrado y non-ASCII --------

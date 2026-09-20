@@ -12,6 +12,8 @@ pub struct Commit {
     /// Refs decoradas por `%D` (HEAD, ramas, tags, remotos).
     pub refs: Vec<String>,
     pub subject: String,
+    /// Cuerpo del mensaje (`%b`), sin el asunto. Vacío si el commit no tiene.
+    pub body: String,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]

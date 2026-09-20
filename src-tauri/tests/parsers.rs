@@ -15,7 +15,7 @@ const NUMSTAT: &[u8] = include_bytes!("fixtures/numstat.bin");
 fn log_parsea_merge_refs_y_non_ascii() {
     let commits = parse_log(LOG_TOPO).expect("parsear log");
 
-    assert_eq!(commits.len(), 5);
+    assert_eq!(commits.len(), 6);
     let merge = &commits[0];
     assert_eq!(merge.parents.len(), 2);
     assert!(merge.refs.contains(&"HEAD -> main".to_string()));
@@ -34,6 +34,37 @@ fn log_parsea_merge_refs_y_non_ascii() {
     assert_eq!(root.author_name, "OpenGit Test");
     assert_eq!(root.author_time, 1_789_725_600);
     assert!(root.subject.contains("日本"));
+}
+
+#[test]
+fn log_parsea_cuerpo_multilinea_sin_romper_el_registro() {
+    let commits = parse_log(LOG_TOPO).expect("parsear log");
+
+    let con_cuerpo = commits
+        .iter()
+        .find(|commit| commit.subject == "feat: asunto con cuerpo")
+        .expect("commit con cuerpo");
+
+    // El cuerpo lleva saltos de línea dentro del mismo registro -z.
+    assert!(con_cuerpo.body.starts_with("Primera línea del cuerpo."));
+    assert!(con_cuerpo.body.contains("Segunda línea con ñ y 日本."));
+    assert!(con_cuerpo.body.ends_with("Refs: OG-044"));
+    assert!(con_cuerpo.body.contains('\n'));
+
+    // Y los commits siguientes se siguen leyendo: el cuerpo no se comió el separador.
+    assert_eq!(commits.len(), 6);
+    assert!(commits.iter().all(|commit| !commit.hash.is_empty()));
+    assert!(commits
+        .iter()
+        .any(|commit| commit.subject == "fix: linea en main"));
+}
+
+#[test]
+fn log_deja_el_cuerpo_vacio_cuando_no_hay() {
+    let commits = parse_log(LOG_TOPO).expect("parsear log");
+
+    let root = commits.last().expect("commit raíz");
+    assert_eq!(root.body, "");
 }
 
 #[test]
