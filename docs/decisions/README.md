@@ -12,5 +12,6 @@ Record of decisions with a high cost to revert. An accepted ADR **is not edited*
 | [0006](ADR-0006-editor-diff-codemirror.md) | Diff editor based on CodeMirror 6 | accepted |
 | [0007](ADR-0007-auto-updates.md) | In-app auto-updates with tauri-plugin-updater | accepted |
 | [0008](ADR-0008-window-per-repository.md) | A window per repository | accepted |
+| [0009](ADR-0009-i18n.md) | Internationalization with a typed in-house catalog | accepted |
 
 To propose a new one, copy [`TEMPLATE.md`](TEMPLATE.md) and follow the `.ai/workflows/adr.md` flow.

@@ -3,7 +3,7 @@
 - **Milestone:** M20 — Internationalization
 - **Status:** backlog
 - **Depends on:** OG-099, OG-067
-- **References:** `src/components/SettingsWindow.tsx`
+- **References:** `docs/decisions/ADR-0009-i18n.md`, `src/components/SettingsWindow.tsx`
 
 ## Context
 
