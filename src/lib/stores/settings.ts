@@ -35,7 +35,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
       // Without the backend (tests) the preference lives only in the store.
     });
   },
-  restoreTabs: loadBoolean(RESTORE_TABS_STORAGE_KEY, false),
+  restoreTabs: loadBoolean(RESTORE_TABS_STORAGE_KEY, true),
   setRestoreTabs: (enabled) => {
     try {
       localStorage.setItem(RESTORE_TABS_STORAGE_KEY, String(enabled));

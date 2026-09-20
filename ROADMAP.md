@@ -195,14 +195,17 @@ downloads the right artifact and offers to restart into it.
 **Exit:** from a version with the updater installed, a published newer release
 is offered and installed without visiting GitHub. ✅
 
-## M15 — Remember open tabs
+## M15 — Remember open tabs ✅ _(closed 2026-09-20)_
 
-Bring back the repositories that were open when the app closed, as an opt-in
-preference.
+Bring back the repositories that were open when the app closed. On by default,
+with a Settings toggle to turn it off.
 
-- [ ] Reopen the previous session from a Settings toggle (OG-082).
+- [x] Reopen the previous session from a Settings toggle (OG-082).
+- [x] Reopen by default and go straight to the tabs, without the home flash
+  (OG-084).
 
-**Exit:** with the preference on, relaunching restores the same tabs.
+**Exit:** relaunching restores the same tabs; the recents home only shows when
+there is no session to restore. ✅
 
 ## Translating documentation and comments to English
 
