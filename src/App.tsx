@@ -9,6 +9,7 @@ import { HistoryView } from "./components/HistoryView";
 import { MergeWindow } from "./components/MergeWindow";
 import { OpBanner } from "./components/OpBanner";
 import { PullDialog } from "./components/PullDialog";
+import { RecentProjects } from "./components/RecentProjects";
 import { RebaseView } from "./components/RebaseView";
 import { RemoteJobModal } from "./components/RemoteJobModal";
 import { RepoTabs } from "./components/RepoTabs";
@@ -335,69 +336,52 @@ function App() {
           min={180}
           max={480}
           label="Resize sidebar"
+          collapsed={!repo}
         >
           <aside className="sidebar" aria-label="Repository">
             <CollapsibleSection id="workspace" title="Workspace" icon="workspace">
-              {repo ? (
-                <ul>
-                  <li>
-                    <button
-                      type="button"
-                      className={`view-button${activeView === "status" ? " active" : ""}`}
-                      onClick={() => setActiveView("status")}
-                    >
-                      File status
-                    </button>
-                  </li>
-                  <li>
-                    <button
-                      type="button"
-                      className={`view-button${activeView === "history" ? " active" : ""}`}
-                      onClick={() => setActiveView("history")}
-                    >
-                      History
-                    </button>
-                  </li>
-                  <li>
-                    <button
-                      type="button"
-                      className={`view-button${activeView === "diff" ? " active" : ""}`}
-                      onClick={() => setActiveView("diff")}
-                    >
-                      Diff
-                    </button>
-                  </li>
-                  <li>
-                    <button
-                      type="button"
-                      className={`view-button${activeView === "conflict" ? " active" : ""}`}
-                      onClick={() => setActiveView("conflict")}
-                    >
-                      Conflicts{conflictCount > 0 ? ` (${conflictCount})` : ""}
-                    </button>
-                  </li>
-                </ul>
-              ) : (
-                <p className="muted">No repository open</p>
-              )}
+              <ul>
+                <li>
+                  <button
+                    type="button"
+                    className={`view-button${activeView === "status" ? " active" : ""}`}
+                    onClick={() => setActiveView("status")}
+                  >
+                    File status
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    className={`view-button${activeView === "history" ? " active" : ""}`}
+                    onClick={() => setActiveView("history")}
+                  >
+                    History
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    className={`view-button${activeView === "diff" ? " active" : ""}`}
+                    onClick={() => setActiveView("diff")}
+                  >
+                    Diff
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    className={`view-button${activeView === "conflict" ? " active" : ""}`}
+                    onClick={() => setActiveView("conflict")}
+                  >
+                    Conflicts{conflictCount > 0 ? ` (${conflictCount})` : ""}
+                  </button>
+                </li>
+              </ul>
             </CollapsibleSection>
 
-            {repo ? (
-              <RefsSidebar />
-            ) : (
-              <CollapsibleSection id="branches" title="Branches" icon="branch">
-                <p className="muted">No repository open</p>
-              </CollapsibleSection>
-            )}
-
-            {repo ? (
-              <StashSidebar />
-            ) : (
-              <CollapsibleSection id="stashes" title="Stashes" icon="stash">
-                <p className="muted">No repository open</p>
-              </CollapsibleSection>
-            )}
-
+            <RefsSidebar />
+            <StashSidebar />
             <ExtrasSidebar />
           </aside>
 
@@ -450,6 +434,7 @@ function Welcome({ loading, onOpen }: { loading: boolean; onOpen: () => void }) 
       <button type="button" onClick={onOpen} disabled={loading}>
         Choose folder
       </button>
+      <RecentProjects />
     </div>
   );
 }

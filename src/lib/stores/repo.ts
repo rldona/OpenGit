@@ -104,21 +104,24 @@ export const useRepoStore = create<RepoState>((set, get) => ({
     }
   },
 
+  // Removing a recent only touches history: it must not close the repo or
+  // drop a session tab.
   removeRecent: async (path) => {
-    await get().closeTab(path);
+    try {
+      await removeRecentRepo(path);
+      set({ recents: get().recents.filter((recent) => recent.path !== path) });
+    } catch (error) {
+      output(`Could not remove from recents: ${formatGitError(error)}`);
+    }
   },
 
+  // Closing a tab only touches the session: the project stays in the
+  // persisted recents so it remains available from the home screen.
   closeTab: async (path) => {
     const wasActive = get().repo?.root === path;
     const tabs = get().openTabs;
     const index = tabs.findIndex((tab) => tab.path === path);
     const remaining = tabs.filter((tab) => tab.path !== path);
-    try {
-      await removeRecentRepo(path);
-      await get().loadRecents();
-    } catch (error) {
-      output(`Could not remove from recents: ${formatGitError(error)}`);
-    }
     if (!wasActive) {
       set({ openTabs: remaining });
       return;
