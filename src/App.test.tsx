@@ -18,7 +18,9 @@ import { useDiffStore } from "./lib/stores/diff";
 import { useLogStore } from "./lib/stores/log";
 import { useRepoStore } from "./lib/stores/repo";
 import { useStatusStore } from "./lib/stores/status";
+import { useThemeStore } from "./lib/stores/theme";
 import { useUiStore } from "./lib/stores/ui";
+import { THEME_STORAGE_KEY } from "./lib/theme";
 
 vi.mock("./lib/bridge/core", () => ({
   getAppVersion: vi.fn(),
@@ -182,6 +184,9 @@ describe("App", () => {
       outputLines: ["OpenGit listo."],
       activeView: "history",
     });
+    localStorage.clear();
+    delete document.documentElement.dataset.theme;
+    useThemeStore.setState({ preference: "system", systemDark: true, resolved: "dark" });
   });
 
   it("muestra el estado vacío y la versión del núcleo", async () => {
@@ -331,5 +336,23 @@ describe("App", () => {
     await user.click(screen.getByRole("button", { name: "Output" }));
 
     expect(screen.queryByRole("region", { name: "Output" })).not.toBeInTheDocument();
+  });
+
+  it("cambia el tema y lo aplica al documento", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    const select = screen.getByRole("combobox", { name: "Theme" });
+    expect(select).toHaveValue("system");
+
+    await user.selectOptions(select, "light");
+
+    expect(select).toHaveValue("light");
+    expect(document.documentElement.dataset.theme).toBe("light");
+    expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe("light");
+
+    await user.selectOptions(select, "dark");
+
+    expect(document.documentElement.dataset.theme).toBe("dark");
   });
 });

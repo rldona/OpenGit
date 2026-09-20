@@ -54,3 +54,4 @@ Un fichero por ticket, nombrado `OG-NNN-slug.md`. Todo cambio del repositorio na
 | [OG-019](OG-019-estado-operaciones.md) | Estado de operaciones y Abort/Continue | M4 | done |
 | [OG-020](OG-020-editor-conflictos.md) | Editor de conflictos por bloques | M4 | done |
 | [OG-021](OG-021-rebase-interactivo.md) | Rebase interactivo visual | M4 | done |
+| [OG-022](OG-022-temas.md) | Tema claro/oscuro | M5 | done |

@@ -24,3 +24,17 @@ if (!("ResizeObserver" in globalThis)) {
   }
   globalThis.ResizeObserver = ResizeObserverStub as unknown as typeof ResizeObserver;
 }
+
+// jsdom no implementa matchMedia; por defecto simulamos un SO en oscuro.
+if (!("matchMedia" in globalThis)) {
+  globalThis.matchMedia = ((query: string) => ({
+    matches: query.includes("dark"),
+    media: query,
+    onchange: null,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })) as unknown as typeof matchMedia;
+}
