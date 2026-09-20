@@ -1,5 +1,6 @@
 import { confirmDestructive } from "../lib/bridge/dialog";
 import type { TodoAction } from "../lib/bridge/types";
+import { useI18n } from "../lib/i18n";
 import { useRebaseStore } from "../lib/stores/rebase";
 import { useRepoStore } from "../lib/stores/repo";
 import { useUiStore } from "../lib/stores/ui";
@@ -7,6 +8,7 @@ import { useUiStore } from "../lib/stores/ui";
 const ACTIONS: TodoAction[] = ["pick", "reword", "squash", "fixup", "drop"];
 
 export function RebaseView() {
+  const { t } = useI18n();
   const root = useRepoStore((state) => state.repo?.root ?? null);
   const base = useRebaseStore((state) => state.base);
   const rows = useRebaseStore((state) => state.rows);
@@ -26,7 +28,10 @@ export function RebaseView() {
     if (!root || rows.length === 0) {
       return;
     }
-    const warning = `Rewrite ${rows.length} commit(s)${dropping > 0 ? `, dropping ${dropping}` : ""}? This rewrites history.`;
+    const warning = t("rebase.rewriteConfirm", {
+      count: rows.length,
+      dropping: dropping > 0 ? t("rebase.dropping", { count: dropping }) : "",
+    });
     if (await confirmDestructive(warning)) {
       const ok = await run(root);
       if (ok) {
@@ -40,7 +45,7 @@ export function RebaseView() {
     <div className="rebase-view">
       <div className="rebase-toolbar">
         <span className="muted">
-          Interactive rebase onto {base?.slice(0, 7) ?? "?"} · {rows.length} commit(s)
+          {t("rebase.onto", { base: base?.slice(0, 7) ?? "?", count: rows.length })}
         </span>
         <div className="rebase-actions">
           <button
@@ -51,7 +56,7 @@ export function RebaseView() {
               setActiveView("history");
             }}
           >
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             type="button"
@@ -59,7 +64,7 @@ export function RebaseView() {
             disabled={loading || rows.length === 0 || missingMessage}
             onClick={() => void confirmRun()}
           >
-            Run rebase
+            {t("rebase.run")}
           </button>
         </div>
       </div>
@@ -69,7 +74,7 @@ export function RebaseView() {
           <li key={row.hash} className={`rebase-row${row.action === "drop" ? " dropped" : ""}`}>
             <span className="rebase-order">{index + 1}</span>
             <select
-              aria-label={`Action for ${row.short}`}
+              aria-label={t("rebase.actionFor", { short: row.short })}
               value={row.action}
               onChange={(event) => setAction(index, event.target.value as TodoAction)}
             >
@@ -84,7 +89,7 @@ export function RebaseView() {
             <span className="rebase-move">
               <button
                 type="button"
-                aria-label={`Move ${row.short} up`}
+                aria-label={t("rebase.moveUp", { short: row.short })}
                 disabled={index === 0}
                 onClick={() => move(index, -1)}
               >
@@ -92,7 +97,7 @@ export function RebaseView() {
               </button>
               <button
                 type="button"
-                aria-label={`Move ${row.short} down`}
+                aria-label={t("rebase.moveDown", { short: row.short })}
                 disabled={index === rows.length - 1}
                 onClick={() => move(index, 1)}
               >
@@ -102,8 +107,8 @@ export function RebaseView() {
             {row.action === "reword" && (
               <input
                 className="rebase-message"
-                aria-label={`Reword message for ${row.short}`}
-                placeholder="New message"
+                aria-label={t("rebase.rewordFor", { short: row.short })}
+                placeholder={t("rebase.newMessage")}
                 value={row.message}
                 onChange={(event) => setMessage(index, event.target.value)}
               />
@@ -112,9 +117,7 @@ export function RebaseView() {
         ))}
       </ol>
 
-      {rows.length === 0 && !loading && (
-        <p className="muted status-empty">Nothing to rebase from this commit</p>
-      )}
+      {rows.length === 0 && !loading && <p className="muted status-empty">{t("rebase.nothing")}</p>}
       {error && (
         <p role="alert" className="error-banner">
           {error}

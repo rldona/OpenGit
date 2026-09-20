@@ -137,5 +137,5 @@ One file per ticket, named `OG-NNN-slug.md`. Every change in the repository star
 | [OG-102](OG-102-i18n-history.md) | i18n: history and commit views | M20 | done |
 | [OG-103](OG-103-i18n-diff-status.md) | i18n: diff, status and staging | M20 | done |
 | [OG-104](OG-104-i18n-sidebars-dialogs.md) | i18n: sidebars and repository dialogs | M20 | done |
-| [OG-105](OG-105-i18n-operations-settings.md) | i18n: operations, settings and help | M20 | backlog |
+| [OG-105](OG-105-i18n-operations-settings.md) | i18n: operations, settings and help | M20 | done |
 | [OG-106](OG-106-i18n-native-menu.md) | i18n: native menu and Rust strings | M20 | backlog |

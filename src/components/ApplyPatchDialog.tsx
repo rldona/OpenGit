@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { pickFile } from "../lib/bridge/dialog";
 import { formatGitError } from "../lib/bridge/errors";
 import { applyPatch } from "../lib/bridge/patch";
+import { useI18n } from "../lib/i18n";
 import { useRepoStore } from "../lib/stores/repo";
 import { useUiStore } from "../lib/stores/ui";
 
@@ -10,6 +11,7 @@ import { useUiStore } from "../lib/stores/ui";
  * (`git apply`), optionally three-way, with the result in the Output panel.
  */
 export function ApplyPatchDialog({ onClose }: { onClose: () => void }) {
+  const { t } = useI18n();
   const root = useRepoStore((state) => state.repo?.root ?? null);
   const [file, setFile] = useState("");
   const [mailbox, setMailbox] = useState(true);
@@ -29,7 +31,7 @@ export function ApplyPatchDialog({ onClose }: { onClose: () => void }) {
 
   const chooseFile = async () => {
     try {
-      const picked = await pickFile("Choose a patch");
+      const picked = await pickFile(t("patch.chooseTitle"));
       if (picked !== null) {
         setFile(picked);
       }
@@ -47,7 +49,7 @@ export function ApplyPatchDialog({ onClose }: { onClose: () => void }) {
     try {
       const output = await applyPatch(root, file, mailbox, threeWay);
       const trimmed = output.trim();
-      useUiStore.getState().appendOutput(trimmed === "" ? `Applied ${file}` : trimmed);
+      useUiStore.getState().appendOutput(trimmed === "" ? t("patch.applied", { file }) : trimmed);
       onClose();
     } catch (applyError) {
       setError(formatGitError(applyError));
@@ -57,26 +59,26 @@ export function ApplyPatchDialog({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="modal-overlay">
-      <div className="remote-dialog" role="dialog" aria-modal="true" aria-label="Apply Patch">
-        <h2 className="remote-dialog-title">Apply Patch</h2>
+      <div className="remote-dialog" role="dialog" aria-modal="true" aria-label={t("patch.aria")}>
+        <h2 className="remote-dialog-title">{t("patch.title")}</h2>
 
         <div className="remote-field">
-          <span>Patch file:</span>
-          <input aria-label="Patch file" readOnly value={file} autoFocus />
+          <span>{t("patch.file")}</span>
+          <input aria-label={t("patch.fileAria")} readOnly value={file} autoFocus />
           <button type="button" onClick={() => void chooseFile()}>
-            Choose…
+            {t("common.choose")}
           </button>
         </div>
 
         <fieldset className="remote-options">
-          <legend>Options</legend>
+          <legend>{t("common.options")}</legend>
           <label>
             <input
               type="checkbox"
               checked={mailbox}
               onChange={(event) => setMailbox(event.target.checked)}
             />
-            Mailbox patch (git am, creates commits)
+            {t("patch.mailbox")}
           </label>
           <label>
             <input
@@ -84,7 +86,7 @@ export function ApplyPatchDialog({ onClose }: { onClose: () => void }) {
               checked={threeWay}
               onChange={(event) => setThreeWay(event.target.checked)}
             />
-            Three-way (--3way)
+            {t("patch.threeWay")}
           </label>
         </fieldset>
 
@@ -96,7 +98,7 @@ export function ApplyPatchDialog({ onClose }: { onClose: () => void }) {
 
         <div className="remote-dialog-actions">
           <button type="button" onClick={onClose}>
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             type="button"
@@ -104,7 +106,7 @@ export function ApplyPatchDialog({ onClose }: { onClose: () => void }) {
             disabled={file === "" || busy}
             onClick={() => void submit()}
           >
-            Apply
+            {t("patch.apply")}
           </button>
         </div>
       </div>

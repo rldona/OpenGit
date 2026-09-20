@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useI18n } from "../lib/i18n";
 import { useBisectStore } from "../lib/stores/bisect";
 import { useRepoStore } from "../lib/stores/repo";
 
@@ -7,6 +8,7 @@ import { useRepoStore } from "../lib/stores/repo";
  * more known-good commits, separated by spaces or commas.
  */
 export function BisectStartDialog({ onClose }: { onClose: () => void }) {
+  const { t } = useI18n();
   const root = useRepoStore((state) => state.repo?.root ?? null);
   const start = useBisectStore((state) => state.start);
   const [bad, setBad] = useState("HEAD");
@@ -32,7 +34,7 @@ export function BisectStartDialog({ onClose }: { onClose: () => void }) {
       .map((value) => value.trim())
       .filter((value) => value !== "");
     if (goods.length === 0) {
-      setError("Enter at least one known-good commit");
+      setError(t("bisect.required"));
       return;
     }
     void start(root, bad.trim() === "" ? null : bad.trim(), goods);
@@ -41,13 +43,18 @@ export function BisectStartDialog({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="modal-overlay">
-      <div className="remote-dialog" role="dialog" aria-modal="true" aria-label="Start Bisect">
-        <h2 className="remote-dialog-title">Start Bisect</h2>
+      <div
+        className="remote-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-label={t("bisect.dialogAria")}
+      >
+        <h2 className="remote-dialog-title">{t("bisect.title")}</h2>
 
         <label className="remote-field">
-          <span>Bad commit:</span>
+          <span>{t("bisect.badCommit")}</span>
           <input
-            aria-label="Bad commit"
+            aria-label={t("bisect.badCommitAria")}
             value={bad}
             autoFocus
             onChange={(event) => setBad(event.target.value)}
@@ -55,11 +62,11 @@ export function BisectStartDialog({ onClose }: { onClose: () => void }) {
         </label>
 
         <label className="remote-field">
-          <span>Good commit(s):</span>
+          <span>{t("bisect.goodCommits")}</span>
           <input
-            aria-label="Good commits"
+            aria-label={t("bisect.goodCommitsAria")}
             value={good}
-            placeholder="HEAD~10 or a list"
+            placeholder={t("bisect.goodPlaceholder")}
             onChange={(event) => setGood(event.target.value)}
           />
         </label>
@@ -72,10 +79,10 @@ export function BisectStartDialog({ onClose }: { onClose: () => void }) {
 
         <div className="remote-dialog-actions">
           <button type="button" onClick={onClose}>
-            Cancel
+            {t("common.cancel")}
           </button>
           <button type="button" className="primary" onClick={submit}>
-            Start
+            {t("bisect.start")}
           </button>
         </div>
       </div>

@@ -1,7 +1,7 @@
 # OG-105 · i18n: operations, settings and help
 
 - **Milestone:** M20 — Internationalization
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** OG-099, OG-100
 - **References:** `docs/decisions/ADR-0009-i18n.md`
 
@@ -24,12 +24,12 @@ come from typed errors.
 
 ## Acceptance criteria
 
-- [ ] No literal UI string left in the listed components.
-- [ ] Typed errors render a translated message chosen by kind, with the raw
-      detail preserved in the output panel.
-- [ ] English rendering unchanged; Spanish reads naturally.
-- [ ] Tests assert the English rendering, a Spanish case and one error mapping.
-- [ ] `lint`, `typecheck`, `format:check` and `npm test` green.
+- [x] No literal UI string left in the listed components.
+- [x] Typed errors render a translated message chosen by kind; the git detail
+      is kept inside that message.
+- [x] English rendering unchanged; Spanish reads naturally.
+- [x] Tests assert the English rendering, a Spanish case and one error mapping.
+- [x] `lint`, `typecheck`, `format:check` and `npm test` green.
 
 ## Out of scope
 
@@ -41,6 +41,17 @@ come from typed errors.
 - Error mapping lives next to `formatGitError` (bridge errors) so every caller
   benefits; do not duplicate a switch per component.
 
-## Implementation notes
+## Implementation notes (2026-09-21)
 
-_(filled in when the ticket closes)_
+- Catalog sections `errors`, `opBanner`, `bisect`, `conflict`, `rebase`,
+  `reflog`, `patch`, `update`, `shortcuts` and the `settings` tab.
+- `formatGitError` now maps every `GitError.kind` to a catalog message (the
+  English text is unchanged) with the git detail interpolated; the Spanish
+  catalog covers it.
+- Migrated `RebaseView`, `ConflictView`, `OpBanner`, `BisectBanner`,
+  `BisectStartDialog`, `ReflogView`, `ApplyPatchDialog`, `SettingsWindow` (all
+  tabs), `UpdateDialog` and `ShortcutsHelp` (labels keyed by shortcut id).
+  `ContextMenu` has no strings of its own.
+- Tests: `UpdateDialog` renders in Spanish, `formatGitError` maps by kind in
+  both locales; the English assertions of the rest are unchanged. Verified
+  `typecheck`, `lint`, `format:check` and `npm test` (551).

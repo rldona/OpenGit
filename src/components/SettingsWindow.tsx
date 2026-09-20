@@ -20,7 +20,7 @@ import {
 } from "../lib/bridge/settings";
 import type { GpgKey } from "../lib/bridge/types";
 import { formatCommitDate } from "../lib/format";
-import { useI18n } from "../lib/i18n";
+import { useI18n, type MessageKey } from "../lib/i18n";
 import type { Locale } from "../lib/i18n/locale";
 import { syncStoredSession } from "../lib/tabs";
 import { useExtrasStore } from "../lib/stores/extras";
@@ -65,13 +65,45 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
   const setLocalePreference = useLocaleStore((state) => state.setPreference);
 
   const remotes = useExtrasStore((state) => state.remotes);
-  const tabs: Array<{ id: Tab; label: string; icon: IconName }> = [
-    { id: "general", label: "General", icon: "workspace" },
-    ...(root ? [{ id: "advanced" as const, label: "Advanced", icon: "settings" as const }] : []),
-    ...(root ? [{ id: "remotes" as const, label: "Remotes", icon: "cloud" as const }] : []),
-    ...(root ? [{ id: "security" as const, label: "Security", icon: "lock" as const }] : []),
-    ...(root ? [{ id: "template" as const, label: "Commit Template", icon: "file" as const }] : []),
-    { id: "appearance", label: "Appearance", icon: "theme" },
+  const tabs: Array<{ id: Tab; labelKey: MessageKey; icon: IconName }> = [
+    { id: "general", labelKey: "settings.tabGeneral", icon: "workspace" },
+    ...(root
+      ? [
+          {
+            id: "advanced" as const,
+            labelKey: "settings.tabAdvanced" as const,
+            icon: "settings" as const,
+          },
+        ]
+      : []),
+    ...(root
+      ? [
+          {
+            id: "remotes" as const,
+            labelKey: "settings.tabRemotes" as const,
+            icon: "cloud" as const,
+          },
+        ]
+      : []),
+    ...(root
+      ? [
+          {
+            id: "security" as const,
+            labelKey: "settings.tabSecurity" as const,
+            icon: "lock" as const,
+          },
+        ]
+      : []),
+    ...(root
+      ? [
+          {
+            id: "template" as const,
+            labelKey: "settings.tabTemplate" as const,
+            icon: "file" as const,
+          },
+        ]
+      : []),
+    { id: "appearance", labelKey: "settings.tabAppearance", icon: "theme" },
   ];
   const [tab, setTab] = useState<Tab>(root ? "advanced" : "appearance");
 
@@ -181,7 +213,7 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
     const name = remoteDraft.name.trim();
     const url = remoteDraft.url.trim();
     if (name === "" || url === "") {
-      setError("Remote name and URL are required");
+      setError(t("settings.remoteRequired"));
       return;
     }
     setError(null);
@@ -208,7 +240,7 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
       return;
     }
     const confirmed = await confirmDestructive(
-      `Remove remote ${selectedRemote}? Its remote branches disappear from the repo.`,
+      t("settings.remoteRemoveConfirm", { name: selectedRemote }),
     );
     if (!confirmed) {
       return;
@@ -234,7 +266,7 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
   };
 
   const importTemplate = async () => {
-    const file = await pickFile("Import commit template");
+    const file = await pickFile(t("settings.importTemplateTitle"));
     if (file === null) {
       return;
     }
@@ -303,9 +335,14 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="modal-overlay">
-      <div className="settings-window" role="dialog" aria-modal="true" aria-label="Settings">
+      <div
+        className="settings-window"
+        role="dialog"
+        aria-modal="true"
+        aria-label={t("settings.aria")}
+      >
         <header className="settings-header">
-          <h2 className="settings-title">{active.label}</h2>
+          <h2 className="settings-title">{t(active.labelKey)}</h2>
           <div className="settings-tabs" role="tablist">
             {tabs.map((item) => (
               <button
@@ -317,7 +354,7 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
                 onClick={() => setTab(item.id)}
               >
                 <Icon name={item.icon} size={20} />
-                <span>{item.label}</span>
+                <span>{t(item.labelKey)}</span>
               </button>
             ))}
           </div>
@@ -332,14 +369,14 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
 
           {tab === "general" && (
             <section className="settings-section">
-              <h3>Startup</h3>
+              <h3>{t("settings.startup")}</h3>
               <label className="settings-check">
                 <input
                   type="checkbox"
                   checked={draftRestoreTabs}
                   onChange={(event) => setDraftRestoreTabs(event.target.checked)}
                 />
-                Reopen the repositories that were open when OpenGit last closed
+                {t("settings.restoreTabs")}
               </label>
             </section>
           )}
@@ -347,11 +384,11 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
           {tab === "advanced" && root && user && (
             <>
               <section className="settings-section">
-                <h3>Repository-specific ignore list</h3>
+                <h3>{t("settings.ignoreTitle")}</h3>
                 <div className="settings-row">
                   <input
                     className="settings-input"
-                    aria-label="Ignore file"
+                    aria-label={t("settings.ignoreAria")}
                     readOnly
                     value={ignorePath}
                   />
@@ -362,34 +399,34 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
                       void openPath(ignorePath).catch((err) => setError(errorMessage(err)))
                     }
                   >
-                    Edit
+                    {t("settings.edit")}
                   </button>
                 </div>
               </section>
 
               <section className="settings-section">
-                <h3>User information</h3>
+                <h3>{t("settings.userInfo")}</h3>
                 <label className="settings-check">
                   <input
                     type="checkbox"
                     checked={user.useGlobal}
                     onChange={(event) => setUser({ ...user, useGlobal: event.target.checked })}
                   />
-                  Use global user settings
+                  {t("settings.useGlobal")}
                 </label>
                 <label className="settings-field">
-                  <span>Full Name:</span>
+                  <span>{t("settings.fullName")}</span>
                   <input
-                    aria-label="Full Name"
+                    aria-label={t("settings.fullNameAria")}
                     value={shownName}
                     disabled={user.useGlobal}
                     onChange={(event) => setUser({ ...user, localName: event.target.value })}
                   />
                 </label>
                 <label className="settings-field">
-                  <span>Email address:</span>
+                  <span>{t("settings.email")}</span>
                   <input
-                    aria-label="Email address"
+                    aria-label={t("settings.emailAria")}
                     value={shownEmail}
                     disabled={user.useGlobal}
                     onChange={(event) => setUser({ ...user, localEmail: event.target.value })}
@@ -398,14 +435,14 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
               </section>
 
               <section className="settings-section">
-                <h3>Miscellaneous</h3>
+                <h3>{t("settings.misc")}</h3>
                 <label className="settings-check">
                   <input
                     type="checkbox"
                     checked={draftAutoRefresh}
                     onChange={(event) => setDraftAutoRefresh(event.target.checked)}
                   />
-                  Automatically refresh (if disabled you must manually refresh this repository)
+                  {t("settings.autoRefresh")}
                 </label>
               </section>
             </>
@@ -413,11 +450,11 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
 
           {tab === "remotes" && root && (
             <section className="settings-section">
-              <h3>Remote repository paths</h3>
-              <div className="remotes-table" aria-label="Remotes">
+              <h3>{t("settings.remotesTitle")}</h3>
+              <div className="remotes-table" aria-label={t("settings.remotesAria")}>
                 <div className="remotes-head">
-                  <span>Name</span>
-                  <span>Path</span>
+                  <span>{t("settings.nameColumn")}</span>
+                  <span>{t("settings.pathColumn")}</span>
                 </div>
                 {remotes.map((remote) => (
                   <button
@@ -430,15 +467,15 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
                     <span className="remotes-url">{remote.url}</span>
                   </button>
                 ))}
-                {remotes.length === 0 && <p className="muted">No remotes</p>}
+                {remotes.length === 0 && <p className="muted">{t("settings.noRemotes")}</p>}
               </div>
 
               {remoteDraft && (
                 <div className="remotes-form">
                   <label className="settings-field">
-                    <span>Name:</span>
+                    <span>{t("settings.nameLabel")}</span>
                     <input
-                      aria-label="Remote name"
+                      aria-label={t("settings.nameAria")}
                       value={remoteDraft.name}
                       onChange={(event) =>
                         setRemoteDraft({ ...remoteDraft, name: event.target.value })
@@ -446,9 +483,9 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
                     />
                   </label>
                   <label className="settings-field">
-                    <span>Path:</span>
+                    <span>{t("settings.pathLabel")}</span>
                     <input
-                      aria-label="Remote URL"
+                      aria-label={t("settings.urlAria")}
                       value={remoteDraft.url}
                       onChange={(event) =>
                         setRemoteDraft({ ...remoteDraft, url: event.target.value })
@@ -463,10 +500,10 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
                         setEditingRemote(null);
                       }}
                     >
-                      Cancel
+                      {t("common.cancel")}
                     </button>
                     <button type="button" className="primary" onClick={() => void saveRemote()}>
-                      Save
+                      {t("common.save")}
                     </button>
                   </div>
                 </div>
@@ -474,17 +511,17 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
 
               <div className="remotes-actions">
                 <button type="button" onClick={startAddRemote}>
-                  Add
+                  {t("settings.add")}
                 </button>
                 <button type="button" disabled={selectedRemote === null} onClick={startEditRemote}>
-                  Edit
+                  {t("settings.edit")}
                 </button>
                 <button
                   type="button"
                   disabled={selectedRemote === null}
                   onClick={() => void removeRemote()}
                 >
-                  Remove
+                  {t("settings.remove")}
                 </button>
               </div>
             </section>
@@ -498,17 +535,17 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
                   checked={signEnabled}
                   onChange={(event) => setSignEnabled(event.target.checked)}
                 />
-                Enable GPG key signing for commits
+                {t("settings.enableSigning")}
               </label>
               <label className="settings-field">
-                <span>Key:</span>
+                <span>{t("settings.keyLabel")}</span>
                 <select
-                  aria-label="Signing key"
+                  aria-label={t("settings.keyAria")}
                   value={signingKey}
                   disabled={!signEnabled || gpgKeys.length === 0}
                   onChange={(event) => setSigningKey(event.target.value)}
                 >
-                  <option value="">Select a key</option>
+                  <option value="">{t("settings.selectKey")}</option>
                   {gpgKeys.map((key) => (
                     <option key={key.id} value={key.id}>
                       {key.user || key.id}
@@ -516,29 +553,29 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
                   ))}
                 </select>
               </label>
-              {gpgKeys.length === 0 && <p className="muted">No GPG secret keys found</p>}
+              {gpgKeys.length === 0 && <p className="muted">{t("settings.noKeys")}</p>}
 
               <div className="settings-key">
-                <h3>Commit signing GPG key</h3>
+                <h3>{t("settings.signingTitle")}</h3>
                 <dl>
                   <div>
-                    <dt>User:</dt>
+                    <dt>{t("settings.user")}</dt>
                     <dd>{selectedKey?.user || "—"}</dd>
                   </div>
                   <div>
-                    <dt>Type:</dt>
+                    <dt>{t("settings.type")}</dt>
                     <dd>{selectedKey?.algo || "—"}</dd>
                   </div>
                   <div>
-                    <dt>Key:</dt>
+                    <dt>{t("settings.keyField")}</dt>
                     <dd className="settings-key-fingerprint">{selectedKey?.fingerprint || "—"}</dd>
                   </div>
                   <div>
-                    <dt>Created:</dt>
+                    <dt>{t("settings.created")}</dt>
                     <dd>{selectedKey?.created ? formatCommitDate(selectedKey.created) : "—"}</dd>
                   </div>
                   <div>
-                    <dt>Expires:</dt>
+                    <dt>{t("settings.expires")}</dt>
                     <dd>{selectedKey?.expires ? formatCommitDate(selectedKey.expires) : "—"}</dd>
                   </div>
                 </dl>
@@ -548,10 +585,7 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
 
           {tab === "template" && root && (
             <section className="settings-section">
-              <p className="settings-help">
-                This message template is a customizable text block that automatically populates the
-                message editor for this repository.
-              </p>
+              <p className="settings-help">{t("settings.templateHelp")}</p>
               <label className="settings-check">
                 <input
                   type="radio"
@@ -559,7 +593,7 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
                   checked={templateMode === "none"}
                   onChange={() => setTemplateMode("none")}
                 />
-                None
+                {t("settings.templateNone")}
               </label>
               <label className="settings-check">
                 <input
@@ -568,8 +602,10 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
                   checked={templateMode === "default"}
                   onChange={() => setTemplateMode("default")}
                 />
-                Default (Preferences → Commit Template)
-                {!templateGlobalSet && <span className="muted"> — no global template set</span>}
+                {t("settings.templateDefault")}
+                {!templateGlobalSet && (
+                  <span className="muted">{t("settings.templateNoGlobal")}</span>
+                )}
               </label>
               <label className="settings-check">
                 <input
@@ -578,18 +614,18 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
                   checked={templateMode === "custom"}
                   onChange={() => setTemplateMode("custom")}
                 />
-                Custom (This Repository Only)
+                {t("settings.templateCustom")}
               </label>
               <textarea
                 className="settings-template"
-                aria-label="Commit template"
+                aria-label={t("settings.templateAria")}
                 value={templateContent}
                 disabled={templateMode !== "custom"}
                 onChange={(event) => setTemplateContent(event.target.value)}
               />
               <div className="remote-dialog-actions">
                 <button type="button" onClick={() => void importTemplate()}>
-                  Import…
+                  {t("settings.importTemplate")}
                 </button>
               </div>
             </section>
@@ -597,17 +633,17 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
 
           {tab === "appearance" && (
             <section className="settings-section">
-              <h3>Theme</h3>
+              <h3>{t("settings.theme")}</h3>
               <label className="settings-field">
-                <span>Appearance:</span>
+                <span>{t("settings.appearance")}</span>
                 <select
-                  aria-label="Theme"
+                  aria-label={t("settings.themeAria")}
                   value={draftTheme}
                   onChange={(event) => setDraftTheme(event.target.value as ThemePreference)}
                 >
-                  <option value="system">System</option>
-                  <option value="light">Light</option>
-                  <option value="dark">Dark</option>
+                  <option value="system">{t("settings.themeSystem")}</option>
+                  <option value="light">{t("settings.themeLight")}</option>
+                  <option value="dark">{t("settings.themeDark")}</option>
                 </select>
               </label>
 
@@ -635,14 +671,14 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
               className="settings-footer-left"
               onClick={() => void editConfigFile()}
             >
-              Edit Config File…
+              {t("settings.editConfig")}
             </button>
           )}
           <button type="button" onClick={onClose}>
-            Cancel
+            {t("common.cancel")}
           </button>
           <button type="button" className="primary" disabled={busy} onClick={() => void submit()}>
-            OK
+            {t("common.ok")}
           </button>
         </footer>
       </div>

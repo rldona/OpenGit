@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import type { GitErrorPayload } from "./types";
 
 function asPayload(error: unknown): GitErrorPayload | null {
@@ -25,34 +26,39 @@ export function formatGitError(error: unknown): string {
   }
   switch (payload.kind) {
     case "not_found":
-      return `Git binary not found: ${text(payload.binary)}`;
+      return t("errors.notFound", { binary: text(payload.binary) });
     case "spawn":
-      return `Could not run git: ${text(payload.message)}`;
+      return t("errors.spawn", { message: text(payload.message) });
     case "command_failed": {
       const stderr = text(payload.stderr).trim();
       const stdout = text(payload.stdout).trim();
       const detail = stderr || stdout;
-      return `git failed with code ${text(payload.exit_code)}${detail ? `: ${detail}` : ""}`;
+      return detail
+        ? t("errors.commandFailedDetail", { code: text(payload.exit_code), detail })
+        : t("errors.commandFailed", { code: text(payload.exit_code) });
     }
     case "timeout":
-      return "git timed out";
+      return t("errors.timeout");
     case "cancelled":
-      return "Operation cancelled";
+      return t("errors.cancelled");
     case "invalid_output":
-      return `Unexpected git output: ${text(payload.message)}`;
+      return t("errors.invalidOutput", { message: text(payload.message) });
     case "path_not_found":
-      return "The folder does not exist";
+      return t("errors.pathNotFound");
     case "not_a_repository":
-      return "The selected folder is not a git repository";
+      return t("errors.notARepository");
     case "not_a_work_tree":
-      return "Bare repositories are not supported yet";
+      return t("errors.notAWorkTree");
     case "invalid_head":
-      return "The repository has an invalid HEAD";
+      return t("errors.invalidHead");
     case "git_too_old":
-      return `git ${text(payload.minimum)} or newer is required (found ${text(payload.found)})`;
+      return t("errors.gitTooOld", {
+        minimum: text(payload.minimum),
+        found: text(payload.found),
+      });
     case "store":
-      return `Could not save app state: ${text(payload.message)}`;
+      return t("errors.store", { message: text(payload.message) });
     default:
-      return `Git error: ${JSON.stringify(payload)}`;
+      return t("errors.generic", { detail: JSON.stringify(payload) });
   }
 }

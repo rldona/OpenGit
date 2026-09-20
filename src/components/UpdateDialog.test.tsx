@@ -1,17 +1,28 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { useLocaleStore } from "../lib/stores/locale";
 import { useUpdateStore } from "../lib/stores/update";
 import { UpdateDialog } from "./UpdateDialog";
 
 describe("UpdateDialog", () => {
   beforeEach(() => {
     useUpdateStore.getState().reset();
+    useLocaleStore.setState({ preference: null, locale: "en" });
   });
 
   it("renders nothing when idle", () => {
     render(<UpdateDialog />);
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("renders the dialog in Spanish", () => {
+    useLocaleStore.setState({ preference: "es", locale: "es" });
+    useUpdateStore.setState({ status: "ready", version: "0.6.0" });
+    render(<UpdateDialog />);
+
+    expect(screen.getByText("OpenGit 0.6.0 está listo.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Reiniciar ahora" })).toBeInTheDocument();
   });
 
   it("offers Later and Restart now when an update is ready", async () => {
