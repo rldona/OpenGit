@@ -1,7 +1,7 @@
 # OG-009 · Working tree status
 
 - **Milestone:** M1 — MVP local
-- **Estado:** in-progress
+- **Estado:** done
 - **Depende de:** OG-003
 - **Referencias:** ADR-0003, OG-010
 
@@ -42,4 +42,4 @@ La vista de estado (inspirada en "File status" de SourceTree) responde a "qué h
 - UI: `StatusView` con secciones (Conflicts/Staged/Unstaged/Untracked), contadores, buscador por nombre y acciones por fila; el descarte y el borrado usan el diálogo nativo de confirmación (`dialog:allow-ask`).
 - Selección de fichero lista para el visor de diff: el panel llega con OG-005.
 - Test de integración de Rust que hace stage → unstage → discard y comprueba el contenido en disco; tests de frontend para secciones, stage y confirmación.
-- Pendiente para cerrar: PR y CI verde.
+- Cerrado el 2026-09-18 con CI verde (Frontend 20 s, Rust 1m39s) en el PR #5, junto con OG-010.

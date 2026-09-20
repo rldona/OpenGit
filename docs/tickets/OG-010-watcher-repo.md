@@ -1,7 +1,7 @@
 # OG-010 · Watcher de `.git` y refresco
 
 - **Milestone:** M1 — MVP local
-- **Estado:** in-progress
+- **Estado:** done
 - **Depende de:** OG-003
 - **Referencias:** docs/architecture/overview.md, OG-009
 
@@ -43,4 +43,4 @@ El estado del repo cambia por la app y por fuera (terminal, IDE, hooks). La UI d
 - La UI (`useRepoEvents`) escucha los cuatro eventos: refs y refresco recargan el historial (silencioso, conserva selección y filtro); index y worktree refrescan el status.
 - Al cerrar el repo (botón Cerrar) o abrir otro, el watcher anterior se detiene y se libera el hilo.
 - Dependencia nueva justificada por el ticket: `notify` 8.2.
-- Pendiente para cerrar: PR y CI verde.
+- Cerrado el 2026-09-18 con CI verde (Frontend 20 s, Rust 1m39s) en el PR #5, junto con OG-009.
