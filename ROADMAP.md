@@ -2,7 +2,7 @@
 
 A milestone closes when its tickets are `done` and its exit criteria are met. Tickets live in [`docs/tickets/`](docs/tickets/README.md).
 
-**Current state:** latest release **v0.6.2** (2026-09-20), with in-app auto-updates and remembered tabs. M0–M16 and **M18 (history and content search depth)** are closed; **M17 (recovery and debugging)** is in progress.
+**Current state:** latest release **v0.6.2** (2026-09-20), with in-app auto-updates and remembered tabs. M0–M18 are closed and there is no active milestone.
 
 ## M0 — Foundation ✅ _(closed 2026-09-18)_
 
@@ -224,17 +224,17 @@ of only opening folders that already exist.
 **Exit:** with no repository on disk, clone or create one and start working
 without leaving the app. ✅
 
-## M17 — Recovery and debugging
+## M17 — Recovery and debugging ✅ _(closed 2026-09-20)_
 
 Make the app safer after mistakes and more capable for investigating history.
 
 - [x] Reflog view with restore/reset to an entry (undo) (OG-089).
-- [ ] Bisect: start, good/bad and reset, with a status banner (OG-090).
+- [x] Bisect: start, good/bad and reset, with a status banner (OG-090).
 - [x] Reset modes: soft, mixed and hard with explicit confirmation (OG-091).
 - [x] Revert a merge commit with a mainline selection (OG-092).
 
 **Exit:** recover a lost commit, find the commit that introduced a bug and undo
-a merge without the terminal.
+a merge without the terminal. ✅
 
 ## M18 — History and content search depth ✅ _(closed 2026-09-20)_
 

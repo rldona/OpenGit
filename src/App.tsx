@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { CollapsibleSection } from "./components/CollapsibleSection";
 import { ApplyPatchDialog } from "./components/ApplyPatchDialog";
+import { BisectBanner } from "./components/BisectBanner";
+import { BisectStartDialog } from "./components/BisectStartDialog";
 import { BlameView } from "./components/BlameView";
 import { CloneDialog } from "./components/CloneDialog";
 import { ConflictView } from "./components/ConflictView";
@@ -89,6 +91,7 @@ function App() {
   const [cloneOpen, setCloneOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [applyPatchOpen, setApplyPatchOpen] = useState(false);
+  const [bisectOpen, setBisectOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -265,6 +268,9 @@ function App() {
       case "apply-patch":
         setApplyPatchOpen(true);
         break;
+      case "bisect":
+        setBisectOpen(true);
+        break;
       case "close-repo":
         void useRepoStore.getState().close();
         break;
@@ -366,10 +372,12 @@ function App() {
       {cloneOpen && <CloneDialog onClose={() => setCloneOpen(false)} />}
       {createOpen && <CreateDialog onClose={() => setCreateOpen(false)} />}
       {repo && applyPatchOpen && <ApplyPatchDialog onClose={() => setApplyPatchOpen(false)} />}
+      {repo && bisectOpen && <BisectStartDialog onClose={() => setBisectOpen(false)} />}
       {settingsOpen && <SettingsWindow onClose={() => setSettingsOpen(false)} />}
       <RemoteJobModal />
 
       {repo && <OpBanner />}
+      {repo && <BisectBanner />}
 
       <RepoTabs />
 
