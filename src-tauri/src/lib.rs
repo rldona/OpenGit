@@ -94,6 +94,7 @@ pub fn run() {
                 watcher: Mutex::new(None),
                 jobs: Arc::new(JobManager::new()),
                 data_dir,
+                auto_refresh: Arc::new(std::sync::atomic::AtomicBool::new(true)),
             });
             Ok(())
         })
@@ -152,7 +153,13 @@ pub fn run() {
             commands::lfs_status,
             commands::remote_urls,
             commands::tracking_commits,
-            commands::author_ident
+            commands::author_ident,
+            commands::config_get,
+            commands::config_set,
+            commands::config_unset,
+            commands::ignore_exclude_path,
+            commands::set_auto_refresh,
+            commands::open_path
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

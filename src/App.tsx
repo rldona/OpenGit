@@ -10,6 +10,7 @@ import { OpBanner } from "./components/OpBanner";
 import { PullDialog } from "./components/PullDialog";
 import { RebaseView } from "./components/RebaseView";
 import { RemoteJobModal } from "./components/RemoteJobModal";
+import { SettingsWindow } from "./components/SettingsWindow";
 import { RefsSidebar } from "./components/RefsSidebar";
 import { ShortcutsHelp } from "./components/ShortcutsHelp";
 import { SplitPane } from "./components/SplitPane";
@@ -31,6 +32,7 @@ import { useLogStore } from "./lib/stores/log";
 import { useRefsStore } from "./lib/stores/refs";
 import { useRemoteStore } from "./lib/stores/remote";
 import { useRepoStore } from "./lib/stores/repo";
+import { syncAutoRefresh } from "./lib/stores/settings";
 import { useStatusStore } from "./lib/stores/status";
 import { useThemeStore } from "./lib/stores/theme";
 import { useUiStore } from "./lib/stores/ui";
@@ -70,6 +72,7 @@ function App() {
   const [pullOpen, setPullOpen] = useState(false);
   const [fetchOpen, setFetchOpen] = useState(false);
   const [mergeOpen, setMergeOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
   const runFetch = () => {
@@ -110,6 +113,11 @@ function App() {
   useEffect(() => {
     void loadRecents();
   }, [loadRecents]);
+
+  useEffect(() => {
+    // The stored "Automatically refresh" preference has to reach the watcher.
+    syncAutoRefresh();
+  }, []);
 
   useEffect(() => {
     const query = window.matchMedia?.("(prefers-color-scheme: dark)");
@@ -267,6 +275,7 @@ function App() {
         onPush={() => void runPush()}
         onMerge={runMerge}
         onRefresh={() => void refreshAll()}
+        onSettings={() => setSettingsOpen(true)}
         refreshing={refreshing}
       />
 
@@ -275,6 +284,7 @@ function App() {
       {repo && fetchOpen && <FetchDialog onClose={() => setFetchOpen(false)} />}
       {repo && pullOpen && <PullDialog onClose={() => setPullOpen(false)} />}
       {repo && mergeOpen && <MergeWindow onClose={() => setMergeOpen(false)} />}
+      {settingsOpen && <SettingsWindow onClose={() => setSettingsOpen(false)} />}
       <RemoteJobModal />
 
       {repo && <OpBanner />}
