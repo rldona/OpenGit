@@ -168,9 +168,17 @@ pub fn log_page(
     skip: usize,
     limit: usize,
     rev: Option<String>,
+    search: Option<crate::git::LogSearch>,
     state: State<'_, AppState>,
 ) -> Result<Vec<Commit>, GitError> {
-    crate::git::log_page(&state.runner, Path::new(&path), skip, limit, rev.as_deref())
+    crate::git::log_page(
+        &state.runner,
+        Path::new(&path),
+        skip,
+        limit,
+        rev.as_deref(),
+        search.as_ref(),
+    )
 }
 
 #[tauri::command]

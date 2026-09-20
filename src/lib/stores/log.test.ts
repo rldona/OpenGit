@@ -75,7 +75,7 @@ describe("useLogStore", () => {
     expect(useLogStore.getState().commits).toHaveLength(1);
     expect(useLogStore.getState().layout.rows).toHaveLength(1);
     expect(useLogStore.getState().hasMore).toBe(false);
-    expect(logPage).toHaveBeenCalledWith("/tmp/repo", 0, 200, null);
+    expect(logPage).toHaveBeenCalledWith("/tmp/repo", 0, 200, null, null);
   });
 
   it("acumula páginas y mantiene el layout incremental", async () => {
@@ -89,14 +89,14 @@ describe("useLogStore", () => {
     expect(useLogStore.getState().commits).toHaveLength(201);
     expect(useLogStore.getState().layout.rows).toHaveLength(201);
     expect(useLogStore.getState().hasMore).toBe(false);
-    expect(logPage).toHaveBeenLastCalledWith("/tmp/repo", 200, 200, null);
+    expect(logPage).toHaveBeenLastCalledWith("/tmp/repo", 200, 200, null, null);
   });
 
   it("recarga al cambiar el filtro de rama", async () => {
     await useLogStore.getState().setFilter("/tmp/repo", "refs/heads/main");
 
     expect(useLogStore.getState().filter).toBe("refs/heads/main");
-    expect(logPage).toHaveBeenLastCalledWith("/tmp/repo", 0, 200, "refs/heads/main");
+    expect(logPage).toHaveBeenLastCalledWith("/tmp/repo", 0, 200, "refs/heads/main", null);
   });
 
   it("hace cherry-pick y refresca log, refs y status", async () => {
@@ -138,6 +138,38 @@ describe("useLogStore", () => {
 
     expect(revertCommit).toHaveBeenCalled();
     expect(resetMixed).toHaveBeenCalledWith("/tmp/repo", "abcdef1234567890");
+  });
+
+  it("aplica una búsqueda y aplana el layout", async () => {
+    vi.mocked(logPage).mockResolvedValue([{ ...COMMIT, parents: ["padre-fuera-de-la-busqueda"] }]);
+    await useLogStore.getState().load("/tmp/repo");
+
+    await useLogStore.getState().applySearch("/tmp/repo", {
+      grep: "feat",
+      author: "",
+      path: "",
+    });
+
+    expect(logPage).toHaveBeenLastCalledWith("/tmp/repo", 0, 200, null, {
+      grep: "feat",
+      author: "",
+      path: "",
+    });
+    expect(useLogStore.getState().layout.rows[0].edges).toHaveLength(0);
+  });
+
+  it("limpia la búsqueda y vuelve a cargar sin filtros", async () => {
+    await useLogStore.getState().load("/tmp/repo");
+    await useLogStore.getState().applySearch("/tmp/repo", {
+      grep: "feat",
+      author: "",
+      path: "",
+    });
+
+    await useLogStore.getState().clearSearch("/tmp/repo");
+
+    expect(useLogStore.getState().search).toEqual({ grep: "", author: "", path: "" });
+    expect(logPage).toHaveBeenLastCalledWith("/tmp/repo", 0, 200, null, null);
   });
 
   it("expone el error de git sin romper el estado", async () => {
