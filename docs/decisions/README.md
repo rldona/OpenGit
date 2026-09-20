@@ -1,14 +1,14 @@
-# Decisiones de arquitectura (ADRs)
+# Architecture decisions (ADRs)
 
-Registro de decisiones con coste alto de revertir. Un ADR aceptado **no se edita**: se sustituye por uno nuevo que lo reemplace.
+Record of decisions with a high cost to revert. An accepted ADR **is not edited**: it is replaced by a new one that supersedes it.
 
-| ADR | Título | Estado |
+| ADR | Title | Status |
 | --- | --- | --- |
-| [0001](ADR-0001-tauri-2.md) | Shell de escritorio basado en Tauri 2 | aceptado |
-| [0002](ADR-0002-react-typescript.md) | Frontend en React + TypeScript | aceptado |
-| [0003](ADR-0003-git-cli-como-motor.md) | El binario `git` del sistema como motor | aceptado |
-| [0004](ADR-0004-grafo-canvas-incremental.md) | Grafo en canvas con carga incremental | aceptado |
-| [0005](ADR-0005-estado-global-zustand.md) | Estado global con Zustand | aceptado |
-| [0006](ADR-0006-editor-diff-codemirror.md) | Editor de diff basado en CodeMirror 6 | aceptado |
+| [0001](ADR-0001-tauri-2.md) | Desktop shell based on Tauri 2 | accepted |
+| [0002](ADR-0002-react-typescript.md) | React + TypeScript frontend | accepted |
+| [0003](ADR-0003-git-cli-como-motor.md) | The system `git` binary as the engine | accepted |
+| [0004](ADR-0004-grafo-canvas-incremental.md) | Canvas graph with incremental loading | accepted |
+| [0005](ADR-0005-estado-global-zustand.md) | Global state with Zustand | accepted |
+| [0006](ADR-0006-editor-diff-codemirror.md) | Diff editor based on CodeMirror 6 | accepted |
 
-Para proponer uno nuevo, copia [`TEMPLATE.md`](TEMPLATE.md) y usa el flujo de `.ai/workflows/adr.md`.
+To propose a new one, copy [`TEMPLATE.md`](TEMPLATE.md) and follow the `.ai/workflows/adr.md` flow.

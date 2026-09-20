@@ -126,8 +126,9 @@ does not block M8 or new features.
 - [x] README.md (2026-09-19).
 - [x] ROADMAP.md, AGENTS.md, CLAUDE.md and `.github/copilot-instructions.md` (2026-09-19).
 - [ ] Release notes of published releases.
-- [ ] Tickets and ADRs (`docs/tickets/`, `docs/decisions/`).
-- [ ] Guides, architecture and `.ai/`.
+- [x] Tickets and ADRs (`docs/tickets/`, `docs/decisions/`).
+- [x] Guides and architecture (`docs/guides/`, `docs/architecture/`).
+- [ ] `.ai/` (agents, skills, workflows, memory).
 - [x] Code comments and test descriptions (frontend and Rust).
 - [ ] Old PR and issue texts (optional: they are edited on GitHub).
 
