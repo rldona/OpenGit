@@ -18,8 +18,8 @@ Cada push al PR lanzaba builds en macOS, Windows y Linux (~8 min de reloj, con m
 
 ## Criterios de aceptación
 
-- [ ] Un PR de código da señal en ~3 min (frontend + Rust).
-- [ ] Un PR solo de docs no lanza CI.
+- [x] Un PR de código da señal en ~3 min (frontend + Rust). _(Frontend 15 s, Rust 3m21s)_
+- [x] Un PR solo de docs no lanza CI. _(verificado con el commit de cierre de este ticket, que no disparó run)_
 - [ ] `build.yml` se lanza a demanda y sube el binario de cada SO como artefacto.
 - [x] Guía de desarrollo actualizada.
 
