@@ -27,3 +27,10 @@
 - **Contexto:** primer CI en GitHub Actions; el job de frontend falló en 7 s con `npm error code E401`.
 - **Hallazgo:** el `~/.npmrc` de esta máquina configura un Artifactory corporativo, así que `npm install` escribió las 276 URLs `resolved` del lock contra ese host. GitHub no tiene (ni debe tener) esas credenciales.
 - **Implicación:** el `package-lock.json` debe resolver contra `https://registry.npmjs.org`. El `.npmrc` del repo fija `replace-registry-host=always` para que npm sustituya el host del lock por el registry configurado en cada máquina (CI → público; local → corporativo). Si un `npm install` vuelve a meter URLs del Artifactory, hay que regenerar el lock antes de pushear.
+
+## No cambies de rama con `tauri dev` corriendo
+
+- **Fecha:** 2026-09-18
+- **Contexto:** `npm run tauri dev` en marcha mientras se hizo `git checkout main` + `git pull` (el pull escribió de nuevo todo el árbol).
+- **Hallazgo:** Vite detectó el cambio de `vite.config.ts`, reinició el servidor y se quedó en el puerto 5174 en vez de 1420 (5173 estaba ocupado por otro proyecto), pese a `strictPort`. La ventana Tauri siguió cargando `devUrl` (1420), que ya no respondía → pantalla blanca. En el log: `Port 5173 is in use, trying another one...` y `Local: http://localhost:5174/`.
+- **Implicación:** no hacer checkout/pull con el dev server vivo. Si pasa: parar todo (`pkill -f "opengit/node_modules/.bin/vite"; pkill -f target/debug/opengit`) y relanzar `npm run tauri dev`, comprobando en el log `http://localhost:1420/` antes de dar por buena la ventana.
