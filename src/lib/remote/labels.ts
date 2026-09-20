@@ -15,5 +15,7 @@ export function describeRemoteJob(kind: JobKind): string {
       return kind.remote ? `Pushing to ${kind.remote}` : "Pushing";
     case "push_tag":
       return `Pushing tag ${kind.tag}`;
+    case "clone":
+      return `Cloning ${kind.url}`;
   }
 }

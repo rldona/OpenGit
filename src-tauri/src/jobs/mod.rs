@@ -45,6 +45,15 @@ pub enum JobKind {
         remote: Option<String>,
         tag: String,
     },
+    /// Clone into `destination`; the job runs with the destination's parent as
+    /// its working directory (OG-085).
+    Clone {
+        url: String,
+        destination: String,
+        depth: Option<u32>,
+        branch: Option<String>,
+        recurse_submodules: bool,
+    },
 }
 
 impl JobKind {
@@ -54,6 +63,7 @@ impl JobKind {
             Self::Pull { .. } => "pull",
             Self::Push { .. } => "push",
             Self::PushTag { .. } => "push tag",
+            Self::Clone { .. } => "clone",
         }
     }
 }
@@ -111,8 +121,46 @@ impl JobManager {
     }
 }
 
+/// Validates the clone destination and returns the working directory to use
+/// (its parent). A readable error beats letting git fail halfway.
+fn clone_cwd(destination: &str) -> Result<std::path::PathBuf, GitError> {
+    if destination.trim().is_empty() {
+        return Err(GitError::invalid(
+            "choose a destination folder for the clone",
+        ));
+    }
+    let dest = Path::new(destination);
+    if dest.exists() {
+        if !dest.is_dir() {
+            return Err(GitError::invalid(
+                "the destination already exists and is not a folder",
+            ));
+        }
+        let mut entries = std::fs::read_dir(dest).map_err(|error| {
+            GitError::invalid(format!("could not read the destination folder: {error}"))
+        })?;
+        if entries.next().is_some() {
+            return Err(GitError::invalid("the destination folder is not empty"));
+        }
+    }
+    let parent = dest
+        .parent()
+        .filter(|parent| !parent.as_os_str().is_empty())
+        .ok_or_else(|| GitError::invalid("the destination needs a parent folder"))?;
+    if !parent.is_dir() {
+        return Err(GitError::invalid(
+            "the destination's parent folder does not exist",
+        ));
+    }
+    Ok(parent.to_path_buf())
+}
+
 /// Builds the git command for the job (without running it).
 pub fn command_for(runner: &Runner, repo: &Path, kind: &JobKind) -> Result<GitCommand, GitError> {
+    let cwd = match kind {
+        JobKind::Clone { destination, .. } => clone_cwd(destination)?,
+        _ => repo.to_path_buf(),
+    };
     let mut args: Vec<OsString> = Vec::new();
     match kind {
         JobKind::Fetch { prune, remote } => {
@@ -181,9 +229,38 @@ pub fn command_for(runner: &Runner, repo: &Path, kind: &JobKind) -> Result<GitCo
                 args.push(remote.into());
             }
         }
+        JobKind::Clone {
+            url,
+            destination,
+            depth,
+            branch,
+            recurse_submodules,
+        } => {
+            if url.trim().is_empty() {
+                return Err(GitError::invalid("the repository URL is required"));
+            }
+            args.push("clone".into());
+            args.push("--progress".into());
+            if let Some(depth) = depth {
+                args.push("--depth".into());
+                args.push(depth.to_string().into());
+            }
+            if let Some(branch) = branch {
+                if !branch.trim().is_empty() {
+                    args.push("--branch".into());
+                    args.push(branch.into());
+                }
+            }
+            if *recurse_submodules {
+                args.push("--recurse-submodules".into());
+            }
+            args.push("--".into());
+            args.push(url.into());
+            args.push(destination.into());
+        }
     }
     Ok(GitCommand::new(args)
-        .cwd(repo)
+        .cwd(cwd)
         .write()
         .timeout(JOB_TIMEOUT)
         .env("GIT_PROGRESS_DELAY", "0"))
@@ -298,5 +375,73 @@ mod tests {
             pull_args(&pull(true, true, true, true)),
             vec!["pull", "--progress", "--rebase", "origin", "main"]
         );
+    }
+
+    fn clone_kind(url: &str, destination: &str) -> JobKind {
+        JobKind::Clone {
+            url: url.into(),
+            destination: destination.into(),
+            depth: Some(1),
+            branch: Some("main".into()),
+            recurse_submodules: true,
+        }
+    }
+
+    #[test]
+    fn clone_mapea_url_destino_y_opciones() {
+        let destination =
+            std::env::temp_dir().join(format!("opengit-clone-args-{}", std::process::id()));
+        let destination = destination.to_string_lossy().into_owned();
+        let args = command_for(
+            &Runner::locate(),
+            Path::new("."),
+            &clone_kind("https://example.com/repo.git", &destination),
+        )
+        .expect("comando de clone")
+        .args();
+        assert_eq!(
+            args,
+            vec![
+                "clone",
+                "--progress",
+                "--depth",
+                "1",
+                "--branch",
+                "main",
+                "--recurse-submodules",
+                "--",
+                "https://example.com/repo.git",
+                destination.as_str(),
+            ]
+        );
+    }
+
+    #[test]
+    fn clone_rechaza_url_vacia() {
+        let destination =
+            std::env::temp_dir().join(format!("opengit-clone-empty-url-{}", std::process::id()));
+        let error = command_for(
+            &Runner::locate(),
+            Path::new("."),
+            &clone_kind("  ", &destination.to_string_lossy()),
+        )
+        .expect_err("una URL vacía debe fallar");
+        assert!(error.to_string().contains("URL"));
+    }
+
+    #[test]
+    fn clone_rechaza_destino_no_vacio() {
+        let dir =
+            std::env::temp_dir().join(format!("opengit-clone-nonempty-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).expect("crear destino");
+        std::fs::write(dir.join("file.txt"), b"x").expect("escribir fichero");
+        let error = command_for(
+            &Runner::locate(),
+            Path::new("."),
+            &clone_kind("https://example.com/repo.git", &dir.to_string_lossy()),
+        )
+        .expect_err("un destino no vacío debe fallar");
+        let _ = std::fs::remove_dir_all(&dir);
+        assert!(error.to_string().contains("not empty"));
     }
 }

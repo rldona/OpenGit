@@ -941,6 +941,14 @@ describe("App", () => {
     expect(screen.getByRole("dialog", { name: "Merge" })).toBeInTheDocument();
   });
 
+  it("opens the Clone dialog from the native menu", () => {
+    render(<App />);
+
+    act(() => menuMock.handler?.("clone-repo"));
+
+    expect(screen.getByRole("dialog", { name: "Clone Repository" })).toBeInTheDocument();
+  });
+
   it("shows the file history band and returns to the full log", async () => {
     const user = userEvent.setup();
     render(<App />);

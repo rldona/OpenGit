@@ -214,7 +214,7 @@ there is no session to restore. ✅
 Bring repositories into the app: clone a remote and create a new one, instead
 of only opening folders that already exist.
 
-- [ ] Clone a repository from the app, with progress, cancel and options
+- [x] Clone a repository from the app, with progress, cancel and options
   (OG-085).
 - [ ] Create (init) a repository, with an initial branch and optional first
   commit and `.gitignore` (OG-086).
