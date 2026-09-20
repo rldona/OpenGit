@@ -244,7 +244,7 @@ history with more detail.
 
 - [x] Search the working tree (`git grep`) with results that open the file's
   diff (OG-093).
-- [ ] Create and apply patches (`format-patch`, `am`/`apply`) (OG-094).
+- [x] Create and apply patches (`format-patch`, `am`/`apply`) (OG-094).
 - [ ] Word-level diff and ignore-whitespace options (OG-095).
 - [ ] Cherry-pick several commits or a range (OG-096).
 

@@ -459,6 +459,14 @@ export function HistoryView() {
                           onSelect: () => void commitActions.rebase(commit),
                         },
                         { label: "Copy hash", onSelect: () => void copyText(commit.hash) },
+                        {
+                          label: "Create Patch…",
+                          onSelect: () => void commitActions.createPatch(commit),
+                        },
+                        {
+                          label: "Create Patches to HEAD…",
+                          onSelect: () => void commitActions.createPatchesToHead(commit),
+                        },
                       ])
                     }
                   >
