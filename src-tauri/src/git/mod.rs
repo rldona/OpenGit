@@ -310,12 +310,36 @@ pub struct CommitResult {
     pub subject: String,
 }
 
-/// Operación de git a medias en el repo (merge, rebase, cherry-pick/revert).
+/// Operación de git a medias en el repo (merge, rebase, cherry-pick/revert),
+/// con el paso actual cuando es un rebase.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize)]
 pub struct RepoOpState {
     pub merge: bool,
     pub rebase: bool,
     pub cherry_pick: bool,
+    pub revert: bool,
+    pub rebase_current: Option<u32>,
+    pub rebase_total: Option<u32>,
+}
+
+impl RepoOpState {
+    pub fn operation(&self) -> Option<&'static str> {
+        if self.rebase {
+            Some("rebase")
+        } else if self.merge {
+            Some("merge")
+        } else if self.cherry_pick {
+            Some("cherry-pick")
+        } else if self.revert {
+            Some("revert")
+        } else {
+            None
+        }
+    }
+
+    pub fn is_clean(&self) -> bool {
+        self.operation().is_none()
+    }
 }
 
 /// Mensaje del último commit, para precargar el amend.
@@ -366,7 +390,13 @@ pub fn commit(
     Ok(CommitResult { hash, subject })
 }
 
-/// Detecta merge, rebase o cherry-pick/revert en curso.
+fn read_number(path: std::path::PathBuf) -> Option<u32> {
+    std::fs::read_to_string(path)
+        .ok()
+        .and_then(|text| text.trim().parse().ok())
+}
+
+/// Detecta merge, rebase o cherry-pick/revert en curso, con el paso del rebase.
 pub fn repo_op_state(runner: &Runner, repo: &Path) -> Result<RepoOpState, GitError> {
     let git_dir = runner
         .run_checked(&GitCommand::new(["rev-parse", "--git-dir"]).cwd(repo))?
@@ -378,12 +408,60 @@ pub fn repo_op_state(runner: &Runner, repo: &Path) -> Result<RepoOpState, GitErr
     } else {
         repo.join(git_dir)
     };
+
+    let rebase_merge = git_dir.join("rebase-merge");
+    let rebase_apply = git_dir.join("rebase-apply");
+    let rebase_dir = if rebase_merge.is_dir() {
+        Some(rebase_merge)
+    } else if rebase_apply.is_dir() {
+        Some(rebase_apply)
+    } else {
+        None
+    };
+    let rebase_active = rebase_dir.is_some();
+    let (rebase_current, rebase_total) = match rebase_dir {
+        Some(dir) => (
+            read_number(dir.join("msgnum")).or_else(|| read_number(dir.join("next"))),
+            read_number(dir.join("end")).or_else(|| read_number(dir.join("last"))),
+        ),
+        None => (None, None),
+    };
+
     Ok(RepoOpState {
         merge: git_dir.join("MERGE_HEAD").exists(),
-        rebase: git_dir.join("rebase-merge").exists() || git_dir.join("rebase-apply").exists(),
-        cherry_pick: git_dir.join("CHERRY_PICK_HEAD").exists()
-            || git_dir.join("REVERT_HEAD").exists(),
+        rebase: rebase_active,
+        cherry_pick: git_dir.join("CHERRY_PICK_HEAD").exists(),
+        revert: git_dir.join("REVERT_HEAD").exists(),
+        rebase_current,
+        rebase_total,
     })
+}
+
+/// Cancela la operación en curso (merge, rebase, cherry-pick o revert).
+pub fn repo_op_abort(runner: &Runner, repo: &Path) -> Result<(), GitError> {
+    let state = repo_op_state(runner, repo)?;
+    let operation = state
+        .operation()
+        .ok_or_else(|| GitError::invalid("no operation in progress"))?;
+    runner
+        .run_checked(&GitCommand::new([operation, "--abort"]).cwd(repo).write())
+        .map(|_| ())
+}
+
+/// Continúa la operación en curso aceptando el mensaje por defecto.
+pub fn repo_op_continue(runner: &Runner, repo: &Path) -> Result<(), GitError> {
+    let state = repo_op_state(runner, repo)?;
+    let operation = state
+        .operation()
+        .ok_or_else(|| GitError::invalid("no operation in progress"))?;
+    runner
+        .run_checked(
+            &GitCommand::new([operation, "--continue"])
+                .cwd(repo)
+                .write()
+                .env("GIT_EDITOR", "true"),
+        )
+        .map(|_| ())
 }
 
 /// Filtros de búsqueda del historial (literal, sin regex).

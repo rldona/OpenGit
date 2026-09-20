@@ -51,3 +51,4 @@ Un fichero por ticket, nombrado `OG-NNN-slug.md`. Todo cambio del repositorio na
 | [OG-016](OG-016-stash.md) | Stash | M3 | done |
 | [OG-017](OG-017-cherry-pick-revert-reset.md) | Cherry-pick, revert y reset suave | M3 | done |
 | [OG-018](OG-018-busqueda-commits.md) | Búsqueda de commits | M3 | done |
+| [OG-019](OG-019-estado-operaciones.md) | Estado de operaciones y Abort/Continue | M4 | done |

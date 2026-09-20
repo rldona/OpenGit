@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { DiffView } from "./components/DiffView";
 import { HistoryView } from "./components/HistoryView";
+import { OpBanner } from "./components/OpBanner";
 import { RefsSidebar } from "./components/RefsSidebar";
 import { StashSidebar } from "./components/StashSidebar";
 import { StatusView } from "./components/StatusView";
@@ -124,6 +125,8 @@ function App() {
           </button>
         </div>
       </header>
+
+      {repo && <OpBanner />}
 
       <div className="panes">
         <aside className="sidebar" aria-label="Repository">

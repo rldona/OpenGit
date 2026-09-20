@@ -50,6 +50,8 @@ pub fn run() {
             commands::create_branch,
             commands::rename_branch,
             commands::delete_branch,
+            commands::repo_op_abort,
+            commands::repo_op_continue,
             commands::cherry_pick,
             commands::revert_commit,
             commands::reset_mixed,
