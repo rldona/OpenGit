@@ -116,7 +116,7 @@ const REFS: RefEntry[] = [
 describe("MergeWindow", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    useRepoStore.setState({ repo: REPO, recents: [], loading: false, error: null });
+    useRepoStore.setState({ repo: REPO, recents: [], openTabs: [], loading: false, error: null });
     useRefsStore.getState().reset();
     useRefsStore.setState({ root: REPO.root, current: "main", refs: REFS });
     useDiffStore.getState().reset();

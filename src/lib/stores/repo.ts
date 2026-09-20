@@ -11,12 +11,14 @@ import { useUiStore } from "./ui";
 type RepoState = {
   repo: RepoInfo | null;
   recents: RecentRepo[];
+  openTabs: RecentRepo[];
   loading: boolean;
   error: string | null;
   loadRecents: () => Promise<void>;
   open: (path: string) => Promise<void>;
   pickAndOpen: () => Promise<void>;
   removeRecent: (path: string) => Promise<void>;
+  closeTab: (path: string) => Promise<void>;
   close: () => Promise<void>;
 };
 
@@ -35,6 +37,7 @@ let opening = false;
 export const useRepoStore = create<RepoState>((set, get) => ({
   repo: null,
   recents: [],
+  openTabs: [],
   loading: false,
   error: null,
 
@@ -60,7 +63,13 @@ export const useRepoStore = create<RepoState>((set, get) => ({
       // Drop the previous repository's diff: without this, its files and patch
       // were briefly rendered under the new repo while the new one loaded.
       useDiffStore.getState().reset();
-      set({ repo: info, loading: false });
+      // Session tabs keep a fixed order: append on first open, never reorder
+      // on switch. The persisted recents file stays as history only.
+      const tabs = get().openTabs;
+      const nextTabs = tabs.some((tab) => tab.path === info.root)
+        ? tabs
+        : [...tabs, { path: info.root, name: info.name, opened_at: Date.now() }];
+      set({ repo: info, openTabs: nextTabs, loading: false });
       output(`Repository opened: ${info.name} (${info.branch ?? "detached HEAD"})`);
       await get().loadRecents();
     } catch (error) {
@@ -95,15 +104,53 @@ export const useRepoStore = create<RepoState>((set, get) => ({
   },
 
   removeRecent: async (path) => {
+    await get().closeTab(path);
+  },
+
+  closeTab: async (path) => {
+    const wasActive = get().repo?.root === path;
+    const tabs = get().openTabs;
+    const index = tabs.findIndex((tab) => tab.path === path);
+    const remaining = tabs.filter((tab) => tab.path !== path);
     try {
       await removeRecentRepo(path);
       await get().loadRecents();
     } catch (error) {
       output(`Could not remove from recents: ${formatGitError(error)}`);
     }
+    if (!wasActive) {
+      set({ openTabs: remaining });
+      return;
+    }
+    if (remaining.length === 0) {
+      try {
+        await closeRepo();
+      } catch {
+        // Even if it fails in Rust, the UI closes anyway.
+      }
+      useLogStore.getState().reset();
+      useStatusStore.getState().reset();
+      set({ repo: null, error: null, openTabs: [] });
+      output("Repository closed");
+      return;
+    }
+    // Show the tab list without the closed repo while its neighbor loads.
+    set({ openTabs: remaining });
+    const neighbor = index > 0 ? tabs[index - 1].path : remaining[0].path;
+    await get().open(neighbor);
   },
 
   close: async () => {
+    const activeRoot = get().repo?.root;
+    const tabs = get().openTabs;
+    const remaining = activeRoot == null ? tabs : tabs.filter((tab) => tab.path !== activeRoot);
+    if (remaining.length > 0 && activeRoot != null) {
+      const index = tabs.findIndex((tab) => tab.path === activeRoot);
+      const neighbor = index > 0 ? tabs[index - 1].path : remaining[0].path;
+      set({ openTabs: remaining });
+      await get().open(neighbor);
+      return;
+    }
     try {
       await closeRepo();
     } catch {
@@ -111,7 +158,7 @@ export const useRepoStore = create<RepoState>((set, get) => ({
     }
     useLogStore.getState().reset();
     useStatusStore.getState().reset();
-    set({ repo: null, error: null });
+    set({ repo: null, error: null, openTabs: remaining });
     output("Repository closed");
   },
 }));

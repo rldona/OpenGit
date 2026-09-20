@@ -91,7 +91,7 @@ describe("SettingsWindow", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
-    useRepoStore.setState({ repo: REPO, recents: [], loading: false, error: null });
+    useRepoStore.setState({ repo: REPO, recents: [], openTabs: [], loading: false, error: null });
     useExtrasStore.setState({ remotes: REMOTES });
     vi.mocked(remoteUrls).mockResolvedValue(REMOTES);
     vi.mocked(confirmDestructive).mockResolvedValue(true);

@@ -11,6 +11,7 @@ import { OpBanner } from "./components/OpBanner";
 import { PullDialog } from "./components/PullDialog";
 import { RebaseView } from "./components/RebaseView";
 import { RemoteJobModal } from "./components/RemoteJobModal";
+import { RepoTabs } from "./components/RepoTabs";
 import { SettingsWindow } from "./components/SettingsWindow";
 import { RefsSidebar } from "./components/RefsSidebar";
 import { ShortcutsHelp } from "./components/ShortcutsHelp";
@@ -52,13 +53,10 @@ function App() {
   const setSystemDark = useThemeStore((state) => state.setSystemDark);
 
   const repo = useRepoStore((state) => state.repo);
-  const recents = useRepoStore((state) => state.recents);
   const loading = useRepoStore((state) => state.loading);
   const error = useRepoStore((state) => state.error);
   const loadRecents = useRepoStore((state) => state.loadRecents);
   const pickAndOpen = useRepoStore((state) => state.pickAndOpen);
-  const open = useRepoStore((state) => state.open);
-  const removeRecent = useRepoStore((state) => state.removeRecent);
 
   const startRemote = useRemoteStore((state) => state.start);
   const currentBranch = useRefsStore((state) => state.current);
@@ -299,6 +297,8 @@ function App() {
 
       {repo && <OpBanner />}
 
+      <RepoTabs />
+
       <SplitPane
         className="workspace"
         direction="vertical"
@@ -321,35 +321,6 @@ function App() {
           label="Resize sidebar"
         >
           <aside className="sidebar" aria-label="Repository">
-            <CollapsibleSection id="recents" title="Recents" icon="folder" defaultCollapsed>
-              {recents.length === 0 ? (
-                <p className="muted">No repositories yet</p>
-              ) : (
-                <ul className="recent-list">
-                  {recents.map((recent) => (
-                    <li key={recent.path} className="recent-item">
-                      <button
-                        type="button"
-                        className="recent-open"
-                        title={recent.path}
-                        onClick={() => void open(recent.path)}
-                      >
-                        {recent.name}
-                      </button>
-                      <button
-                        type="button"
-                        className="recent-remove"
-                        aria-label={`Remove ${recent.name} from recents`}
-                        onClick={() => void removeRecent(recent.path)}
-                      >
-                        ×
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </CollapsibleSection>
-
             <CollapsibleSection id="workspace" title="Workspace" icon="workspace">
               {repo ? (
                 <ul>

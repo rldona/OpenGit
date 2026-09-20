@@ -86,7 +86,7 @@ describe("StatusView", () => {
     vi.clearAllMocks();
     vi.mocked(statusRepo).mockResolvedValue(REPORT);
     vi.mocked(confirmDestructive).mockResolvedValue(true);
-    useRepoStore.setState({ repo: REPO, recents: [], loading: false, error: null });
+    useRepoStore.setState({ repo: REPO, recents: [], openTabs: [], loading: false, error: null });
     useStatusStore.getState().reset();
     useLogStore.getState().reset();
     useExtrasStore.setState({ lfs: null });

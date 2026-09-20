@@ -87,7 +87,7 @@ describe("RebaseView", () => {
       rebase_current: null,
       rebase_total: null,
     });
-    useRepoStore.setState({ repo: REPO, recents: [], loading: false, error: null });
+    useRepoStore.setState({ repo: REPO, recents: [], openTabs: [], loading: false, error: null });
     useRebaseStore.getState().reset();
     useRebaseStore.setState({ root: REPO.root, base: "base1234567", rows: ROWS });
   });

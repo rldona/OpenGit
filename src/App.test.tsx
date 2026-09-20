@@ -213,7 +213,7 @@ describe("App", () => {
       rebase_current: null,
       rebase_total: null,
     });
-    useRepoStore.setState({ repo: null, recents: [], loading: false, error: null });
+    useRepoStore.setState({ repo: null, recents: [], openTabs: [], loading: false, error: null });
     useCommitStore.getState().reset();
     useExtrasStore.getState().reset();
     useLogStore.getState().reset();
@@ -264,6 +264,38 @@ describe("App", () => {
     expect(within(header).getByText("Commit")).toBeInTheDocument();
     expect(within(header).getByText("Author")).toBeInTheDocument();
     expect(within(header).getByText("Date")).toBeInTheDocument();
+  });
+
+  it("shows repo tabs only when two or more repos are open", async () => {
+    const other: RepoInfo = { ...REPO, root: "/tmp/other", name: "other" };
+    useRepoStore.setState({ repo: REPO, openTabs: [], loading: false, error: null });
+    render(<App />);
+
+    // A single open repo renders no tab strip and no Recents section.
+    expect(screen.queryByRole("tablist", { name: "Open repositories" })).not.toBeInTheDocument();
+    expect(screen.queryByText("Recents")).not.toBeInTheDocument();
+
+    act(() => {
+      useRepoStore.setState({
+        openTabs: [
+          { path: REPO.root, name: REPO.name, opened_at: 1 },
+          { path: other.root, name: other.name, opened_at: 2 },
+        ],
+      });
+    });
+
+    const tablist = await screen.findByRole("tablist", { name: "Open repositories" });
+    expect(within(tablist).getByRole("tab", { name: "mi-repo" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(within(tablist).getByRole("tab", { name: "other" })).toHaveAttribute(
+      "aria-selected",
+      "false",
+    );
+    // The strip sits between the toolbar and the workspace content.
+    expect(tablist.previousElementSibling?.classList.contains("toolbar")).toBe(true);
+    expect(tablist.nextElementSibling?.classList.contains("workspace")).toBe(true);
   });
 
   it("searches the history by message and clears back to the full log", async () => {
@@ -358,7 +390,7 @@ describe("App", () => {
       rebase_current: null,
       rebase_total: null,
     });
-    useRepoStore.setState({ repo: REPO, recents: [], loading: false, error: null });
+    useRepoStore.setState({ repo: REPO, recents: [], openTabs: [], loading: false, error: null });
     render(<App />);
 
     expect(await screen.findByRole("status")).toHaveTextContent("merge in progress");

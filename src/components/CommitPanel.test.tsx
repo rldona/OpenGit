@@ -69,7 +69,7 @@ describe("CommitPanel", () => {
       rebase_total: null,
     });
     vi.mocked(commitRepo).mockResolvedValue({ hash: "abc1234", subject: "feat: algo" });
-    useRepoStore.setState({ repo: REPO, recents: [], loading: false, error: null });
+    useRepoStore.setState({ repo: REPO, recents: [], openTabs: [], loading: false, error: null });
     useStatusStore.getState().reset();
     useStatusStore.setState({ report: REPORT, root: REPO.root });
     useCommitStore.getState().reset();

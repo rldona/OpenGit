@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { pickDirectory } from "../bridge/dialog";
-import { openRepo, recentRepos } from "../bridge/repo";
+import { closeRepo, openRepo, recentRepos, removeRecentRepo } from "../bridge/repo";
 import { statusRepo } from "../bridge/status";
 import type { RepoInfo } from "../bridge/types";
 import { useRepoStore } from "./repo";
@@ -11,6 +11,7 @@ vi.mock("../bridge/repo", () => ({
   openRepo: vi.fn(),
   recentRepos: vi.fn(),
   removeRecentRepo: vi.fn(),
+  closeRepo: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("../bridge/status", () => ({
@@ -45,9 +46,11 @@ const REPO: RepoInfo = {
 
 describe("useRepoStore", () => {
   beforeEach(() => {
-    useRepoStore.setState({ repo: null, recents: [], loading: false, error: null });
+    useRepoStore.setState({ repo: null, recents: [], openTabs: [], loading: false, error: null });
     useUiStore.setState({ outputLines: [] });
     vi.mocked(recentRepos).mockResolvedValue([]);
+    vi.mocked(removeRecentRepo).mockResolvedValue(undefined);
+    vi.mocked(closeRepo).mockResolvedValue(undefined);
   });
 
   it("opens a repository, stores it and reloads recents", async () => {
@@ -58,10 +61,64 @@ describe("useRepoStore", () => {
 
     expect(useRepoStore.getState().repo).toEqual(REPO);
     expect(useRepoStore.getState().recents).toHaveLength(1);
+    expect(useRepoStore.getState().openTabs).toEqual([
+      { path: REPO.root, name: REPO.name, opened_at: expect.any(Number) },
+    ]);
     expect(useRepoStore.getState().error).toBeNull();
     expect(useUiStore.getState().outputLines.join("\n")).toContain("Repository opened: mi-repo");
     // Pending changes must be there without pressing Refresh, even in History.
     expect(statusRepo).toHaveBeenCalledWith(REPO.root);
+  });
+
+  it("appends a second repo to the tabs without reordering on switch", async () => {
+    const other: RepoInfo = { ...REPO, root: "/tmp/other", name: "other" };
+    vi.mocked(openRepo).mockImplementation(async (path: string) =>
+      path === other.root ? other : REPO,
+    );
+
+    await useRepoStore.getState().open(REPO.root);
+    await useRepoStore.getState().open(other.root);
+    expect(useRepoStore.getState().openTabs.map((tab) => tab.path)).toEqual([
+      REPO.root,
+      other.root,
+    ]);
+
+    // Switching back focuses the tab but keeps the fixed order.
+    await useRepoStore.getState().open(REPO.root);
+    expect(useRepoStore.getState().repo?.root).toBe(REPO.root);
+    expect(useRepoStore.getState().openTabs.map((tab) => tab.path)).toEqual([
+      REPO.root,
+      other.root,
+    ]);
+    expect(useRepoStore.getState().openTabs).toHaveLength(2);
+  });
+
+  it("closing the active tab opens the left neighbor", async () => {
+    const other: RepoInfo = { ...REPO, root: "/tmp/other", name: "other" };
+    vi.mocked(openRepo).mockImplementation(async (path: string) =>
+      path === other.root ? other : REPO,
+    );
+
+    await useRepoStore.getState().open(REPO.root);
+    await useRepoStore.getState().open(other.root);
+    await useRepoStore.getState().open(REPO.root);
+
+    await useRepoStore.getState().closeTab(REPO.root);
+
+    expect(removeRecentRepo).toHaveBeenCalledWith(REPO.root);
+    expect(useRepoStore.getState().openTabs.map((tab) => tab.path)).toEqual([other.root]);
+    expect(useRepoStore.getState().repo?.root).toBe(other.root);
+  });
+
+  it("closing the last tab returns to the empty state", async () => {
+    vi.mocked(openRepo).mockResolvedValue(REPO);
+
+    await useRepoStore.getState().open(REPO.root);
+    await useRepoStore.getState().closeTab(REPO.root);
+
+    expect(useRepoStore.getState().repo).toBeNull();
+    expect(useRepoStore.getState().openTabs).toEqual([]);
+    expect(closeRepo).toHaveBeenCalled();
   });
 
   it("translates the validation error into a readable message", async () => {

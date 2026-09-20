@@ -711,38 +711,53 @@ body {
   font-size: 12px;
 }
 
-.recent-list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.recent-item {
+.repo-tabs {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   gap: 4px;
+  overflow-x: auto;
+  padding: 4px 10px;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
 }
 
-.recent-open {
-  flex: 1;
+.repo-tab {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 2px;
+  max-width: 220px;
+  border: 1px solid transparent;
+  border-radius: 6px 6px 0 0;
+}
+
+.repo-tab-open {
   overflow: hidden;
-  padding: 3px 6px;
+  padding: 4px 8px;
   border: none;
-  border-radius: 4px;
   background: transparent;
-  color: var(--text);
+  color: var(--text-muted);
   font: inherit;
-  text-align: left;
   text-overflow: ellipsis;
   white-space: nowrap;
   cursor: pointer;
 }
 
-.recent-open:hover {
-  background: var(--hover);
+.repo-tab-open:hover {
+  color: var(--text);
 }
 
-.recent-remove {
+.repo-tab.active {
+  border-color: var(--border);
+  border-bottom-color: transparent;
+  background: var(--bg);
+}
+
+.repo-tab.active .repo-tab-open {
+  color: var(--text);
+}
+
+.repo-tab-close {
   padding: 2px 6px;
   border: none;
   border-radius: 4px;
@@ -752,7 +767,7 @@ body {
   cursor: pointer;
 }
 
-.recent-remove:hover {
+.repo-tab-close:hover {
   background: var(--hover);
   color: var(--text);
 }
