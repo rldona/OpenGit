@@ -1,7 +1,7 @@
 use opengit_lib::git::{
     parse_gitattributes_paths, parse_gitattributes_uses_lfs, parse_log, parse_numstat, parse_refs,
-    parse_status, parse_submodule_status, parse_worktree_list, GitError, StatusKind,
-    SubmoduleState,
+    parse_status, parse_submodule_status, parse_worktree_list, remote_web_url, GitError,
+    StatusKind, SubmoduleState,
 };
 
 const LOG_TOPO: &[u8] = include_bytes!("fixtures/log_topo.bin");
@@ -283,4 +283,42 @@ fn gitattributes_uses_lfs_detecta_lineas_activas() {
     assert!(!parse_gitattributes_uses_lfs(b"# *.bin filter=lfs\n"));
     assert!(!parse_gitattributes_uses_lfs(b"*.txt text\n"));
     assert!(!parse_gitattributes_uses_lfs(b""));
+}
+
+#[test]
+fn remote_web_url_convierte_los_formatos_habituales() {
+    assert_eq!(
+        remote_web_url("https://github.com/rldona/opengit.git").as_deref(),
+        Some("https://github.com/rldona/opengit")
+    );
+    assert_eq!(
+        remote_web_url("https://gitlab.com/grupo/sub/repo/").as_deref(),
+        Some("https://gitlab.com/grupo/sub/repo")
+    );
+    assert_eq!(
+        remote_web_url("git@github.com:rldona/opengit.git").as_deref(),
+        Some("https://github.com/rldona/opengit")
+    );
+    assert_eq!(
+        remote_web_url("ssh://git@gitlab.com/grupo/repo.git").as_deref(),
+        Some("https://gitlab.com/grupo/repo")
+    );
+    assert_eq!(
+        remote_web_url("ssh://git@host:2222/grupo/repo.git").as_deref(),
+        Some("https://host/grupo/repo")
+    );
+    assert_eq!(
+        remote_web_url("git://host/grupo/repo.git").as_deref(),
+        Some("https://host/grupo/repo")
+    );
+}
+
+#[test]
+fn remote_web_url_rechaza_rutas_locales() {
+    assert_eq!(remote_web_url("/tmp/repo"), None);
+    assert_eq!(remote_web_url("../otro/repo"), None);
+    assert_eq!(remote_web_url("file:///tmp/repo"), None);
+    assert_eq!(remote_web_url("C:\\repos\\opengit"), None);
+    assert_eq!(remote_web_url(""), None);
+    assert_eq!(remote_web_url("git@github.com:"), None);
 }

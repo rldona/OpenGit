@@ -1,5 +1,13 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { GitVersion, LfsStatus, RecentRepo, RepoInfo, Submodule, Worktree } from "./types";
+import type {
+  GitVersion,
+  LfsStatus,
+  RecentRepo,
+  Remote,
+  RepoInfo,
+  Submodule,
+  Worktree,
+} from "./types";
 
 export function gitVersion(): Promise<GitVersion> {
   return invoke<GitVersion>("git_version");
@@ -32,4 +40,8 @@ export function worktreeList(path: string): Promise<Worktree[]> {
 
 export function lfsStatus(path: string): Promise<LfsStatus> {
   return invoke<LfsStatus>("lfs_status", { path });
+}
+
+export function remoteUrls(path: string): Promise<Remote[]> {
+  return invoke<Remote[]>("remote_urls", { path });
 }

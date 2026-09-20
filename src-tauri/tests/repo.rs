@@ -180,3 +180,37 @@ fn recientes_sin_duplicados_y_persistidos() {
     assert_eq!(list.len(), 1);
     assert_eq!(list[0].path, "/repos/b");
 }
+
+#[test]
+fn remote_urls_lista_nombre_url_y_web() {
+    let repo = TestRepo::init();
+    repo.write("a.txt", b"a\n");
+    repo.git_ok(&["add", "."]);
+    repo.git_ok(&["commit", "-q", "-m", "base"]);
+    repo.git_ok(&[
+        "remote",
+        "add",
+        "origin",
+        "git@github.com:rldona/opengit.git",
+    ]);
+    repo.git_ok(&["remote", "add", "local", "/tmp/otro-repo"]);
+
+    let remotes = git::remote_urls(&runner(), repo.path()).expect("remotos");
+
+    assert_eq!(remotes.len(), 2, "{remotes:?}");
+    let origin = remotes
+        .iter()
+        .find(|remote| remote.name == "origin")
+        .expect("origin");
+    assert_eq!(origin.url, "git@github.com:rldona/opengit.git");
+    assert_eq!(
+        origin.web_url.as_deref(),
+        Some("https://github.com/rldona/opengit")
+    );
+
+    let local = remotes
+        .iter()
+        .find(|remote| remote.name == "local")
+        .expect("local");
+    assert_eq!(local.web_url, None);
+}

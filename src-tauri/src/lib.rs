@@ -17,6 +17,7 @@ use crate::repo::recents::Recents;
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             let data_dir = app.path().app_data_dir()?;
             std::fs::create_dir_all(&data_dir)?;
@@ -77,7 +78,8 @@ pub fn run() {
             commands::remove_recent_repo,
             commands::submodule_status,
             commands::worktree_list,
-            commands::lfs_status
+            commands::lfs_status,
+            commands::remote_urls
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
