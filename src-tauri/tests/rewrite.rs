@@ -1,8 +1,8 @@
 mod support;
 
 use opengit_lib::git::{
-    cherry_pick, cherry_pick_range, reflog, repo_op_state, reset, reset_mixed, revert_commit,
-    status, ResetMode, Runner,
+    bisect_mark, bisect_reset, bisect_start, bisect_state, cherry_pick, cherry_pick_range, reflog,
+    repo_op_state, reset, reset_mixed, revert_commit, status, BisectMark, ResetMode, Runner,
 };
 use support::TestRepo;
 
@@ -242,4 +242,28 @@ fn reflog_lists_entries_newest_first() {
         entries[0].selector
     );
     assert_eq!(entries[0].hash, head(&repo));
+}
+
+#[test]
+fn bisect_start_mark_and_reset() {
+    let repo = TestRepo::init();
+    let mut hashes = Vec::new();
+    for index in 0..8 {
+        commit_file(&repo, "a.txt", &format!("{index}\n"), &format!("c{index}"));
+        hashes.push(head(&repo));
+    }
+    let bad = hashes[7].clone();
+    let good = hashes[0].clone();
+
+    bisect_start(&runner(), repo.path(), Some(&bad), &[good]).expect("bisect start");
+    let state = bisect_state(&runner(), repo.path()).expect("state");
+    assert!(state.active);
+    assert!(state.current.is_some());
+    assert!(state.remaining.unwrap_or(0) > 0, "{state:?}");
+
+    bisect_mark(&runner(), repo.path(), BisectMark::Good).expect("mark good");
+    assert!(bisect_state(&runner(), repo.path()).unwrap().active);
+
+    bisect_reset(&runner(), repo.path()).expect("bisect reset");
+    assert!(!bisect_state(&runner(), repo.path()).unwrap().active);
 }

@@ -60,6 +60,7 @@ fn build_menu(app: &tauri::App) -> tauri::Result<()> {
         .item(&MenuItemBuilder::with_id("push", "Push").build(app)?)
         .separator()
         .item(&MenuItemBuilder::with_id("merge", "Merge…").build(app)?)
+        .item(&MenuItemBuilder::with_id("bisect", "Bisect…").build(app)?)
         .separator()
         .item(&MenuItemBuilder::with_id("refresh", "Refresh").build(app)?)
         .build()?;
@@ -150,6 +151,10 @@ pub fn run() {
             commands::commit_message,
             commands::commit_repo,
             commands::repo_op_state,
+            commands::bisect_start,
+            commands::bisect_mark,
+            commands::bisect_reset,
+            commands::bisect_state,
             commands::branch_tracking,
             commands::checkout_ref,
             commands::create_branch,

@@ -596,6 +596,48 @@ pub fn repo_op_state(
     crate::git::repo_op_state(&state.runner, Path::new(&path))
 }
 
+/// Starts a bisect (OG-090).
+#[tauri::command]
+pub fn bisect_start(
+    path: String,
+    bad: Option<String>,
+    good: Vec<String>,
+    state: State<'_, AppState>,
+) -> Result<(), GitError> {
+    pause_while(&state, || {
+        crate::git::bisect_start(&state.runner, Path::new(&path), bad.as_deref(), &good)
+    })
+}
+
+/// Marks the current bisect candidate (OG-090).
+#[tauri::command]
+pub fn bisect_mark(
+    path: String,
+    kind: crate::git::BisectMark,
+    state: State<'_, AppState>,
+) -> Result<(), GitError> {
+    pause_while(&state, || {
+        crate::git::bisect_mark(&state.runner, Path::new(&path), kind)
+    })
+}
+
+/// Ends the bisect (OG-090).
+#[tauri::command]
+pub fn bisect_reset(path: String, state: State<'_, AppState>) -> Result<(), GitError> {
+    pause_while(&state, || {
+        crate::git::bisect_reset(&state.runner, Path::new(&path))
+    })
+}
+
+/// Reads the bisect state (OG-090).
+#[tauri::command]
+pub fn bisect_state(
+    path: String,
+    state: State<'_, AppState>,
+) -> Result<crate::git::BisectState, GitError> {
+    crate::git::bisect_state(&state.runner, Path::new(&path))
+}
+
 #[tauri::command]
 pub fn branch_tracking(
     path: String,
