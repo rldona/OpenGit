@@ -121,3 +121,11 @@ One file per ticket, named `OG-NNN-slug.md`. Every change in the repository star
 | [OG-086](OG-086-init-repository.md) | Create (init) a repository | M16 | done |
 | [OG-087](OG-087-home-clone-create.md) | Clone and Create entry points on the home screen | M16 | done |
 | [OG-088](OG-088-open-in-new-window.md) | Open a repository in a new window | M16 | backlog |
+| [OG-089](OG-089-reflog-undo.md) | Reflog view with restore/reset (undo) | M17 | backlog |
+| [OG-090](OG-090-bisect.md) | Bisect | M17 | backlog |
+| [OG-091](OG-091-reset-modes.md) | Reset modes (soft, mixed, hard) | M17 | backlog |
+| [OG-092](OG-092-revert-merge-mainline.md) | Revert a merge commit with a mainline | M17 | backlog |
+| [OG-093](OG-093-search-working-tree.md) | Search the working tree (git grep) | M18 | ready |
+| [OG-094](OG-094-patches.md) | Create and apply patches | M18 | ready |
+| [OG-095](OG-095-word-diff-whitespace.md) | Word-level diff and ignore-whitespace options | M18 | ready |
+| [OG-096](OG-096-cherry-pick-range.md) | Cherry-pick several commits or a range | M18 | ready |

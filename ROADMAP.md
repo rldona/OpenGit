@@ -2,7 +2,7 @@
 
 A milestone closes when its tickets are `done` and its exit criteria are met. Tickets live in [`docs/tickets/`](docs/tickets/README.md).
 
-**Current state:** latest release **v0.6.2** (2026-09-20), with in-app auto-updates and remembered tabs. M0–M16 are closed; the optional OG-088 (open a repository in a new window) stays in the backlog and there is no active milestone.
+**Current state:** latest release **v0.6.2** (2026-09-20), with in-app auto-updates and remembered tabs. M0–M16 are closed; **M18 (history and content search depth)** is in progress. The optional OG-088 (open a repository in a new window) and M17 (recovery and debugging) stay in the backlog.
 
 ## M0 — Foundation ✅ _(closed 2026-09-18)_
 
@@ -224,6 +224,32 @@ of only opening folders that already exist.
 
 **Exit:** with no repository on disk, clone or create one and start working
 without leaving the app. ✅
+
+## M17 — Recovery and debugging
+
+Make the app safer after mistakes and more capable for investigating history.
+
+- [ ] Reflog view with restore/reset to an entry (undo) (OG-089).
+- [ ] Bisect: start, good/bad and reset, with a status banner (OG-090).
+- [ ] Reset modes: soft, mixed and hard with explicit confirmation (OG-091).
+- [ ] Revert a merge commit with a mainline selection (OG-092).
+
+**Exit:** recover a lost commit, find the commit that introduced a bug and undo
+a merge without the terminal.
+
+## M18 — History and content search depth
+
+Search what is in the working tree, move changes around as patches and compare
+history with more detail.
+
+- [ ] Search the working tree (`git grep`) with results that open the file or
+  the diff (OG-093).
+- [ ] Create and apply patches (`format-patch`, `am`/`apply`) (OG-094).
+- [ ] Word-level diff and ignore-whitespace options (OG-095).
+- [ ] Cherry-pick several commits or a range (OG-096).
+
+**Exit:** find a string across the worktree, export and apply a patch and
+cherry-pick a range, all from the app.
 
 ## Translating documentation and comments to English
 
