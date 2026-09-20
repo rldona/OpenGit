@@ -138,6 +138,17 @@ rough edges reported against daily use after M8.
 **Exit:** open several repositories in tabs and see every edit land in the
 badge and the file list within the watcher latency. ✅
 
+## M10 — v0.3.1 stabilization fixes
+
+Small follow-ups reported against daily use right after v0.3.0.
+
+- [x] Submodule test env race flaking CI (OG-073).
+- [x] README downloads pointing at the previous release (OG-074).
+- [x] Image preview flicker and untracked image preview (OG-075).
+- [x] Image previews overflowing their frame (OG-076).
+
+**Exit:** green CI and previews that fit. ✅
+
 ## Translating documentation and comments to English
 
 Since 2026-09-19 the convention is **English for documentation, code and
