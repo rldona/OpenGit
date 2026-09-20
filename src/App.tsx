@@ -3,6 +3,7 @@ import { CollapsibleSection } from "./components/CollapsibleSection";
 import { BlameView } from "./components/BlameView";
 import { CloneDialog } from "./components/CloneDialog";
 import { ConflictView } from "./components/ConflictView";
+import { CreateDialog } from "./components/CreateDialog";
 import { DiffView } from "./components/DiffView";
 import { ExtrasSidebar } from "./components/ExtrasSidebar";
 import { FetchDialog } from "./components/FetchDialog";
@@ -82,6 +83,7 @@ function App() {
   const [fetchOpen, setFetchOpen] = useState(false);
   const [mergeOpen, setMergeOpen] = useState(false);
   const [cloneOpen, setCloneOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -236,6 +238,9 @@ function App() {
       case "clone-repo":
         setCloneOpen(true);
         break;
+      case "create-repo":
+        setCreateOpen(true);
+        break;
       case "close-repo":
         void useRepoStore.getState().close();
         break;
@@ -335,6 +340,7 @@ function App() {
       {repo && pullOpen && <PullDialog onClose={() => setPullOpen(false)} />}
       {repo && mergeOpen && <MergeWindow onClose={() => setMergeOpen(false)} />}
       {cloneOpen && <CloneDialog onClose={() => setCloneOpen(false)} />}
+      {createOpen && <CreateDialog onClose={() => setCreateOpen(false)} />}
       {settingsOpen && <SettingsWindow onClose={() => setSettingsOpen(false)} />}
       <RemoteJobModal />
 

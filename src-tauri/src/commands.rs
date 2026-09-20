@@ -216,6 +216,30 @@ pub fn open_repo(
     Ok(info)
 }
 
+/// `.gitignore` templates for the "Create repository" dialog (OG-086).
+#[tauri::command]
+pub fn gitignore_templates() -> Vec<repo::GitignoreTemplate> {
+    repo::gitignore_templates()
+}
+
+/// Creates a repository at `path`; the UI opens it afterwards (OG-086).
+#[tauri::command]
+pub fn init_repo(
+    path: String,
+    branch: String,
+    template: Option<String>,
+    initial_commit: bool,
+    state: State<'_, AppState>,
+) -> Result<(), GitError> {
+    repo::init(
+        &state.runner,
+        Path::new(&path),
+        &branch,
+        template.as_deref(),
+        initial_commit,
+    )
+}
+
 #[tauri::command]
 pub fn close_repo(state: State<'_, AppState>) -> Result<(), GitError> {
     if let Some(watcher) = state.watcher.lock().map_err(lock_error)?.take() {

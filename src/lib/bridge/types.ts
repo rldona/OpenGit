@@ -238,6 +238,12 @@ export type GpgKey = {
   expires: number | null;
 };
 
+/** `.gitignore` template for the "Create repository" dialog (OG-086). */
+export type GitignoreTemplate = {
+  id: string;
+  name: string;
+};
+
 /** Error serialized by the Rust core (discriminant `kind` field). */
 export type GitErrorPayload = {
   kind: string;
