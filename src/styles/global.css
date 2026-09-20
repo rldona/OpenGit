@@ -716,7 +716,7 @@ body {
   align-items: stretch;
   gap: 4px;
   overflow-x: auto;
-  padding: 4px 10px;
+  padding: 4px 10px 0;
   background: var(--bg-panel);
   border-bottom: 1px solid var(--border);
 }
@@ -727,6 +727,7 @@ body {
   align-items: center;
   gap: 2px;
   max-width: 220px;
+  margin-bottom: -1px;
   border: 1px solid transparent;
   border-radius: 6px 6px 0 0;
 }
