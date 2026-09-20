@@ -3926,3 +3926,107 @@ body {
   text-overflow: ellipsis;
   white-space: pre;
 }
+
+/* Reflog (OG-089): HEAD positions with per-entry actions. */
+.reflog-view {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  overflow-y: auto;
+}
+
+.reflog-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.reflog-mode {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.reflog-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.reflog-entry {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.reflog-info {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.reflog-selector {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.reflog-hash {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.reflog-subject {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reflog-meta {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.reflog-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.reflog-actions button,
+.reflog-branch button {
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.reflog-actions button:hover,
+.reflog-branch button:hover {
+  background: var(--hover);
+}
+
+.reflog-branch {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.reflog-branch input {
+  flex: 1;
+  padding: 3px 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-elevated);
+  color: var(--text);
+  font: inherit;
+}
