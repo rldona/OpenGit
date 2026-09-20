@@ -27,11 +27,15 @@ type LogState = {
   loading: boolean;
   hasMore: boolean;
   error: string | null;
+  /** Se incrementa al pedir localizar un commit (sidebar): dispara el scroll. */
+  revealRequest: number;
   load: (root: string) => Promise<void>;
   reload: (root: string) => Promise<void>;
   loadMore: () => Promise<void>;
   setFilter: (root: string, rev: string | null) => Promise<void>;
   select: (hash: string | null) => void;
+  /** Carga páginas hasta encontrar el commit, lo selecciona y pide el scroll. */
+  revealCommit: (root: string, hash: string) => Promise<void>;
   cherryPick: (root: string, hash: string) => Promise<void>;
   revert: (root: string, hash: string) => Promise<void>;
   resetTo: (root: string, hash: string) => Promise<void>;
@@ -62,6 +66,7 @@ export const useLogStore = create<LogState>((set, get) => ({
   refs: [],
   filter: null,
   selected: null,
+  revealRequest: 0,
   loading: false,
   hasMore: true,
   error: null,
@@ -145,6 +150,25 @@ export const useLogStore = create<LogState>((set, get) => ({
 
   select: (hash) => set({ selected: hash }),
 
+  revealCommit: async (root, hash) => {
+    const found = () => get().commits.some((commit) => commit.hash === hash);
+    // Con un filtro de rama activo el commit puede no estar en el log.
+    if (get().filter !== null && !found()) {
+      set({ filter: null });
+      await get().load(root);
+    }
+    while (!found() && get().hasMore) {
+      const before = get().commits.length;
+      await get().loadMore();
+      if (get().commits.length === before) {
+        break;
+      }
+    }
+    if (found()) {
+      set((state) => ({ selected: hash, revealRequest: state.revealRequest + 1 }));
+    }
+  },
+
   cherryPick: async (root, hash) => {
     try {
       await cherryPickRequest(root, hash);
@@ -189,6 +213,7 @@ export const useLogStore = create<LogState>((set, get) => ({
       refs: [],
       filter: null,
       selected: null,
+      revealRequest: 0,
       loading: false,
       hasMore: true,
       error: null,

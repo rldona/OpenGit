@@ -30,7 +30,7 @@ use serde::{Deserialize, Serialize};
 pub const LOG_FORMAT: &str = "%H%x1f%P%x1f%an%x1f%ae%x1f%at%x1f%D%x1f%s%x1f%b";
 /// Formato de `for-each-ref`: campos separados por NUL.
 pub const REFS_FORMAT: &str =
-    "%(refname)%00%(objectname)%00%(objecttype)%00%(upstream)%00%(upstream:track)";
+    "%(refname)%00%(objectname)%00%(objecttype)%00%(upstream)%00%(upstream:track)%00%(*objectname)";
 
 /// Commit del plan de rebase interactivo.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]

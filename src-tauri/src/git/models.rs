@@ -60,6 +60,8 @@ pub struct Ref {
     pub object_type: String,
     pub upstream: Option<String>,
     pub track: Option<String>,
+    /// Objeto al que resuelve la ref: para un tag anotado, el commit pelado.
+    pub target: String,
 }
 
 /// Entrada de `git stash list`.
