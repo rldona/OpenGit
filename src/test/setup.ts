@@ -9,6 +9,13 @@ HTMLCanvasElement.prototype.getContext = vi.fn(
   () => null,
 ) as unknown as typeof HTMLCanvasElement.prototype.getContext;
 
+if (!("requestAnimationFrame" in globalThis)) {
+  globalThis.requestAnimationFrame = ((callback: FrameRequestCallback) =>
+    setTimeout(() => callback(performance.now()), 16)) as typeof requestAnimationFrame;
+  globalThis.cancelAnimationFrame = ((id: number) =>
+    clearTimeout(id)) as typeof cancelAnimationFrame;
+}
+
 if (!("ResizeObserver" in globalThis)) {
   class ResizeObserverStub {
     observe = vi.fn();

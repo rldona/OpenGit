@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, type RefObject } from "react";
 import { GRAPH_COLORS, LANE_WIDTH, ROW_HEIGHT, type GraphRow } from "../lib/graph/layout";
 
 const PADDING = 8;
@@ -7,42 +7,52 @@ const NODE_RADIUS = 4;
 type Props = {
   rows: GraphRow[];
   colors: Record<number, string>;
-  scrollTop: number;
-  viewportHeight: number;
   laneCount: number;
   selected: string | null;
+  scrollRef: RefObject<HTMLDivElement | null>;
 };
 
-export function GraphCanvas({
-  rows,
-  colors,
-  scrollTop,
-  viewportHeight,
-  laneCount,
-  selected,
-}: Props) {
+/**
+ * Capa de canvas fija sobre la lista (no se mueve con el scroll): lee
+ * `scrollTop` al dibujar y repinta en el siguiente frame, antes del paint.
+ */
+export function GraphCanvas({ rows, colors, laneCount, selected, scrollRef }: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const frameRef = useRef<number | null>(null);
+  const sizeRef = useRef({ width: 0, height: 0, ratio: 0 });
   const width = laneCount * LANE_WIDTH + PADDING * 2;
 
-  useEffect(() => {
+  const draw = useCallback(() => {
     const canvas = canvasRef.current;
-    if (!canvas) {
+    const scroller = scrollRef.current;
+    if (!canvas || !scroller) {
       return;
     }
     const ratio = window.devicePixelRatio || 1;
-    canvas.width = Math.max(1, Math.floor(width * ratio));
-    canvas.height = Math.max(1, Math.floor(viewportHeight * ratio));
+    const height = scroller.clientHeight;
+    const bufferWidth = Math.max(1, Math.floor(width * ratio));
+    const bufferHeight = Math.max(1, Math.floor(height * ratio));
+    const size = sizeRef.current;
+    if (size.width !== bufferWidth || size.height !== bufferHeight || size.ratio !== ratio) {
+      canvas.width = bufferWidth;
+      canvas.height = bufferHeight;
+      sizeRef.current = { width: bufferWidth, height: bufferHeight, ratio };
+    }
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
+
     const context = canvas.getContext("2d");
     if (!context) {
       return;
     }
+    const scrollTop = scroller.scrollTop;
     context.setTransform(ratio, 0, 0, ratio, 0, 0);
-    context.clearRect(0, 0, width, viewportHeight);
+    context.clearRect(0, 0, width, height);
     context.lineWidth = 2;
     context.lineCap = "round";
 
     const first = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - 1);
-    const last = Math.min(rows.length, Math.ceil((scrollTop + viewportHeight) / ROW_HEIGHT) + 1);
+    const last = Math.min(rows.length, Math.ceil((scrollTop + height) / ROW_HEIGHT) + 1);
     const x = (lane: number) => PADDING + lane * LANE_WIDTH + LANE_WIDTH / 2;
     const colorOf = (laneId: number) => colors[laneId] ?? GRAPH_COLORS[0];
 
@@ -99,14 +109,37 @@ export function GraphCanvas({
         context.stroke();
       }
     }
-  }, [rows, colors, scrollTop, viewportHeight, laneCount, selected, width]);
+  }, [rows, colors, selected, scrollRef, width]);
 
-  return (
-    <canvas
-      ref={canvasRef}
-      className="history-graph"
-      aria-hidden="true"
-      style={{ width, height: viewportHeight, top: scrollTop }}
-    />
-  );
+  const schedule = useCallback(() => {
+    if (frameRef.current !== null) {
+      return;
+    }
+    frameRef.current = window.requestAnimationFrame(() => {
+      frameRef.current = null;
+      draw();
+    });
+  }, [draw]);
+
+  useEffect(() => {
+    const scroller = scrollRef.current;
+    if (!scroller) {
+      return;
+    }
+    const onScroll = () => schedule();
+    scroller.addEventListener("scroll", onScroll, { passive: true });
+    const observer = new ResizeObserver(() => schedule());
+    observer.observe(scroller);
+    schedule();
+    return () => {
+      scroller.removeEventListener("scroll", onScroll);
+      observer.disconnect();
+      if (frameRef.current !== null) {
+        window.cancelAnimationFrame(frameRef.current);
+        frameRef.current = null;
+      }
+    };
+  }, [scrollRef, schedule]);
+
+  return <canvas ref={canvasRef} className="history-graph" aria-hidden="true" />;
 }
