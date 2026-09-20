@@ -2020,6 +2020,84 @@ pub fn grep_worktree(
     Ok(GrepResult { matches, truncated })
 }
 
+/// Writes patch files for a commit (`single`) or for the range up to HEAD
+/// (OG-094). Returns the created file paths.
+pub fn format_patch(
+    runner: &Runner,
+    repo: &Path,
+    spec: &str,
+    single: bool,
+    out_dir: &Path,
+) -> Result<Vec<String>, GitError> {
+    let spec = spec.trim();
+    if spec.is_empty() {
+        return Err(GitError::invalid("choose a commit or a range"));
+    }
+    // A revision is never an option; this keeps argv safe without `--`.
+    if spec.starts_with('-') {
+        return Err(GitError::invalid("invalid revision"));
+    }
+    std::fs::create_dir_all(out_dir).map_err(|error| {
+        GitError::invalid(format!("could not create the output folder: {error}"))
+    })?;
+
+    let mut args: Vec<OsString> = vec![
+        "format-patch".into(),
+        "-o".into(),
+        out_dir.as_os_str().to_os_string(),
+    ];
+    if single {
+        args.push("-1".into());
+    }
+    args.push(spec.into());
+
+    let output = runner.run_checked(&GitCommand::new(args).cwd(repo).write())?;
+    Ok(output
+        .stdout_lossy()
+        .lines()
+        .map(str::trim)
+        .filter(|line| !line.is_empty())
+        .map(str::to_string)
+        .collect())
+}
+
+/// Applies a patch: `git am` for a mailbox or `git apply` for a plain diff
+/// (OG-094). A failed `am` is aborted so no half state is left behind.
+pub fn apply_patch(
+    runner: &Runner,
+    repo: &Path,
+    file: &Path,
+    mailbox: bool,
+    three_way: bool,
+) -> Result<String, GitError> {
+    if !file.is_file() {
+        return Err(GitError::invalid("choose a patch file"));
+    }
+
+    if mailbox {
+        let mut args: Vec<OsString> = vec!["am".into()];
+        if three_way {
+            args.push("--3way".into());
+        }
+        args.push(file.as_os_str().to_os_string());
+        return match runner.run_checked(&GitCommand::new(args).cwd(repo).write()) {
+            Ok(output) => Ok(output.stdout_lossy()),
+            Err(error) => {
+                let _ = runner.run(&GitCommand::new(["am", "--abort"]).cwd(repo).write());
+                Err(error)
+            }
+        };
+    }
+
+    let mut args: Vec<OsString> = vec!["apply".into()];
+    if three_way {
+        args.push("--3way".into());
+    }
+    args.push(file.as_os_str().to_os_string());
+    let output = runner.run_checked(&GitCommand::new(args).cwd(repo).write())?;
+    Ok(output.stderr_lossy())
+}
+
 #[cfg(test)]
 mod grep_tests {
     use super::*;

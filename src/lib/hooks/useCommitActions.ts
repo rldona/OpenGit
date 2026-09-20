@@ -1,4 +1,6 @@
-import { confirmDestructive } from "../bridge/dialog";
+import { confirmDestructive, pickDirectory } from "../bridge/dialog";
+import { formatGitError } from "../bridge/errors";
+import { formatPatch } from "../bridge/patch";
 import type { Commit } from "../bridge/types";
 import { useDiffStore } from "../stores/diff";
 import { useLogStore } from "../stores/log";
@@ -13,7 +15,27 @@ export type CommitActions = {
   revert: (commit: Commit) => Promise<void>;
   reset: (commit: Commit) => Promise<void>;
   rebase: (commit: Commit) => Promise<void>;
+  createPatch: (commit: Commit) => Promise<void>;
+  createPatchesToHead: (commit: Commit) => Promise<void>;
 };
+
+async function exportPatches(root: string | null, spec: string, single: boolean): Promise<void> {
+  if (!root) {
+    return;
+  }
+  const outDir = await pickDirectory("Choose a folder for the patch");
+  if (outDir === null) {
+    return;
+  }
+  try {
+    const files = await formatPatch(root, spec, single, outDir);
+    useUiStore
+      .getState()
+      .appendOutput(files.length === 0 ? "No patches created" : `Patch(es): ${files.join(", ")}`);
+  } catch (error) {
+    useUiStore.getState().appendOutput(`Could not create the patch: ${formatGitError(error)}`);
+  }
+}
 
 /** Actions for a commit, shared by the detail panel and the context menu. */
 export function useCommitActions(): CommitActions {
@@ -69,5 +91,7 @@ export function useCommitActions(): CommitActions {
       await openRebase(root, commit.hash);
       setActiveView("rebase");
     },
+    createPatch: (commit) => exportPatches(root, commit.hash, true),
+    createPatchesToHead: (commit) => exportPatches(root, commit.hash, false),
   };
 }
