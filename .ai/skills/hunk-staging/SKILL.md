@@ -3,52 +3,52 @@ name: hunk-staging
 description: Use when implementing or fixing stage/unstage of hunks, lines or selections (git apply --cached, patch reconstruction, partial staging). Triggers on hunk, patch, index, staged, CRLF, no newline at end of file, EOF marker. Covers patch construction, --recount, reverse apply and verification.
 ---
 
-# Stage por hunks con parches
+# Staging by hunks with patches
 
-## Estrategia
+## Strategy
 
-El index se modifica con un parche aplicado sobre `--cached`. Nunca se reescribe el índice a mano ni se toca el working tree.
+The index is modified with a patch applied on top of `--cached`. The index is never rewritten by hand and the working tree is never touched.
 
 ```bash
 git diff -U3 --no-color --no-ext-diff -- <path>        # working tree vs index
-git diff --cached -U3 --no-color -- <path>             # index vs HEAD (para unstage)
-git apply --cached --recount -                         # stage (parche por stdin)
+git diff --cached -U3 --no-color -- <path>             # index vs HEAD (for unstage)
+git apply --cached --recount -                         # stage (patch via stdin)
 git apply --cached --reverse --recount -               # unstage
 ```
 
-- `--recount` recalcula los contadores de los hunks: úsalo siempre que reconstruyas parches.
-- El parche va por **stdin**, no por fichero temporal en el repo (evita basura y watchers falsos).
-- `--whitespace=nowarn` para no sorprender al usuario con avisos de whitespace.
+- `--recount` recalculates the hunk counters: use it whenever you reconstruct patches.
+- The patch goes via **stdin**, not via a temporary file in the repo (avoids junk and false watchers).
+- `--whitespace=nowarn` so as not to surprise the user with whitespace warnings.
 
-## Construcción del parche
+## Patch construction
 
-1. Parte del diff original del fichero y localiza el hunk y las líneas seleccionadas.
-2. Conserva las líneas de contexto necesarias (`@@ -a,b +c,d @@`); si recortas contexto, recalcula cabeceras con `--recount` o a mano.
-3. Mantén **el byte exacto** de cada línea: prefijos ` `, `+`, `-` y el marcador `\ No newline at end of file` en su sitio.
-4. Reconstruye el bloque `diff --git a/... b/...` con `--- a/...` y `+++ b/...`, rutas sin comillas raras y sin prefijos duplicados.
-5. Para líneas sueltas dentro de un hunk, el parche resultante puede partir el hunk; verifica con `git apply --check` antes de aplicar.
+1. Start from the original diff of the file and locate the hunk and the selected lines.
+2. Keep the necessary context lines (`@@ -a,b +c,d @@`); if you trim context, recalculate headers with `--recount` or by hand.
+3. Keep **the exact byte** of each line: prefixes ` `, `+`, `-` and the `\ No newline at end of file` marker in place.
+4. Rebuild the `diff --git a/... b/...` block with `--- a/...` and `+++ b/...`, paths without weird quotes and without duplicated prefixes.
+5. For individual lines inside a hunk, the resulting patch may split the hunk; verify with `git apply --check` before applying.
 
-## Verificación (en tests)
+## Verification (in tests)
 
 ```bash
-git diff --cached --numstat        # qué quedó staged
-git diff --numstat                 # qué quedó sin staged
-git ls-files -s -- <path>          # hash del blob en el index
+git diff --cached --numstat        # what ended up staged
+git diff --numstat                 # what ended up unstaged
+git ls-files -s -- <path>          # blob hash in the index
 ```
 
-- Después de un unstage, el working tree debe quedar idéntico: compara `git hash-object <path>` con el blob esperado.
+- After an unstage, the working tree must remain identical: compare `git hash-object <path>` with the expected blob.
 
-## Casos que rompen parches
+## Cases that break patches
 
-- **CRLF:** el diff puede traer `\r`; aplica tal cual y no re-normalices (respeta `core.autocrlf` del usuario).
-- **Sin newline final:** el marcador `\ No newline at end of file` debe ir pegado a la línea afectada; sin él, git añade un newline y corrompe el fichero.
-- **Fichero nuevo/borrado:** usa `/dev/null` en el lado correspondiente y `new file mode`/`deleted file mode`.
-- **Rutas con espacios o non-ASCII:** el formato `diff --git` las cita; con `--no-prefix` y comillas se complica. Prefiere `--no-color --no-ext-diff` y rutas tal cual las da `git diff -z` para la capa de datos.
-- **Modo de fichero:** un cambio de permisos no es un hunk; va en la cabecera `old mode/new mode`.
+- **CRLF:** the diff may contain `\r`; apply as-is and don't re-normalize (respect the user's `core.autocrlf`).
+- **No final newline:** the `\ No newline at end of file` marker must be attached to the affected line; without it, git adds a newline and corrupts the file.
+- **New/deleted file:** use `/dev/null` on the corresponding side and `new file mode`/`deleted file mode`.
+- **Paths with spaces or non-ASCII:** the `diff --git` format quotes them; with `--no-prefix` and quotes it gets complicated. Prefer `--no-color --no-ext-diff` and paths as `git diff -z` yields them for the data layer.
+- **File mode:** a permission change is not a hunk; it goes in the `old mode/new mode` header.
 
-## Anti-patrones
+## Anti-patterns
 
-- Escribir el parche en un fichero dentro del repo y llamar a `git apply <archivo>`.
-- Construir el parche con strings sin conservar los bytes originales (pierdes CRLF o el marcador EOF).
-- Aplicar sin `--cached` (ensucia el working tree) o sin `--reverse` al hacer unstage.
-- Confiar en el número de líneas original sin `--recount`.
+- Writing the patch to a file inside the repo and calling `git apply <file>`.
+- Building the patch with strings without preserving the original bytes (you lose CRLF or the EOF marker).
+- Applying without `--cached` (dirties the working tree) or without `--reverse` when unstaging.
+- Relying on the original line count without `--recount`.

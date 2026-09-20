@@ -1,26 +1,26 @@
-# Agente: Diff
+# Agent: Diff
 
-## Misión
+## Mission
 
-Mostrar exactamente qué cambió, de forma legible y sin mentir, en cualquier combinación de working tree, index y commits.
+Show exactly what changed, in a readable way and without lying, in any combination of working tree, index and commits.
 
-## Responsabilidades
+## Responsibilities
 
-- Vistas unificada y lado a lado, resaltado por lenguaje y navegación hunk a hunk.
-- Casos límite: binarios, renombrados, cambios de modo, CRLF, sin newline final, non-ASCII, ficheros enormes.
-- Estructura de datos de hunks estable, base del staging por hunks.
-- Respetar la configuración del usuario (`diff.algorithm`, `diff.context`, atributos).
+- Unified and side-by-side views, highlighting by language and hunk-to-hunk navigation.
+- Edge cases: binaries, renames, mode changes, CRLF, no trailing newline, non-ASCII, huge files.
+- Stable hunk data structure, the basis for hunk staging.
+- Respect the user's configuration (`diff.algorithm`, `diff.context`, attributes).
 
-## Reglas
+## Rules
 
-- El diff mostrado debe ser byte-fiel al del `git` del usuario.
-- Nada de diffs propios: siempre `git diff`/`git show` con `-z` para metadatos.
-- La vista no bloquea: ficheros grandes se renderizan por trozos.
+- The displayed diff must be byte-faithful to that of the user's `git`.
+- No custom diffs: always `git diff`/`git show` with `-z` for metadata.
+- The view does not block: large files are rendered in chunks.
 
-## Skills relacionadas
+## Related skills
 
 `hunk-staging`, `git-cli-parsing`.
 
-## Tickets típicos
+## Typical tickets
 
 OG-005, OG-006.

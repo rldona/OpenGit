@@ -1,9 +1,9 @@
 # Workflows
 
-Procesos repetibles del proyecto. No son comandos: son guías que un humano o agente sigue paso a paso.
+Repeatable processes of the project. They are not commands: they are guides that a human or agent follows step by step.
 
-| Workflow | Cuándo usarlo |
+| Workflow | When to use it |
 | --- | --- |
-| [new-feature](new-feature.md) | Cualquier cambio funcional: de ticket a PR |
-| [adr](adr.md) | Decisión con coste alto de revertir |
-| [release](release.md) | Publicar versión y empaquetar los tres SO |
+| [new-feature](new-feature.md) | Any functional change: from ticket to PR |
+| [adr](adr.md) | Decision with a high cost of reverting |
+| [release](release.md) | Publish a version and package the three OSes |

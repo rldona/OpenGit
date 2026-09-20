@@ -1,7 +1,7 @@
 # OG-062 · Translate the project to English
 
 - **Milestone:** M8 — SourceTree parity (phase 3) (cross-cutting)
-- **Status:** in progress
+- **Status:** done
 - **Depends on:** —
 - **References:** ROADMAP.md, AGENTS.md
 
@@ -27,14 +27,14 @@ between them and without touching behaviour.
   `tests/`, including helper functions and assertion messages).
 - [x] `docs/tickets/` (title, states and prose) and its index.
 - [x] `docs/architecture/`, `docs/decisions/` and `docs/guides/`.
-- [ ] `.ai/` (agents, skills, workflows, memory).
+- [x] `.ai/` (agents, skills, workflows, memory).
 
 ## Acceptance criteria
 
-- [ ] No Spanish prose left in comments or docs (manual sweep with `rg`).
-- [ ] Tests keep passing between batches: translation changes no behaviour.
-- [ ] One batch per PR so each diff is reviewable.
-- [ ] Code identifiers are not renamed just to translate a comment.
+- [x] No Spanish prose left in comments or docs (manual sweep with `rg`).
+- [x] Tests keep passing between batches: translation changes no behaviour.
+- [x] One batch per PR so each diff is reviewable.
+- [x] Code identifiers are not renamed just to translate a comment.
 
 ## Out of scope
 
