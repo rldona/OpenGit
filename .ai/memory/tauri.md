@@ -35,3 +35,17 @@
 - **Finding:** `codesign -dv` showed `flags=adhoc,linker-signed` and `Info.plist=not bound`, and the bundle had no `Contents/_CodeSignature`. `codesign --verify` failed with *"code has no resources but signature indicates they must be present"*: the linker signs the binary but does not seal the bundle resources. Tauri only re-signs the assembled bundle when `bundle.macOS.signingIdentity` is set.
 - **Implication:** set `"macOS": { "signingIdentity": "-" }` (ad-hoc) so the DMG ships a valid signature; without it, arm64 refuses to launch the app. Ad-hoc does not remove Gatekeeper: users still right-click → Open or run `xattr -dr com.apple.quarantine`. To repair an already-installed copy: `codesign --force --sign - /Applications/OpenGit.app`.
 
+
+## The updater pubkey is only checked when installing, and Windows exits during install
+
+- **Date:** 2026-09-20
+- **Context:** OG-081, in-app auto-updates with `tauri-plugin-updater` (ADR-0007).
+- **Finding:** the plugin's config requires a `pubkey`, but it is only parsed when an update is downloaded/verified; `check()` and app startup work with a placeholder. Two platform behaviours matter: on Windows `install()` launches the NSIS installer and calls `std::process::exit(0)` (the app closes on its own, `relaunch` on the JS side never runs), while on macOS/Linux `install()` returns and the app must be relaunched with `@tauri-apps/plugin-process`. `createUpdaterArtifacts` also makes a plain local `tauri build` require `TAURI_SIGNING_PRIVATE_KEY`; `--no-bundle` does not.
+- **Implication:** keep the check/download separate from install (download in the background, install on "Restart now") so Windows does not quit mid-session. Treat the minisign private key as unrecoverable infrastructure: losing it permanently breaks updates for installed users.
+
+## `tauri build` on macOS: intermittent `failed to run xattr`
+
+- **Date:** 2026-09-20
+- **Context:** OG-081; a local `tauri build --bundles app` failed at "failed to remove extra attributes from app bundle: `failed to run xattr`".
+- **Finding:** the bundler runs `xattr -crs <App>.app` before ad-hoc signing (`tauri-bundler` `bundle/macos/app.rs`). Its `output_ok()` treats any non-zero exit as `failed to run xattr` and swallows the real stderr (only visible with `-v`). On recent macOS the SIP-protected `com.apple.provenance` xattr can make `xattr -c` fail (EPERM) without Full Disk Access, and the attribute appears on freshly copied files, so the failure is intermittent. It is unrelated to the updater: it happens in the pre-existing signing step.
+- **Implication:** retry the build, or grant the terminal Full Disk Access (System Settings → Privacy & Security). The release workflow runs on a clean macOS runner, so it is not expected there. To validate the minisign key/password without bundling, use `npm run tauri -- signer sign -f <key> -p <password> <file>`.

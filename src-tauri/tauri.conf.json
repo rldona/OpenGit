@@ -29,6 +29,7 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "createUpdaterArtifacts": true,
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -38,6 +39,14 @@
     ],
     "macOS": {
       "signingIdentity": "-"
+    }
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEU5N0VGQTFCRUY3RTM3RjIKUldUeU4zN3ZHL3ArNlFRcEcxWVh6OGk5ZStwTjUwUGZBcVhxT0hlTi9sY0c2d3BIR0VVSXR4ZFkK",
+      "endpoints": [
+        "https://github.com/rldona/OpenGit/releases/latest/download/latest.json"
+      ]
     }
   }
 }
