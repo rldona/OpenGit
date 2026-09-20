@@ -1,7 +1,7 @@
 # OG-109 · Run blocking commands off the main thread
 
 - **Milestone:** —
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** OG-010, OG-080, OG-088
 - **References:** ADR-0008, ADR-0010, `src-tauri/src/commands.rs`, `src-tauri/src/watch/mod.rs`, `src-tauri/src/lib.rs`
 
@@ -36,16 +36,16 @@ more expensive than FSEvents on macOS.
 
 ## Acceptance criteria
 
-- [ ] Every git/blocking-IO command is `async` and runs its work on the
+- [x] Every git/blocking-IO command is `async` and runs its work on the
       blocking pool; command names, arguments and return types are unchanged.
-- [ ] Commands that must stay on the main thread (window/menu creation) and
+- [x] Commands that must stay on the main thread (window/menu creation) and
       the trivial in-memory commands remain synchronous.
-- [ ] `open_repo` returns without waiting for the OS watch to be registered and
+- [x] `open_repo` returns without waiting for the OS watch to be registered and
       without joining the previous watcher.
-- [ ] `watch::start` returns immediately; `WatcherHandle::wait_ready` reports
+- [x] `watch::start` returns immediately; `WatcherHandle::wait_ready` reports
       when the watch is registered.
-- [ ] The watcher polling fallback reacts to stop within ~100 ms.
-- [ ] `cargo clippy -- -D warnings`, `cargo test` and the frontend checks pass.
+- [x] The watcher polling fallback reacts to stop within ~100 ms.
+- [x] `cargo clippy -- -D warnings`, `cargo test` and the frontend checks pass.
 
 ## Out of scope
 
@@ -70,3 +70,5 @@ more expensive than FSEvents on macOS.
   close).
 - `watch::start` now creates an empty `IgnoreMatcher` without git, registers
   the OS watch, then loads the ignore set, signalling readiness afterwards.
+- Manual validation on Ubuntu (`.deb`, v0.8.3): switching between several open
+  repositories no longer freezes the window and the app responds instantly.
