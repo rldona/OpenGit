@@ -1,7 +1,7 @@
 # OG-025 · Git LFS: detección y avisos
 
 - **Milestone:** M5 — Pulido
-- **Estado:** in-progress
+- **Estado:** done
 - **Depende de:** OG-002, OG-009
 - **Referencias:** ROADMAP.md
 
@@ -45,4 +45,4 @@ En repos con Git LFS, si `git-lfs` no está instalado los ficheros gestionados s
 - En los tests de integración no se añaden ficheros que casen con `filter=lfs`: sin git-lfs instalado, `git add` intenta ejecutar el filtro y falla (justo el escenario que avisa la UI). En esta máquina git-lfs no está instalado y el aviso es visible desde el primer arranque.
 - Frontend: `parseLfsPointerPatch` detecta version/oid/size ignorando prefijos de diff; aviso en File status (solo si falta git-lfs) y en el diff (siempre que el parche sea un puntero); sección Git LFS en el sidebar.
 - Tests: 109 Rust (2 de parsers y 3 de integración nuevos), 179 frontend (10 nuevos).
-- Pendiente para cerrar: PR y CI verde.
+- Cerrado el 2026-09-18 con CI verde (Frontend 41 s, Rust 1m27s) en el PR #21.
