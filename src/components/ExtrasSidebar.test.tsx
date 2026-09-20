@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { lfsStatus, openRepo, submoduleStatus, worktreeList } from "../lib/bridge/repo";
+import { lfsStatus, openRepo, remoteUrls, submoduleStatus, worktreeList } from "../lib/bridge/repo";
 import type { LfsStatus, RepoInfo, Submodule, Worktree } from "../lib/bridge/types";
 import { useExtrasStore } from "../lib/stores/extras";
 import { useRepoStore } from "../lib/stores/repo";
@@ -16,6 +16,7 @@ vi.mock("../lib/bridge/repo", () => ({
   submoduleStatus: vi.fn(),
   worktreeList: vi.fn(),
   lfsStatus: vi.fn(),
+  remoteUrls: vi.fn(),
 }));
 
 const REPO: RepoInfo = {
@@ -60,6 +61,7 @@ describe("ExtrasSidebar", () => {
     vi.mocked(submoduleStatus).mockResolvedValue(SUBMODULES);
     vi.mocked(worktreeList).mockResolvedValue(WORKTREES);
     vi.mocked(lfsStatus).mockResolvedValue(LFS);
+    vi.mocked(remoteUrls).mockResolvedValue([]);
     vi.mocked(openRepo).mockResolvedValue(REPO);
     useRepoStore.setState({ repo: REPO, recents: [], loading: false, error: null });
     useExtrasStore.setState({

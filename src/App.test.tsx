@@ -65,6 +65,7 @@ vi.mock("./lib/bridge/repo", () => ({
   lfsStatus: vi
     .fn()
     .mockResolvedValue({ installed: true, version: "git-lfs/3.5.1", configured: false }),
+  remoteUrls: vi.fn().mockResolvedValue([]),
 }));
 
 vi.mock("./lib/bridge/log", () => ({

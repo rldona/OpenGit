@@ -153,6 +153,12 @@ export type LfsStatus = {
   configured: boolean;
 };
 
+export type Remote = {
+  name: string;
+  url: string;
+  web_url: string | null;
+};
+
 export type RefEntry = {
   name: string;
   object_id: string;

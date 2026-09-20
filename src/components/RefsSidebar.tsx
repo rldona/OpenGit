@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { confirmDestructive } from "../lib/bridge/dialog";
+import { openExternal } from "../lib/bridge/opener";
+import { useExtrasStore } from "../lib/stores/extras";
 import { useLogStore } from "../lib/stores/log";
 import { useRefsStore } from "../lib/stores/refs";
 import { useRemoteStore } from "../lib/stores/remote";
@@ -18,6 +20,7 @@ export function RefsSidebar() {
   const load = useRefsStore((state) => state.load);
   const setFilter = useRefsStore((state) => state.setFilter);
   const checkout = useRefsStore((state) => state.checkout);
+  const remoteInfos = useExtrasStore((state) => state.remotes);
   const create = useRefsStore((state) => state.create);
   const rename = useRefsStore((state) => state.rename);
   const remove = useRefsStore((state) => state.remove);
@@ -259,25 +262,41 @@ export function RefsSidebar() {
       <section className="sidebar-section">
         <h2>Remotes</h2>
         {remoteGroups.size === 0 && <p className="muted">No remote branches</p>}
-        {[...remoteGroups.entries()].map(([remote, items]) => (
-          <div key={remote}>
-            <p className="refs-group">{remote}</p>
-            <ul className="refs-list">
-              {items.map(({ ref, short }) => (
-                <li key={ref.name}>
+        {[...remoteGroups.entries()].map(([remote, items]) => {
+          const webUrl = remoteInfos.find((entry) => entry.name === remote)?.web_url ?? null;
+          return (
+            <div key={remote}>
+              <p className="refs-group">
+                {remote}
+                {webUrl && (
                   <button
                     type="button"
-                    className="refs-name"
-                    title={ref.name}
-                    onClick={() => root && void checkout(root, ref)}
+                    className="refs-open-remote"
+                    title={`Open ${webUrl} in the browser`}
+                    aria-label={`Open ${remote} in the browser`}
+                    onClick={() => void openExternal(webUrl)}
                   >
-                    {short}
+                    ↗
                   </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
+                )}
+              </p>
+              <ul className="refs-list">
+                {items.map(({ ref, short }) => (
+                  <li key={ref.name}>
+                    <button
+                      type="button"
+                      className="refs-name"
+                      title={ref.name}
+                      onClick={() => root && void checkout(root, ref)}
+                    >
+                      {short}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          );
+        })}
       </section>
       <section className="sidebar-section">
         <h2>Tags</h2>
