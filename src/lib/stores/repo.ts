@@ -3,8 +3,10 @@ import { pickDirectory } from "../bridge/dialog";
 import { formatGitError } from "../bridge/errors";
 import { closeRepo, openRepo, recentRepos, removeRecentRepo } from "../bridge/repo";
 import type { RecentRepo, RepoInfo } from "../bridge/types";
+import { clearStoredSession, saveStoredSession } from "../tabs";
 import { useDiffStore } from "./diff";
 import { useLogStore } from "./log";
+import { useSettingsStore } from "./settings";
 import { useStatusStore } from "./status";
 import { useUiStore } from "./ui";
 
@@ -21,10 +23,23 @@ type RepoState = {
   closeTab: (path: string) => Promise<void>;
   switchTab: (direction: 1 | -1) => Promise<void>;
   close: () => Promise<void>;
+  /** Reopens a stored session in order, leaving `active` selected (OG-082). */
+  restoreSession: (paths: string[], active: string | null) => Promise<void>;
 };
 
 function output(line: string): void {
   useUiStore.getState().appendOutput(line);
+}
+
+/**
+ * Persists the session only when the "reopen tabs" preference is on, so the
+ * default path never writes to storage (OG-082).
+ */
+function persistSession(tabs: RecentRepo[], active: string | null): void {
+  if (!useSettingsStore.getState().restoreTabs) {
+    return;
+  }
+  saveStoredSession(tabs, active);
 }
 
 /**
@@ -71,6 +86,7 @@ export const useRepoStore = create<RepoState>((set, get) => ({
         ? tabs
         : [...tabs, { path: info.root, name: info.name, opened_at: Date.now() }];
       set({ repo: info, openTabs: nextTabs, loading: false });
+      persistSession(nextTabs, info.root);
       output(`Repository opened: ${info.name} (${info.branch ?? "detached HEAD"})`);
       await get().loadRecents();
     } catch (error) {
@@ -124,6 +140,7 @@ export const useRepoStore = create<RepoState>((set, get) => ({
     const remaining = tabs.filter((tab) => tab.path !== path);
     if (!wasActive) {
       set({ openTabs: remaining });
+      persistSession(remaining, get().repo?.root ?? null);
       return;
     }
     if (remaining.length === 0) {
@@ -135,6 +152,7 @@ export const useRepoStore = create<RepoState>((set, get) => ({
       useLogStore.getState().reset();
       useStatusStore.getState().reset();
       set({ repo: null, error: null, openTabs: [] });
+      clearStoredSession();
       output("Repository closed");
       return;
     }
@@ -178,6 +196,18 @@ export const useRepoStore = create<RepoState>((set, get) => ({
     useLogStore.getState().reset();
     useStatusStore.getState().reset();
     set({ repo: null, error: null, openTabs: remaining });
+    clearStoredSession();
     output("Repository closed");
+  },
+
+  restoreSession: async (paths, active) => {
+    // `open` appends each tab in order and never reorders, so reopening the
+    // active path last leaves it selected while keeping the stored order.
+    for (const path of paths) {
+      await get().open(path);
+    }
+    if (active !== null && get().repo?.root !== active) {
+      await get().open(active);
+    }
   },
 }));

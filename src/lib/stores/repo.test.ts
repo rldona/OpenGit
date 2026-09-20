@@ -3,7 +3,9 @@ import { pickDirectory } from "../bridge/dialog";
 import { closeRepo, openRepo, recentRepos, removeRecentRepo } from "../bridge/repo";
 import { statusRepo } from "../bridge/status";
 import type { RepoInfo } from "../bridge/types";
+import { loadStoredSession } from "../tabs";
 import { useRepoStore } from "./repo";
+import { useSettingsStore } from "./settings";
 import { useUiStore } from "./ui";
 
 vi.mock("../bridge/repo", () => ({
@@ -46,7 +48,9 @@ const REPO: RepoInfo = {
 
 describe("useRepoStore", () => {
   beforeEach(() => {
+    localStorage.clear();
     useRepoStore.setState({ repo: null, recents: [], openTabs: [], loading: false, error: null });
+    useSettingsStore.setState({ restoreTabs: false });
     useUiStore.setState({ outputLines: [] });
     vi.mocked(recentRepos).mockResolvedValue([]);
     vi.mocked(removeRecentRepo).mockResolvedValue(undefined);
@@ -218,5 +222,45 @@ describe("useRepoStore", () => {
 
     expect(useRepoStore.getState().loading).toBe(false);
     expect(openRepo).not.toHaveBeenCalled();
+  });
+
+  it("does not persist the session while the preference is off", async () => {
+    vi.mocked(openRepo).mockResolvedValue(REPO);
+
+    await useRepoStore.getState().open(REPO.root);
+
+    expect(loadStoredSession()).toBeNull();
+  });
+
+  it("persists and restores the session when the preference is on", async () => {
+    const other: RepoInfo = { ...REPO, root: "/tmp/other", name: "other" };
+    vi.mocked(openRepo).mockImplementation(async (path: string) =>
+      path === other.root ? other : REPO,
+    );
+    useSettingsStore.setState({ restoreTabs: true });
+
+    await useRepoStore.getState().open(REPO.root);
+    await useRepoStore.getState().open(other.root);
+    expect(loadStoredSession()).toEqual({ paths: [REPO.root, other.root], active: other.root });
+
+    // Simulate a fresh launch: no tabs in memory, then restore.
+    useRepoStore.setState({ repo: null, openTabs: [] });
+    await useRepoStore.getState().restoreSession([REPO.root, other.root], REPO.root);
+
+    expect(useRepoStore.getState().openTabs.map((tab) => tab.path)).toEqual([
+      REPO.root,
+      other.root,
+    ]);
+    expect(useRepoStore.getState().repo?.root).toBe(REPO.root);
+  });
+
+  it("clears the stored session when the last tab closes", async () => {
+    vi.mocked(openRepo).mockResolvedValue(REPO);
+    useSettingsStore.setState({ restoreTabs: true });
+
+    await useRepoStore.getState().open(REPO.root);
+    await useRepoStore.getState().closeTab(REPO.root);
+
+    expect(loadStoredSession()).toBeNull();
   });
 });

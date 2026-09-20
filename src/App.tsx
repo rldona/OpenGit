@@ -31,12 +31,13 @@ import { useRepoEvents } from "./lib/hooks/useRepoEvents";
 import { useShortcuts, type ShortcutHandlers } from "./lib/hooks/useShortcuts";
 import { LAYOUT_KEYS } from "./lib/layout";
 import { refreshRepo } from "./lib/refresh";
+import { loadStoredSession } from "./lib/tabs";
 import { hasActiveOperation, stagedEntries, useCommitStore } from "./lib/stores/commit";
 import { useLogStore } from "./lib/stores/log";
 import { useRefsStore } from "./lib/stores/refs";
 import { useRemoteStore } from "./lib/stores/remote";
 import { useRepoStore } from "./lib/stores/repo";
-import { syncAutoRefresh } from "./lib/stores/settings";
+import { syncAutoRefresh, useSettingsStore } from "./lib/stores/settings";
 import { useStatusStore } from "./lib/stores/status";
 import { useThemeStore } from "./lib/stores/theme";
 import { useUiStore } from "./lib/stores/ui";
@@ -115,6 +116,17 @@ function App() {
   useEffect(() => {
     void loadRecents();
   }, [loadRecents]);
+
+  useEffect(() => {
+    // Reopen the previous session when the preference is on (OG-082).
+    if (!useSettingsStore.getState().restoreTabs) {
+      return;
+    }
+    const session = loadStoredSession();
+    if (session !== null && session.paths.length > 0) {
+      void useRepoStore.getState().restoreSession(session.paths, session.active);
+    }
+  }, []);
 
   useEffect(() => {
     // Silent update check on startup (OG-081): only surfaces a ready update;

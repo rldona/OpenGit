@@ -20,6 +20,7 @@ import {
 } from "../lib/bridge/settings";
 import type { GpgKey } from "../lib/bridge/types";
 import { formatCommitDate } from "../lib/format";
+import { syncStoredSession } from "../lib/tabs";
 import { useExtrasStore } from "../lib/stores/extras";
 import { useRepoStore } from "../lib/stores/repo";
 import { useSettingsStore } from "../lib/stores/settings";
@@ -27,7 +28,7 @@ import { useThemeStore } from "../lib/stores/theme";
 import type { ThemePreference } from "../lib/theme";
 import { Icon, type IconName } from "./Icon";
 
-type Tab = "advanced" | "remotes" | "security" | "template" | "appearance";
+type Tab = "general" | "advanced" | "remotes" | "security" | "template" | "appearance";
 type TemplateMode = "none" | "default" | "custom";
 
 type UserInfo = {
@@ -54,9 +55,12 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
   const setAutoRefresh = useSettingsStore((state) => state.setAutoRefresh);
   const theme = useThemeStore((state) => state.preference);
   const setTheme = useThemeStore((state) => state.setPreference);
+  const restoreTabs = useSettingsStore((state) => state.restoreTabs);
+  const setRestoreTabs = useSettingsStore((state) => state.setRestoreTabs);
 
   const remotes = useExtrasStore((state) => state.remotes);
   const tabs: Array<{ id: Tab; label: string; icon: IconName }> = [
+    { id: "general", label: "General", icon: "workspace" },
     ...(root ? [{ id: "advanced" as const, label: "Advanced", icon: "settings" as const }] : []),
     ...(root ? [{ id: "remotes" as const, label: "Remotes", icon: "cloud" as const }] : []),
     ...(root ? [{ id: "security" as const, label: "Security", icon: "lock" as const }] : []),
@@ -67,6 +71,7 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
 
   const [draftTheme, setDraftTheme] = useState<ThemePreference>(theme);
   const [draftAutoRefresh, setDraftAutoRefresh] = useState(autoRefresh);
+  const [draftRestoreTabs, setDraftRestoreTabs] = useState(restoreTabs);
   const [ignorePath, setIgnorePath] = useState("");
   const [user, setUser] = useState<UserInfo | null>(null);
   const [selectedRemote, setSelectedRemote] = useState<string | null>(null);
@@ -266,6 +271,14 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
       if (draftAutoRefresh !== autoRefresh) {
         setAutoRefresh(draftAutoRefresh);
       }
+      if (draftRestoreTabs !== restoreTabs) {
+        setRestoreTabs(draftRestoreTabs);
+        syncStoredSession(
+          draftRestoreTabs,
+          useRepoStore.getState().openTabs,
+          useRepoStore.getState().repo?.root ?? null,
+        );
+      }
       setTheme(draftTheme);
       onClose();
     } catch (err) {
@@ -305,6 +318,20 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
             <p role="alert" className="error-banner">
               {error}
             </p>
+          )}
+
+          {tab === "general" && (
+            <section className="settings-section">
+              <h3>Startup</h3>
+              <label className="settings-check">
+                <input
+                  type="checkbox"
+                  checked={draftRestoreTabs}
+                  onChange={(event) => setDraftRestoreTabs(event.target.checked)}
+                />
+                Reopen the repositories that were open when OpenGit last closed
+              </label>
+            </section>
           )}
 
           {tab === "advanced" && root && user && (
