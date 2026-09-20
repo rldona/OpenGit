@@ -63,7 +63,6 @@ fn build_menu(app: &tauri::App) -> tauri::Result<()> {
 
     let help_menu = SubmenuBuilder::new(app, "Help")
         .item(&MenuItemBuilder::with_id("documentation", "Documentation").build(app)?)
-        .item(&MenuItemBuilder::with_id("check-updates-help", "Check for Updates…").build(app)?)
         .build()?;
 
     let menu = MenuBuilder::new(app)
