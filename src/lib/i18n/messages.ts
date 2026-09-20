@@ -105,6 +105,7 @@ export const en = {
     paletteGithub: "GitHub",
     paletteCopilot: "Copilot",
     paletteVercel: "Vercel",
+    paletteCode: "Code",
     editConfig: "Edit Config File…",
   },
   welcome: {

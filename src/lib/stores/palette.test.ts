@@ -12,6 +12,7 @@ describe("isPaletteName", () => {
     expect(isPaletteName("default")).toBe(true);
     expect(isPaletteName("purple")).toBe(true);
     expect(isPaletteName("sublime-dark")).toBe(true);
+    expect(isPaletteName("code")).toBe(true);
     expect(isPaletteName("neon")).toBe(false);
     expect(isPaletteName(null)).toBe(false);
   });

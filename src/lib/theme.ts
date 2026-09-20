@@ -1,7 +1,15 @@
 export type ThemePreference = "system" | "light" | "dark";
 export type ResolvedTheme = "light" | "dark";
 export type PaletteName =
-  "default" | "purple" | "classic" | "sublime" | "sublime-dark" | "github" | "copilot" | "vercel";
+  | "default"
+  | "purple"
+  | "classic"
+  | "sublime"
+  | "sublime-dark"
+  | "github"
+  | "copilot"
+  | "vercel"
+  | "code";
 
 export const THEME_STORAGE_KEY = "opengit.theme";
 export const PALETTE_STORAGE_KEY = "opengit.palette";
@@ -16,6 +24,7 @@ const PALETTES: PaletteName[] = [
   "github",
   "copilot",
   "vercel",
+  "code",
 ];
 
 export function isThemePreference(value: unknown): value is ThemePreference {
