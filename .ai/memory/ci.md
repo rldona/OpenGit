@@ -13,3 +13,10 @@
 - **Contexto:** filtrado de commits que solo tocan docs en `ci.yml`.
 - **Hallazgo:** con `paths-ignore`, un cambio solo de docs no dispara el workflow; si hubiera required checks configurados, el merge se quedaría esperando un check que nunca llega.
 - **Implicación:** ahora no hay branch protection, así que es seguro. Si se activa, quitar el filtro o sustituirlo por un job ligero de detección de cambios.
+
+## Test de watcher flaky en CI
+
+- **Fecha:** 2026-09-18
+- **Contexto:** el PR #34 (solo UI) falló en el job Rust con `watch::la_pausa_silencia_los_cambios_propios` («no debe emitir en pausa»).
+- **Hallazgo:** el test depende del timing real de inotify/FSEvents y puede fallar sin cambios de código; `gh run rerun --failed` pasó a la primera.
+- **Implicación:** ante ese fallo, reejecutar antes de sospechar del cambio. Si se repite, hacerlo determinista (esperar el primer evento con timeout mayor en vez de dormir una cantidad fija).

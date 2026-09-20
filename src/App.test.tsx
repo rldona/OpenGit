@@ -242,6 +242,11 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: "Fetch" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Pull" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Push" })).toBeInTheDocument();
+    expect(screen.getByText("Graph")).toBeInTheDocument();
+    expect(screen.getByText("Description")).toBeInTheDocument();
+    expect(screen.getByText("Commit")).toBeInTheDocument();
+    expect(screen.getByText("Author")).toBeInTheDocument();
+    expect(screen.getByText("Date")).toBeInTheDocument();
   });
 
   it("abre el editor de conflictos desde File status", async () => {
