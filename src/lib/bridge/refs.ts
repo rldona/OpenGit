@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { BranchTracking, MergeResult, TrackingCommits } from "./types";
+import type { BranchTracking, MergeOptions, MergeResult, TrackingCommits } from "./types";
 
 export function branchTracking(path: string): Promise<BranchTracking> {
   return invoke<BranchTracking>("branch_tracking", { path });
@@ -28,6 +28,10 @@ export function deleteBranch(path: string, name: string, force: boolean): Promis
 }
 
 /** Merges `rev` into the current branch; a conflict is not an error. */
-export function mergeBranch(path: string, rev: string, noFf: boolean): Promise<MergeResult> {
-  return invoke<MergeResult>("merge_branch", { path, rev, noFf });
+export function mergeBranch(
+  path: string,
+  rev: string,
+  options: MergeOptions,
+): Promise<MergeResult> {
+  return invoke<MergeResult>("merge_branch", { path, rev, options });
 }

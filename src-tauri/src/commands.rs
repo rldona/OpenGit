@@ -536,11 +536,11 @@ pub fn image_blob(
 pub fn merge_branch(
     path: String,
     rev: String,
-    no_ff: bool,
+    options: crate::git::MergeOptions,
     state: State<'_, AppState>,
 ) -> Result<crate::git::MergeResult, GitError> {
     pause_while(&state, || {
-        crate::git::merge_branch(&state.runner, Path::new(&path), &rev, no_ff)
+        crate::git::merge_branch(&state.runner, Path::new(&path), &rev, options)
     })
 }
 

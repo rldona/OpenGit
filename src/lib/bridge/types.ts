@@ -97,6 +97,14 @@ export type MergeResult = {
   output: string;
 };
 
+/** Checkboxes of the merge window (OG-063). */
+export type MergeOptions = {
+  noFf: boolean;
+  noCommit: boolean;
+  includeMessages: boolean;
+  rebase: boolean;
+};
+
 /** Effective identity git would use when signing a commit. */
 export type AuthorIdent = {
   name: string;
