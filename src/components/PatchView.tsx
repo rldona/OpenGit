@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { HunkSelection } from "../lib/bridge/diff";
-import { classifyPatchLines, parseHunkHeader, PATCH_ROW_HEIGHT } from "../lib/diff/patch";
+import {
+  classifyPatchLines,
+  parseHunkHeader,
+  stripPatchHeader,
+  PATCH_ROW_HEIGHT,
+} from "../lib/diff/patch";
 import { sameRange, visibleRange, type VisibleRange } from "../lib/graph/viewport";
 
 const OVERSCAN = 8;
@@ -29,7 +34,7 @@ export function PatchView({
 }: Props) {
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const [range, setRange] = useState<VisibleRange>({ start: 0, end: 0 });
-  const lines = classifyPatchLines(patch);
+  const lines = stripPatchHeader(classifyPatchLines(patch));
 
   const update = useCallback(() => {
     const scroller = scrollerRef.current;

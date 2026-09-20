@@ -50,6 +50,7 @@ const COMMIT: Commit = {
   author_time: 1_789_725_600,
   refs: ["HEAD -> main"],
   subject: "commit de prueba",
+  body: "",
 };
 
 function page(size: number, prefix: string): Commit[] {

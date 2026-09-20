@@ -53,6 +53,8 @@ export type Commit = {
   author_time: number;
   refs: string[];
   subject: string;
+  /** Cuerpo del mensaje (`%b`), sin el asunto. Cadena vacía si no hay. */
+  body: string;
 };
 
 export type JobKind =

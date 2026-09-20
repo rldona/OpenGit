@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import type { SubmoduleState } from "../lib/bridge/types";
 import { shortRefName } from "../lib/format";
+import { CollapsibleSection } from "./CollapsibleSection";
 import { useExtrasStore } from "../lib/stores/extras";
 import { useRepoStore } from "../lib/stores/repo";
 
@@ -49,8 +50,7 @@ export function ExtrasSidebar() {
   return (
     <>
       {showSubmodules && (
-        <section className="sidebar-section">
-          <h2>Submodules</h2>
+        <CollapsibleSection id="submodules" title="Submodules" icon="submodule">
           <ul className="refs-list">
             {submodules.map((submodule) => (
               <li key={submodule.path} className="refs-item">
@@ -69,12 +69,11 @@ export function ExtrasSidebar() {
               </li>
             ))}
           </ul>
-        </section>
+        </CollapsibleSection>
       )}
 
       {showWorktrees && (
-        <section className="sidebar-section">
-          <h2>Worktrees</h2>
+        <CollapsibleSection id="worktrees" title="Worktrees" icon="folder">
           <ul className="refs-list">
             {worktrees.map((worktree) => {
               const current = pathsEqual(worktree.path, root);
@@ -101,16 +100,15 @@ export function ExtrasSidebar() {
               );
             })}
           </ul>
-        </section>
+        </CollapsibleSection>
       )}
 
       {showLfs && lfs && (
-        <section className="sidebar-section">
-          <h2>Git LFS</h2>
+        <CollapsibleSection id="lfs" title="Git LFS" icon="cloud">
           <p className={lfs.installed ? "muted" : "lfs-missing"}>
             {lfs.installed ? (lfs.version ?? "Installed") : "Not installed"}
           </p>
-        </section>
+        </CollapsibleSection>
       )}
 
       {error && (

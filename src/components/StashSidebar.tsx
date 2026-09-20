@@ -2,7 +2,10 @@ import { useEffect, useState } from "react";
 import { confirmDestructive } from "../lib/bridge/dialog";
 import { formatDateTime } from "../lib/format";
 import { useRepoStore } from "../lib/stores/repo";
+import { useCollapseStore } from "../lib/stores/collapse";
 import { useStashStore } from "../lib/stores/stash";
+import { useUiStore } from "../lib/stores/ui";
+import { CollapsibleSection } from "./CollapsibleSection";
 import { StashDiffDialog } from "./StashDiffDialog";
 
 export function StashSidebar() {
@@ -16,6 +19,8 @@ export function StashSidebar() {
   const drop = useStashStore((state) => state.drop);
   const openDiff = useStashStore((state) => state.openDiff);
 
+  const newStashRequest = useUiStore((state) => state.newStashRequest);
+
   const [form, setForm] = useState(false);
   const [message, setMessage] = useState("");
   const [untracked, setUntracked] = useState(false);
@@ -25,6 +30,14 @@ export function StashSidebar() {
       void load(root);
     }
   }, [root, load]);
+
+  // El botón Stash de la barra reutiliza este formulario (ver RefsSidebar).
+  useEffect(() => {
+    if (newStashRequest > 0) {
+      setForm(true);
+      useCollapseStore.getState().set("stashes", false);
+    }
+  }, [newStashRequest]);
 
   const submit = async () => {
     if (!root) {
@@ -45,8 +58,7 @@ export function StashSidebar() {
   };
 
   return (
-    <section className="sidebar-section">
-      <h2>Stashes</h2>
+    <CollapsibleSection id="stashes" title="Stashes" icon="stash">
       <div className="refs-toolbar">
         <button
           type="button"
@@ -114,6 +126,6 @@ export function StashSidebar() {
         </p>
       )}
       <StashDiffDialog />
-    </section>
+    </CollapsibleSection>
   );
 }

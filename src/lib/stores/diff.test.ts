@@ -169,4 +169,29 @@ describe("useDiffStore", () => {
     expect(useDiffStore.getState().files).toHaveLength(1);
     expect(diffFile).toHaveBeenCalledWith(expect.objectContaining({ rev: "abc1234" }));
   });
+
+  it("descarta la respuesta de un commit que ya no es el seleccionado", async () => {
+    // El primero tarda más que el segundo: sin guard, su respuesta pisaría la buena.
+    let resolveSlow: ((value: never[]) => void) | null = null;
+    vi.mocked(commitFiles)
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveSlow = resolve as (value: never[]) => void;
+          }),
+      )
+      .mockResolvedValueOnce([
+        { path: "rapido.txt", orig_path: null, binary: false, added: 2, deleted: 0 },
+      ]);
+
+    const slow = useDiffStore.getState().openCommit("/tmp/repo", "lento00");
+    await useDiffStore.getState().openCommit("/tmp/repo", "rapido0");
+
+    resolveSlow!([]);
+    await slow;
+
+    const state = useDiffStore.getState();
+    expect(state.target).toEqual({ kind: "commit", rev: "rapido0" });
+    expect(state.files.map((file) => file.path)).toEqual(["rapido.txt"]);
+  });
 });

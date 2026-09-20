@@ -2,7 +2,9 @@ export const LAYOUT_KEYS = {
   sidebar: "opengit.layout.sidebar",
   output: "opengit.layout.output",
   diffFiles: "opengit.layout.diff-files",
-  historyDetail: "opengit.layout.history-detail",
+  historyBottom: "opengit.layout.history-bottom",
+  historyFiles: "opengit.layout.history-files",
+  historyMeta: "opengit.layout.history-meta",
 } as const;
 
 export function clampSize(size: number, min: number, max: number): number {
