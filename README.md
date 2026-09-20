@@ -6,7 +6,7 @@ Cliente de Git de escritorio, multiplataforma (Windows, macOS y Linux), inspirad
 
 ## Estado
 
-**M1 completado** el 2026-09-18. La app abre repositorios, navega el historial con grafo, muestra diffs, hace stage por hunks, commitea, gestiona el working tree y las ramas con checkout, todo con watcher en vivo. El siguiente paso es M2 (remotos, OG-011).
+**M2 completado** el 2026-09-18. Además del MVP local (grafo, diff, stage por hunks, commit, status, ramas con checkout y watcher), la app hace fetch, pull y push con salida en streaming, cancelación y errores accionables. El siguiente paso es M3 (stash, tags, cherry-pick/revert/reset y búsqueda).
 
 | Área | Decisión | ADR |
 | --- | --- | --- |

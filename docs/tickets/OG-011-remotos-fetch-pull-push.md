@@ -1,7 +1,7 @@
 # OG-011 · Fetch, pull y push
 
 - **Milestone:** M2 — Remotos
-- **Estado:** in-progress
+- **Estado:** done
 - **Depende de:** OG-007, OG-008, OG-010
 - **Referencias:** ADR-0003, docs/architecture/overview.md
 
@@ -46,4 +46,4 @@ Cierra el ciclo diario: sincronizar con el remoto sin abrir el terminal, con la 
 - UI: botones Fetch/Pull/Push y Cancel en la toolbar; confirmación extra al pushear `main`/`master`; push sin upstream activa `--set-upstream` automáticamente.
 - `describeRemoteError` mapea la salida a causas accionables (non-fast-forward, auth, remoto inexistente, sin upstream, ref inexistente) con tests.
 - Tests: 4 de Rust con remotos locales (push+upstream, fetch, non-ff, cancelación con hook bloqueante) y 11 de frontend (mapeo de errores y store remoto).
-- Pendiente para cerrar: PR y CI verde.
+- Cerrado el 2026-09-18 con CI verde (Frontend 28 s, Rust 1m27s) en el PR #11. Con esto queda completo M2. De paso el CI destapó que sin `init.defaultBranch` el bare de test quedaba en `master`; los remotos de test fijan `main` explícitamente.
