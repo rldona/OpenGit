@@ -14,6 +14,7 @@ import { listRefs, logPage } from "./lib/bridge/log";
 import { openRepo, recentRepos } from "./lib/bridge/repo";
 import { commitFiles, diffFile, diffNumstat } from "./lib/bridge/diff";
 import { statusRepo } from "./lib/bridge/status";
+import { stashList } from "./lib/bridge/stash";
 import type { Commit, RepoInfo, StatusReport } from "./lib/bridge/types";
 import { useDiffStore } from "./lib/stores/diff";
 import { useCommitStore } from "./lib/stores/commit";
@@ -499,6 +500,21 @@ describe("App", () => {
 
     // Without refs the gap is not rendered: the subject sits next to the graph.
     await waitFor(() => expect(document.querySelector(".commit-refs")).toBeNull());
+  });
+
+  it("Refresh reloads the stashes too and reports it in the Output", async () => {
+    const user = userEvent.setup();
+    useUiStore.setState({ outputOpen: true });
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Choose folder" }));
+    await findCommitRow();
+    vi.mocked(stashList).mockClear();
+
+    await user.click(screen.getByRole("button", { name: /Refresh/ }));
+
+    await waitFor(() => expect(stashList).toHaveBeenCalledWith("/tmp/mi-repo"));
+    expect(await screen.findByText("Refreshed mi-repo")).toBeInTheDocument();
   });
 
   it("resizes the table columns and saves the width", async () => {

@@ -1,9 +1,6 @@
 import { useEffect } from "react";
 import { subscribeRepoEvents } from "../bridge/events";
-import { useExtrasStore } from "../stores/extras";
-import { useLogStore } from "../stores/log";
-import { useRefsStore } from "../stores/refs";
-import { useStashStore } from "../stores/stash";
+import { refreshRepo } from "../refresh";
 import { useStatusStore } from "../stores/status";
 
 /** Connects watcher events to the stores (OG-010). */
@@ -14,37 +11,19 @@ export function useRepoEvents(root: string | null): void {
     }
     let disposed = false;
     let unlisteners: Array<() => void> = [];
-    const reloadLog = () => {
-      void useLogStore.getState().reload(root);
-    };
     const reloadStatus = () => {
       void useStatusStore.getState().refresh(root);
     };
-    const reloadRefs = () => {
-      void useRefsStore.getState().refresh(root);
-    };
-    const reloadStashes = () => {
-      void useStashStore.getState().refresh(root);
-    };
-    const reloadExtras = () => {
-      void useExtrasStore.getState().refresh(root);
-    };
     void subscribeRepoEvents({
+      // Ref changes can move anything (HEAD, tracking, branches), so the whole
+      // repository is reloaded; index and worktree changes only touch status.
       onRefsChanged: () => {
-        reloadLog();
-        reloadRefs();
-        reloadStatus();
-        reloadStashes();
-        reloadExtras();
+        void refreshRepo(root);
       },
       onIndexChanged: reloadStatus,
       onWorktreeChanged: reloadStatus,
       onRefreshed: () => {
-        reloadLog();
-        reloadRefs();
-        reloadStatus();
-        reloadStashes();
-        reloadExtras();
+        void refreshRepo(root);
       },
     })
       .then((functions) => {
