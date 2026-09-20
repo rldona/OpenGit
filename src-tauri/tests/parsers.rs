@@ -152,6 +152,14 @@ fn refs_parsea_ramas_remotas_tags_y_upstream() {
         .find(|reference| reference.name == "refs/tags/v0.2.0")
         .expect("tag anotado");
     assert_eq!(annotated.object_type, "tag");
+    // El tag anotado apunta al commit pelado, no al objeto tag.
+    assert_eq!(annotated.target, "7b5940ceec35abc54a73f69bab5dfd936ba95cc5");
+
+    let lightweight = refs
+        .iter()
+        .find(|reference| reference.name == "refs/tags/v0.1.0")
+        .expect("tag ligero");
+    assert_eq!(lightweight.target, lightweight.object_id);
 
     assert!(refs
         .iter()

@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { classifyRef, formatAuthor, formatCommitDate, shortRefName } from "../lib/format";
 import { ROW_HEIGHT, graphWidth as graphWidthFor, visibleLaneCount } from "../lib/graph/layout";
 import { sameRange, visibleRange, type VisibleRange } from "../lib/graph/viewport";
@@ -91,6 +91,31 @@ export function HistoryView() {
     return () => observer.disconnect();
   }, [updateRange]);
 
+  // Localiza en la lista virtualizada el commit pedido desde la sidebar
+  // (una tag, por ejemplo): lo selecciona el store y aquí lo traemos a la vista.
+  const revealRequest = useLogStore((state) => state.revealRequest);
+  const handledReveal = useRef(0);
+  useEffect(() => {
+    if (revealRequest === handledReveal.current) {
+      return;
+    }
+    handledReveal.current = revealRequest;
+    const { selected: hash, commits: list } = useLogStore.getState();
+    const scroller = scrollRef.current;
+    if (!hash || !scroller) {
+      return;
+    }
+    const index = list.findIndex((commit) => commit.hash === hash);
+    if (index < 0) {
+      return;
+    }
+    scroller.scrollTop = Math.max(
+      0,
+      (index + commitOffset) * ROW_HEIGHT - Math.round(scroller.clientHeight / 3),
+    );
+    updateRange();
+  }, [revealRequest, commitOffset, updateRange]);
+
   // Medido sobre el rango visible, no sobre todo el historial: ver OG-047.
   const laneCount = visibleLaneCount(
     rows,
@@ -162,20 +187,19 @@ export function HistoryView() {
             </span>
             <span className="commit-header-cell">Description</span>
             {(Object.keys(COLUMN_LABELS) as ColumnName[]).map((column) => (
-              <Fragment key={column}>
+              <div
+                key={column}
+                className={`commit-header-cell commit-header-${column}`}
+                style={{ width: widths[column] }}
+              >
                 <ColumnResizer
                   column={column}
                   label={COLUMN_LABELS[column]}
                   width={widths[column]}
                   onResize={(width) => setWidth(column, width)}
                 />
-                <span
-                  className={`commit-header-cell commit-header-${column}`}
-                  style={{ width: widths[column] }}
-                >
-                  {COLUMN_LABELS[column]}
-                </span>
-              </Fragment>
+                {COLUMN_LABELS[column]}
+              </div>
             ))}
           </div>
           <GraphCanvas
