@@ -723,7 +723,7 @@ body {
   justify-content: safe center;
   gap: 8px;
   overflow-x: auto;
-  padding: 8px 10px 0;
+  padding: 4px 10px 0;
   background: var(--bg-panel);
   border-bottom: 1px solid var(--border);
 }
