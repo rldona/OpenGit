@@ -92,7 +92,7 @@ describe("RebaseView", () => {
     useRebaseStore.setState({ root: REPO.root, base: "base1234567", rows: ROWS });
   });
 
-  it("muestra el plan con acciones y orden", () => {
+  it("shows the plan with actions and order", () => {
     render(<RebaseView />);
 
     expect(screen.getByText("uno")).toBeInTheDocument();
@@ -100,7 +100,7 @@ describe("RebaseView", () => {
     expect(screen.getByLabelText("Action for aaaa1111")).toHaveValue("pick");
   });
 
-  it("permite cambiar acción y reordenar", async () => {
+  it("allows changing the action and reordering", async () => {
     const user = userEvent.setup();
     render(<RebaseView />);
 
@@ -112,7 +112,7 @@ describe("RebaseView", () => {
     expect(rows.find((row) => row.subject === "uno")?.action).toBe("drop");
   });
 
-  it("pide mensaje por fila reword y lo envía al ejecutar", async () => {
+  it("asks for a message per reword row and sends it when running", async () => {
     const user = userEvent.setup();
     render(<RebaseView />);
 
@@ -134,7 +134,7 @@ describe("RebaseView", () => {
     ]);
   });
 
-  it("cancelar vuelve al historial sin ejecutar", async () => {
+  it("cancel returns to the history without running", async () => {
     const user = userEvent.setup();
     render(<RebaseView />);
 

@@ -76,7 +76,7 @@ describe("MergeDialog", () => {
     useUiStore.setState({ outputLines: [] });
   });
 
-  it("lista las otras ramas y muestra el destino", () => {
+  it("lists the other branches and shows the destination", () => {
     render(<MergeDialog onClose={() => {}} />);
 
     expect(screen.getByLabelText("Merge branch")).toHaveValue("");
@@ -85,13 +85,13 @@ describe("MergeDialog", () => {
     expect(screen.getByText("main", { selector: ".remote-value" })).toBeInTheDocument();
   });
 
-  it("no deja fusionar sin elegir rama", async () => {
+  it("does not allow merging without choosing a branch", async () => {
     render(<MergeDialog onClose={() => {}} />);
 
     expect(screen.getByRole("button", { name: "Merge" })).toBeDisabled();
   });
 
-  it("fusiona la rama elegida con --no-ff si se marca", async () => {
+  it("merges the chosen branch with --no-ff if checked", async () => {
     const user = userEvent.setup();
     const onClose = vi.fn();
     render(<MergeDialog onClose={onClose} />);

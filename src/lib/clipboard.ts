@@ -1,4 +1,4 @@
-/** Copia texto al portapapeles sin depender de plugins de Tauri. */
+/** Copies text to the clipboard without relying on Tauri plugins. */
 export async function copyText(text: string): Promise<void> {
   try {
     await navigator.clipboard.writeText(text);

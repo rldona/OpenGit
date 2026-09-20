@@ -140,14 +140,14 @@ describe("RefsSidebar", () => {
     vi.mocked(listRefs).mockResolvedValue(REFS);
   });
 
-  it("muestra ramas, remotas y tags con la actual marcada", async () => {
+  it("shows branches, remotes and tags with the current one marked", async () => {
     const user = userEvent.setup();
     render(<RefsSidebar />);
 
     await screen.findByText("feature");
     expect(screen.getByText("main")).toBeInTheDocument();
     expect(screen.getByText("feature")).toBeInTheDocument();
-    // Los remotos arrancan plegados: hay que abrir "origin" para ver sus ramas.
+    // Remotes start collapsed: "origin" must be expanded to see its branches.
     await user.click(screen.getByRole("button", { name: "origin" }));
     expect(screen.getByText("origin/remota")).toBeInTheDocument();
     expect(screen.getByText("v1.0.0")).toBeInTheDocument();
@@ -158,7 +158,7 @@ describe("RefsSidebar", () => {
     expect(screen.getByText("2↓")).toBeInTheDocument();
   });
 
-  it("selecciona la rama al pulsar, sin hacer checkout", async () => {
+  it("selects the branch on click, without checking out", async () => {
     const user = userEvent.setup();
     render(<RefsSidebar />);
 
@@ -169,7 +169,7 @@ describe("RefsSidebar", () => {
     expect(checkoutRef).not.toHaveBeenCalled();
   });
 
-  it("hace checkout desde el menú contextual", async () => {
+  it("checks out from the context menu", async () => {
     const user = userEvent.setup();
     render(<RefsSidebar />);
     await screen.findByText("feature");
@@ -180,7 +180,7 @@ describe("RefsSidebar", () => {
     expect(checkoutRef).toHaveBeenCalledWith("/tmp/repo", "feature", false);
   });
 
-  it("selecciona una rama remota sin hacer checkout", async () => {
+  it("selects a remote branch without checking out", async () => {
     const user = userEvent.setup();
     render(<RefsSidebar />);
     await screen.findByText("feature");
@@ -193,7 +193,7 @@ describe("RefsSidebar", () => {
     expect(checkoutRef).not.toHaveBeenCalled();
   });
 
-  it("crea un tag en el commit seleccionado o HEAD", async () => {
+  it("creates a tag on the selected commit or HEAD", async () => {
     const user = userEvent.setup();
     vi.mocked(tagCreate).mockResolvedValue(undefined);
     render(<RefsSidebar />);
@@ -207,7 +207,7 @@ describe("RefsSidebar", () => {
     expect(tagCreate).toHaveBeenCalledWith("/tmp/repo", "v2.0.0", "HEAD", null);
   });
 
-  it("localiza en el historial el commit de un tag al pulsarlo", async () => {
+  it("locates a tag's commit in the history when clicked", async () => {
     const user = userEvent.setup();
     vi.mocked(logPage).mockResolvedValue([
       {
@@ -233,7 +233,7 @@ describe("RefsSidebar", () => {
     expect(tag).toHaveClass("selected");
   });
 
-  it("borra un tag solo tras confirmar", async () => {
+  it("deletes a tag only after confirming", async () => {
     const user = userEvent.setup();
     vi.mocked(tagDelete).mockResolvedValue(undefined);
     render(<RefsSidebar />);
@@ -245,7 +245,7 @@ describe("RefsSidebar", () => {
     expect(tagDelete).toHaveBeenCalledWith("/tmp/repo", "v1.0.0");
   });
 
-  it("hace push del tag al remoto", async () => {
+  it("pushes the tag to the remote", async () => {
     const user = userEvent.setup();
     render(<RefsSidebar />);
     await screen.findByText("v1.0.0");
@@ -260,7 +260,7 @@ describe("RefsSidebar", () => {
     });
   });
 
-  it("no expone Push ni Delete al pasar por encima de un tag", async () => {
+  it("does not expose Push or Delete when hovering a tag", async () => {
     render(<RefsSidebar />);
 
     const row = (await screen.findByText("v1.0.0")).closest("li")!;
@@ -269,7 +269,7 @@ describe("RefsSidebar", () => {
     expect(within(row).queryByRole("button", { name: "Delete" })).not.toBeInTheDocument();
   });
 
-  it("muestra la confirmación por nombre para borrar sin mergear", () => {
+  it("shows name confirmation to delete without merging", () => {
     useRefsStore.setState({ pendingForceDelete: "feature" });
     render(<RefsSidebar />);
 
@@ -277,7 +277,7 @@ describe("RefsSidebar", () => {
     expect(screen.getByLabelText("Confirm force delete feature")).toBeInTheDocument();
   });
 
-  it("abre la URL web del remoto en el navegador", async () => {
+  it("opens the remote web URL in the browser", async () => {
     const user = userEvent.setup();
     render(<RefsSidebar />);
     await screen.findByText("feature");
@@ -287,7 +287,7 @@ describe("RefsSidebar", () => {
     expect(openExternal).toHaveBeenCalledWith("https://github.com/rldona/opengit");
   });
 
-  it("abre el menú contextual de una rama", async () => {
+  it("opens a branch context menu", async () => {
     render(<RefsSidebar />);
     await screen.findByText("feature");
 
@@ -300,7 +300,7 @@ describe("RefsSidebar", () => {
     expect(within(menu).getByRole("menuitem", { name: "Copy name" })).toBeInTheDocument();
   });
 
-  it("fusiona una rama en la actual desde el menú contextual", async () => {
+  it("merges a branch into the current one from the context menu", async () => {
     const user = userEvent.setup();
     vi.mocked(mergeBranch).mockResolvedValue({ conflicted: false, output: "" });
     vi.mocked(confirmDestructive).mockResolvedValue(true);
@@ -314,7 +314,7 @@ describe("RefsSidebar", () => {
     expect(mergeBranch).toHaveBeenCalledWith("/tmp/repo", "feature", false);
   });
 
-  it("no ofrece fusionar la rama actual en sí misma", async () => {
+  it("does not offer merging the current branch into itself", async () => {
     render(<RefsSidebar />);
     await screen.findByText("feature");
 
@@ -323,7 +323,7 @@ describe("RefsSidebar", () => {
     expect(screen.getByRole("menuitem", { name: "Merge into main" })).toBeDisabled();
   });
 
-  it("abre el menú de la sección Branches con el botón derecho", async () => {
+  it("opens the Branches section menu with the right mouse button", async () => {
     const user = userEvent.setup();
     render(<RefsSidebar />);
     await screen.findByText("feature");
@@ -340,7 +340,7 @@ describe("RefsSidebar", () => {
     expect(screen.getByLabelText("New branch name")).toBeInTheDocument();
   });
 
-  it("no expone Rename ni Delete al pasar por encima de una rama", async () => {
+  it("does not expose Rename or Delete when hovering a branch", async () => {
     render(<RefsSidebar />);
 
     const row = (await screen.findByText("feature")).closest("li")!;
@@ -349,13 +349,13 @@ describe("RefsSidebar", () => {
     expect(within(row).queryByRole("button", { name: "Delete" })).not.toBeInTheDocument();
   });
 
-  it("pliega los remotos por defecto y los despliega al pulsar", async () => {
+  it("collapses remotes by default and expands them on click", async () => {
     const user = userEvent.setup();
     render(<RefsSidebar />);
     await screen.findByText("feature");
 
-    // Sin esto, un repo con cientos de ramas remotas expulsa de la vista
-    // todo lo que va debajo (tags, stashes, submódulos).
+    // Without this, a repo with hundreds of remote branches pushes out of view
+    // everything below it (tags, stashes, submodules).
     expect(screen.queryByText("origin/remota")).not.toBeInTheDocument();
     const toggle = screen.getByRole("button", { name: "origin" });
     expect(toggle).toHaveAttribute("aria-expanded", "false");
@@ -366,7 +366,7 @@ describe("RefsSidebar", () => {
     expect(toggle).toHaveAttribute("aria-expanded", "true");
   });
 
-  it("no ofrece abrir remotos sin URL web", async () => {
+  it("does not offer to open remotes without a web URL", async () => {
     useExtrasStore.setState({ remotes: [{ name: "origin", url: "/tmp/origen", web_url: null }] });
     render(<RefsSidebar />);
     await screen.findByText("feature");

@@ -10,19 +10,19 @@ import {
 } from "./theme";
 
 describe("resolveTheme", () => {
-  it("system sigue a prefers-color-scheme", () => {
+  it("system follows prefers-color-scheme", () => {
     expect(resolveTheme("system", true)).toBe("dark");
     expect(resolveTheme("system", false)).toBe("light");
   });
 
-  it("light y dark ignoran el sistema", () => {
+  it("light and dark ignore the system", () => {
     expect(resolveTheme("light", true)).toBe("light");
     expect(resolveTheme("dark", false)).toBe("dark");
   });
 });
 
 describe("isThemePreference", () => {
-  it("acepta solo los valores conocidos", () => {
+  it("accepts only known values", () => {
     expect(isThemePreference("system")).toBe(true);
     expect(isThemePreference("light")).toBe(true);
     expect(isThemePreference("dark")).toBe(true);
@@ -31,29 +31,29 @@ describe("isThemePreference", () => {
   });
 });
 
-describe("persistencia de la preferencia", () => {
+describe("preference persistence", () => {
   beforeEach(() => {
     localStorage.clear();
   });
 
-  it("sin valor guardado cae en system", () => {
+  it("without a saved value falls back to system", () => {
     expect(loadThemePreference()).toBe("system");
   });
 
-  it("guarda y recupera la preferencia", () => {
+  it("saves and restores the preference", () => {
     saveThemePreference("light");
     expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe("light");
     expect(loadThemePreference()).toBe("light");
   });
 
-  it("un valor inválido cae en system", () => {
+  it("an invalid value falls back to system", () => {
     localStorage.setItem(THEME_STORAGE_KEY, "neon");
     expect(loadThemePreference()).toBe("system");
   });
 });
 
 describe("systemPrefersDark", () => {
-  it("lee la media query del sistema", () => {
+  it("reads the system media query", () => {
     vi.stubGlobal("matchMedia", () => ({ matches: false }));
     expect(systemPrefersDark()).toBe(false);
     vi.stubGlobal("matchMedia", () => ({ matches: true }));
@@ -63,7 +63,7 @@ describe("systemPrefersDark", () => {
 });
 
 describe("selectionRingColor", () => {
-  it("contrasta con cada tema", () => {
+  it("contrasts with each theme", () => {
     expect(selectionRingColor("dark")).not.toBe(selectionRingColor("light"));
   });
 });

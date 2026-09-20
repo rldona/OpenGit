@@ -8,14 +8,14 @@ describe("useThemeStore", () => {
     useThemeStore.setState({ preference: "system", systemDark: true, resolved: "dark" });
   });
 
-  it("setPreference persiste y resuelve el tema", () => {
+  it("setPreference persists and resolves the theme", () => {
     useThemeStore.getState().setPreference("light");
     expect(useThemeStore.getState().preference).toBe("light");
     expect(useThemeStore.getState().resolved).toBe("light");
     expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe("light");
   });
 
-  it("system sigue a setSystemDark", () => {
+  it("system follows setSystemDark", () => {
     useThemeStore.getState().setPreference("system");
     useThemeStore.getState().setSystemDark(false);
     expect(useThemeStore.getState().resolved).toBe("light");
@@ -23,7 +23,7 @@ describe("useThemeStore", () => {
     expect(useThemeStore.getState().resolved).toBe("dark");
   });
 
-  it("un cambio del sistema no pisa una preferencia explícita", () => {
+  it("a system change does not override an explicit preference", () => {
     useThemeStore.getState().setPreference("dark");
     useThemeStore.getState().setSystemDark(false);
     expect(useThemeStore.getState().resolved).toBe("dark");

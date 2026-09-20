@@ -5,7 +5,7 @@ export function startRemoteJob(path: string, kind: JobKind): Promise<string> {
   return invoke<string>("start_remote_job", { path, kind });
 }
 
-/** Marca el job para cancelar; el proceso muere en menos de 100 ms. */
+/** Marks the job to cancel it; the process dies in under 100 ms. */
 export function cancelRemoteJob(jobId: string): Promise<boolean> {
   return invoke<boolean>("cancel_remote_job", { jobId });
 }

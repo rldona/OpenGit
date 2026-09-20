@@ -16,7 +16,7 @@ import type { MergeResult, RefEntry, TrackingCommits } from "../bridge/types";
 import { useLogStore } from "./log";
 import { useStatusStore } from "./status";
 
-/** Sets de incoming/outgoing; sin upstream no hay llamada a git. */
+/** Incoming/outgoing sets; without upstream there is no git call. */
 async function loadTrackingCommits(
   root: string,
   upstream: string | null,
@@ -56,7 +56,7 @@ type RefsState = {
   load: (root: string) => Promise<void>;
   refresh: (root: string) => Promise<void>;
   checkout: (root: string, ref: RefEntry) => Promise<void>;
-  /** Fusiona `rev` en la rama actual; `null` si git falló. */
+  /** Merges `rev` into the current branch; `null` if git failed. */
   merge: (root: string, rev: string, noFf: boolean) => Promise<MergeResult | null>;
   create: (root: string, name: string, startPoint: string) => Promise<boolean>;
   rename: (root: string, oldName: string, newName: string) => Promise<boolean>;

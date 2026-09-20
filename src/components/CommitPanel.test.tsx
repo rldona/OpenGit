@@ -75,7 +75,7 @@ describe("CommitPanel", () => {
     useCommitStore.getState().reset();
   });
 
-  it("muestra la identidad de git que firmará el commit", async () => {
+  it("shows the git identity that will sign the commit", async () => {
     render(<CommitPanel />);
 
     expect(
@@ -84,7 +84,7 @@ describe("CommitPanel", () => {
     expect(screen.getByText("R")).toBeInTheDocument();
   });
 
-  it("rechaza commitear sin mensaje", async () => {
+  it("rejects committing without a message", async () => {
     const user = userEvent.setup();
     render(<CommitPanel />);
 
@@ -94,7 +94,7 @@ describe("CommitPanel", () => {
     expect(commitRepo).not.toHaveBeenCalled();
   });
 
-  it("commitea con el mensaje escrito", async () => {
+  it("commits with the written message", async () => {
     const user = userEvent.setup();
     render(<CommitPanel />);
 
@@ -104,7 +104,7 @@ describe("CommitPanel", () => {
     expect(commitRepo).toHaveBeenCalledWith("/tmp/repo", "feat: algo", false);
   });
 
-  it("deshabilita el commit mientras hay una operación en curso", async () => {
+  it("disables commit while an operation is in progress", async () => {
     vi.mocked(repoOpState).mockResolvedValue({
       merge: true,
       rebase: false,

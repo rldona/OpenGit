@@ -7,13 +7,13 @@ const pathOf = (item: Item) => item.path;
 
 function asDir<T>(node: { kind: string }): FileTreeDir<T> {
   if (node.kind !== "dir") {
-    throw new Error("se esperaba un directorio");
+    throw new Error("expected a directory");
   }
   return node as FileTreeDir<T>;
 }
 
 describe("buildFileTree", () => {
-  it("agrupa por segmentos y ordena directorios antes que ficheros", () => {
+  it("groups by segments and sorts directories before files", () => {
     const tree = buildFileTree<Item>(
       [
         { path: "src/b.ts", size: 1 },
@@ -29,7 +29,7 @@ describe("buildFileTree", () => {
     expect(src.files.map((item) => item.size)).toEqual([3, 1]);
   });
 
-  it("anida varios niveles y guarda los descendientes", () => {
+  it("nests several levels and stores the descendants", () => {
     const tree = buildFileTree<Item>(
       [
         { path: "src/lib/deep/file.ts", size: 1 },
@@ -47,7 +47,7 @@ describe("buildFileTree", () => {
     expect(lib.files).toHaveLength(1);
   });
 
-  it("ignora rutas vacías y no toca el orden de ficheros sueltos", () => {
+  it("ignores empty paths and does not touch the order of loose files", () => {
     const tree = buildFileTree<Item>(
       [
         { path: "", size: 0 },

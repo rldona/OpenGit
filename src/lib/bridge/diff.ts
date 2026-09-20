@@ -58,7 +58,7 @@ export function stageSelection(request: {
   return invoke<void>("stage_selection", request);
 }
 
-/** Destructivo: descarta hunks/líneas del working tree (confirmado en la UI). */
+/** Destructive: discards hunks/lines from the working tree (confirmed in the UI). */
 export function discardSelection(request: {
   path: string;
   file: string;

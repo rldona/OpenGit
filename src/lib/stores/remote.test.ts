@@ -74,7 +74,7 @@ describe("useRemoteStore", () => {
     vi.mocked(statusRepo).mockResolvedValue(CLEAN);
   });
 
-  it("arranca un push y se queda en ejecución", async () => {
+  it("starts a push and stays running", async () => {
     await useRemoteStore.getState().start("/tmp/repo", {
       kind: "push",
       remote: null,
@@ -91,7 +91,7 @@ describe("useRemoteStore", () => {
     expect(useUiStore.getState().outputLines.join("\n")).toContain("Running push");
   });
 
-  it("al terminar con éxito refresca grafo, refs y status", async () => {
+  it("on successful completion refreshes graph, refs and status", async () => {
     await useRemoteStore
       .getState()
       .start("/tmp/repo", { kind: "fetch", prune: false, remote: null });
@@ -113,7 +113,7 @@ describe("useRemoteStore", () => {
     expect(statusRepo).toHaveBeenCalled();
   });
 
-  it("traduce el rechazo non-fast-forward a un consejo", async () => {
+  it("translates the non-fast-forward rejection into a hint", async () => {
     await useRemoteStore.getState().start("/tmp/repo", {
       kind: "push",
       remote: null,
@@ -135,7 +135,7 @@ describe("useRemoteStore", () => {
     expect(useUiStore.getState().outputLines.join("\n")).toContain("push failed");
   });
 
-  it("cancela el job en curso", async () => {
+  it("cancels the current job", async () => {
     await useRemoteStore.getState().start("/tmp/repo", PULL);
 
     await useRemoteStore.getState().cancel();
@@ -143,7 +143,7 @@ describe("useRemoteStore", () => {
     expect(cancelRemoteJob).toHaveBeenCalledWith("job-1");
   });
 
-  it("titula el job y conserva el título en el error", async () => {
+  it("titles the job and keeps the title on error", async () => {
     await useRemoteStore.getState().start("/tmp/repo", {
       kind: "pull",
       remote: "origin",
@@ -172,7 +172,7 @@ describe("useRemoteStore", () => {
     expect(useRemoteStore.getState().title).toBeNull();
   });
 
-  it("no se queda en running si el fin llega antes de conocer el id", async () => {
+  it("does not stay running if the end arrives before the id is known", async () => {
     vi.mocked(startRemoteJob).mockImplementation(async () => {
       useRemoteStore.getState().handleFinished({
         job_id: "job-1",
@@ -189,7 +189,7 @@ describe("useRemoteStore", () => {
     expect(useRemoteStore.getState().jobId).toBeNull();
   });
 
-  it("cancela aunque el id del job no haya llegado todavía", async () => {
+  it("cancels even if the job id has not arrived yet", async () => {
     let release: (id: string) => void = () => {};
     vi.mocked(startRemoteJob).mockImplementation(
       () =>
@@ -206,7 +206,7 @@ describe("useRemoteStore", () => {
     expect(cancelRemoteJob).toHaveBeenCalledWith("job-1");
   });
 
-  it("ignora eventos de otro job", async () => {
+  it("ignores events from another job", async () => {
     await useRemoteStore.getState().start("/tmp/repo", PULL);
 
     useRemoteStore.getState().handleFinished({

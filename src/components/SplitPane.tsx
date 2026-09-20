@@ -4,7 +4,7 @@ import { clampSize, loadSize, saveSize } from "../lib/layout";
 type Props = {
   children: [ReactNode, ReactNode];
   direction: "horizontal" | "vertical";
-  /** Panel con tamaño fijo: el primero o el último. */
+  /** Panel with a fixed size: the first or the last one. */
   side: "start" | "end";
   storageKey: string;
   defaultSize: number;

@@ -44,7 +44,7 @@ describe("useExtrasStore", () => {
     useExtrasStore.getState().reset();
   });
 
-  it("load guarda submódulos, worktrees, LFS y remotos", async () => {
+  it("load stores submodules, worktrees, LFS and remotes", async () => {
     await useExtrasStore.getState().load("/tmp/repo");
 
     expect(submoduleStatus).toHaveBeenCalledWith("/tmp/repo");
@@ -59,7 +59,7 @@ describe("useExtrasStore", () => {
     expect(useExtrasStore.getState().error).toBeNull();
   });
 
-  it("load registra el error y deja de cargar", async () => {
+  it("load records the error and stops loading", async () => {
     vi.mocked(submoduleStatus).mockRejectedValue(new Error("boom"));
 
     await useExtrasStore.getState().load("/tmp/repo");
@@ -68,7 +68,7 @@ describe("useExtrasStore", () => {
     expect(useExtrasStore.getState().loading).toBe(false);
   });
 
-  it("refresh actualiza las listas", async () => {
+  it("refresh updates the lists", async () => {
     useExtrasStore.setState({ root: "/tmp/repo", submodules: [], worktrees: [], lfs: null });
 
     await useExtrasStore.getState().refresh("/tmp/repo");
@@ -78,7 +78,7 @@ describe("useExtrasStore", () => {
     expect(useExtrasStore.getState().lfs).toEqual(LFS);
   });
 
-  it("reset vacía el estado", () => {
+  it("reset empties the state", () => {
     useExtrasStore.setState({
       root: "/tmp/repo",
       submodules: SUBMODULES,

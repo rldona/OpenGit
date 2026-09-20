@@ -39,14 +39,14 @@ describe("useStatusStore", () => {
     vi.mocked(confirmDestructive).mockResolvedValue(true);
   });
 
-  it("carga el informe del working tree", async () => {
+  it("loads the working tree report", async () => {
     await useStatusStore.getState().load("/tmp/repo");
 
     expect(useStatusStore.getState().report?.entries).toHaveLength(2);
     expect(useStatusStore.getState().error).toBeNull();
   });
 
-  it("hace stage y refresca el estado", async () => {
+  it("stages and refreshes the status", async () => {
     await useStatusStore.getState().load("/tmp/repo");
     await useStatusStore.getState().stage("a.txt", null);
 
@@ -55,7 +55,7 @@ describe("useStatusStore", () => {
     expect(useUiStore.getState().outputLines.join("\n")).toContain("Stage: a.txt");
   });
 
-  it("descarta cambios y registra la acción en la salida", async () => {
+  it("discards changes and logs the action in the output", async () => {
     await useStatusStore.getState().load("/tmp/repo");
     await useStatusStore.getState().discard("a.txt", null);
 
@@ -63,7 +63,7 @@ describe("useStatusStore", () => {
     expect(useUiStore.getState().outputLines.join("\n")).toContain("Discarded: a.txt");
   });
 
-  it("hace unstage de ficheros staged", async () => {
+  it("unstages staged files", async () => {
     await useStatusStore.getState().load("/tmp/repo");
     await useStatusStore.getState().unstage("a.txt", null);
 

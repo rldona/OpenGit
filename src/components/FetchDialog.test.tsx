@@ -34,14 +34,14 @@ describe("FetchDialog", () => {
     useRemoteStore.getState().reset();
   });
 
-  it("arranca con el remoto del upstream", () => {
+  it("starts with the upstream remote", () => {
     render(<FetchDialog onClose={() => {}} />);
 
     expect(screen.getByLabelText("Fetch from repository")).toHaveValue("origin");
     expect(screen.getByText("git@github.com:rldona/opengit.git")).toBeInTheDocument();
   });
 
-  it("lanza un fetch del remoto con prune opcional", async () => {
+  it("starts a fetch of the remote with optional prune", async () => {
     const user = userEvent.setup();
     const onClose = vi.fn();
     render(<FetchDialog onClose={onClose} />);
@@ -57,7 +57,7 @@ describe("FetchDialog", () => {
     expect(onClose).toHaveBeenCalled();
   });
 
-  it("con todos los remotos ignora la selección", async () => {
+  it("with all remotes it ignores the selection", async () => {
     const user = userEvent.setup();
     render(<FetchDialog onClose={() => {}} />);
 
@@ -73,7 +73,7 @@ describe("FetchDialog", () => {
     });
   });
 
-  it("cancelar cierra sin lanzar nada", async () => {
+  it("cancel closes without starting anything", async () => {
     const user = userEvent.setup();
     const onClose = vi.fn();
     render(<FetchDialog onClose={onClose} />);

@@ -40,7 +40,7 @@ export function RefsSidebar() {
 
   const [creating, setCreating] = useState(false);
   const refMenu = useContextMenu();
-  // Selección visual: el checkout solo se hace desde el menú contextual.
+  // Visual selection: checkout is only done from the context menu.
   const [selectedRef, setSelectedRef] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
   const [renaming, setRenaming] = useState<string | null>(null);
@@ -58,8 +58,8 @@ export function RefsSidebar() {
     setSelectedRef(null);
   }, [root, load]);
 
-  // El botón Branch de la barra reutiliza el formulario que ya vive aquí,
-  // en vez de duplicar un diálogo de creación.
+  // The Branch button in the toolbar reuses the form that already lives here,
+  // instead of duplicating a creation dialog.
   useEffect(() => {
     if (newBranchRequest > 0) {
       setCreating(true);
@@ -76,7 +76,7 @@ export function RefsSidebar() {
     }
   };
 
-  // Pulsar una tag localiza su commit en el historial y lo selecciona.
+  // Clicking a tag locates its commit in the history and selects it.
   const reveal = (ref: RefEntry) => {
     if (!root) {
       return;
@@ -170,8 +170,8 @@ export function RefsSidebar() {
                 useCollapseStore.getState().set("tags", false);
               },
             },
-            // Como en SourceTree, pero sin backend todavía: se muestran
-            // deshabilitados para no prometer lo que no hay.
+            // Like in SourceTree, but without a backend yet: they are shown
+            // disabled so as not to promise what does not exist.
             { label: "New Remote…", disabled: true, onSelect: () => {} },
             { label: "Add Submodule…", disabled: true, onSelect: () => {} },
             { label: "Add/Link Subtree…", disabled: true, onSelect: () => {} },
@@ -268,8 +268,8 @@ export function RefsSidebar() {
                     if (!track || (track.ahead === 0 && track.behind === 0)) {
                       return null;
                     }
-                    // Como SourceTree: contador primero y flecha después, en un
-                    // badge que se vea de un vistazo (12↓).
+                    // Like SourceTree: counter first and arrow after, in a
+                    // badge that is visible at a glance (12↓).
                     return (
                       <span className="refs-track">
                         {track.ahead > 0 && <span>{track.ahead}↑</span>}

@@ -80,14 +80,14 @@ describe("useRebaseStore", () => {
     });
   });
 
-  it("carga el plan con todo en pick", async () => {
+  it("loads the plan with everything as pick", async () => {
     await useRebaseStore.getState().open("/tmp/repo", "base1234");
 
     expect(rebasePlan).toHaveBeenCalledWith("/tmp/repo", "base1234");
     expect(useRebaseStore.getState().rows.map((row) => row.action)).toEqual(["pick", "pick"]);
   });
 
-  it("permite varios rewords con mensajes distintos", async () => {
+  it("allows several rewords with different messages", async () => {
     await useRebaseStore.getState().open("/tmp/repo", "base1234");
 
     useRebaseStore.getState().setAction(0, "reword");
@@ -106,7 +106,7 @@ describe("useRebaseStore", () => {
     ]);
   });
 
-  it("mueve filas arriba y abajo", async () => {
+  it("moves rows up and down", async () => {
     await useRebaseStore.getState().open("/tmp/repo", "base1234");
 
     useRebaseStore.getState().move(1, -1);
@@ -114,7 +114,7 @@ describe("useRebaseStore", () => {
     expect(useRebaseStore.getState().rows.map((row) => row.subject)).toEqual(["dos", "uno"]);
   });
 
-  it("el mensaje viaja con la fila al reordenar", async () => {
+  it("the message travels with the row when reordering", async () => {
     await useRebaseStore.getState().open("/tmp/repo", "base1234");
     useRebaseStore.getState().setAction(0, "reword");
     useRebaseStore.getState().setMessage(0, "mensaje uno");
@@ -126,7 +126,7 @@ describe("useRebaseStore", () => {
     expect(rows[1]).toMatchObject({ subject: "uno", action: "reword", message: "mensaje uno" });
   });
 
-  it("exige mensaje en todos los rewords", async () => {
+  it("requires a message for every reword", async () => {
     await useRebaseStore.getState().open("/tmp/repo", "base1234");
     useRebaseStore.getState().setAction(0, "reword");
     useRebaseStore.getState().setMessage(0, "mensaje uno");
@@ -139,7 +139,7 @@ describe("useRebaseStore", () => {
     expect(interactiveRebase).not.toHaveBeenCalled();
   });
 
-  it("ejecuta el rebase y refresca", async () => {
+  it("runs the rebase and refreshes", async () => {
     await useRebaseStore.getState().open("/tmp/repo", "base1234");
     useRebaseStore.getState().setAction(1, "squash");
 
