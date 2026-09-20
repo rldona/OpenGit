@@ -1,7 +1,7 @@
 # OG-032 · Árbol de ficheros en diff y status
 
 - **Milestone:** M5 — Pulido
-- **Estado:** in-progress
+- **Estado:** done
 - **Depende de:** OG-005, OG-009
 - **Referencias:** ROADMAP.md
 
@@ -43,4 +43,4 @@ Las listas de ficheros de diff y de File status son planas. En repos con muchos 
 - `FileTree`: recursivo, plegado local por ruta de directorio (sobrevive a refrescos), `renderFile` y `renderDirExtra` por callback.
 - Diff y status comparten el toggle **List / Tree** del store `ui` (por defecto árbol); en modo árbol las filas muestran el nombre y el `title` conserva la ruta completa.
 - Tests: 199 frontend (8 nuevos: helper, componente y toggle en ambas vistas); 114 Rust intactos (cambio solo de UI).
-- Pendiente para cerrar: PR y CI verde.
+- Cerrado el 2026-09-18 con CI verde (Frontend 37 s, Rust 1m49s) en el PR #29.
