@@ -799,10 +799,7 @@ fn open_candidates(path: &Path) -> Vec<(&'static str, Vec<std::ffi::OsString>)> 
     }
     #[cfg(target_os = "windows")]
     {
-        vec![(
-            "cmd",
-            vec!["/c".into(), "start".into(), "".into(), target],
-        )]
+        vec![("cmd", vec!["/c".into(), "start".into(), "".into(), target])]
     }
     #[cfg(all(unix, not(target_os = "macos")))]
     {
