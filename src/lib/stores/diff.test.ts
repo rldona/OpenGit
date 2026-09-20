@@ -82,6 +82,7 @@ describe("useDiffStore", () => {
       staged: false,
       rev: null,
       reversed: false,
+      options: { ignore_all_space: false, ignore_blank_lines: false, word_diff: false },
     });
   });
 
@@ -353,6 +354,21 @@ describe("useDiffStore", () => {
       rev: "feature",
       file: "a.txt",
       reversed: false,
+      options: { ignore_all_space: false, ignore_blank_lines: false, word_diff: false },
     });
+  });
+
+  it("reloads the patch with the chosen diff option", async () => {
+    await useDiffStore.getState().openWorktree("/tmp/repo");
+    vi.mocked(diffFile).mockClear();
+
+    await useDiffStore.getState().toggleOption("word_diff");
+
+    expect(useDiffStore.getState().options.word_diff).toBe(true);
+    expect(diffFile).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: { ignore_all_space: false, ignore_blank_lines: false, word_diff: true },
+      }),
+    );
   });
 });

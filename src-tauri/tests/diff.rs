@@ -2,7 +2,7 @@ mod support;
 
 use opengit_lib::git::{
     commit_file_diff, commit_files, compare_file_diff, compare_numstat, diff_numstat,
-    untracked_file_diff, worktree_file_diff, Runner,
+    untracked_file_diff, worktree_file_diff, DiffOptions, Runner,
 };
 use support::TestRepo;
 
@@ -18,16 +18,40 @@ fn diff_of_working_tree_staged_and_reversed() {
     repo.git_ok(&["commit", "-q", "-m", "base"]);
 
     repo.write("a.txt", b"uno\ntres\n");
-    let unstaged = worktree_file_diff(&runner(), repo.path(), "a.txt", false, false).unwrap();
+    let unstaged = worktree_file_diff(
+        &runner(),
+        repo.path(),
+        "a.txt",
+        false,
+        false,
+        &DiffOptions::default(),
+    )
+    .unwrap();
     assert!(unstaged.contains("-dos"), "{unstaged}");
     assert!(unstaged.contains("+tres"));
     assert!(unstaged.contains("@@"));
 
     repo.git_ok(&["add", "a.txt"]);
-    let staged = worktree_file_diff(&runner(), repo.path(), "a.txt", true, false).unwrap();
+    let staged = worktree_file_diff(
+        &runner(),
+        repo.path(),
+        "a.txt",
+        true,
+        false,
+        &DiffOptions::default(),
+    )
+    .unwrap();
     assert!(staged.contains("+tres"));
 
-    let reversed = worktree_file_diff(&runner(), repo.path(), "a.txt", true, true).unwrap();
+    let reversed = worktree_file_diff(
+        &runner(),
+        repo.path(),
+        "a.txt",
+        true,
+        true,
+        &DiffOptions::default(),
+    )
+    .unwrap();
     assert!(reversed.contains("-tres"), "{reversed}");
     assert!(reversed.contains("+dos"));
 }
@@ -49,7 +73,15 @@ fn diff_of_commit_with_rename() {
         .expect("renamed");
     assert_eq!(renamed.orig_path.as_deref(), Some("viejo.txt"));
 
-    let patch = commit_file_diff(&runner(), repo.path(), "HEAD", "nuevo.txt", false).unwrap();
+    let patch = commit_file_diff(
+        &runner(),
+        repo.path(),
+        "HEAD",
+        "nuevo.txt",
+        false,
+        &DiffOptions::default(),
+    )
+    .unwrap();
     assert!(patch.contains("+mas"), "{patch}");
 }
 
@@ -61,7 +93,15 @@ fn diff_of_binaries_warns() {
     repo.git_ok(&["commit", "-q", "-m", "base"]);
     repo.write("bin.bin", b"\x00\x03\x04");
 
-    let patch = worktree_file_diff(&runner(), repo.path(), "bin.bin", false, false).unwrap();
+    let patch = worktree_file_diff(
+        &runner(),
+        repo.path(),
+        "bin.bin",
+        false,
+        false,
+        &DiffOptions::default(),
+    )
+    .unwrap();
     assert!(patch.contains("Binary files"), "{patch}");
 }
 
@@ -138,11 +178,85 @@ fn compares_two_revisions_with_added_deleted_and_renamed_files() {
         .expect("renamed");
     assert_eq!(renamed.orig_path.as_deref(), Some("viejo.txt"));
 
-    let patch =
-        compare_file_diff(&runner(), repo.path(), &base, "HEAD", "añadido.txt", false).unwrap();
+    let patch = compare_file_diff(
+        &runner(),
+        repo.path(),
+        &base,
+        "HEAD",
+        "añadido.txt",
+        false,
+        &DiffOptions::default(),
+    )
+    .unwrap();
     assert!(patch.contains("+nuevo"), "{patch}");
 
-    let reversed =
-        compare_file_diff(&runner(), repo.path(), &base, "HEAD", "añadido.txt", true).unwrap();
+    let reversed = compare_file_diff(
+        &runner(),
+        repo.path(),
+        &base,
+        "HEAD",
+        "añadido.txt",
+        true,
+        &DiffOptions::default(),
+    )
+    .unwrap();
     assert!(reversed.contains("-nuevo"), "{reversed}");
+}
+
+#[test]
+fn diff_options_ignore_whitespace() {
+    let repo = TestRepo::init();
+    repo.write("a.txt", b"hello world\n");
+    repo.git_ok(&["add", "."]);
+    repo.git_ok(&["commit", "-q", "-m", "base"]);
+    repo.write("a.txt", b"hello   world\n");
+
+    let plain = worktree_file_diff(
+        &runner(),
+        repo.path(),
+        "a.txt",
+        false,
+        false,
+        &DiffOptions::default(),
+    )
+    .unwrap();
+    assert!(plain.contains("+hello   world"), "{plain}");
+
+    let ignoring = worktree_file_diff(
+        &runner(),
+        repo.path(),
+        "a.txt",
+        false,
+        false,
+        &DiffOptions {
+            ignore_all_space: true,
+            ..DiffOptions::default()
+        },
+    )
+    .unwrap();
+    assert!(ignoring.is_empty(), "{ignoring}");
+}
+
+#[test]
+fn diff_options_word_diff_marks_the_changed_word() {
+    let repo = TestRepo::init();
+    repo.write("a.txt", b"hello world\n");
+    repo.git_ok(&["add", "."]);
+    repo.git_ok(&["commit", "-q", "-m", "base"]);
+    repo.write("a.txt", b"hello there\n");
+
+    let word = worktree_file_diff(
+        &runner(),
+        repo.path(),
+        "a.txt",
+        false,
+        false,
+        &DiffOptions {
+            word_diff: true,
+            ..DiffOptions::default()
+        },
+    )
+    .unwrap();
+
+    assert!(word.contains("[-world-]{+there+}"), "{word}");
 }
