@@ -414,7 +414,6 @@ pub fn interactive_rebase(
     path: String,
     base: String,
     todos: Vec<crate::git::TodoItem>,
-    reword_message: Option<String>,
     state: State<'_, AppState>,
 ) -> Result<(), GitError> {
     pause_while(&state, || {
@@ -424,7 +423,6 @@ pub fn interactive_rebase(
             &state.data_dir,
             &base,
             &todos,
-            reword_message.as_deref(),
         )
     })
 }
