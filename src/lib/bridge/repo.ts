@@ -2,6 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import type {
   AuthorIdent,
   GitVersion,
+  GitignoreTemplate,
   LfsStatus,
   RecentRepo,
   Remote,
@@ -16,6 +17,21 @@ export function gitVersion(): Promise<GitVersion> {
 
 export function openRepo(path: string): Promise<RepoInfo> {
   return invoke<RepoInfo>("open_repo", { path });
+}
+
+/** Creates a repository at `path`; the UI opens it afterwards (OG-086). */
+export function initRepo(
+  path: string,
+  branch: string,
+  template: string | null,
+  initialCommit: boolean,
+): Promise<void> {
+  return invoke<void>("init_repo", { path, branch, template, initialCommit });
+}
+
+/** `.gitignore` templates offered when creating a repository. */
+export function gitignoreTemplates(): Promise<GitignoreTemplate[]> {
+  return invoke<GitignoreTemplate[]>("gitignore_templates");
 }
 
 export function recentRepos(): Promise<RecentRepo[]> {

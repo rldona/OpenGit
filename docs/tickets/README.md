@@ -118,6 +118,6 @@ One file per ticket, named `OG-NNN-slug.md`. Every change in the repository star
 | [OG-083](OG-083-remove-duplicate-update-menu.md) | Remove the duplicate Check for Updates menu item | Next | done |
 | [OG-084](OG-084-restore-tabs-by-default.md) | Restore tabs by default and skip the home flash | M15 | done |
 | [OG-085](OG-085-clone-repository.md) | Clone a repository from the app | M16 | done |
-| [OG-086](OG-086-init-repository.md) | Create (init) a repository | M16 | ready |
+| [OG-086](OG-086-init-repository.md) | Create (init) a repository | M16 | done |
 | [OG-087](OG-087-home-clone-create.md) | Clone and Create entry points on the home screen | M16 | backlog |
 | [OG-088](OG-088-open-in-new-window.md) | Open a repository in a new window | M16 | backlog |
