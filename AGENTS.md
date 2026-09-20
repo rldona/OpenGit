@@ -19,7 +19,7 @@ React UI (WebView)  →  Tauri IPC (invoke/events)  →  Rust core  →  git bin
 
 ## Development
 
-Current state: **M8 completed** (2026-09-19) with SourceTree parity phase 3: file history, compare refs, per-line blame, remote/submodule/worktree management, merge strategies with a native Merge entry, and pointer-based drag & drop. There is no active milestone yet; scope for the next one starts from `ROADMAP.md`. Signing and notarization are dropped for cost (OG-028).
+Current state: **M0–M15 closed**; latest release **v0.6.2** (2026-09-20). It ships in-app auto-updates with a free minisign key (OG-081, ADR-0007) and remembered open tabs, on by default (OG-082/OG-084). There is no active milestone yet; scope for the next one starts from `ROADMAP.md`. Signing and notarization are dropped for cost (OG-028); the updater uses minisign, not code signing.
 
 ```bash
 npm install

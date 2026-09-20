@@ -2,6 +2,8 @@
 
 A milestone closes when its tickets are `done` and its exit criteria are met. Tickets live in [`docs/tickets/`](docs/tickets/README.md).
 
+**Current state:** latest release **v0.6.2** (2026-09-20), with in-app auto-updates and remembered tabs. M0–M15 are closed; the next milestone starts from this file.
+
 ## M0 — Foundation ✅ _(closed 2026-09-18)_
 
 Documentation, decisions and a runnable skeleton.
@@ -121,7 +123,7 @@ plus the merge loose ends and drag gestures.
 **Exit:** search and navigate history without touching the terminal, and run a
 repository with remotes, submodules and worktrees from the app. ✅
 
-## M9 — Repository tabs and live working tree
+## M9 — Repository tabs and live working tree ✅ _(closed 2026-09-19)_
 
 First pass over multi-repository handling and working-tree freshness, the two
 rough edges reported against daily use after M8.
@@ -138,7 +140,7 @@ rough edges reported against daily use after M8.
 **Exit:** open several repositories in tabs and see every edit land in the
 badge and the file list within the watcher latency. ✅
 
-## M10 — v0.3.1 stabilization fixes
+## M10 — v0.3.1 stabilization fixes ✅ _(closed 2026-09-19)_
 
 Small follow-ups reported against daily use right after v0.3.0.
 
@@ -149,7 +151,7 @@ Small follow-ups reported against daily use right after v0.3.0.
 
 **Exit:** green CI and previews that fit. ✅
 
-## M11 — Updates and external files
+## M11 — Updates and external files ✅ _(closed 2026-09-20)_
 
 First features beyond daily-use fixes: learning about releases from
 inside the app, and opening worktree files in the machine's
@@ -163,7 +165,7 @@ applications.
 **Exit:** get notified of v0.4.0 from v0.3.1, and open any listed file
 outside the app. ✅
 
-## M12 — Home shortcuts
+## M12 — Home shortcuts ✅ _(closed 2026-09-20)_
 
 Bring recent projects back as a shortcut on the empty state.
 
@@ -184,12 +186,12 @@ waiting for a manual refresh.
 **Exit:** editing a file outside the app refreshes the list without pressing
 Refresh. ✅
 
-## M14 — In-app auto-updates
+## M14 — In-app auto-updates ✅ _(closed 2026-09-20)_
 
 Stop downloading installers by hand: the app checks for a new release,
 downloads the right artifact and offers to restart into it.
 
-- [ ] Auto-update with `tauri-plugin-updater`, a minisign key and `latest.json`
+- [x] Auto-update with `tauri-plugin-updater`, a minisign key and `latest.json`
   from the GitHub release; "Restart to install" modal (OG-081, ADR-0007).
 
 **Exit:** from a version with the updater installed, a published newer release
@@ -212,7 +214,7 @@ there is no session to restore. ✅
 Since 2026-09-19 the convention is **English for documentation, code and
 comments**. What was written in Spanish before is translated in a separate
 process (OG-062), in small reviewable batches with CI green between them; it
-does not block M8 or new features.
+does not block new features.
 
 - [x] README.md (2026-09-19).
 - [x] ROADMAP.md, AGENTS.md, CLAUDE.md and `.github/copilot-instructions.md` (2026-09-19).
