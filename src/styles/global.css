@@ -741,7 +741,7 @@ body {
 
 .history-list {
   position: absolute;
-  inset: 0;
+  inset: 24px 0 0;
   z-index: 1;
   overflow-y: auto;
 }
@@ -752,10 +752,58 @@ body {
 
 .history-graph {
   position: absolute;
-  top: 0;
+  top: 24px;
   left: 0;
   z-index: 0;
   pointer-events: none;
+}
+
+.commit-header {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 24px;
+  padding-right: 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.commit-header-graph {
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.commit-header-cell {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.commit-header-cell:not(.commit-header-hash):not(.commit-header-author):not(.commit-header-date) {
+  flex: 1;
+}
+
+.commit-header-hash {
+  flex-shrink: 0;
+  width: 70px;
+}
+
+.commit-header-author {
+  flex-shrink: 0;
+  width: 140px;
+}
+
+.commit-header-date {
+  flex-shrink: 0;
+  width: 110px;
 }
 
 .commit-row {
