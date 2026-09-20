@@ -8,11 +8,28 @@ import {
   createBranch,
   deleteBranch,
   renameBranch,
+  trackingCommits,
 } from "../bridge/refs";
 import { tagCreate, tagDelete } from "../bridge/tags";
-import type { RefEntry } from "../bridge/types";
+import type { RefEntry, TrackingCommits } from "../bridge/types";
 import { useLogStore } from "./log";
 import { useStatusStore } from "./status";
+
+/** Sets de incoming/outgoing; sin upstream no hay llamada a git. */
+async function loadTrackingCommits(
+  root: string,
+  upstream: string | null,
+): Promise<{ incoming: string[]; outgoing: string[] }> {
+  if (!upstream) {
+    return { incoming: [], outgoing: [] };
+  }
+  try {
+    const commits: TrackingCommits = await trackingCommits(root, upstream);
+    return { incoming: commits.incoming, outgoing: commits.outgoing };
+  } catch {
+    return { incoming: [], outgoing: [] };
+  }
+}
 import { useUiStore } from "./ui";
 
 function output(line: string): void {
@@ -31,6 +48,8 @@ type RefsState = {
   ahead: number;
   behind: number;
   filter: string;
+  incoming: string[];
+  outgoing: string[];
   loading: boolean;
   error: string | null;
   pendingForceDelete: string | null;
@@ -61,6 +80,8 @@ export const useRefsStore = create<RefsState>((set, get) => ({
   ahead: 0,
   behind: 0,
   filter: "",
+  incoming: [],
+  outgoing: [],
   loading: false,
   error: null,
   pendingForceDelete: null,
@@ -69,12 +90,14 @@ export const useRefsStore = create<RefsState>((set, get) => ({
     set({ root, loading: true, error: null });
     try {
       const [refs, tracking] = await Promise.all([listRefs(root), branchTracking(root)]);
+      const commits = await loadTrackingCommits(root, tracking.upstream);
       set({
         refs,
         current: tracking.current,
         upstream: tracking.upstream,
         ahead: tracking.ahead,
         behind: tracking.behind,
+        ...commits,
         loading: false,
       });
     } catch (error) {
@@ -85,6 +108,7 @@ export const useRefsStore = create<RefsState>((set, get) => ({
   refresh: async (root) => {
     try {
       const [refs, tracking] = await Promise.all([listRefs(root), branchTracking(root)]);
+      const commits = await loadTrackingCommits(root, tracking.upstream);
       set({
         root,
         refs,
@@ -92,6 +116,7 @@ export const useRefsStore = create<RefsState>((set, get) => ({
         upstream: tracking.upstream,
         ahead: tracking.ahead,
         behind: tracking.behind,
+        ...commits,
       });
     } catch (error) {
       set({ error: formatGitError(error) });
@@ -224,6 +249,8 @@ export const useRefsStore = create<RefsState>((set, get) => ({
       ahead: 0,
       behind: 0,
       filter: "",
+      incoming: [],
+      outgoing: [],
       loading: false,
       error: null,
       pendingForceDelete: null,

@@ -70,8 +70,8 @@ const REFS: RefEntry[] = [
     name: "refs/heads/feature",
     object_id: "b",
     object_type: "commit",
-    upstream: null,
-    track: null,
+    upstream: "refs/remotes/origin/feature",
+    track: "[ahead 1, behind 2]",
   },
   {
     name: "refs/remotes/origin/remota",
@@ -121,6 +121,8 @@ describe("RefsSidebar", () => {
     expect(screen.getByLabelText("Current branch")).toBeInTheDocument();
     expect(screen.getByText("v1.0.0").querySelector(".refs-tag-mark.annotated")).not.toBeNull();
     expect(screen.getByText("ligero").querySelector(".refs-tag-mark.annotated")).toBeNull();
+    expect(screen.getByText("↑1")).toBeInTheDocument();
+    expect(screen.getByText("↓2")).toBeInTheDocument();
   });
 
   it("filtra el árbol de refs", async () => {

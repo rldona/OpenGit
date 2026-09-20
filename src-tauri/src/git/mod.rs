@@ -11,7 +11,7 @@ pub mod version;
 pub use error::GitError;
 pub use models::{
     Commit, FileDiff, FileStatus, LfsStatus, Ref, Remote, Stash, StatusKind, StatusReport,
-    Submodule, SubmoduleState, Worktree,
+    Submodule, SubmoduleState, TrackingCommits, Worktree,
 };
 pub use parsers::{
     parse_gitattributes_paths, parse_gitattributes_uses_lfs, parse_log, parse_numstat, parse_refs,
@@ -365,6 +365,40 @@ pub fn remote_urls(runner: &Runner, repo: &Path) -> Result<Vec<Remote>, GitError
         });
     }
     Ok(remotes)
+}
+
+fn rev_list(runner: &Runner, repo: &Path, range: &str) -> Result<Vec<String>, GitError> {
+    let output = runner.run_checked(
+        &GitCommand::new(["rev-list", "--max-count=200", "--end-of-options", range]).cwd(repo),
+    )?;
+    Ok(output
+        .stdout_lossy()
+        .lines()
+        .map(str::trim)
+        .filter(|line| !line.is_empty())
+        .map(str::to_string)
+        .collect())
+}
+
+/// Hashes de `HEAD..upstream` (incoming) y `upstream..HEAD` (outgoing).
+pub fn tracking_commits(
+    runner: &Runner,
+    repo: &Path,
+    upstream: &str,
+) -> Result<TrackingCommits, GitError> {
+    let upstream = upstream.trim();
+    if upstream.is_empty()
+        || upstream.starts_with('-')
+        || upstream.contains(char::is_whitespace)
+        || upstream.contains("..")
+    {
+        return Err(GitError::invalid(format!(
+            "invalid upstream ref: {upstream}"
+        )));
+    }
+    let incoming = rev_list(runner, repo, &format!("HEAD..{upstream}"))?;
+    let outgoing = rev_list(runner, repo, &format!("{upstream}..HEAD"))?;
+    Ok(TrackingCommits { incoming, outgoing })
 }
 
 pub fn stash_push(

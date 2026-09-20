@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { formatDateTime, shortRefName } from "../lib/format";
 import { LANE_WIDTH, ROW_HEIGHT } from "../lib/graph/layout";
 import { sameRange, visibleRange, type VisibleRange } from "../lib/graph/viewport";
@@ -8,6 +8,7 @@ import { useCommitActions } from "../lib/hooks/useCommitActions";
 import { useContextMenu } from "../lib/hooks/useContextMenu";
 import type { Commit, LogSearch } from "../lib/bridge/types";
 import { useLogStore } from "../lib/stores/log";
+import { useRefsStore } from "../lib/stores/refs";
 import { useRepoStore } from "../lib/stores/repo";
 import { useUiStore } from "../lib/stores/ui";
 import { GraphCanvas } from "./GraphCanvas";
@@ -37,6 +38,10 @@ export function HistoryView() {
   const [searchForm, setSearchForm] = useState<LogSearch>({ grep: "", author: "", path: "" });
   const commitActions = useCommitActions();
   const commitMenu = useContextMenu();
+  const incoming = useRefsStore((state) => state.incoming);
+  const outgoing = useRefsStore((state) => state.outgoing);
+  const incomingSet = useMemo(() => new Set(incoming), [incoming]);
+  const outgoingSet = useMemo(() => new Set(outgoing), [outgoing]);
 
   const searchActive =
     storedSearch.grep !== "" || storedSearch.author !== "" || storedSearch.path !== "";
@@ -208,7 +213,9 @@ export function HistoryView() {
                   <button
                     key={row.hash}
                     type="button"
-                    className={`commit-row${selected === row.hash ? " selected" : ""}`}
+                    className={`commit-row${selected === row.hash ? " selected" : ""}${
+                      incomingSet.has(commit.hash) ? " incoming" : ""
+                    }${outgoingSet.has(commit.hash) ? " outgoing" : ""}`}
                     style={{ top: index * ROW_HEIGHT, paddingLeft: graphWidth }}
                     onClick={() => select(row.hash)}
                     onContextMenu={(event) =>
@@ -235,6 +242,16 @@ export function HistoryView() {
                     }
                   >
                     <span className="commit-refs">{renderRefs(commit.refs)}</span>
+                    {incomingSet.has(commit.hash) && (
+                      <span className="commit-track incoming" title="Incoming commit">
+                        ↓
+                      </span>
+                    )}
+                    {outgoingSet.has(commit.hash) && (
+                      <span className="commit-track outgoing" title="Outgoing commit">
+                        ↑
+                      </span>
+                    )}
                     <span className="commit-subject" title={commit.subject}>
                       {commit.subject}
                     </span>

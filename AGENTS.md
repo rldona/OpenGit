@@ -19,7 +19,7 @@ React UI (WebView)  →  Tauri IPC (invoke/events)  →  Rust core  →  binario
 
 ## Desarrollo
 
-Estado actual: **M5 completado** (2026-09-18). MVP local + remotos + historial avanzado + rebase/conflictos + pulido (temas claro/oscuro, atajos, submódulos/worktrees, avisos LFS, releases sin firmar). La firma/notarización queda descartada por coste (OG-028); siguiente: lo que se priorice del roadmap.
+Estado actual: **M6 completado** (2026-09-18). MVP local + remotos + historial avanzado + rebase/conflictos + pulido y paridad visual con SourceTree (menú nativo, toolbar con iconos, splits, tabla de commits, menús contextuales, paneles con numeración y badges de tracking). La firma/notarización queda descartada por coste (OG-028); siguiente: lo que se priorice del roadmap.
 
 ```bash
 npm install
