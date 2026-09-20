@@ -1,4 +1,5 @@
 import { useRepoStore } from "../lib/stores/repo";
+import { Icon } from "./Icon";
 
 /**
  * Session tabs for the open repositories (OG-069, OG-070). Hidden with no
@@ -52,7 +53,7 @@ export function RepoTabs() {
         title="Open another repository"
         onClick={() => void pickAndOpen()}
       >
-        +
+        <Icon name="plus" size={14} />
       </button>
     </nav>
   );
