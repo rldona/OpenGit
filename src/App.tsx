@@ -37,6 +37,7 @@ import { setWindowTitle } from "./lib/bridge/window";
 import { useJobEvents } from "./lib/hooks/useJobEvents";
 import { useRepoEvents } from "./lib/hooks/useRepoEvents";
 import { useShortcuts, type ShortcutHandlers } from "./lib/hooks/useShortcuts";
+import { t as msg, useI18n } from "./lib/i18n";
 import { LAYOUT_KEYS } from "./lib/layout";
 import { refreshRepo } from "./lib/refresh";
 import { loadStoredSession } from "./lib/tabs";
@@ -59,6 +60,7 @@ function shouldRestoreSession(): boolean {
 }
 
 function App() {
+  const { t } = useI18n();
   const outputOpen = useUiStore((state) => state.outputOpen);
   const toggleOutput = useUiStore((state) => state.toggleOutput);
   const outputLines = useUiStore((state) => state.outputLines);
@@ -119,7 +121,7 @@ function App() {
     }
     if (
       (currentBranch === "main" || currentBranch === "master") &&
-      !(await confirmDestructive(`Push ${currentBranch} to the remote?`))
+      !(await confirmDestructive(msg("app.pushConfirm", { branch: currentBranch })))
     ) {
       return;
     }
@@ -201,7 +203,7 @@ function App() {
     setRefreshing(true);
     try {
       await refreshRepo(opened.root);
-      useUiStore.getState().appendOutput(`Refreshed ${opened.name}`);
+      useUiStore.getState().appendOutput(msg("app.refreshed", { name: opened.name }));
     } finally {
       setRefreshing(false);
     }
@@ -344,11 +346,11 @@ function App() {
     // capabilities/default.json. Silently swallowing the error hid for all of M6
     // that the title was never set: now it shows up in the Output panel.
     void setWindowTitle(repo ? repo.root : "OpenGit").catch((error: unknown) => {
-      useUiStore
-        .getState()
-        .appendOutput(
-          `Could not set the window title: ${error instanceof Error ? error.message : String(error)}`,
-        );
+      useUiStore.getState().appendOutput(
+        msg("app.couldNotSetTitle", {
+          error: error instanceof Error ? error.message : String(error),
+        }),
+      );
     });
   }, [repo]);
 
@@ -391,7 +393,7 @@ function App() {
         defaultSize={160}
         min={80}
         max={420}
-        label="Resize output"
+        label={t("output.resize")}
         collapsed={!outputOpen}
       >
         <SplitPane
@@ -402,11 +404,11 @@ function App() {
           defaultSize={240}
           min={180}
           max={480}
-          label="Resize sidebar"
+          label={t("sidebar.resize")}
           collapsed={!repo}
         >
-          <aside className="sidebar" aria-label="Repository">
-            <CollapsibleSection id="workspace" title="Workspace" icon="workspace">
+          <aside className="sidebar" aria-label={t("sidebar.repository")}>
+            <CollapsibleSection id="workspace" title={t("workspace.title")} icon="workspace">
               <ul>
                 <li>
                   <button
@@ -414,7 +416,7 @@ function App() {
                     className={`view-button${activeView === "status" ? " active" : ""}`}
                     onClick={() => setActiveView("status")}
                   >
-                    File status
+                    {t("workspace.status")}
                   </button>
                 </li>
                 <li>
@@ -423,7 +425,7 @@ function App() {
                     className={`view-button${activeView === "history" ? " active" : ""}`}
                     onClick={() => setActiveView("history")}
                   >
-                    History
+                    {t("workspace.history")}
                   </button>
                 </li>
                 <li>
@@ -432,7 +434,7 @@ function App() {
                     className={`view-button${activeView === "diff" ? " active" : ""}`}
                     onClick={() => setActiveView("diff")}
                   >
-                    Diff
+                    {t("workspace.diff")}
                   </button>
                 </li>
                 <li>
@@ -441,7 +443,9 @@ function App() {
                     className={`view-button${activeView === "conflict" ? " active" : ""}`}
                     onClick={() => setActiveView("conflict")}
                   >
-                    Conflicts{conflictCount > 0 ? ` (${conflictCount})` : ""}
+                    {conflictCount > 0
+                      ? t("workspace.conflictsCount", { count: conflictCount })
+                      : t("workspace.conflicts")}
                   </button>
                 </li>
                 <li>
@@ -450,7 +454,7 @@ function App() {
                     className={`view-button${activeView === "search" ? " active" : ""}`}
                     onClick={() => setActiveView("search")}
                   >
-                    Search
+                    {t("workspace.search")}
                   </button>
                 </li>
                 <li>
@@ -459,7 +463,7 @@ function App() {
                     className={`view-button${activeView === "reflog" ? " active" : ""}`}
                     onClick={() => setActiveView("reflog")}
                   >
-                    Reflog
+                    {t("workspace.reflog")}
                   </button>
                 </li>
               </ul>
@@ -470,7 +474,7 @@ function App() {
             <ExtrasSidebar />
           </aside>
 
-          <main className="content" aria-label="History">
+          <main className="content" aria-label={t("content.history")}>
             {error && (
               <p role="alert" className="error-banner">
                 {error}
@@ -507,8 +511,8 @@ function App() {
           </main>
         </SplitPane>
 
-        <section className="output-panel" aria-label="Output">
-          <h2>Output</h2>
+        <section className="output-panel" aria-label={t("output.title")}>
+          <h2>{t("output.title")}</h2>
           {outputLines.map((line, index) => (
             <p key={`${index}-${line}`} className="output-line">
               {line}
@@ -531,19 +535,20 @@ function Welcome({
   onClone: () => void;
   onCreate: () => void;
 }) {
+  const { t } = useI18n();
   return (
     <div className="empty-state">
-      <h1>No repository open</h1>
-      <p>Open a repository to see its commit graph and history.</p>
+      <h1>{t("welcome.title")}</h1>
+      <p>{t("welcome.subtitle")}</p>
       <div className="welcome-actions">
         <button type="button" onClick={onOpen} disabled={loading}>
-          Choose folder
+          {t("welcome.chooseFolder")}
         </button>
         <button type="button" onClick={onClone} disabled={loading}>
-          Clone Repository…
+          {t("welcome.clone")}
         </button>
         <button type="button" onClick={onCreate} disabled={loading}>
-          Create Repository…
+          {t("welcome.create")}
         </button>
       </div>
       <RecentProjects />

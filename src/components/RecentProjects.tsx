@@ -1,3 +1,4 @@
+import { useI18n } from "../lib/i18n";
 import { useRepoStore } from "../lib/stores/repo";
 
 /**
@@ -7,6 +8,7 @@ import { useRepoStore } from "../lib/stores/repo";
  * closing the repository or a tab.
  */
 export function RecentProjects() {
+  const { t } = useI18n();
   const recents = useRepoStore((state) => state.recents);
   const open = useRepoStore((state) => state.open);
   const removeRecent = useRepoStore((state) => state.removeRecent);
@@ -16,8 +18,8 @@ export function RecentProjects() {
   }
 
   return (
-    <section className="welcome-recents" aria-label="Recent projects">
-      <h2>Recent Projects</h2>
+    <section className="welcome-recents" aria-label={t("welcome.recentsAria")}>
+      <h2>{t("welcome.recents")}</h2>
       <ul className="welcome-recents-list">
         {recents.map((recent) => (
           <li key={recent.path} className="welcome-recent">
@@ -33,8 +35,8 @@ export function RecentProjects() {
             <button
               type="button"
               className="welcome-recent-remove"
-              aria-label={`Remove ${recent.name} from recent projects`}
-              title={`Remove ${recent.name}`}
+              aria-label={t("welcome.removeRecent", { name: recent.name })}
+              title={t("welcome.remove", { name: recent.name })}
               onClick={() => void removeRecent(recent.path)}
             >
               ×

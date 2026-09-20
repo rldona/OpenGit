@@ -266,8 +266,13 @@ terminal. ✅
 
 The UI is English-only (OG-014); this milestone makes the language a choice.
 
-- [ ] i18n framework plus the Spanish locale (OG-099).
+- [x] i18n framework (typed catalog, `en`/`es`) and the app shell (OG-099, ADR-0009).
 - [ ] Language selector in Settings, persisted (OG-100).
+- [ ] Area migration: history and commit views (OG-102).
+- [ ] Area migration: diff, status and staging (OG-103).
+- [ ] Area migration: sidebars and repository dialogs (OG-104).
+- [ ] Area migration: operations, settings and help (OG-105).
+- [ ] Native menu and Rust user-facing strings (OG-106).
 
 **Exit:** switching the UI between English and Spanish from Settings and the
 choice survives a restart; the code has no hardcoded UI strings left.

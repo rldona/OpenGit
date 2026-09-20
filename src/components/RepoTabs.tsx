@@ -1,4 +1,5 @@
 import { openRepoInNewWindow } from "../lib/bridge/app";
+import { useI18n } from "../lib/i18n";
 import { useContextMenu } from "../lib/hooks/useContextMenu";
 import { useRepoStore } from "../lib/stores/repo";
 import { Icon } from "./Icon";
@@ -10,6 +11,7 @@ import { Icon } from "./Icon";
  * first open, never reorder on switch).
  */
 export function RepoTabs() {
+  const { t } = useI18n();
   const openTabs = useRepoStore((state) => state.openTabs);
   const activeRoot = useRepoStore((state) => state.repo?.root ?? null);
   const open = useRepoStore((state) => state.open);
@@ -22,7 +24,7 @@ export function RepoTabs() {
   }
 
   return (
-    <nav className="repo-tabs" role="tablist" aria-label="Open repositories">
+    <nav className="repo-tabs" role="tablist" aria-label={t("tabs.aria")}>
       {openTabs.map((tab) => {
         const active = tab.path === activeRoot;
         return (
@@ -37,7 +39,7 @@ export function RepoTabs() {
               onContextMenu={(event) =>
                 menu.open(event, [
                   {
-                    label: "Open in New Window",
+                    label: t("tabs.openInNewWindow"),
                     onSelect: () => void openRepoInNewWindow(tab.path),
                   },
                 ])
@@ -48,8 +50,8 @@ export function RepoTabs() {
             <button
               type="button"
               className="repo-tab-close"
-              aria-label={`Close ${tab.name}`}
-              title={`Close ${tab.name}`}
+              aria-label={t("tabs.close", { name: tab.name })}
+              title={t("tabs.close", { name: tab.name })}
               onClick={() => void closeTab(tab.path)}
             >
               ×
@@ -60,8 +62,8 @@ export function RepoTabs() {
       <button
         type="button"
         className="repo-tab-add"
-        aria-label="Open another repository"
-        title="Open another repository"
+        aria-label={t("tabs.openAnother")}
+        title={t("tabs.openAnother")}
         onClick={() => void pickAndOpen()}
       >
         <Icon name="plus" size={14} />
