@@ -62,3 +62,4 @@ Un fichero por ticket, nombrado `OG-NNN-slug.md`. Todo cambio del repositorio na
 | [OG-027](OG-027-release-artefactos.md) | Arreglar subida de artefactos del release | M5 | done |
 | [OG-028](OG-028-sin-firma.md) | Distribución sin firma | M5 | done |
 | [OG-029](OG-029-reword-multiple.md) | Reword múltiple en rebase (v2) | M5 | done |
+| [OG-030](OG-030-diff-stash.md) | Diff de stash | M5 | in-progress |

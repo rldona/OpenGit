@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { formatGitError } from "../bridge/errors";
-import { stashApply, stashDrop, stashList, stashPush } from "../bridge/stash";
+import { stashApply, stashDrop, stashList, stashPush, stashShow } from "../bridge/stash";
 import type { Stash } from "../bridge/types";
 import { useStatusStore } from "./status";
 import { useUiStore } from "./ui";
@@ -10,12 +10,18 @@ type StashState = {
   stashes: Stash[];
   loading: boolean;
   error: string | null;
+  diffReference: string | null;
+  diffPatch: string;
+  diffLoading: boolean;
+  diffError: string | null;
   load: (root: string) => Promise<void>;
   refresh: (root: string) => Promise<void>;
   create: (root: string, message: string | null, includeUntracked: boolean) => Promise<boolean>;
   apply: (root: string, reference: string) => Promise<void>;
   pop: (root: string, reference: string) => Promise<void>;
   drop: (root: string, reference: string) => Promise<void>;
+  openDiff: (root: string, reference: string) => Promise<void>;
+  closeDiff: () => void;
   reset: () => void;
 };
 
@@ -28,6 +34,10 @@ export const useStashStore = create<StashState>((set, get) => ({
   stashes: [],
   loading: false,
   error: null,
+  diffReference: null,
+  diffPatch: "",
+  diffLoading: false,
+  diffError: null,
 
   load: async (root) => {
     set({ root, loading: true, error: null });
@@ -96,5 +106,27 @@ export const useStashStore = create<StashState>((set, get) => ({
     }
   },
 
-  reset: () => set({ root: null, stashes: [], loading: false, error: null }),
+  openDiff: async (root, reference) => {
+    set({ diffReference: reference, diffPatch: "", diffLoading: true, diffError: null });
+    try {
+      const patch = await stashShow(root, reference);
+      set({ diffPatch: patch, diffLoading: false });
+    } catch (error) {
+      set({ diffLoading: false, diffError: formatGitError(error) });
+    }
+  },
+
+  closeDiff: () => set({ diffReference: null, diffPatch: "", diffLoading: false, diffError: null }),
+
+  reset: () =>
+    set({
+      root: null,
+      stashes: [],
+      loading: false,
+      error: null,
+      diffReference: null,
+      diffPatch: "",
+      diffLoading: false,
+      diffError: null,
+    }),
 }));
