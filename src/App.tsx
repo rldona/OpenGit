@@ -1,21 +1,17 @@
 import { useEffect, useState } from "react";
 import { HistoryView } from "./components/HistoryView";
+import { StatusView } from "./components/StatusView";
 import { getAppVersion } from "./lib/bridge/core";
+import { useRepoEvents } from "./lib/hooks/useRepoEvents";
 import { useRepoStore } from "./lib/stores/repo";
 import { useUiStore } from "./lib/stores/ui";
-
-const SECTIONS = [
-  { title: "Workspace", items: ["File status", "History"] },
-  { title: "Branches", items: [] },
-  { title: "Tags", items: [] },
-  { title: "Remotes", items: [] },
-  { title: "Stashes", items: [] },
-];
 
 function App() {
   const outputOpen = useUiStore((state) => state.outputOpen);
   const toggleOutput = useUiStore((state) => state.toggleOutput);
   const outputLines = useUiStore((state) => state.outputLines);
+  const activeView = useUiStore((state) => state.activeView);
+  const setActiveView = useUiStore((state) => state.setActiveView);
 
   const repo = useRepoStore((state) => state.repo);
   const recents = useRepoStore((state) => state.recents);
@@ -25,8 +21,11 @@ function App() {
   const pickAndOpen = useRepoStore((state) => state.pickAndOpen);
   const open = useRepoStore((state) => state.open);
   const removeRecent = useRepoStore((state) => state.removeRecent);
+  const close = useRepoStore((state) => state.close);
 
   const [coreVersion, setCoreVersion] = useState<string | null>(null);
+
+  useRepoEvents(repo?.root ?? null);
 
   useEffect(() => {
     let cancelled = false;
@@ -55,6 +54,11 @@ function App() {
           <span className="core-version">
             {coreVersion ? `núcleo v${coreVersion}` : "núcleo —"}
           </span>
+          {repo && (
+            <button type="button" onClick={() => void close()}>
+              Cerrar
+            </button>
+          )}
           <button type="button" onClick={() => void pickAndOpen()} disabled={loading}>
             {loading ? "Abriendo…" : "Abrir repositorio"}
           </button>
@@ -95,7 +99,41 @@ function App() {
               </ul>
             )}
           </section>
-          <WorkspaceSections hasRepo={repo !== null} />
+
+          <section className="sidebar-section">
+            <h2>Workspace</h2>
+            {repo ? (
+              <ul>
+                <li>
+                  <button
+                    type="button"
+                    className={`view-button${activeView === "status" ? " active" : ""}`}
+                    onClick={() => setActiveView("status")}
+                  >
+                    File status
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    className={`view-button${activeView === "history" ? " active" : ""}`}
+                    onClick={() => setActiveView("history")}
+                  >
+                    History
+                  </button>
+                </li>
+              </ul>
+            ) : (
+              <p className="muted">Sin repositorio</p>
+            )}
+          </section>
+
+          {["Branches", "Tags", "Remotes", "Stashes"].map((title) => (
+            <section key={title} className="sidebar-section">
+              <h2>{title}</h2>
+              <p className="muted">{repo ? "—" : "Sin repositorio"}</p>
+            </section>
+          ))}
         </aside>
 
         <main className="content" aria-label="Historial">
@@ -104,7 +142,15 @@ function App() {
               {error}
             </p>
           )}
-          {repo ? <HistoryView /> : <Welcome loading={loading} onOpen={pickAndOpen} />}
+          {repo ? (
+            activeView === "status" ? (
+              <StatusView />
+            ) : (
+              <HistoryView />
+            )
+          ) : (
+            <Welcome loading={loading} onOpen={pickAndOpen} />
+          )}
         </main>
       </div>
 
@@ -119,29 +165,6 @@ function App() {
         </section>
       )}
     </div>
-  );
-}
-
-function WorkspaceSections({ hasRepo }: { hasRepo: boolean }) {
-  return (
-    <>
-      {SECTIONS.map((section) => (
-        <section key={section.title} className="sidebar-section">
-          <h2>{section.title}</h2>
-          {!hasRepo ? (
-            <p className="muted">Sin repositorio</p>
-          ) : section.items.length === 0 ? (
-            <p className="muted">—</p>
-          ) : (
-            <ul>
-              {section.items.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          )}
-        </section>
-      ))}
-    </>
   );
 }
 

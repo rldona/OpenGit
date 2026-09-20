@@ -4,11 +4,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
 import { getAppVersion } from "./lib/bridge/core";
 import { pickDirectory } from "./lib/bridge/dialog";
+import { subscribeRepoEvents } from "./lib/bridge/events";
 import { listRefs, logPage } from "./lib/bridge/log";
 import { openRepo, recentRepos } from "./lib/bridge/repo";
-import type { Commit, RepoInfo } from "./lib/bridge/types";
+import { statusRepo } from "./lib/bridge/status";
+import type { Commit, RepoInfo, StatusReport } from "./lib/bridge/types";
 import { useLogStore } from "./lib/stores/log";
 import { useRepoStore } from "./lib/stores/repo";
+import { useStatusStore } from "./lib/stores/status";
 import { useUiStore } from "./lib/stores/ui";
 
 vi.mock("./lib/bridge/core", () => ({
@@ -17,6 +20,7 @@ vi.mock("./lib/bridge/core", () => ({
 
 vi.mock("./lib/bridge/dialog", () => ({
   pickDirectory: vi.fn(),
+  confirmDestructive: vi.fn(),
 }));
 
 vi.mock("./lib/bridge/repo", () => ({
@@ -24,11 +28,24 @@ vi.mock("./lib/bridge/repo", () => ({
   openRepo: vi.fn(),
   recentRepos: vi.fn(),
   removeRecentRepo: vi.fn(),
+  closeRepo: vi.fn(),
 }));
 
 vi.mock("./lib/bridge/log", () => ({
   logPage: vi.fn(),
   listRefs: vi.fn(),
+}));
+
+vi.mock("./lib/bridge/status", () => ({
+  statusRepo: vi.fn(),
+  stagePath: vi.fn(),
+  unstagePath: vi.fn(),
+  discardPath: vi.fn(),
+  deleteUntracked: vi.fn(),
+}));
+
+vi.mock("./lib/bridge/events", () => ({
+  subscribeRepoEvents: vi.fn().mockResolvedValue([]),
 }));
 
 const REPO: RepoInfo = {
@@ -51,6 +68,16 @@ const COMMIT: Commit = {
   subject: "commit de prueba",
 };
 
+const REPORT: StatusReport = {
+  head: "aaaa0000",
+  branch: "main",
+  detached: false,
+  upstream: null,
+  ahead: 0,
+  behind: 0,
+  entries: [{ kind: "ordinary", xy: "M.", path: "staged.txt", orig_path: null }],
+};
+
 describe("App", () => {
   beforeEach(() => {
     vi.mocked(getAppVersion).mockResolvedValue("0.1.0");
@@ -61,9 +88,15 @@ describe("App", () => {
     vi.mocked(openRepo).mockResolvedValue(REPO);
     vi.mocked(listRefs).mockResolvedValue([]);
     vi.mocked(logPage).mockResolvedValue([COMMIT]);
+    vi.mocked(statusRepo).mockResolvedValue(REPORT);
     useRepoStore.setState({ repo: null, recents: [], loading: false, error: null });
     useLogStore.getState().reset();
-    useUiStore.setState({ outputOpen: true, outputLines: ["OpenGit listo."] });
+    useStatusStore.getState().reset();
+    useUiStore.setState({
+      outputOpen: true,
+      outputLines: ["OpenGit listo."],
+      activeView: "history",
+    });
   });
 
   it("muestra el estado vacío y la versión del núcleo", async () => {
@@ -82,8 +115,19 @@ describe("App", () => {
 
     expect(openRepo).toHaveBeenCalledWith("/tmp/mi-repo");
     expect(await screen.findByText("commit de prueba")).toBeInTheDocument();
-    expect(screen.getByRole("combobox")).toBeInTheDocument();
+    expect(subscribeRepoEvents).toHaveBeenCalled();
     expect(await screen.findByText(/Repositorio abierto: mi-repo/)).toBeInTheDocument();
+  });
+
+  it("cambia a la vista File status y muestra los cambios", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Seleccionar carpeta" }));
+    await user.click(await screen.findByRole("button", { name: "File status" }));
+
+    expect(await screen.findByRole("heading", { name: /Staged/ })).toBeInTheDocument();
+    expect(screen.getByText("staged.txt")).toBeInTheDocument();
   });
 
   it("selecciona un commit y muestra su detalle", async () => {

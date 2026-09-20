@@ -17,6 +17,7 @@ type LogState = {
   hasMore: boolean;
   error: string | null;
   load: (root: string) => Promise<void>;
+  reload: (root: string) => Promise<void>;
   loadMore: () => Promise<void>;
   setFilter: (root: string, rev: string | null) => Promise<void>;
   select: (hash: string | null) => void;
@@ -64,6 +65,26 @@ export const useLogStore = create<LogState>((set, get) => ({
       set({ error: formatGitError(error) });
     } finally {
       set({ loading: false });
+    }
+  },
+
+  /// Refresco silencioso tras el watcher: conserva selección y filtro.
+  reload: async (root) => {
+    try {
+      const filter = get().filter;
+      const [refs, commits] = await Promise.all([
+        listRefs(root),
+        logPage(root, 0, PAGE_SIZE, filter),
+      ]);
+      set({
+        root,
+        refs,
+        commits,
+        layout: layoutPage(commits.map(toInput)),
+        hasMore: commits.length === PAGE_SIZE,
+      });
+    } catch (error) {
+      set({ error: formatGitError(error) });
     }
   },
 

@@ -1,8 +1,10 @@
 import { create } from "zustand";
 import { pickDirectory } from "../bridge/dialog";
 import { formatGitError } from "../bridge/errors";
-import { openRepo, recentRepos, removeRecentRepo } from "../bridge/repo";
+import { closeRepo, openRepo, recentRepos, removeRecentRepo } from "../bridge/repo";
 import type { RecentRepo, RepoInfo } from "../bridge/types";
+import { useLogStore } from "./log";
+import { useStatusStore } from "./status";
 import { useUiStore } from "./ui";
 
 type RepoState = {
@@ -14,7 +16,7 @@ type RepoState = {
   open: (path: string) => Promise<void>;
   pickAndOpen: () => Promise<void>;
   removeRecent: (path: string) => Promise<void>;
-  close: () => void;
+  close: () => Promise<void>;
 };
 
 function output(line: string): void {
@@ -69,5 +71,15 @@ export const useRepoStore = create<RepoState>((set, get) => ({
     }
   },
 
-  close: () => set({ repo: null, error: null }),
+  close: async () => {
+    try {
+      await closeRepo();
+    } catch {
+      // Aunque falle en Rust, la UI se cierra igual.
+    }
+    useLogStore.getState().reset();
+    useStatusStore.getState().reset();
+    set({ repo: null, error: null });
+    output("Repositorio cerrado");
+  },
 }));
