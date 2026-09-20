@@ -264,6 +264,18 @@ describe("App", () => {
     expect(screen.queryByRole("region", { name: "Output" })).not.toBeInTheDocument();
   });
 
+  it("offers Clone and Create from the home screen", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Clone Repository…" }));
+    expect(screen.getByRole("dialog", { name: "Clone Repository" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+
+    await user.click(screen.getByRole("button", { name: "Create Repository…" }));
+    expect(screen.getByRole("dialog", { name: "Create Repository" })).toBeInTheDocument();
+  });
+
   it("lists recent projects on the home and opens one directly", async () => {
     const user = userEvent.setup();
     render(<App />);
