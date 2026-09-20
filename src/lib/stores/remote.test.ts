@@ -7,6 +7,7 @@ import type { JobKind, StatusReport } from "../bridge/types";
 import { useLogStore } from "./log";
 import { useRefsStore } from "./refs";
 import { useRemoteStore } from "./remote";
+import { useRepoStore } from "./repo";
 import { useUiStore } from "./ui";
 
 vi.mock("../bridge/jobs", () => ({
@@ -217,5 +218,27 @@ describe("useRemoteStore", () => {
     });
 
     expect(useRemoteStore.getState().running).toBe(true);
+  });
+
+  it("opens the cloned repository when a clone finishes", async () => {
+    const open = vi.spyOn(useRepoStore.getState(), "open").mockResolvedValue(undefined);
+    await useRemoteStore.getState().start("/tmp/clones", {
+      kind: "clone",
+      url: "https://example.com/repo.git",
+      destination: "/tmp/clones/repo",
+      depth: null,
+      branch: null,
+      recurse_submodules: false,
+    });
+
+    useRemoteStore.getState().handleFinished({
+      job_id: "job-1",
+      success: true,
+      exit_code: 0,
+      cancelled: false,
+    });
+
+    expect(open).toHaveBeenCalledWith("/tmp/clones/repo");
+    open.mockRestore();
   });
 });
