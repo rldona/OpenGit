@@ -19,7 +19,7 @@ pub fn parse_numstat(data: &[u8]) -> Result<Vec<FileDiff>, GitError> {
         let fields = split_fields(token, FIELD_SEP);
         if fields.len() != 3 {
             return Err(GitError::invalid(format!(
-                "entrada numstat con {} campos, se esperaban 3",
+                "numstat entry with {} fields, expected 3",
                 fields.len()
             )));
         }
@@ -33,7 +33,7 @@ pub fn parse_numstat(data: &[u8]) -> Result<Vec<FileDiff>, GitError> {
             let new = tokens.get(index + 2).map(|token| text(token));
             index += 3;
             let (Some(orig), Some(new)) = (orig, new) else {
-                return Err(GitError::invalid("rename numstat sin las dos rutas"));
+                return Err(GitError::invalid("numstat rename without both paths"));
             };
             diffs.push(FileDiff {
                 path: new,
@@ -63,5 +63,5 @@ fn parse_count(field: &[u8]) -> Result<Option<u64>, GitError> {
     text(field)
         .parse::<u64>()
         .map(Some)
-        .map_err(|_| GitError::invalid(format!("contador numstat ilegible: {:?}", text(field))))
+        .map_err(|_| GitError::invalid(format!("unreadable numstat count: {:?}", text(field))))
 }

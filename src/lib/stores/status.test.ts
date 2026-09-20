@@ -60,7 +60,7 @@ describe("useStatusStore", () => {
     await useStatusStore.getState().discard("a.txt", null);
 
     expect(discardPath).toHaveBeenCalledWith("/tmp/repo", "a.txt", null);
-    expect(useUiStore.getState().outputLines.join("\n")).toContain("Descartado: a.txt");
+    expect(useUiStore.getState().outputLines.join("\n")).toContain("Discarded: a.txt");
   });
 
   it("hace unstage de ficheros staged", async () => {

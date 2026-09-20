@@ -316,7 +316,7 @@ impl GitProcess {
                 })
             }
             Err(RecvTimeoutError::Disconnected) => Err(GitError::Spawn {
-                message: "el hilo de espera terminó sin estado".into(),
+                message: "wait thread finished without status".into(),
             }),
         }
     }
@@ -335,7 +335,7 @@ fn join_reader(handle: JoinHandle<io::Result<Vec<u8>>>) -> Result<Vec<u8>, GitEr
             message: err.to_string(),
         }),
         Err(_) => Err(GitError::Spawn {
-            message: "el lector de salida de git murió".into(),
+            message: "git output reader panicked".into(),
         }),
     }
 }

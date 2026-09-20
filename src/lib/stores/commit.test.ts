@@ -59,7 +59,7 @@ describe("useCommitStore", () => {
     const ok = await useCommitStore.getState().submit(1);
 
     expect(ok).toBe(false);
-    expect(useCommitStore.getState().error).toBe("Escribe un mensaje de commit");
+    expect(useCommitStore.getState().error).toBe("Write a commit message");
     expect(commitRepo).not.toHaveBeenCalled();
   });
 
@@ -70,7 +70,7 @@ describe("useCommitStore", () => {
     const ok = await useCommitStore.getState().submit(0);
 
     expect(ok).toBe(false);
-    expect(useCommitStore.getState().error).toContain("No hay cambios en el index");
+    expect(useCommitStore.getState().error).toContain("Nothing staged");
     expect(commitRepo).not.toHaveBeenCalled();
   });
 

@@ -72,7 +72,7 @@ describe("DiffView", () => {
     expect(await screen.findByText("a.txt")).toBeInTheDocument();
     expect(screen.getByText("bin.bin")).toBeInTheDocument();
     expect(await screen.findByTestId("diff-editor")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Lado a lado" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Side by side" })).toBeInTheDocument();
   });
 
   it("avisa de ficheros binarios sin editor", async () => {
@@ -81,7 +81,7 @@ describe("DiffView", () => {
 
     await user.click(await screen.findByText("bin.bin"));
 
-    expect(await screen.findByText(/Fichero binario/)).toBeInTheDocument();
+    expect(await screen.findByText(/Binary file/)).toBeInTheDocument();
     expect(screen.queryByTestId("diff-editor")).not.toBeInTheDocument();
   });
 
@@ -89,7 +89,7 @@ describe("DiffView", () => {
     const user = userEvent.setup();
     render(<DiffView />);
 
-    await user.click(await screen.findByRole("button", { name: "Unificado" }));
+    await user.click(await screen.findByRole("button", { name: "Unified" }));
 
     expect(useDiffStore.getState().mode).toBe("unified");
     expect(await screen.findByRole("button", { name: "Stage hunk" })).toBeInTheDocument();

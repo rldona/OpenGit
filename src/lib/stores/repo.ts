@@ -33,7 +33,7 @@ export const useRepoStore = create<RepoState>((set, get) => ({
     try {
       set({ recents: await recentRepos() });
     } catch (error) {
-      output(`No se pudieron cargar los recientes: ${formatGitError(error)}`);
+      output(`Could not load recent repositories: ${formatGitError(error)}`);
     }
   },
 
@@ -42,12 +42,12 @@ export const useRepoStore = create<RepoState>((set, get) => ({
     try {
       const info = await openRepo(path);
       set({ repo: info, loading: false });
-      output(`Repositorio abierto: ${info.name} (${info.branch ?? "detached HEAD"})`);
+      output(`Repository opened: ${info.name} (${info.branch ?? "detached HEAD"})`);
       await get().loadRecents();
     } catch (error) {
       const message = formatGitError(error);
       set({ loading: false, error: message });
-      output(`Error al abrir ${path}: ${message}`);
+      output(`Could not open ${path}: ${message}`);
     }
   },
 
@@ -67,7 +67,7 @@ export const useRepoStore = create<RepoState>((set, get) => ({
       await removeRecentRepo(path);
       await get().loadRecents();
     } catch (error) {
-      output(`No se pudo quitar de recientes: ${formatGitError(error)}`);
+      output(`Could not remove from recents: ${formatGitError(error)}`);
     }
   },
 
@@ -80,6 +80,6 @@ export const useRepoStore = create<RepoState>((set, get) => ({
     useLogStore.getState().reset();
     useStatusStore.getState().reset();
     set({ repo: null, error: null });
-    output("Repositorio cerrado");
+    output("Repository closed");
   },
 }));

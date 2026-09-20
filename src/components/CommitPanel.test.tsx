@@ -75,7 +75,7 @@ describe("CommitPanel", () => {
 
     await user.click(screen.getByRole("button", { name: "Commit" }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("Escribe un mensaje de commit");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Write a commit message");
     expect(commitRepo).not.toHaveBeenCalled();
   });
 
@@ -83,7 +83,7 @@ describe("CommitPanel", () => {
     const user = userEvent.setup();
     render(<CommitPanel />);
 
-    await user.type(screen.getByLabelText("Mensaje del commit"), "feat: algo");
+    await user.type(screen.getByLabelText("Commit message"), "feat: algo");
     await user.click(screen.getByRole("button", { name: "Commit" }));
 
     expect(commitRepo).toHaveBeenCalledWith("/tmp/repo", "feat: algo", false);
@@ -93,7 +93,7 @@ describe("CommitPanel", () => {
     vi.mocked(repoOpState).mockResolvedValue({ merge: true, rebase: false, cherry_pick: false });
     render(<CommitPanel />);
 
-    expect(await screen.findByRole("status")).toHaveTextContent("merge en curso");
+    expect(await screen.findByRole("status")).toHaveTextContent("merge in progress");
     expect(screen.getByRole("button", { name: "Commit" })).toBeDisabled();
   });
 });

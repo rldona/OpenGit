@@ -21,9 +21,10 @@ pub struct GitVersion {
 impl GitVersion {
     /// Parsea la salida de `git --version`, p. ej. `git version 2.50.1 (Apple Git-155)`.
     pub fn parse(output: &str) -> Result<Self, GitError> {
-        let rest = output.trim().strip_prefix("git version ").ok_or_else(|| {
-            GitError::invalid(format!("salida de versión inesperada: {output:?}"))
-        })?;
+        let rest = output
+            .trim()
+            .strip_prefix("git version ")
+            .ok_or_else(|| GitError::invalid(format!("unexpected version output: {output:?}")))?;
         let numbers = rest.split_whitespace().next().unwrap_or_default();
         let mut parts = numbers.split('.');
         let major = parse_part(parts.next(), output)?;
@@ -47,7 +48,7 @@ impl GitVersion {
 
 fn parse_part(part: Option<&str>, output: &str) -> Result<u32, GitError> {
     part.and_then(|value| value.parse().ok())
-        .ok_or_else(|| GitError::invalid(format!("versión de git ilegible: {output:?}")))
+        .ok_or_else(|| GitError::invalid(format!("unreadable git version: {output:?}")))
 }
 
 impl fmt::Display for GitVersion {
