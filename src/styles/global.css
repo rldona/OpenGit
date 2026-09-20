@@ -809,47 +809,79 @@ body {
   color: var(--text);
 }
 
-/* Update notice (OG-077): quiet banner under the tab strip. */
-.update-notice {
+/* Update dialog (OG-081): FlupCode-style "restart to install" prompt. */
+.update-dialog {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: min(400px, calc(100vw - 32px));
+  padding: 20px 22px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-panel);
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+
+.update-dialog-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 5px 10px;
-  background: var(--bg-panel);
-  border-bottom: 1px solid var(--border);
-  color: var(--text-muted);
-  font-size: 12px;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: var(--bg-elevated);
+  color: var(--accent);
 }
 
-.update-action {
-  padding: 1px 8px;
-  border: 1px solid var(--accent);
-  border-radius: 4px;
+.update-dialog-title {
+  margin: 0;
+  font-size: 15px;
+}
+
+.update-dialog-text {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.update-dialog-progress {
+  width: 100%;
+  height: 6px;
+}
+
+.update-dialog-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.update-dialog-actions button {
+  flex: 1;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
   background: transparent;
-  color: var(--accent);
+  color: var(--text);
   font: inherit;
   cursor: pointer;
 }
 
-.update-action:hover {
+.update-dialog-actions button:hover {
+  background: var(--hover);
+}
+
+.update-dialog-actions button.primary {
+  border-color: var(--accent);
   background: var(--accent);
   color: var(--accent-fg);
 }
 
-.update-dismiss {
-  padding: 1px 6px;
-  border: none;
-  border-radius: 4px;
-  background: transparent;
-  color: var(--text-muted);
-  font: inherit;
-  cursor: pointer;
-}
-
-.update-dismiss:hover {
-  background: var(--hover);
-  color: var(--text);
+.update-dialog-actions button.primary:hover {
+  filter: brightness(1.1);
 }
 
 .error-banner {

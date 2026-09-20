@@ -59,6 +59,7 @@ The binaries are **not signed or notarized** (certificates cost money and this p
 - **Remotes** with an options dialog, streaming progress and cancel; credentials are handled by the system credential helper.
 - **Navigable history**: branch filter, column sorting, search and an "Uncommitted changes" row.
 - **Light/dark theme** and keyboard shortcuts.
+- **In-app updates**: checks for a new release on startup (or from the menu), downloads it in the background and offers to restart into it.
 
 ## Status
 
@@ -73,6 +74,7 @@ The binaries are **not signed or notarized** (certificates cost money and this p
 | Git engine | system `git` binary | [ADR-0003](docs/decisions/) |
 | Commit graph | canvas + incremental loading | [ADR-0004](docs/decisions/) |
 | Global state | Zustand | [ADR-0005](docs/decisions/) |
+| Updates | `tauri-plugin-updater` + minisign | [ADR-0007](docs/decisions/) |
 
 ## Principles
 

@@ -184,6 +184,17 @@ waiting for a manual refresh.
 **Exit:** editing a file outside the app refreshes the list without pressing
 Refresh. ✅
 
+## M14 — In-app auto-updates
+
+Stop downloading installers by hand: the app checks for a new release,
+downloads the right artifact and offers to restart into it.
+
+- [ ] Auto-update with `tauri-plugin-updater`, a minisign key and `latest.json`
+  from the GitHub release; "Restart to install" modal (OG-081, ADR-0007).
+
+**Exit:** from a version with the updater installed, a published newer release
+is offered and installed without visiting GitHub.
+
 ## Translating documentation and comments to English
 
 Since 2026-09-19 the convention is **English for documentation, code and
@@ -205,5 +216,5 @@ does not block M8 or new features.
 - Reimplementing git (never).
 - Deep hosting integrations (PRs, issues) — at most, opening the remote URL.
 - Editing files inside the app.
-- Installer signing and notarization: their cost is not assumed; the app ships unsigned (OG-028).
-- Auto-updater, `.rpm` packaging and beta channels.
+- Installer signing and notarization: their cost is not assumed; the app ships unsigned (OG-028). The updater uses a free minisign key, not code signing (ADR-0007).
+- `.rpm` packaging and beta channels.

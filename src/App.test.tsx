@@ -1,9 +1,9 @@
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { check } from "@tauri-apps/plugin-updater";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
 import { pickDirectory } from "./lib/bridge/dialog";
-import { openExternal } from "./lib/bridge/opener";
 import { startRemoteJob } from "./lib/bridge/jobs";
 import { readConflictFile } from "./lib/bridge/conflict";
 import { subscribeRepoEvents } from "./lib/bridge/events";
@@ -32,10 +32,6 @@ import { THEME_STORAGE_KEY } from "./lib/theme";
 vi.mock("./lib/bridge/dialog", () => ({
   pickDirectory: vi.fn(),
   confirmDestructive: vi.fn().mockResolvedValue(true),
-}));
-
-vi.mock("./lib/bridge/app", () => ({
-  appVersion: vi.fn().mockResolvedValue("0.3.1"),
 }));
 
 vi.mock("./lib/bridge/opener", () => ({
@@ -165,6 +161,14 @@ vi.mock("./components/DiffEditor", () => ({
   DiffEditor: () => <div data-testid="diff-editor" />,
 }));
 
+vi.mock("@tauri-apps/plugin-updater", () => ({
+  check: vi.fn().mockResolvedValue(null),
+}));
+
+vi.mock("@tauri-apps/plugin-process", () => ({
+  relaunch: vi.fn().mockResolvedValue(undefined),
+}));
+
 const REPO: RepoInfo = {
   root: "/tmp/mi-repo",
   name: "mi-repo",
@@ -227,8 +231,9 @@ describe("App", () => {
     });
     useRepoStore.setState({ repo: null, recents: [], openTabs: [], loading: false, error: null });
     useUpdateStore.getState().reset();
-    // The startup update check must never touch the network in tests.
-    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("offline")));
+    // The updater plugin is mocked; the startup check never touches the network.
+    vi.mocked(check).mockReset();
+    vi.mocked(check).mockResolvedValue(null);
     useCommitStore.getState().reset();
     useExtrasStore.getState().reset();
     useLogStore.getState().reset();
@@ -873,18 +878,23 @@ describe("App", () => {
     expect(screen.getByRole("region", { name: "Output" })).toBeInTheDocument();
   });
 
-  it("checks for updates from the native menu and offers the download", async () => {
+  it("checks for updates from the native menu and offers to restart", async () => {
     const user = userEvent.setup();
-    vi.mocked(fetch).mockResolvedValue(
-      new Response(JSON.stringify({ tag_name: "v0.4.0" }), { status: 200 }),
-    );
+    const update = {
+      version: "0.4.0",
+      download: vi.fn().mockResolvedValue(undefined),
+      install: vi.fn().mockResolvedValue(undefined),
+    };
     render(<App />);
+    // Let the silent startup check finish before the manual one in this test.
+    await waitFor(() => expect(useUpdateStore.getState().status).toBe("idle"));
+    vi.mocked(check).mockResolvedValue(update as never);
 
     act(() => menuMock.handler?.("check-updates"));
 
-    expect(await screen.findByText(/is available\./)).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Download" }));
-    expect(openExternal).toHaveBeenCalledWith("https://github.com/rldona/OpenGit/releases/latest");
+    expect(await screen.findByText("OpenGit 0.4.0 is ready.")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Later" }));
+    expect(screen.queryByText("OpenGit 0.4.0 is ready.")).not.toBeInTheDocument();
   });
 
   it("opens the Merge window from the native menu", async () => {
