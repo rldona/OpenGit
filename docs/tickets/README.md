@@ -72,4 +72,4 @@ Un fichero por ticket, nombrado `OG-NNN-slug.md`. Todo cambio del repositorio na
 | [OG-037](OG-037-tabla-commits.md) | Tabla de commits con cabecera | M6 | done |
 | [OG-038](OG-038-context-menus.md) | Menús contextuales | M6 | done |
 | [OG-039](OG-039-paneles-diff.md) | Paneles de status/diff estilo SourceTree | M6 | done |
-| [OG-040](OG-040-incoming-outgoing.md) | Commits entrantes/salientes con badges | M6 | in-progress |
+| [OG-040](OG-040-incoming-outgoing.md) | Commits entrantes/salientes con badges | M6 | done |
