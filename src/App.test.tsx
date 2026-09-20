@@ -284,6 +284,26 @@ describe("App", () => {
     expect(await screen.findByRole("tab", { name: "mi-repo" })).toBeInTheDocument();
   });
 
+  it("does not flash the home while restoring the session", async () => {
+    useSettingsStore.setState({ restoreTabs: true });
+    saveStoredSession([{ path: "/tmp/mi-repo" }], "/tmp/mi-repo");
+    let resolveOpen: ((repo: RepoInfo) => void) | undefined;
+    vi.mocked(openRepo).mockImplementation(
+      () =>
+        new Promise<RepoInfo>((resolve) => {
+          resolveOpen = resolve;
+        }),
+    );
+
+    render(<App />);
+
+    // The recents home must not appear while the stored repo is opening.
+    expect(screen.queryByRole("heading", { name: "No repository open" })).not.toBeInTheDocument();
+
+    resolveOpen?.(REPO);
+    expect(await screen.findByRole("tab", { name: "mi-repo" })).toBeInTheDocument();
+  });
+
   it("opens the chosen repository and shows the history", async () => {
     const user = userEvent.setup();
     useUiStore.setState({ outputOpen: true });

@@ -116,3 +116,4 @@ One file per ticket, named `OG-NNN-slug.md`. Every change in the repository star
 | [OG-081](OG-081-auto-updates.md) | In-app auto-updates | M14 | done |
 | [OG-082](OG-082-remember-open-tabs.md) | Remember open repositories between sessions | M15 | done |
 | [OG-083](OG-083-remove-duplicate-update-menu.md) | Remove the duplicate Check for Updates menu item | Next | done |
+| [OG-084](OG-084-restore-tabs-by-default.md) | Restore tabs by default and skip the home flash | M15 | done |
