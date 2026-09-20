@@ -386,6 +386,80 @@ pub fn delete_branch(
 }
 
 #[tauri::command]
+pub fn tag_create(
+    path: String,
+    name: String,
+    target: String,
+    message: Option<String>,
+    state: State<'_, AppState>,
+) -> Result<(), GitError> {
+    pause_while(&state, || {
+        crate::git::tag_create(
+            &state.runner,
+            Path::new(&path),
+            &name,
+            &target,
+            message.as_deref(),
+        )
+    })
+}
+
+#[tauri::command]
+pub fn tag_delete(path: String, name: String, state: State<'_, AppState>) -> Result<(), GitError> {
+    pause_while(&state, || {
+        crate::git::tag_delete(&state.runner, Path::new(&path), &name)
+    })
+}
+
+#[tauri::command]
+pub fn stash_list(
+    path: String,
+    state: State<'_, AppState>,
+) -> Result<Vec<crate::git::Stash>, GitError> {
+    crate::git::stash_list(&state.runner, Path::new(&path))
+}
+
+#[tauri::command]
+pub fn stash_push(
+    path: String,
+    message: Option<String>,
+    include_untracked: bool,
+    state: State<'_, AppState>,
+) -> Result<(), GitError> {
+    pause_while(&state, || {
+        crate::git::stash_push(
+            &state.runner,
+            Path::new(&path),
+            message.as_deref(),
+            include_untracked,
+        )
+    })
+}
+
+#[tauri::command]
+pub fn stash_apply(
+    path: String,
+    reference: String,
+    drop: bool,
+    state: State<'_, AppState>,
+) -> Result<(), GitError> {
+    pause_while(&state, || {
+        crate::git::stash_apply(&state.runner, Path::new(&path), &reference, drop)
+    })
+}
+
+#[tauri::command]
+pub fn stash_drop(
+    path: String,
+    reference: String,
+    state: State<'_, AppState>,
+) -> Result<(), GitError> {
+    pause_while(&state, || {
+        crate::git::stash_drop(&state.runner, Path::new(&path), &reference)
+    })
+}
+
+#[tauri::command]
 pub fn recent_repos(state: State<'_, AppState>) -> Result<Vec<RecentRepo>, GitError> {
     Ok(state.recents.lock().map_err(lock_error)?.list())
 }

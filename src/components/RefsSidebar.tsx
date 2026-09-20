@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { confirmDestructive } from "../lib/bridge/dialog";
 import { useLogStore } from "../lib/stores/log";
 import { useRefsStore } from "../lib/stores/refs";
+import { useRemoteStore } from "../lib/stores/remote";
 import { useRepoStore } from "../lib/stores/repo";
 
 export function RefsSidebar() {
@@ -23,11 +25,19 @@ export function RefsSidebar() {
   const cancelForceDelete = useRefsStore((state) => state.cancelForceDelete);
   const selectedCommit = useLogStore((state) => state.selected);
 
+  const createTag = useRefsStore((state) => state.createTag);
+  const deleteTag = useRefsStore((state) => state.deleteTag);
+  const startRemote = useRemoteStore((state) => state.start);
+
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
   const [renaming, setRenaming] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
   const [typed, setTyped] = useState("");
+  const [tagForm, setTagForm] = useState(false);
+  const [tagName, setTagName] = useState("");
+  const [tagMessage, setTagMessage] = useState("");
+  const [tagAnnotated, setTagAnnotated] = useState(false);
 
   useEffect(() => {
     if (root) {
@@ -75,6 +85,36 @@ export function RefsSidebar() {
     if (ok) {
       setRenaming(null);
       setRenameValue("");
+    }
+  };
+
+  const submitTag = async () => {
+    if (!root || tagName.trim() === "") {
+      return;
+    }
+    const ok = await createTag(
+      root,
+      tagName.trim(),
+      selectedCommit ?? "HEAD",
+      tagAnnotated ? tagMessage : null,
+    );
+    if (ok) {
+      setTagForm(false);
+      setTagName("");
+      setTagMessage("");
+      setTagAnnotated(false);
+    }
+  };
+
+  const confirmDeleteTag = async (name: string) => {
+    if (root && (await confirmDestructive(`Delete tag ${name}? This cannot be undone.`))) {
+      await deleteTag(root, name);
+    }
+  };
+
+  const pushTag = (name: string) => {
+    if (root) {
+      void startRemote(root, { kind: "push_tag", remote: null, tag: name });
     }
   };
 
@@ -239,24 +279,76 @@ export function RefsSidebar() {
           </div>
         ))}
       </section>
-
       <section className="sidebar-section">
         <h2>Tags</h2>
+        <div className="refs-toolbar">
+          <button
+            type="button"
+            aria-label="New tag"
+            title="New tag"
+            onClick={() => setTagForm((value) => !value)}
+          >
+            +
+          </button>
+        </div>
+        {tagForm && (
+          <div className="refs-inline refs-tag-form">
+            <input
+              autoFocus
+              aria-label="New tag name"
+              placeholder="Tag name"
+              value={tagName}
+              onChange={(event) => setTagName(event.target.value)}
+            />
+            <label className="refs-check">
+              <input
+                type="checkbox"
+                checked={tagAnnotated}
+                onChange={(event) => setTagAnnotated(event.target.checked)}
+              />
+              Annotated
+            </label>
+            {tagAnnotated && (
+              <input
+                aria-label="Tag message"
+                placeholder="Tag message"
+                value={tagMessage}
+                onChange={(event) => setTagMessage(event.target.value)}
+              />
+            )}
+            <button type="button" onClick={() => void submitTag()}>
+              Create
+            </button>
+          </div>
+        )}
         <ul className="refs-list">
           {tags.map(({ ref, short }) => (
             <li
               key={ref.name}
-              className="refs-tag"
+              className="refs-item"
               title={ref.object_type === "tag" ? "Annotated tag" : "Lightweight tag"}
             >
-              <span className={`refs-tag-mark${ref.object_type === "tag" ? " annotated" : ""}`} />
-              {short}
+              <span className="refs-tag">
+                <span className={`refs-tag-mark${ref.object_type === "tag" ? " annotated" : ""}`} />
+                {short}
+              </span>
+              <span className="refs-actions">
+                <button type="button" onClick={() => pushTag(short)}>
+                  Push
+                </button>
+                <button
+                  type="button"
+                  className="danger"
+                  onClick={() => void confirmDeleteTag(short)}
+                >
+                  Delete
+                </button>
+              </span>
             </li>
           ))}
           {tags.length === 0 && <li className="muted">No tags</li>}
         </ul>
       </section>
-
       {error && (
         <p role="alert" className="refs-error">
           {error}

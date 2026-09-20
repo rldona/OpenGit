@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { DiffView } from "./components/DiffView";
 import { HistoryView } from "./components/HistoryView";
 import { RefsSidebar } from "./components/RefsSidebar";
+import { StashSidebar } from "./components/StashSidebar";
 import { StatusView } from "./components/StatusView";
 import { getAppVersion } from "./lib/bridge/core";
 import { confirmDestructive } from "./lib/bridge/dialog";
@@ -202,10 +203,14 @@ function App() {
             </section>
           )}
 
-          <section className="sidebar-section">
-            <h2>Stashes</h2>
-            <p className="muted">{repo ? "—" : "No repository open"}</p>
-          </section>
+          {repo ? (
+            <StashSidebar />
+          ) : (
+            <section className="sidebar-section">
+              <h2>Stashes</h2>
+              <p className="muted">No repository open</p>
+            </section>
+          )}
         </aside>
 
         <main className="content" aria-label="History">
