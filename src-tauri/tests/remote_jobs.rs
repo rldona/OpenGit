@@ -13,7 +13,9 @@ fn runner() -> Runner {
 }
 
 fn init_bare(dir: &TempDir) {
-    let output = git(dir.path(), &["init", "--bare", "-q"]);
+    // `-b main` explícito: sin init.defaultBranch, CI crea master y el clon
+    // no seguiría la rama que empujamos.
+    let output = git(dir.path(), &["init", "--bare", "-b", "main", "-q"]);
     assert!(output.status.success());
 }
 
@@ -106,7 +108,13 @@ fn fetch_actualiza_las_refs_remotas() {
     let b_path = clones.path().join("b");
     let cloned = git(
         clones.path(),
-        &["clone", remote.path().to_str().unwrap(), "b"],
+        &[
+            "clone",
+            "--branch",
+            "main",
+            remote.path().to_str().unwrap(),
+            "b",
+        ],
     );
     assert!(
         cloned.status.success(),
@@ -148,7 +156,13 @@ fn push_rechazado_por_non_fast_forward() {
     let b_path = clones.path().join("b");
     let cloned = git(
         clones.path(),
-        &["clone", remote.path().to_str().unwrap(), "b"],
+        &[
+            "clone",
+            "--branch",
+            "main",
+            remote.path().to_str().unwrap(),
+            "b",
+        ],
     );
     assert!(cloned.status.success());
 
