@@ -49,6 +49,7 @@
   --text: #1f2328;
   --text-muted: #667085;
   --accent: #2563eb;
+  --accent-fg: #ffffff;
   --hover: rgb(0 0 0 / 5%);
   --warning-bg: #fff7e0;
   --warning-border: #e3b341;
@@ -2087,17 +2088,15 @@ body {
   background: var(--hover);
 }
 
-.refs-name.current {
-  font-weight: 600;
-}
-
+/* The current branch uses the active-view highlight instead of the old dot,
+   which was easy to miss. */
+.refs-name.current,
 .refs-name.selected {
   background: rgb(59 130 246 / 18%);
 }
 
-.refs-dot {
-  color: var(--accent);
-  font-size: 10px;
+.refs-name.current {
+  font-weight: 600;
 }
 
 /* Badge de tracking (12↓), como SourceTree: píldora gris con contador y
@@ -2109,8 +2108,8 @@ body {
   margin-left: auto;
   padding: 0 7px;
   border-radius: 999px;
-  background: var(--border);
-  color: var(--text);
+  background: var(--accent);
+  color: var(--accent-fg);
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 600;
