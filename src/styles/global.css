@@ -740,7 +740,7 @@ body {
 
 .repo-tab-open {
   overflow: hidden;
-  padding: 4px 8px;
+  padding: 7px 10px;
   border: none;
   background: transparent;
   color: var(--text-muted);
