@@ -798,10 +798,11 @@ pub fn merge_branch(
 pub fn revert_commit(
     path: String,
     hash: String,
+    mainline: Option<u32>,
     state: State<'_, AppState>,
 ) -> Result<(), GitError> {
     pause_while(&state, || {
-        crate::git::revert_commit(&state.runner, Path::new(&path), &hash)
+        crate::git::revert_commit(&state.runner, Path::new(&path), &hash, mainline)
     })
 }
 
