@@ -3,45 +3,45 @@ name: commit-graph-layout
 description: Use when implementing or debugging the commit graph lanes in the log view (lane assignment, incremental layout, canvas rendering, HiDPI). Triggers on grafo, lanes, graph, commit graph, canvas, topo-order, parents, merges. Covers the lane algorithm, stable colors and performance rules.
 ---
 
-# Layout del grafo de commits
+# Commit graph layout
 
-## Entrada y salida
+## Input and output
 
-- Entrada: commits en orden topológico inverso (nuevo → viejo), cada uno con `hash` y `parents`.
-- Salida: para cada commit, su **lane** (columna) y las **aristas** hacia sus padres, con la lane de origen y destino. El layout debe ser una función pura `commits -> layout`, testeable sin canvas.
+- Input: commits in reverse topological order (new → old), each with `hash` and `parents`.
+- Output: for each commit, its **lane** (column) and the **edges** towards its parents, with the source and destination lane. The layout must be a pure function `commits -> layout`, testable without canvas.
 
-## Algoritmo base (incremental)
+## Base algorithm (incremental)
 
-1. Mantén un array `lanes` con el hash del commit que cada lane espera como siguiente (el "expectation").
-2. Para el commit `C`:
-   - Si `C` está en `lanes[i]`, su lane es `i`.
-   - Si no (rama nueva), abre una lane libre o añade una al final.
-3. Reemplaza `lanes[i]` por el primer padre de `C`. Los padres adicionales (merges) ocupan lanes nuevas o existentes con su hash.
-4. Las lanes cuyo hash ya no va a aparecer más se cierran al final de la página; no reordenes las lanes abiertas (provoca saltos visuales).
-5. Al cargar la siguiente página, continúa el estado (`lanes`) en vez de recalcular todo.
+1. Keep a `lanes` array with the hash of the commit that each lane expects as next (the "expectation").
+2. For commit `C`:
+   - If `C` is in `lanes[i]`, its lane is `i`.
+   - If not (new branch), open a free lane or append one at the end.
+3. Replace `lanes[i]` with the first parent of `C`. Additional parents (merges) occupy new or existing lanes with their hash.
+4. Lanes whose hash will no longer appear are closed at the end of the page; don't reorder open lanes (it causes visual jumps).
+5. When loading the next page, continue the state (`lanes`) instead of recomputing everything.
 
-## Colores
+## Colors
 
-- El color va asociado a la **rama/ref**, no al índice de lane (las lanes se reutilizan y cambiarían de color).
-- Un hash de color estable (p. ej. por nombre de rama) que no dependa del orden de llegada.
-- En merges, el color del commit es el de su primera lane; las aristas mantienen el color de la lane de la que salen.
+- The color is associated with the **branch/ref**, not with the lane index (lanes are reused and would change color).
+- A stable color hash (e.g. by branch name) that doesn't depend on arrival order.
+- In merges, the commit's color is that of its first lane; edges keep the color of the lane they come from.
 
-## Renderizado
+## Rendering
 
-- Canvas 2D solo para el viewport (+ un margen de filas). Filas virtualizadas en DOM para selección y accesibilidad (`aria-hidden` en el canvas).
-- Altura de fila fija; `y = index * rowHeight - scrollTop`.
-- `devicePixelRatio`: tamaño del canvas en píxeles físicos y `ctx.scale(dpr, dpr)` para trazo nítido.
-- Curvas de merge con `quadraticCurveTo` o arcos; los cruces sin conexión se dibujan como "puente" rompiendo la línea.
-- No redibujar todo al cambiar la selección: capa de selección/HUD separada o repintado solo de las filas afectadas.
+- Canvas 2D only for the viewport (+ a row margin). Virtualized DOM rows for selection and accessibility (`aria-hidden` on the canvas).
+- Fixed row height; `y = index * rowHeight - scrollTop`.
+- `devicePixelRatio`: canvas size in physical pixels and `ctx.scale(dpr, dpr)` for crisp strokes.
+- Merge curves with `quadraticCurveTo` or arcs; unconnected crossings are drawn as a "bridge" breaking the line.
+- Don't redraw everything when the selection changes: separate selection/HUD layer or repaint only the affected rows.
 
 ## Tests
 
-Casos mínimos del layout: lineal, root único, merge simple, merge de dos ramas que continúan, octopus, múltiples roots (historial huérfano), rama que nace de un commit antiguo y cargas incrementales por páginas cuyos límites caen en mitad de un merge.
+Minimum layout cases: linear, single root, simple merge, merge of two branches that continue, octopus, multiple roots (orphan history), branch born from an old commit, and incremental loads by pages whose boundaries fall in the middle of a merge.
 
-## Anti-patrones
+## Anti-patterns
 
-- `O(n²)` buscando el hash en todas las lanes: indexa por hash → lane.
-- Recalcular el layout completo al paginar.
-- Dibujar todos los commits en el DOM.
-- Colores por índice de lane.
-- Medir texto dentro del bucle de pintado.
+- `O(n²)` searching the hash in all lanes: index by hash → lane.
+- Recomputing the complete layout when paginating.
+- Drawing all commits in the DOM.
+- Colors by lane index.
+- Measuring text inside the paint loop.

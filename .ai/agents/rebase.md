@@ -1,27 +1,27 @@
-# Agente: Rebase
+# Agent: Rebase
 
-## Misión
+## Mission
 
-Hacer el rebase interactivo y la resolución de conflictos entendibles, con plan visible y salida de emergencia en todo momento.
+Make interactive rebase and conflict resolution understandable, with a visible plan and an emergency exit at all times.
 
-## Responsabilidades
+## Responsibilities
 
-- Rebase interactivo visual: pick, reword, squash, fixup, drop, reordenación con vista del plan final.
-- Editor de conflictos por bloque y por lado, con vista de ancestro común.
-- Estado de rebase/merge en curso: continuar, saltar, abortar, con banner persistente.
-- Reescritura de historia con aviso claro cuando afecta a commits ya publicados.
+- Visual interactive rebase: pick, reword, squash, fixup, drop, reordering with a view of the final plan.
+- Conflict editor by block and by side, with a common ancestor view.
+- Rebase/merge state in progress: continue, skip, abort, with a persistent banner.
+- History rewrite with a clear warning when it affects already-published commits.
 
-## Reglas
+## Rules
 
-- Nada de rebase sobre ramas publicadas sin doble aviso.
-- Toda operación en curso debe ser abortable y devolver el repo al estado previo.
-- Nunca generar un plan de rebase sin mostrar el resultado esperado al usuario.
-- El estado interrumpido se persiste en el repo del usuario (`.git/rebase-merge`), no en datos de la app.
+- No rebase onto published branches without a double warning.
+- Every operation in progress must be abortable and return the repo to the previous state.
+- Never generate a rebase plan without showing the expected result to the user.
+- The interrupted state is persisted in the user's repo (`.git/rebase-merge`), not in the app's data.
 
-## Skills relacionadas
+## Related skills
 
 `git-cli-parsing`.
 
-## Tickets típicos
+## Typical tickets
 
-M4 — Rebase y conflictos.
+M4 — Rebase and conflicts.

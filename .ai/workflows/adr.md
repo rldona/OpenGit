@@ -1,18 +1,18 @@
 # Workflow: ADR
 
-## Cuándo hace falta
+## When it is needed
 
-- Elegir o cambiar una dependencia estructural (shell, motor git, editor de diff, estado global).
-- Definir un protocolo o modelo de datos que la UI y Rust comparten.
-- Cualquier decisión donde volver atrás implique reescribir componentes.
+- Choosing or changing a structural dependency (shell, git engine, diff editor, global state).
+- Defining a protocol or data model that the UI and Rust share.
+- Any decision where going back implies rewriting components.
 
-No hace falta ADR para decisiones locales y baratas de revertir.
+No ADR is needed for local decisions that are cheap to revert.
 
-## Pasos
+## Steps
 
-1. Copia `docs/decisions/TEMPLATE.md` a `ADR-NNNN-slug.md` con el siguiente número libre.
-2. Rellena contexto, decisión, alternativas y consecuencias. Las consecuencias negativas también se escriben.
-3. Estado inicial `propuesto`; discusión en el ticket o PR.
-4. Al aceptarse, actualiza el estado y añade la fila al índice `docs/decisions/README.md`.
-5. Si sustituye a otro ADR: el antiguo pasa a `sustituido por ADR-NNNN` (no se edita su contenido) y se enlazan.
-6. Enlaza el ADR desde `AGENTS.md` si afecta al trabajo diario (stack, comandos) y desde el ticket que lo motivó.
+1. Copy `docs/decisions/TEMPLATE.md` to `ADR-NNNN-slug.md` with the next free number.
+2. Fill in context, decision, alternatives and consequences. Negative consequences are written too.
+3. Initial status `proposed`; discussion in the ticket or PR.
+4. Once accepted, update the status and add the row to the `docs/decisions/README.md` index.
+5. If it supersedes another ADR: the old one becomes `superseded by ADR-NNNN` (its content is not edited) and they are linked.
+6. Link the ADR from `AGENTS.md` if it affects daily work (stack, commands) and from the ticket that motivated it.

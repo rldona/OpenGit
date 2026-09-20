@@ -1,22 +1,22 @@
 # Frontend
 
-## El canvas no hereda variables CSS
+## The canvas does not inherit CSS variables
 
-- **Fecha:** 2026-09-18
-- **Contexto:** tema claro/oscuro (OG-022); el anillo de selección del grafo se pintaba con `#ffffff` fijo.
-- **Hallazgo:** `GraphCanvas` dibuja con la API 2D y su contexto no resuelve `var(--…)`; cualquier color tematizado debe llegar en JS. Leerlo con `getComputedStyle` en cada frame de scroll es innecesario.
-- **Implicación:** los colores de canvas viven en helpers JS (`selectionRingColor` en `lib/theme.ts`); si crecen, centralizarlos ahí y no leer el DOM en `draw()`.
+- **Date:** 2026-09-18
+- **Context:** light/dark theme (OG-022); the graph's selection ring was painted with a fixed `#ffffff`.
+- **Finding:** `GraphCanvas` draws with the 2D API and its context doesn't resolve `var(--…)`; any themed color must arrive in JS. Reading it with `getComputedStyle` on every scroll frame is unnecessary.
+- **Implication:** canvas colors live in JS helpers (`selectionRingColor` in `lib/theme.ts`); if they grow, centralize them there and don't read the DOM in `draw()`.
 
-## CodeMirror: `oneDark` incluye el resaltado; el tema claro necesita `defaultHighlightStyle`
+## CodeMirror: `oneDark` includes highlighting; the light theme needs `defaultHighlightStyle`
 
-- **Fecha:** 2026-09-18
-- **Contexto:** el diff usaba `oneDark` fijo (OG-006) y en tema claro quedaba ilegible.
-- **Hallazgo:** `oneDark` aporta tema y highlight style; sin él no hay colores de sintaxis. Para el tema claro basta `syntaxHighlighting(defaultHighlightStyle)` de `@codemirror/language`. El editor se reconstruye al cambiar de tema incluyéndolo en las deps del efecto.
-- **Implicación:** cualquier extensión de CodeMirror dependiente del tema debe entrar en las deps del efecto que crea la vista.
+- **Date:** 2026-09-18
+- **Context:** the diff used a fixed `oneDark` (OG-006) and was unreadable in the light theme.
+- **Finding:** `oneDark` provides the theme and the highlight style; without it there are no syntax colors. For the light theme, `syntaxHighlighting(defaultHighlightStyle)` from `@codemirror/language` is enough. The editor is rebuilt on theme change by including it in the effect's deps.
+- **Implication:** any CodeMirror extension that depends on the theme must go into the deps of the effect that creates the view.
 
-## Preferencias de UI en localStorage con script inline anti-flash
+## UI preferences in localStorage with an anti-flash inline script
 
-- **Fecha:** 2026-09-18
-- **Contexto:** persistir el tema sin IPC y sin ver un frame oscuro antes de que React monte.
-- **Hallazgo:** en Tauri el WebView persiste localStorage por origen (en dev, `http://localhost:1420`). Un script inline en `index.html` puede leer la clave y fijar `data-theme` antes de cargar el bundle; el store de zustand lee el mismo valor al inicializarse.
-- **Implicación:** las preferencias de UI van a localStorage; el estado compartido con el core (recents) sigue en `app_data_dir`. Mantener ambos scripts en sintonía (`THEME_STORAGE_KEY`).
+- **Date:** 2026-09-18
+- **Context:** persisting the theme without IPC and without seeing a dark frame before React mounts.
+- **Finding:** in Tauri the WebView persists localStorage per origin (in dev, `http://localhost:1420`). An inline script in `index.html` can read the key and set `data-theme` before the bundle loads; the zustand store reads the same value when it initializes.
+- **Implication:** UI preferences go to localStorage; shared state with the core (recents) stays in `app_data_dir`. Keep both scripts in sync (`THEME_STORAGE_KEY`).

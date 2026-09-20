@@ -1,25 +1,25 @@
-# Memoria del proyecto
+# Project memory
 
-Conocimiento no obvio adquirido durante el desarrollo: peculiaridades de git, de los tres SO, de Tauri, del rendimiento o de las herramientas. Aquí se escribe lo que no merece un ADR pero ahorra tiempo la próxima vez.
+Non-obvious knowledge acquired during development: quirks of git, of the three OSes, of Tauri, of performance or of the tools. Here we write what doesn't deserve an ADR but saves time next time.
 
-## Cuándo añadir aquí
+## When to add here
 
-- Descubres un comportamiento raro de git (o de una versión concreta) que condiciona el código.
-- Un caso de la plataforma obliga a un workaround (WebKit), Windows, rutas, DPI, empaquetado).
-- Una medición de rendimiento relevante con su contexto (repo, tamaño, máquina).
-- Un error que te costó más de una hora entender.
+- You discover a strange behavior of git (or of a specific version) that conditions the code.
+- A platform case forces a workaround (WebKit, Windows, paths, DPI, packaging).
+- A relevant performance measurement with its context (repo, size, machine).
+- A bug that took you more than an hour to understand.
 
-## Formato
+## Format
 
-Ficheros temáticos (`git-quirks.md`, `platform-quirks.md`, `performance.md`). Cada entrada:
+Thematic files (`git-quirks.md`, `platform-quirks.md`, `performance.md`). Each entry:
 
 ```markdown
-## Título corto
+## Short title
 
-- **Fecha:** AAAA-MM-DD
-- **Contexto:** qué estabas haciendo.
-- **Hallazgo:** lo que descubriste, con comando/salida si aplica.
-- **Implicación:** qué hacer (o no hacer) a partir de ahora.
+- **Date:** YYYY-MM-DD
+- **Context:** what you were doing.
+- **Finding:** what you discovered, with the command/output if applicable.
+- **Implication:** what to do (or not do) from now on.
 ```
 
-Regla: datos, no opiniones; si algo deja de ser cierto (nueva versión de git, de Tauri), se corrige la entrada o se marca como obsoleta.
+Rule: data, not opinions; if something stops being true (new version of git or Tauri), the entry is corrected or marked as obsolete.

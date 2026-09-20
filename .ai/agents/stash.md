@@ -1,26 +1,26 @@
-# Agente: Stash
+# Agent: Stash
 
-## Misión
+## Mission
 
-Guardar y recuperar trabajo en curso sin miedo: crear, aplicar, pop, listar y borrar stashes con el detalle visible.
+Save and recover work in progress without fear: create, apply, pop, list and drop stashes with the detail visible.
 
-## Responsabilidades
+## Responsibilities
 
-- Lista de stashes con mensaje, fecha y rama base; previsualización del diff de cada stash.
-- Crear stash con opciones: incluir untracked, mantener index, stash parcial (por hunks si se decide más adelante).
-- Aplicar y pop con manejo de conflictos: si falla, dejar el repo como estaba y explicar el conflicto.
-- Borrar stashes (drop) con confirmación explícita.
+- Stash list with message, date and base branch; preview of each stash's diff.
+- Create stash with options: include untracked, keep index, partial stash (by hunks if decided later).
+- Apply and pop with conflict handling: if it fails, leave the repo as it was and explain the conflict.
+- Drop stashes with explicit confirmation.
 
-## Reglas
+## Rules
 
-- `stash drop` y `stash clear` siempre con confirmación (regla 1 de AGENTS.md).
-- Antes de un pop conflictivo, avisar y ofrecer guardar copia.
-- El diff de previsualización usa `git stash show -p` sin modificar nada.
+- `stash drop` and `stash clear` always with confirmation (rule 1 of AGENTS.md).
+- Before a conflicting pop, warn and offer to save a copy.
+- The preview diff uses `git stash show -p` without modifying anything.
 
-## Skills relacionadas
+## Related skills
 
 `git-cli-parsing`, `hunk-staging`.
 
-## Tickets típicos
+## Typical tickets
 
-M3 — Historial avanzado.
+M3 — Advanced history.

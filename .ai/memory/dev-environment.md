@@ -1,58 +1,58 @@
-# Entorno de desarrollo
+# Development environment
 
-## En las sesiones de opencode, `node` no es Node
+## In opencode sessions, `node` is not Node
 
-- **Fecha:** 2026-09-18
-- **Contexto:** ejecutar `npm install` desde sesiones no interactivas en el Mac de desarrollo.
-- **Hallazgo:** el PATH de la sesión antepone un shim de Bun (`/private/tmp/bun-node-*/node`) y no incluye Homebrew; `node --version` falla con un error del REPL de Bun. npm y cargo tampoco están en el PATH.
-- **Implicación:** anteponer `export PATH="/opt/homebrew/bin:$HOME/.cargo/bin:$PATH"` en los comandos de shell. El Node real de Homebrew es la v26 y el de nvm está en `~/.nvm/versions/node`.
+- **Date:** 2026-09-18
+- **Context:** running `npm install` from non-interactive sessions on the development Mac.
+- **Finding:** the session PATH prepends a Bun shim (`/private/tmp/bun-node-*/node`) and doesn't include Homebrew; `node --version` fails with a Bun REPL error. npm and cargo aren't in the PATH either.
+- **Implication:** prepend `export PATH="/opt/homebrew/bin:$HOME/.cargo/bin:$PATH"` to shell commands. The real Homebrew Node is v26 and the nvm one is in `~/.nvm/versions/node`.
 
-## Rust se instaló el 2026-09-18 con rustup
+## Rust was installed on 2026-09-18 with rustup
 
-- **Fecha:** 2026-09-18
-- **Contexto:** OG-001 requería compilar el núcleo Tauri; no había toolchain.
-- **Hallazgo:** instalado Rust 1.98.1 con `--profile default` (incluye clippy y rustfmt) en `~/.cargo`.
-- **Implicación:** usar `cargo` con `$HOME/.cargo/bin` en el PATH.
+- **Date:** 2026-09-18
+- **Context:** OG-001 required compiling the Tauri core; there was no toolchain.
+- **Finding:** installed Rust 1.98.1 with `--profile default` (includes clippy and rustfmt) in `~/.cargo`.
+- **Implication:** use `cargo` with `$HOME/.cargo/bin` in the PATH.
 
-## npm 11 avisa de scripts de instalación sin aprobar
+## npm 11 warns about unapproved install scripts
 
-- **Fecha:** 2026-09-18
-- **Contexto:** `npm install` en el proyecto.
-- **Hallazgo:** npm avisa de que `fsevents` tiene un install script no aprobado (`allow-scripts`) y no lo ejecuta. No bloquea tests ni build.
-- **Implicación:** si el HMR de Vite se comporta raro en macOS, aprobar el script con `npm approve-scripts`; no es necesario por ahora.
+- **Date:** 2026-09-18
+- **Context:** `npm install` in the project.
+- **Finding:** npm warns that `fsevents` has an unapproved install script (`allow-scripts`) and doesn't run it. It doesn't block tests or the build.
+- **Implication:** if Vite HMR behaves strangely on macOS, approve the script with `npm approve-scripts`; not necessary for now.
 
-## El lock no puede apuntar al registry corporativo
+## The lockfile must not point to the corporate registry
 
-- **Fecha:** 2026-09-18
-- **Contexto:** primer CI en GitHub Actions; el job de frontend falló en 7 s con `npm error code E401`.
-- **Hallazgo:** el `~/.npmrc` de esta máquina configura un Artifactory corporativo, así que `npm install` escribió las 276 URLs `resolved` del lock contra ese host. GitHub no tiene (ni debe tener) esas credenciales.
-- **Implicación:** el `package-lock.json` debe resolver contra `https://registry.npmjs.org`. El `.npmrc` del repo fija `registry=https://registry.npmjs.org/` (npmjs es alcanzable desde la máquina de desarrollo) para que cualquier `npm install` escriba URLs públicas.
-- **Ojo con `replace-registry-host=always`:** no sirve como arreglo. Solo sustituye el **host** del lock por el registry configurado, pero deja la ruta corporativa (`/artifactory/api/npm/...`), generando URLs rotas en CI (404 en vez de E401). Se probó y se descartó.
+- **Date:** 2026-09-18
+- **Context:** first CI on GitHub Actions; the frontend job failed in 7 s with `npm error code E401`.
+- **Finding:** this machine's `~/.npmrc` configures a corporate Artifactory, so `npm install` wrote the lock's 276 `resolved` URLs against that host. GitHub doesn't have (and shouldn't have) those credentials.
+- **Implication:** `package-lock.json` must resolve against `https://registry.npmjs.org`. The repo's `.npmrc` pins `registry=https://registry.npmjs.org/` (npmjs is reachable from the development machine) so that any `npm install` writes public URLs.
+- **Watch out with `replace-registry-host=always`:** it doesn't work as a fix. It only replaces the lock's **host** with the configured registry, but leaves the corporate path (`/artifactory/api/npm/...`), generating broken URLs in CI (404 instead of E401). It was tested and discarded.
 
-## Los commits van con el noreply de GitHub, no con la cuenta corporativa
+## Commits use the GitHub noreply, not the corporate account
 
-- **Fecha:** 2026-09-18
-- **Contexto:** el historial del repo se creó con el `user.email` global de la máquina (cuenta corporativa) y hubo que reescribirlo.
-- **Hallazgo:** el repo no tenía identidad propia; `git config --global user.email` apunta a la cuenta de empresa. Se reescribieron autor y committer con `git filter-branch --env-filter` conservando fechas, y se fuerza-pushearon `main` y las ramas.
-- **Implicación:** el repo fija en su config local `user.name=Raúl López` y `user.email=rldona@users.noreply.github.com`; AGENTS.md lo exige como regla 11. Si algún commit sale con otro correo, se corrige antes de pushear.
+- **Date:** 2026-09-18
+- **Context:** the repo history was created with the machine's global `user.email` (corporate account) and had to be rewritten.
+- **Finding:** the repo had no identity of its own; `git config --global user.email` points to the company account. Author and committer were rewritten with `git filter-branch --env-filter` preserving dates, and `main` and the branches were force-pushed.
+- **Implication:** the repo pins `user.name=Raúl López` and `user.email=rldona@users.noreply.github.com` in its local config; AGENTS.md requires it as rule 11. If any commit goes out with another email, it's fixed before pushing.
 
-## No cambies de rama con `tauri dev` corriendo
+## Don't switch branches with `tauri dev` running
 
-- **Fecha:** 2026-09-18
-- **Contexto:** `npm run tauri dev` en marcha mientras se hizo `git checkout main` + `git pull` (el pull escribió de nuevo todo el árbol).
-- **Hallazgo:** Vite detectó el cambio de `vite.config.ts`, reinició el servidor y se quedó en el puerto 5174 en vez de 1420 (5173 estaba ocupado por otro proyecto), pese a `strictPort`. La ventana Tauri siguió cargando `devUrl` (1420), que ya no respondía → pantalla blanca. En el log: `Port 5173 is in use, trying another one...` y `Local: http://localhost:5174/`.
-- **Implicación:** no hacer checkout/pull con el dev server vivo. Si pasa: parar todo (`pkill -f "opengit/node_modules/.bin/vite"; pkill -f target/debug/opengit`) y relanzar `npm run tauri dev`, comprobando en el log `http://localhost:1420/` antes de dar por buena la ventana.
+- **Date:** 2026-09-18
+- **Context:** `npm run tauri dev` running while doing `git checkout main` + `git pull` (the pull rewrote the whole tree).
+- **Finding:** Vite detected the change to `vite.config.ts`, restarted the server and ended up on port 5174 instead of 1420 (5173 was taken by another project), despite `strictPort`. The Tauri window kept loading `devUrl` (1420), which no longer responded → white screen. In the log: `Port 5173 is in use, trying another one...` and `Local: http://localhost:5174/`.
+- **Implication:** don't checkout/pull with the dev server alive. If it happens: stop everything (`pkill -f "opengit/node_modules/.bin/vite"; pkill -f target/debug/opengit`) and relaunch `npm run tauri dev`, checking the log for `http://localhost:1420/` before considering the window good.
 
-## Los TempDir de los tests deben ser únicos aunque el reloj se repita
+## Test TempDirs must be unique even if the clock repeats
 
-- **Fecha:** 2026-09-18
-- **Contexto:** tests de integración de Rust en paralelo; fallos aleatorios de un test distinto en cada pasada (detached HEAD, errores de git, diffs).
-- **Hallazgo:** `TempDir::new` generaba el nombre con `pid + nanos`; dos hilos podían obtener el mismo `nanos` y compartir carpeta, pisándose y borrándose entre tests.
-- **Implicación:** el nombre incluye ahora un contador atómico (`AtomicU64`). Si los tests vuelven a fallar de forma no determinista, sospechar primero de recursos compartidos (temp dirs, puertos, ficheros de config).
+- **Date:** 2026-09-18
+- **Context:** parallel Rust integration tests; random failures of a different test on each run (detached HEAD, git errors, diffs).
+- **Finding:** `TempDir::new` generated the name with `pid + nanos`; two threads could get the same `nanos` and share a folder, overwriting and deleting each other between tests.
+- **Implication:** the name now includes an atomic counter (`AtomicU64`). If tests fail non-deterministically again, suspect shared resources first (temp dirs, ports, config files).
 
-## `.trunk/` y vitest
+## `.trunk/` and vitest
 
-- **Fecha:** 2026-09-18
-- **Contexto:** de repente `npm run test` recolectaba 213 ficheros de test.
-- **Hallazgo:** apareció un directorio `.trunk/` (plugins del linter Trunk) con sus propios `*.test.ts`; vitest los escaneaba y fallaban al cargar.
-- **Implicación:** `vite.config.ts` excluye `**/.trunk/**` (y `src-tauri`) y `.gitignore` ignora `.trunk/`. Si vuelven a aparecer cientos de ficheros en Vitest, revisar el primer directorio inesperado.
+- **Date:** 2026-09-18
+- **Context:** suddenly `npm run test` collected 213 test files.
+- **Finding:** a `.trunk/` directory appeared (Trunk linter plugins) with its own `*.test.ts`; vitest scanned them and they failed to load.
+- **Implication:** `vite.config.ts` excludes `**/.trunk/**` (and `src-tauri`) and `.gitignore` ignores `.trunk/`. If hundreds of files show up in Vitest again, check the first unexpected directory.

@@ -1,26 +1,26 @@
-# Agente: Branch
+# Agent: Branch
 
-## Misión
+## Mission
 
-Gestionar la navegación entre refs: branches locales y remotas, tags y la rama actual, sin sorpresas con el working tree.
+Manage navigation between refs: local and remote branches, tags and the current branch, without surprises with the working tree.
 
-## Responsabilidades
+## Responsibilities
 
-- Sidebar de refs con upstream, ahead/behind y agrupación por remoto.
-- Checkout local y remoto con tracking; crear, renombrar y borrar ramas.
-- Avisos de checkout con working tree sucio (qué ficheros se ven afectados y opciones).
-- Explicar el estado del repo tras operaciones: detached HEAD, merge en curso, etc.
+- Refs sidebar with upstream, ahead/behind and grouping by remote.
+- Local and remote checkout with tracking; create, rename and delete branches.
+- Warnings for checkout with a dirty working tree (which files are affected and the options).
+- Explain the repo state after operations: detached HEAD, merge in progress, etc.
 
-## Reglas
+## Rules
 
-- Borrado con `-d` por defecto; `-D` solo con confirmación explícita y palabra de peligro.
-- Nunca checkout destructivo silencioso: si hay cambios sin commitear, se pregunta antes.
-- Si un checkout puede fallar, se avisa antes de intentar y se muestra el error real de git si pasa.
+- Deletion with `-d` by default; `-D` only with explicit confirmation and a danger word.
+- Never a silent destructive checkout: if there are uncommitted changes, ask first.
+- If a checkout may fail, warn before attempting it and show git's real error if it happens.
 
-## Skills relacionadas
+## Related skills
 
 `git-cli-parsing`.
 
-## Tickets típicos
+## Typical tickets
 
-OG-008; merge local y tags en M3.
+OG-008; local merge and tags in M3.
