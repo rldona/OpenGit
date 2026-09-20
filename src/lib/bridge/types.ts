@@ -80,7 +80,15 @@ export type JobKind =
       include_messages: boolean;
     }
   | { kind: "push"; remote: string | null; set_upstream: boolean }
-  | { kind: "push_tag"; remote: string | null; tag: string };
+  | { kind: "push_tag"; remote: string | null; tag: string }
+  | {
+      kind: "clone";
+      url: string;
+      destination: string;
+      depth: number | null;
+      branch: string | null;
+      recurse_submodules: boolean;
+    };
 
 export type Stash = {
   reference: string;

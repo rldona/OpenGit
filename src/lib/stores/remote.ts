@@ -6,6 +6,7 @@ import { describeRemoteError } from "../remote/errors";
 import { describeRemoteJob } from "../remote/labels";
 import { useLogStore } from "./log";
 import { useRefsStore } from "./refs";
+import { useRepoStore } from "./repo";
 import { useStatusStore } from "./status";
 import { useUiStore } from "./ui";
 
@@ -21,6 +22,8 @@ type RemoteState = {
   recentLines: string[];
   /** Cancel pressed before the job id is known. */
   cancelRequested: boolean;
+  /** Destination to open when a clone finishes (OG-085). */
+  cloneDestination: string | null;
   start: (root: string, kind: JobKind) => Promise<void>;
   cancel: () => Promise<void>;
   /** Closes the error window and clears its output. */
@@ -42,6 +45,7 @@ export const useRemoteStore = create<RemoteState>((set, get) => ({
   error: null,
   recentLines: [],
   cancelRequested: false,
+  cloneDestination: null,
 
   start: async (root, kind) => {
     if (get().running) {
@@ -53,6 +57,7 @@ export const useRemoteStore = create<RemoteState>((set, get) => ({
       recentLines: [],
       kind: kind.kind,
       title: describeRemoteJob(kind),
+      cloneDestination: kind.kind === "clone" ? kind.destination : null,
     });
     output(`Running ${kind.kind}…`);
     try {
@@ -67,7 +72,7 @@ export const useRemoteStore = create<RemoteState>((set, get) => ({
       }
     } catch (error) {
       const message = formatGitError(error);
-      set({ running: false, kind: null, error: message });
+      set({ running: false, kind: null, error: message, cloneDestination: null });
       output(`Could not start ${kind.kind}: ${message}`);
     }
   },
@@ -112,8 +117,14 @@ export const useRemoteStore = create<RemoteState>((set, get) => ({
     if (!running || (jobId !== null && payload.job_id !== jobId)) {
       return;
     }
-    const { kind, recentLines } = get();
-    set({ running: false, jobId: null, kind: null, cancelRequested: false });
+    const { kind, recentLines, cloneDestination } = get();
+    set({
+      running: false,
+      jobId: null,
+      kind: null,
+      cancelRequested: false,
+      cloneDestination: null,
+    });
 
     if (payload.success) {
       set({ title: null });
@@ -139,6 +150,11 @@ export const useRemoteStore = create<RemoteState>((set, get) => ({
       void log.reload(log.root);
       void useStatusStore.getState().refresh(log.root);
     }
+
+    // A finished clone opens the new repository (OG-085).
+    if (payload.success && cloneDestination) {
+      void useRepoStore.getState().open(cloneDestination);
+    }
   },
 
   reset: () =>
@@ -150,5 +166,6 @@ export const useRemoteStore = create<RemoteState>((set, get) => ({
       error: null,
       recentLines: [],
       cancelRequested: false,
+      cloneDestination: null,
     }),
 }));

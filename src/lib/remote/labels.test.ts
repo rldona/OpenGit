@@ -33,4 +33,17 @@ describe("describeRemoteJob", () => {
       "Fetching all remotes",
     );
   });
+
+  it("titles a clone with its URL", () => {
+    expect(
+      describeRemoteJob({
+        kind: "clone",
+        url: "https://example.com/repo.git",
+        destination: "/tmp/repo",
+        depth: null,
+        branch: null,
+        recurse_submodules: false,
+      }),
+    ).toBe("Cloning https://example.com/repo.git");
+  });
 });

@@ -27,6 +27,7 @@ fn build_menu(app: &tauri::App) -> tauri::Result<()> {
 
     let file_menu = SubmenuBuilder::new(app, "File")
         .item(&MenuItemBuilder::with_id("open-repo", "Open Repository…").build(app)?)
+        .item(&MenuItemBuilder::with_id("clone-repo", "Clone Repository…").build(app)?)
         .item(&MenuItemBuilder::with_id("close-repo", "Close Repository").build(app)?)
         .separator()
         .close_window()
