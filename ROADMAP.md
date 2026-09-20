@@ -2,7 +2,7 @@
 
 A milestone closes when its tickets are `done` and its exit criteria are met. Tickets live in [`docs/tickets/`](docs/tickets/README.md).
 
-**Current state:** latest release **v0.8.4** (2026-09-23) with FlupCode-derived color palettes in Settings → Appearance (OG-110). M0–M20 are closed and there is no active milestone.
+**Current state:** latest release **v0.8.5** (2026-09-24) with the FlupCode "Code" colour palette in Settings → Appearance (OG-111). M0–M20 are closed and there is no active milestone.
 
 ## M0 — Foundation ✅ _(closed 2026-09-18)_
 
