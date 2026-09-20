@@ -1,18 +1,91 @@
 use std::path::{Path, PathBuf};
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use std::time::{SystemTime, UNIX_EPOCH};
 
+use serde::Serialize;
 use tauri::{AppHandle, Emitter, State};
 
 use crate::git::{error::GitError, runner::Runner, version::GitVersion, Commit, Ref, StatusReport};
+use crate::jobs::{JobKind, JobManager, RemoteJobEvent};
 use crate::repo::{self, ops, recents::Recents, RecentRepo};
 use crate::watch::{self, WatcherHandle};
 
-/// Estado compartido por los comandos: runner de git, recientes y watcher.
+/// Estado compartido por los comandos: runner, recientes, watcher y jobs.
 pub struct AppState {
     pub runner: Runner,
     pub recents: Mutex<Recents>,
     pub watcher: Mutex<Option<WatcherHandle>>,
+    pub jobs: Arc<JobManager>,
+}
+
+#[derive(Clone, Serialize)]
+struct JobOutputPayload {
+    job_id: String,
+    stream: String,
+    line: String,
+}
+
+#[derive(Clone, Serialize)]
+struct JobFinishedPayload {
+    job_id: String,
+    success: bool,
+    exit_code: i32,
+    cancelled: bool,
+}
+
+/// Arranca fetch/pull/push en segundo plano; la salida llega por eventos
+/// `job://output` y `job://finished`. Devuelve el id del job para cancelarlo.
+#[tauri::command]
+pub fn start_remote_job(
+    app: AppHandle,
+    path: String,
+    kind: JobKind,
+    state: State<'_, AppState>,
+) -> Result<String, GitError> {
+    let job_id = state.jobs.next_id();
+    let manager = Arc::clone(&state.jobs);
+    let id = job_id.clone();
+    crate::jobs::start(
+        &state.jobs,
+        &job_id,
+        &state.runner,
+        Path::new(&path),
+        &kind,
+        move |event| match event {
+            RemoteJobEvent::Output { stream, line } => {
+                let _ = app.emit(
+                    "job://output",
+                    JobOutputPayload {
+                        job_id: id.clone(),
+                        stream: stream.as_str().to_string(),
+                        line,
+                    },
+                );
+            }
+            RemoteJobEvent::Finished {
+                success,
+                exit_code,
+                cancelled,
+            } => {
+                manager.remove(&id);
+                let _ = app.emit(
+                    "job://finished",
+                    JobFinishedPayload {
+                        job_id: id.clone(),
+                        success,
+                        exit_code,
+                        cancelled,
+                    },
+                );
+            }
+        },
+    )?;
+    Ok(job_id)
+}
+
+#[tauri::command]
+pub fn cancel_remote_job(job_id: String, state: State<'_, AppState>) -> Result<bool, GitError> {
+    Ok(state.jobs.cancel(&job_id))
 }
 
 impl AppState {

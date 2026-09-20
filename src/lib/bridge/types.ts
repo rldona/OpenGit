@@ -30,6 +30,24 @@ export type Commit = {
   subject: string;
 };
 
+export type JobKind =
+  | { kind: "fetch"; prune: boolean; remote: string | null }
+  | { kind: "pull" }
+  | { kind: "push"; remote: string | null; set_upstream: boolean };
+
+export type JobOutputEvent = {
+  job_id: string;
+  stream: string;
+  line: string;
+};
+
+export type JobFinishedEvent = {
+  job_id: string;
+  success: boolean;
+  exit_code: number;
+  cancelled: boolean;
+};
+
 export type BranchTracking = {
   current: string | null;
   upstream: string | null;

@@ -1,0 +1,148 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { cancelRemoteJob, startRemoteJob } from "../bridge/jobs";
+import { listRefs, logPage } from "../bridge/log";
+import { branchTracking } from "../bridge/refs";
+import { statusRepo } from "../bridge/status";
+import type { StatusReport } from "../bridge/types";
+import { useLogStore } from "./log";
+import { useRefsStore } from "./refs";
+import { useRemoteStore } from "./remote";
+import { useUiStore } from "./ui";
+
+vi.mock("../bridge/jobs", () => ({
+  startRemoteJob: vi.fn(),
+  cancelRemoteJob: vi.fn(),
+}));
+
+vi.mock("../bridge/log", () => ({
+  listRefs: vi.fn(),
+  logPage: vi.fn(),
+}));
+
+vi.mock("../bridge/refs", () => ({
+  branchTracking: vi.fn(),
+  checkoutRef: vi.fn(),
+  createBranch: vi.fn(),
+  renameBranch: vi.fn(),
+  deleteBranch: vi.fn(),
+}));
+
+vi.mock("../bridge/status", () => ({
+  statusRepo: vi.fn(),
+  stagePath: vi.fn(),
+  unstagePath: vi.fn(),
+  discardPath: vi.fn(),
+  deleteUntracked: vi.fn(),
+}));
+
+const CLEAN: StatusReport = {
+  head: "a",
+  branch: "main",
+  detached: false,
+  upstream: null,
+  ahead: 0,
+  behind: 0,
+  entries: [],
+};
+
+describe("useRemoteStore", () => {
+  beforeEach(() => {
+    useRemoteStore.getState().reset();
+    useUiStore.setState({ outputLines: [] });
+    useLogStore.setState({ root: "/tmp/repo" });
+    useRefsStore.setState({ root: "/tmp/repo" });
+    vi.mocked(startRemoteJob).mockResolvedValue("job-1");
+    vi.mocked(cancelRemoteJob).mockResolvedValue(true);
+    vi.mocked(listRefs).mockResolvedValue([]);
+    vi.mocked(logPage).mockResolvedValue([]);
+    vi.mocked(branchTracking).mockResolvedValue({
+      current: "main",
+      upstream: null,
+      ahead: 0,
+      behind: 0,
+    });
+    vi.mocked(statusRepo).mockResolvedValue(CLEAN);
+  });
+
+  it("arranca un push y se queda en ejecución", async () => {
+    await useRemoteStore.getState().start("/tmp/repo", {
+      kind: "push",
+      remote: null,
+      set_upstream: true,
+    });
+
+    expect(startRemoteJob).toHaveBeenCalledWith("/tmp/repo", {
+      kind: "push",
+      remote: null,
+      set_upstream: true,
+    });
+    expect(useRemoteStore.getState().running).toBe(true);
+    expect(useRemoteStore.getState().jobId).toBe("job-1");
+    expect(useUiStore.getState().outputLines.join("\n")).toContain("Running push");
+  });
+
+  it("al terminar con éxito refresca grafo, refs y status", async () => {
+    await useRemoteStore
+      .getState()
+      .start("/tmp/repo", { kind: "fetch", prune: false, remote: null });
+    useRemoteStore
+      .getState()
+      .handleOutput({ job_id: "job-1", stream: "stderr", line: "Receiving objects" });
+    useRemoteStore.getState().handleFinished({
+      job_id: "job-1",
+      success: true,
+      exit_code: 0,
+      cancelled: false,
+    });
+
+    expect(useRemoteStore.getState().running).toBe(false);
+    expect(useUiStore.getState().outputLines.join("\n")).toContain("Receiving objects");
+    expect(useUiStore.getState().outputLines.join("\n")).toContain("fetch done");
+    expect(listRefs).toHaveBeenCalled();
+    expect(logPage).toHaveBeenCalled();
+    expect(statusRepo).toHaveBeenCalled();
+  });
+
+  it("traduce el rechazo non-fast-forward a un consejo", async () => {
+    await useRemoteStore.getState().start("/tmp/repo", {
+      kind: "push",
+      remote: null,
+      set_upstream: false,
+    });
+    useRemoteStore.getState().handleOutput({
+      job_id: "job-1",
+      stream: "stderr",
+      line: "! [rejected] main -> main (non-fast-forward)",
+    });
+    useRemoteStore.getState().handleFinished({
+      job_id: "job-1",
+      success: false,
+      exit_code: 1,
+      cancelled: false,
+    });
+
+    expect(useRemoteStore.getState().error).toContain("Pull first");
+    expect(useUiStore.getState().outputLines.join("\n")).toContain("push failed");
+  });
+
+  it("cancela el job en curso", async () => {
+    await useRemoteStore.getState().start("/tmp/repo", { kind: "pull" });
+
+    await useRemoteStore.getState().cancel();
+
+    expect(cancelRemoteJob).toHaveBeenCalledWith("job-1");
+  });
+
+  it("ignora eventos de otro job", async () => {
+    await useRemoteStore.getState().start("/tmp/repo", { kind: "pull" });
+
+    useRemoteStore.getState().handleFinished({
+      job_id: "job-99",
+      success: true,
+      exit_code: 0,
+      cancelled: false,
+    });
+
+    expect(useRemoteStore.getState().running).toBe(true);
+  });
+});

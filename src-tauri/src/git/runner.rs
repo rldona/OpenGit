@@ -6,14 +6,15 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{self, RecvTimeoutError};
 use std::sync::Arc;
 use std::thread::{self, JoinHandle};
-use std::time::Duration;
-#[cfg(unix)]
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use super::error::GitError;
 use super::version::GitVersion;
 
 pub const DEFAULT_TIMEOUT: Duration = Duration::from_secs(30);
+
+/// Recibe cada línea (o fragmento separado por `\r`, típico del progreso).
+pub type StreamSink = Arc<dyn Fn(StreamKind, String) + Send + Sync>;
 const KILL_GRACE: Duration = Duration::from_millis(500);
 
 /// Cómo se conecta stdin del proceso.
@@ -173,6 +174,24 @@ impl Runner {
 
     /// Lanza el proceso en su propio grupo (Unix) para poder matar el árbol.
     pub fn spawn(&self, cmd: &GitCommand) -> Result<GitProcess, GitError> {
+        self.spawn_inner(cmd, None)
+    }
+
+    /// Igual que `spawn`, pero cada línea de stdout/stderr se entrega al sink
+    /// en cuanto llega (para fetch/pull/push con progreso).
+    pub fn spawn_streaming(
+        &self,
+        cmd: &GitCommand,
+        sink: StreamSink,
+    ) -> Result<GitProcess, GitError> {
+        self.spawn_inner(cmd, Some(sink))
+    }
+
+    fn spawn_inner(
+        &self,
+        cmd: &GitCommand,
+        sink: Option<StreamSink>,
+    ) -> Result<GitProcess, GitError> {
         let mut command = Command::new(&self.binary);
         command
             .args(&cmd.args)
@@ -226,8 +245,10 @@ impl Runner {
 
         let stdout = child.stdout.take().expect("stdout fue redirigido a pipe");
         let stderr = child.stderr.take().expect("stderr fue redirigido a pipe");
-        let stdout_handle = thread::spawn(move || read_all(stdout));
-        let stderr_handle = thread::spawn(move || read_all(stderr));
+        let stdout_sink = sink.clone();
+        let stdout_handle =
+            thread::spawn(move || read_stream(stdout, stdout_sink, StreamKind::Stdout));
+        let stderr_handle = thread::spawn(move || read_stream(stderr, sink, StreamKind::Stderr));
 
         let exited = Arc::new(AtomicBool::new(false));
         let (tx, rx) = mpsc::channel();
@@ -243,6 +264,7 @@ impl Runner {
         Ok(GitProcess {
             pid,
             exited,
+            cancel: Arc::new(AtomicBool::new(false)),
             stdout: stdout_handle,
             stderr: stderr_handle,
             wait_rx: rx,
@@ -254,10 +276,28 @@ impl Runner {
     }
 }
 
-/// Proceso de git en marcha, cancelable y con timeout.
+/// Flujo de salida del proceso.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum StreamKind {
+    Stdout,
+    Stderr,
+}
+
+impl StreamKind {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Stdout => "stdout",
+            Self::Stderr => "stderr",
+        }
+    }
+}
+
+/// Proceso de git en marcha, cancelable y con timeout. La cancelación puede
+/// llegar desde fuera a través del token (`Arc<AtomicBool>`).
 pub struct GitProcess {
     pid: u32,
     exited: Arc<AtomicBool>,
+    cancel: Arc<AtomicBool>,
     stdout: JoinHandle<io::Result<Vec<u8>>>,
     stderr: JoinHandle<io::Result<Vec<u8>>>,
     wait_rx: mpsc::Receiver<io::Result<ExitStatus>>,
@@ -272,11 +312,17 @@ impl GitProcess {
         self.pid
     }
 
+    /// Token compartible para cancelar el proceso desde otro hilo.
+    pub fn cancel_token(&self) -> Arc<AtomicBool> {
+        Arc::clone(&self.cancel)
+    }
+
     pub fn cancel(&mut self) -> Result<(), GitError> {
         if self.cancelled {
             return Ok(());
         }
         self.cancelled = true;
+        self.cancel.store(true, Ordering::SeqCst);
         if !self.exited.load(Ordering::SeqCst) {
             kill_tree(self.pid);
         }
@@ -284,48 +330,109 @@ impl GitProcess {
     }
 
     pub fn wait(mut self, timeout: Duration) -> Result<GitOutput, GitError> {
-        match self.wait_rx.recv_timeout(timeout) {
-            Ok(Ok(status)) => {
-                drop(self.stdin.take());
-                let stdout = join_reader(self.stdout)?;
-                let stderr = join_reader(self.stderr)?;
-                let _ = self.wait_handle.join();
-                if self.cancelled {
-                    return Err(GitError::Cancelled { args: self.args });
-                }
-                Ok(GitOutput {
-                    status,
-                    stdout,
-                    stderr,
-                })
+        let deadline = Instant::now() + timeout;
+        loop {
+            if self.cancel.load(Ordering::SeqCst) {
+                self.cancelled = true;
             }
-            Ok(Err(err)) => {
-                let _ = self.wait_handle.join();
-                Err(GitError::Spawn {
-                    message: err.to_string(),
-                })
-            }
-            Err(RecvTimeoutError::Timeout) => {
+            let remaining = deadline.saturating_duration_since(Instant::now());
+            if remaining.is_zero() {
                 drop(self.stdin.take());
                 kill_tree(self.pid);
                 let _ = self.wait_rx.recv_timeout(Duration::from_secs(5));
                 let _ = self.wait_handle.join();
-                Err(GitError::Timeout {
+                return Err(GitError::Timeout {
                     timeout_ms: timeout.as_millis() as u64,
                     args: self.args,
-                })
+                });
             }
-            Err(RecvTimeoutError::Disconnected) => Err(GitError::Spawn {
-                message: "wait thread finished without status".into(),
-            }),
+            match self
+                .wait_rx
+                .recv_timeout(remaining.min(Duration::from_millis(100)))
+            {
+                Ok(Ok(status)) => {
+                    drop(self.stdin.take());
+                    let stdout = join_reader(self.stdout)?;
+                    let stderr = join_reader(self.stderr)?;
+                    let _ = self.wait_handle.join();
+                    if self.cancelled {
+                        return Err(GitError::Cancelled { args: self.args });
+                    }
+                    return Ok(GitOutput {
+                        status,
+                        stdout,
+                        stderr,
+                    });
+                }
+                Ok(Err(err)) => {
+                    let _ = self.wait_handle.join();
+                    return Err(GitError::Spawn {
+                        message: err.to_string(),
+                    });
+                }
+                Err(RecvTimeoutError::Timeout) => {
+                    if self.cancel.load(Ordering::SeqCst) {
+                        drop(self.stdin.take());
+                        kill_tree(self.pid);
+                        let _ = self.wait_rx.recv_timeout(Duration::from_secs(5));
+                        let _ = self.wait_handle.join();
+                        return Err(GitError::Cancelled { args: self.args });
+                    }
+                }
+                Err(RecvTimeoutError::Disconnected) => {
+                    return Err(GitError::Spawn {
+                        message: "wait thread finished without status".into(),
+                    });
+                }
+            }
         }
     }
 }
 
-fn read_all(mut reader: impl Read) -> io::Result<Vec<u8>> {
-    let mut buffer = Vec::new();
-    reader.read_to_end(&mut buffer)?;
-    Ok(buffer)
+/// Lee un flujo separando por `\n` o `\r` (el progreso de git usa CR):
+/// cada fragmento va al sink y todo se acumula para el resultado final.
+fn read_stream(
+    mut reader: impl Read,
+    sink: Option<StreamSink>,
+    kind: StreamKind,
+) -> io::Result<Vec<u8>> {
+    // Sin sink no se toca ni un byte: hay parches CRLF que deben sobrevivir.
+    if sink.is_none() {
+        let mut collected = Vec::new();
+        reader.read_to_end(&mut collected)?;
+        return Ok(collected);
+    }
+
+    let mut collected = Vec::new();
+    let mut segment = Vec::new();
+    let mut chunk = [0u8; 4096];
+    loop {
+        let read = reader.read(&mut chunk)?;
+        if read == 0 {
+            break;
+        }
+        for byte in &chunk[..read] {
+            if *byte == b'\n' || *byte == b'\r' {
+                if !segment.is_empty() {
+                    if let Some(sink) = &sink {
+                        sink(kind, String::from_utf8_lossy(&segment).into_owned());
+                    }
+                    collected.extend_from_slice(&segment);
+                    collected.push(b'\n');
+                    segment.clear();
+                }
+            } else {
+                segment.push(*byte);
+            }
+        }
+    }
+    if !segment.is_empty() {
+        if let Some(sink) = &sink {
+            sink(kind, String::from_utf8_lossy(&segment).into_owned());
+        }
+        collected.extend_from_slice(&segment);
+    }
+    Ok(collected)
 }
 
 fn join_reader(handle: JoinHandle<io::Result<Vec<u8>>>) -> Result<Vec<u8>, GitError> {

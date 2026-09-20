@@ -35,6 +35,13 @@
 - **Hallazgo:** interpolar el mensaje en `-m` requiere escapar comillas y rompe saltos de línea.
 - **Implicación:** pasar el mensaje por stdin (`-F -`), nunca concatenado.
 
+## La salida de git no se normaliza si no hay streaming
+
+- **Fecha:** 2026-09-18
+- **Contexto:** OG-011 añadió un lector por líneas para el progreso de fetch/pull/push (que usa `\r`).
+- **Hallazgo:** al trocear también por `\r` en los comandos normales, los parches CRLF perdían el `\r` y `git apply` fallaba (`patch does not apply`). Regresión detectada por los tests de OG-006.
+- **Implicación:** `read_stream` solo normaliza cuando hay sink; sin él, `read_to_end` byte a byte. Cualquier cambio en el runner debe pasar la suite de staging con CRLF.
+
 ## El tracking exige un remoto configurado, no solo la ref
 
 - **Fecha:** 2026-09-18
