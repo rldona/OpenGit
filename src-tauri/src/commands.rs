@@ -1046,6 +1046,18 @@ pub fn lfs_status(
     crate::git::lfs_status(&state.runner, Path::new(&path))
 }
 
+/// Starts tracking a pattern with Git LFS, updating `.gitattributes` (OG-098).
+#[tauri::command]
+pub fn lfs_track(
+    path: String,
+    pattern: String,
+    state: State<'_, AppState>,
+) -> Result<(), GitError> {
+    pause_while(&state, || {
+        crate::git::lfs_track(&state.runner, Path::new(&path), &pattern)
+    })
+}
+
 #[tauri::command]
 pub fn remote_urls(
     path: String,

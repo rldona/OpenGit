@@ -254,7 +254,7 @@ cherry-pick a range, all from the app. ✅
 
 Move LFS past detection-only and manage repository hooks without the terminal.
 
-- [ ] Git LFS complete: track patterns, pull objects and migrate existing files
+- [x] Git LFS complete: track patterns, pull objects and migrate existing files
   (OG-097).
 - [ ] Hooks manager: list, edit and enable/disable (OG-098).
 

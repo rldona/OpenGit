@@ -157,7 +157,9 @@ describe("StatusView", () => {
   });
 
   it("warns if the repo uses LFS and git-lfs is not installed", async () => {
-    useExtrasStore.setState({ lfs: { installed: false, version: null, configured: true } });
+    useExtrasStore.setState({
+      lfs: { installed: false, version: null, configured: true, patterns: [] },
+    });
     render(<StatusView />);
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
@@ -251,7 +253,7 @@ describe("StatusView", () => {
 
   it("does not warn if Git LFS is installed", async () => {
     useExtrasStore.setState({
-      lfs: { installed: true, version: "git-lfs/3.5.1", configured: true },
+      lfs: { installed: true, version: "git-lfs/3.5.1", configured: true, patterns: [] },
     });
     render(<StatusView />);
 

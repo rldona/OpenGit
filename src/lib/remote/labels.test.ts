@@ -46,4 +46,11 @@ describe("describeRemoteJob", () => {
       }),
     ).toBe("Cloning https://example.com/repo.git");
   });
+
+  it("titles the LFS jobs", () => {
+    expect(describeRemoteJob({ kind: "lfs_pull", remote: null })).toBe("Downloading LFS objects");
+    expect(describeRemoteJob({ kind: "lfs_migrate", include: "*.psd" })).toBe(
+      "Migrating *.psd to LFS",
+    );
+  });
 });

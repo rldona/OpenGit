@@ -131,6 +131,9 @@ pub struct LfsStatus {
     pub version: Option<String>,
     /// Some tracked `.gitattributes` uses `filter=lfs`.
     pub configured: bool,
+    /// Active `filter=lfs` patterns, prefixed with their `.gitattributes`
+    /// directory (OG-098).
+    pub patterns: Vec<String>,
 }
 
 /// Repository remote, with its web URL when it can be opened.

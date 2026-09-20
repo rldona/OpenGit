@@ -3286,6 +3286,15 @@ body {
   background: rgb(59 130 246 / 22%);
 }
 
+.remote-dialog-actions button.danger {
+  border-color: var(--danger-border);
+  color: var(--danger-text);
+}
+
+.remote-dialog-actions button.danger:hover:not(:disabled) {
+  border-color: var(--danger);
+}
+
 .remote-progress {
   position: relative;
   overflow: hidden;
