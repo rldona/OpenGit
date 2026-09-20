@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { pickDirectory } from "../lib/bridge/dialog";
 import { formatGitError } from "../lib/bridge/errors";
-import { cloneFolderName, joinClonePath } from "../lib/clone";
+import { cloneFolderName } from "../lib/clone";
+import { joinFolderPath } from "../lib/paths";
 import { useRemoteStore } from "../lib/stores/remote";
 
 /**
@@ -64,7 +65,7 @@ export function CloneDialog({ onClose }: { onClose: () => void }) {
     void start(parent, {
       kind: "clone",
       url: url.trim(),
-      destination: joinClonePath(parent, name.trim()),
+      destination: joinFolderPath(parent, name.trim()),
       depth: parsedDepth,
       branch: branch.trim() === "" ? null : branch.trim(),
       recurse_submodules: recurseSubmodules,
@@ -109,7 +110,7 @@ export function CloneDialog({ onClose }: { onClose: () => void }) {
         </label>
 
         {parent !== "" && name.trim() !== "" && (
-          <p className="remote-url">Clone into {joinClonePath(parent, name.trim())}</p>
+          <p className="remote-url">Clone into {joinFolderPath(parent, name.trim())}</p>
         )}
 
         <fieldset className="remote-options">
