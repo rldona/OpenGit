@@ -133,13 +133,14 @@ body {
 .content {
   display: flex;
   flex: 1;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
   min-width: 0;
 }
 
 .empty-state {
   max-width: 380px;
+  margin: auto;
+  padding: 24px;
   color: var(--text-muted);
   text-align: center;
 }
@@ -227,7 +228,7 @@ body {
 
 .error-banner {
   max-width: 560px;
-  margin: 0;
+  margin: 12px 12px 0;
   padding: 8px 12px;
   border: 1px solid #7f1d1d;
   border-radius: 6px;
@@ -287,4 +288,195 @@ body {
 
 .empty-state button:hover {
   border-color: var(--accent);
+}
+
+.history {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.history-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+}
+
+.history-filter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.history-filter select {
+  padding: 3px 6px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-elevated);
+  color: var(--text);
+  font: inherit;
+}
+
+.history-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.history-list {
+  position: relative;
+  flex: 1;
+  overflow-y: auto;
+  min-width: 0;
+}
+
+.history-inner {
+  position: relative;
+}
+
+.history-graph {
+  position: absolute;
+  left: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.commit-row {
+  position: absolute;
+  right: 0;
+  left: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 28px;
+  padding-right: 12px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.commit-row:hover {
+  background: var(--hover);
+}
+
+.commit-row.selected {
+  background: rgb(59 130 246 / 18%);
+}
+
+.commit-refs {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 4px;
+  width: 220px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.ref-badge {
+  padding: 1px 6px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 11px;
+}
+
+.ref-badge.head {
+  background: var(--accent);
+  color: #fff;
+}
+
+.ref-badge.branch {
+  background: rgb(91 141 239 / 18%);
+  border-color: rgb(91 141 239 / 45%);
+}
+
+.ref-badge.remote {
+  background: rgb(224 164 88 / 15%);
+  border-color: rgb(224 164 88 / 45%);
+}
+
+.ref-badge.tag {
+  background: rgb(154 123 216 / 18%);
+  border-color: rgb(154 123 216 / 50%);
+}
+
+.commit-subject {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.commit-hash {
+  flex-shrink: 0;
+  width: 70px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.commit-author {
+  flex-shrink: 0;
+  width: 140px;
+  overflow: hidden;
+  color: var(--text-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.commit-date {
+  flex-shrink: 0;
+  width: 110px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.commit-detail {
+  width: 300px;
+  flex-shrink: 0;
+  overflow-y: auto;
+  padding: 12px;
+  background: var(--bg-panel);
+  border-left: 1px solid var(--border);
+}
+
+.commit-detail header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.commit-detail h2 {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.commit-detail header button {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.commit-detail-subject {
+  line-height: 1.5;
+}
+
+.break {
+  word-break: break-all;
 }

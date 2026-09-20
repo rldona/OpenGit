@@ -20,6 +20,24 @@ export type RecentRepo = {
   opened_at: number;
 };
 
+export type Commit = {
+  hash: string;
+  parents: string[];
+  author_name: string;
+  author_email: string;
+  author_time: number;
+  refs: string[];
+  subject: string;
+};
+
+export type RefEntry = {
+  name: string;
+  object_id: string;
+  object_type: string;
+  upstream: string | null;
+  track: string | null;
+};
+
 /** Error serializado por el núcleo Rust (campo `kind` discriminante). */
 export type GitErrorPayload = {
   kind: string;
