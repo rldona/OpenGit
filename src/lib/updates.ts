@@ -32,8 +32,8 @@ export function isNewer(current: string, tag: string): boolean {
   return false;
 }
 
-/** Latest release tag (`vX.Y.Z`) or `null` when offline or failing. */
-export async function fetchLatestTag(): Promise<string | null> {
+/** Latest release tag (`vX.Y.Z`); throws on network, timeout or bad API answers. */
+export async function fetchLatestTag(): Promise<string> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
@@ -42,17 +42,17 @@ export async function fetchLatestTag(): Promise<string | null> {
       headers: { Accept: "application/vnd.github+json" },
     });
     if (!response.ok) {
-      return null;
+      throw new Error(`GitHub API responded ${response.status}`);
     }
     const body: unknown = await response.json();
     if (typeof body !== "object" || body === null || !("tag_name" in body)) {
-      return null;
+      throw new Error("GitHub API answer has no tag");
     }
     const tag = (body as { tag_name: unknown }).tag_name;
-    return typeof tag === "string" ? tag : null;
-  } catch {
-    // Offline, rate-limited or timed out: the check stays silent.
-    return null;
+    if (typeof tag !== "string") {
+      throw new Error("GitHub API answer has no tag");
+    }
+    return tag;
   } finally {
     clearTimeout(timeout);
   }
