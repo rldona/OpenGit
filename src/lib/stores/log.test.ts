@@ -75,7 +75,7 @@ describe("useLogStore", () => {
 
     await useLogStore.getState().load("/tmp/repo");
 
-    expect(useLogStore.getState().error).toContain("git falló con código 128");
+    expect(useLogStore.getState().error).toContain("git failed with code 128");
     expect(useLogStore.getState().commits).toHaveLength(0);
   });
 });

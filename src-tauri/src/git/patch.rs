@@ -62,12 +62,12 @@ impl ParsedPatch {
     pub fn build(&self, selection: &HunkSelection) -> Result<Option<Vec<u8>>, GitError> {
         match selection {
             HunkSelection::File => Err(GitError::invalid(
-                "la selección de fichero completo no se resuelve con parches",
+                "whole-file selection is not resolved with patches",
             )),
             HunkSelection::Hunk { index } => {
                 let hunk = self.hunks.get(*index).ok_or_else(|| {
                     GitError::invalid(format!(
-                        "hunk {index} fuera de rango ({} hunks)",
+                        "hunk {index} out of range ({} hunks)",
                         self.hunks.len()
                     ))
                 })?;

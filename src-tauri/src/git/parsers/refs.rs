@@ -17,7 +17,7 @@ pub fn parse_refs(data: &[u8]) -> Result<Vec<Ref>, GitError> {
         let fields = split_fields(record, FIELD_SEP);
         if fields.len() != EXPECTED_FIELDS {
             return Err(GitError::invalid(format!(
-                "registro de ref con {} campos, se esperaban {EXPECTED_FIELDS}",
+                "ref record with {} fields, expected {EXPECTED_FIELDS}",
                 fields.len()
             )));
         }

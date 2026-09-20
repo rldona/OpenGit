@@ -30,6 +30,13 @@ export type Commit = {
   subject: string;
 };
 
+export type BranchTracking = {
+  current: string | null;
+  upstream: string | null;
+  ahead: number;
+  behind: number;
+};
+
 export type CommitResult = {
   hash: string;
   subject: string;

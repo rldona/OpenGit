@@ -52,9 +52,9 @@ impl fmt::Display for GitError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::NotFound { binary } => {
-                write!(f, "no se encontró el binario de git: {binary}")
+                write!(f, "git binary not found: {binary}")
             }
-            Self::Spawn { message } => write!(f, "no se pudo ejecutar git: {message}"),
+            Self::Spawn { message } => write!(f, "could not run git: {message}"),
             Self::CommandFailed {
                 exit_code,
                 stdout,
@@ -67,38 +67,35 @@ impl fmt::Display for GitError {
                     .collect::<Vec<_>>()
                     .join("\n");
                 if detail.is_empty() {
-                    write!(f, "git falló con código {exit_code}")
+                    write!(f, "git failed with code {exit_code}")
                 } else {
-                    write!(f, "git falló con código {exit_code}: {detail}")
+                    write!(f, "git failed with code {exit_code}: {detail}")
                 }
             }
             Self::Timeout { timeout_ms, .. } => {
-                write!(f, "git no terminó en {timeout_ms} ms")
+                write!(f, "git did not finish within {timeout_ms} ms")
             }
-            Self::Cancelled { .. } => write!(f, "operación cancelada"),
+            Self::Cancelled { .. } => write!(f, "operation cancelled"),
             Self::InvalidOutput { message } => {
-                write!(f, "salida de git inesperada: {message}")
+                write!(f, "unexpected git output: {message}")
             }
-            Self::PathNotFound { path } => write!(f, "la carpeta no existe: {path}"),
+            Self::PathNotFound { path } => write!(f, "folder does not exist: {path}"),
             Self::NotARepository { path } => {
-                write!(f, "la carpeta no es un repositorio git: {path}")
+                write!(f, "not a git repository: {path}")
             }
             Self::NotAWorkTree { path } => {
-                write!(f, "los repositorios bare no están soportados: {path}")
+                write!(f, "bare repositories are not supported: {path}")
             }
             Self::InvalidHead { path } => {
-                write!(f, "el repositorio tiene un HEAD inválido: {path}")
+                write!(f, "invalid HEAD: {path}")
             }
             Self::GitTooOld { found, minimum } => {
-                write!(
-                    f,
-                    "se requiere git {minimum} o superior (instalado {found})"
-                )
+                write!(f, "git {minimum} or newer is required (found {found})")
             }
             Self::Store { message } => {
-                write!(f, "no se pudo guardar el estado de la app: {message}")
+                write!(f, "could not save app state: {message}")
             }
-            Self::Io { message } => write!(f, "error de fichero: {message}"),
+            Self::Io { message } => write!(f, "file error: {message}"),
         }
     }
 }

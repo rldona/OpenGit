@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { DiffView } from "./components/DiffView";
 import { HistoryView } from "./components/HistoryView";
+import { RefsSidebar } from "./components/RefsSidebar";
 import { StatusView } from "./components/StatusView";
 import { getAppVersion } from "./lib/bridge/core";
 import { useRepoEvents } from "./lib/hooks/useRepoEvents";
@@ -50,31 +51,29 @@ function App() {
     <div className="app">
       <header className="toolbar">
         <span className="brand">OpenGit</span>
-        <span className="tagline">{repo ? repo.root : "sin repositorio abierto"}</span>
+        <span className="tagline">{repo ? repo.root : "no repository open"}</span>
         <div className="toolbar-actions">
-          <span className="core-version">
-            {coreVersion ? `núcleo v${coreVersion}` : "núcleo —"}
-          </span>
+          <span className="core-version">{coreVersion ? `core v${coreVersion}` : "core —"}</span>
           {repo && (
             <button type="button" onClick={() => void close()}>
-              Cerrar
+              Close
             </button>
           )}
           <button type="button" onClick={() => void pickAndOpen()} disabled={loading}>
-            {loading ? "Abriendo…" : "Abrir repositorio"}
+            {loading ? "Opening…" : "Open repository"}
           </button>
           <button type="button" onClick={toggleOutput} aria-pressed={outputOpen}>
-            Salida
+            Output
           </button>
         </div>
       </header>
 
       <div className="panes">
-        <aside className="sidebar" aria-label="Repositorio">
+        <aside className="sidebar" aria-label="Repository">
           <section className="sidebar-section">
-            <h2>Recientes</h2>
+            <h2>Recents</h2>
             {recents.length === 0 ? (
-              <p className="muted">Todavía no hay repositorios</p>
+              <p className="muted">No repositories yet</p>
             ) : (
               <ul className="recent-list">
                 {recents.map((recent) => (
@@ -90,7 +89,7 @@ function App() {
                     <button
                       type="button"
                       className="recent-remove"
-                      aria-label={`Quitar ${recent.name} de recientes`}
+                      aria-label={`Remove ${recent.name} from recents`}
                       onClick={() => void removeRecent(recent.path)}
                     >
                       ×
@@ -134,19 +133,26 @@ function App() {
                 </li>
               </ul>
             ) : (
-              <p className="muted">Sin repositorio</p>
+              <p className="muted">No repository open</p>
             )}
           </section>
 
-          {["Branches", "Tags", "Remotes", "Stashes"].map((title) => (
-            <section key={title} className="sidebar-section">
-              <h2>{title}</h2>
-              <p className="muted">{repo ? "—" : "Sin repositorio"}</p>
+          {repo ? (
+            <RefsSidebar />
+          ) : (
+            <section className="sidebar-section">
+              <h2>Branches</h2>
+              <p className="muted">No repository open</p>
             </section>
-          ))}
+          )}
+
+          <section className="sidebar-section">
+            <h2>Stashes</h2>
+            <p className="muted">{repo ? "—" : "No repository open"}</p>
+          </section>
         </aside>
 
-        <main className="content" aria-label="Historial">
+        <main className="content" aria-label="History">
           {error && (
             <p role="alert" className="error-banner">
               {error}
@@ -167,8 +173,8 @@ function App() {
       </div>
 
       {outputOpen && (
-        <section className="output-panel" aria-label="Salida">
-          <h2>Salida</h2>
+        <section className="output-panel" aria-label="Output">
+          <h2>Output</h2>
           {outputLines.map((line, index) => (
             <p key={`${index}-${line}`} className="output-line">
               {line}
@@ -183,10 +189,10 @@ function App() {
 function Welcome({ loading, onOpen }: { loading: boolean; onOpen: () => void }) {
   return (
     <div className="empty-state">
-      <h1>Sin repositorio abierto</h1>
-      <p>Abre un repositorio para ver el grafo de commits y su historial.</p>
+      <h1>No repository open</h1>
+      <p>Open a repository to see its commit graph and history.</p>
       <button type="button" onClick={onOpen} disabled={loading}>
-        Seleccionar carpeta
+        Choose folder
       </button>
     </div>
   );

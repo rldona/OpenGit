@@ -1,16 +1,16 @@
 import { ask, open } from "@tauri-apps/plugin-dialog";
 
-/** Selector nativo de carpeta; `null` si el usuario cancela. */
+/** Native folder picker; `null` when the user cancels. */
 export async function pickDirectory(): Promise<string | null> {
   const selected = await open({
     directory: true,
     multiple: false,
-    title: "Abrir repositorio",
+    title: "Open repository",
   });
   return typeof selected === "string" ? selected : null;
 }
 
-/** Confirmación para operaciones destructivas (descartar, borrar). */
+/** Confirmation for destructive operations (discard, delete). */
 export function confirmDestructive(message: string): Promise<boolean> {
-  return ask(message, { title: "Confirmar acción", kind: "warning" });
+  return ask(message, { title: "Confirm action", kind: "warning" });
 }
