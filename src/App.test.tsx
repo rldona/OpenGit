@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
@@ -6,6 +6,7 @@ import { getAppVersion } from "./lib/bridge/core";
 import { pickDirectory } from "./lib/bridge/dialog";
 import { readConflictFile } from "./lib/bridge/conflict";
 import { subscribeRepoEvents } from "./lib/bridge/events";
+import { setWindowTitle } from "./lib/bridge/window";
 import { cherryPick } from "./lib/bridge/history";
 import { repoOpAbort } from "./lib/bridge/ops";
 import { commitRepo, repoOpState } from "./lib/bridge/commit";
@@ -81,9 +82,19 @@ vi.mock("./lib/bridge/status", () => ({
   deleteUntracked: vi.fn(),
 }));
 
+const menuMock = vi.hoisted(() => ({ handler: null as ((id: string) => void) | null }));
+
 vi.mock("./lib/bridge/events", () => ({
   subscribeRepoEvents: vi.fn().mockResolvedValue([]),
   subscribeJobEvents: vi.fn().mockResolvedValue([]),
+  subscribeMenuEvents: vi.fn((handler: (id: string) => void) => {
+    menuMock.handler = handler;
+    return Promise.resolve(() => {});
+  }),
+}));
+
+vi.mock("./lib/bridge/window", () => ({
+  setWindowTitle: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("./lib/bridge/jobs", () => ({
@@ -459,5 +470,47 @@ describe("App", () => {
 
     expect(input).toHaveValue("?");
     expect(screen.queryByRole("dialog", { name: "Keyboard shortcuts" })).not.toBeInTheDocument();
+  });
+
+  it("fija el título de la ventana con la ruta del repo", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    expect(setWindowTitle).toHaveBeenCalledWith("OpenGit");
+
+    await user.click(screen.getByRole("button", { name: "Choose folder" }));
+
+    expect(setWindowTitle).toHaveBeenLastCalledWith("/tmp/mi-repo");
+  });
+
+  it("muestra rama, cambios y versión en la barra de estado", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Choose folder" }));
+    await user.click(await screen.findByRole("button", { name: "File status" }));
+
+    const footer = screen.getByRole("contentinfo");
+    expect(within(footer).getByText("main")).toBeInTheDocument();
+    expect(await within(footer).findByText("1 change(s)")).toBeInTheDocument();
+    expect(within(footer).getByText("core v0.1.0")).toBeInTheDocument();
+  });
+
+  it("enruta los clics del menú nativo a sus acciones", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Choose folder" }));
+    await screen.findByText("commit de prueba");
+    vi.mocked(listRefs).mockClear();
+
+    act(() => menuMock.handler?.("view-status"));
+    expect(useUiStore.getState().activeView).toBe("status");
+
+    act(() => menuMock.handler?.("refresh"));
+    expect(listRefs).toHaveBeenCalledWith("/tmp/mi-repo");
+
+    act(() => menuMock.handler?.("toggle-output"));
+    expect(screen.queryByRole("region", { name: "Output" })).not.toBeInTheDocument();
   });
 });

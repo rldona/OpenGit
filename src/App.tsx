@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ConflictView } from "./components/ConflictView";
 import { DiffView } from "./components/DiffView";
 import { ExtrasSidebar } from "./components/ExtrasSidebar";
 import { HistoryView } from "./components/HistoryView";
+import { Icon } from "./components/Icon";
 import { OpBanner } from "./components/OpBanner";
 import { RebaseView } from "./components/RebaseView";
 import { RefsSidebar } from "./components/RefsSidebar";
@@ -11,9 +12,12 @@ import { StashSidebar } from "./components/StashSidebar";
 import { StatusView } from "./components/StatusView";
 import { getAppVersion } from "./lib/bridge/core";
 import { confirmDestructive } from "./lib/bridge/dialog";
+import { subscribeMenuEvents } from "./lib/bridge/events";
+import { openExternal } from "./lib/bridge/opener";
+import { setWindowTitle } from "./lib/bridge/window";
 import { useJobEvents } from "./lib/hooks/useJobEvents";
 import { useRepoEvents } from "./lib/hooks/useRepoEvents";
-import { useShortcuts } from "./lib/hooks/useShortcuts";
+import { useShortcuts, type ShortcutHandlers } from "./lib/hooks/useShortcuts";
 import { hasActiveOperation, stagedEntries, useCommitStore } from "./lib/stores/commit";
 import { useExtrasStore } from "./lib/stores/extras";
 import { useLogStore } from "./lib/stores/log";
@@ -24,6 +28,8 @@ import { useStatusStore } from "./lib/stores/status";
 import { useThemeStore } from "./lib/stores/theme";
 import { useUiStore } from "./lib/stores/ui";
 import type { ThemePreference } from "./lib/theme";
+
+const PROJECT_URL = "https://github.com/rldona/opengit";
 
 function App() {
   const outputOpen = useUiStore((state) => state.outputOpen);
@@ -56,6 +62,7 @@ function App() {
   const conflictCount = useStatusStore(
     (state) => state.report?.entries.filter((entry) => entry.kind === "unmerged").length ?? 0,
   );
+  const changeCount = useStatusStore((state) => state.report?.entries.length ?? 0);
 
   const [coreVersion, setCoreVersion] = useState<string | null>(null);
 
@@ -163,7 +170,7 @@ function App() {
     useLogStore.getState().select(null);
   };
 
-  useShortcuts({
+  const actions: ShortcutHandlers = {
     open: () => void pickAndOpen(),
     refresh: refreshAll,
     commit: commitStaged,
@@ -179,7 +186,82 @@ function App() {
     },
     help: toggleShortcuts,
     close: closeOverlayOrSelection,
+  };
+
+  useShortcuts(actions);
+
+  const menuDispatch = (id: string) => {
+    switch (id) {
+      case "open-repo":
+        actions.open?.();
+        break;
+      case "close-repo":
+        void useRepoStore.getState().close();
+        break;
+      case "view-status":
+        actions.viewStatus?.();
+        break;
+      case "view-history":
+        actions.viewHistory?.();
+        break;
+      case "view-diff":
+        actions.viewDiff?.();
+        break;
+      case "toggle-output":
+        toggleOutput();
+        break;
+      case "shortcuts":
+        actions.help?.();
+        break;
+      case "fetch":
+        runFetch();
+        break;
+      case "pull":
+        runPull();
+        break;
+      case "push":
+        void runPush();
+        break;
+      case "refresh":
+        refreshAll();
+        break;
+      case "documentation":
+        void openExternal(PROJECT_URL);
+        break;
+      default:
+        break;
+    }
+  };
+  const menuDispatchRef = useRef(menuDispatch);
+  useEffect(() => {
+    menuDispatchRef.current = menuDispatch;
   });
+
+  useEffect(() => {
+    let unlisten: (() => void) | null = null;
+    let disposed = false;
+    subscribeMenuEvents((id) => menuDispatchRef.current(id))
+      .then((fn) => {
+        if (disposed) {
+          fn();
+        } else {
+          unlisten = fn;
+        }
+      })
+      .catch(() => {
+        // Sin menú nativo la UI sigue funcionando con la toolbar y los atajos.
+      });
+    return () => {
+      disposed = true;
+      unlisten?.();
+    };
+  }, []);
+
+  useEffect(() => {
+    void setWindowTitle(repo ? repo.root : "OpenGit").catch(() => {
+      // En tests o sin ventana nativa el título no es crítico.
+    });
+  }, [repo]);
 
   return (
     <div className="app">
@@ -187,7 +269,51 @@ function App() {
         <span className="brand">OpenGit</span>
         <span className="tagline">{repo ? repo.root : "no repository open"}</span>
         <div className="toolbar-actions">
-          <span className="core-version">{coreVersion ? `core v${coreVersion}` : "core —"}</span>
+          <button type="button" onClick={() => void pickAndOpen()} disabled={loading}>
+            <Icon name="folder" />
+            {loading ? "Opening…" : "Open repository"}
+          </button>
+          {repo && (
+            <>
+              <button type="button" onClick={runFetch} disabled={remoteRunning}>
+                <Icon name="download" />
+                Fetch
+              </button>
+              <button type="button" onClick={runPull} disabled={remoteRunning}>
+                <Icon name="download" />
+                Pull
+              </button>
+              <button type="button" onClick={() => void runPush()} disabled={remoteRunning}>
+                <Icon name="upload" />
+                Push
+              </button>
+              <button type="button" onClick={refreshAll}>
+                <Icon name="refresh" />
+                Refresh
+              </button>
+              {remoteRunning && (
+                <button type="button" onClick={() => void cancelRemote()}>
+                  Cancel
+                </button>
+              )}
+              <button type="button" onClick={() => void close()}>
+                <Icon name="close" />
+                Close
+              </button>
+            </>
+          )}
+          <button
+            type="button"
+            onClick={toggleOutput}
+            aria-pressed={outputOpen}
+            title="Output"
+            aria-label="Output"
+          >
+            <Icon name="terminal" />
+          </button>
+          <button type="button" aria-label="Keyboard shortcuts" onClick={toggleShortcuts}>
+            <Icon name="help" />
+          </button>
           <select
             className="theme-select"
             aria-label="Theme"
@@ -198,36 +324,6 @@ function App() {
             <option value="light">Light</option>
             <option value="dark">Dark</option>
           </select>
-          {repo && (
-            <>
-              <button type="button" onClick={runFetch} disabled={remoteRunning}>
-                Fetch
-              </button>
-              <button type="button" onClick={runPull} disabled={remoteRunning}>
-                Pull
-              </button>
-              <button type="button" onClick={() => void runPush()} disabled={remoteRunning}>
-                Push
-              </button>
-              {remoteRunning && (
-                <button type="button" onClick={() => void cancelRemote()}>
-                  Cancel
-                </button>
-              )}
-              <button type="button" onClick={() => void close()}>
-                Close
-              </button>
-            </>
-          )}
-          <button type="button" onClick={() => void pickAndOpen()} disabled={loading}>
-            {loading ? "Opening…" : "Open repository"}
-          </button>
-          <button type="button" onClick={toggleOutput} aria-pressed={outputOpen}>
-            Output
-          </button>
-          <button type="button" aria-label="Keyboard shortcuts" onClick={toggleShortcuts}>
-            ?
-          </button>
         </div>
       </header>
 
@@ -368,6 +464,16 @@ function App() {
           ))}
         </section>
       )}
+
+      <footer className="status-bar">
+        <span>{repo ? (currentBranch ?? "detached HEAD") : "No repository"}</span>
+        {repo && conflictCount > 0 && (
+          <span className="status-conflicts">{conflictCount} conflict(s)</span>
+        )}
+        {repo && <span className="muted">{changeCount} change(s)</span>}
+        <span className="status-spacer" />
+        <span className="core-version">{coreVersion ? `core v${coreVersion}` : "core —"}</span>
+      </footer>
     </div>
   );
 }
