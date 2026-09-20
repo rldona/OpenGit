@@ -14,9 +14,10 @@ export function visibleRange(
   viewportHeight: number,
   rowCount: number,
   overscan = 6,
+  rowHeight = ROW_HEIGHT,
 ): VisibleRange {
-  const start = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - overscan);
-  const end = Math.min(rowCount, Math.ceil((scrollTop + viewportHeight) / ROW_HEIGHT) + overscan);
+  const start = Math.max(0, Math.floor(scrollTop / rowHeight) - overscan);
+  const end = Math.min(rowCount, Math.ceil((scrollTop + viewportHeight) / rowHeight) + overscan);
   return { start, end };
 }
 

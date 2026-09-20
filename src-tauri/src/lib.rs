@@ -38,6 +38,7 @@ pub fn run() {
             commands::diff_numstat,
             commands::stage_path,
             commands::unstage_path,
+            commands::stage_selection,
             commands::discard_path,
             commands::delete_untracked,
             commands::recent_repos,

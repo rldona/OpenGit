@@ -35,6 +35,14 @@
 - **Hallazgo:** interpolar el mensaje en `-m` requiere escapar comillas y rompe saltos de línea.
 - **Implicación:** pasar el mensaje por stdin (`-F -`), nunca concatenado.
 
+## Stage parcial: un `-` descartado debe pasar a contexto
+
+- **Fecha:** 2026-09-18
+- **Contexto:** reconstrucción de parches por líneas en OG-006.
+- **Hallazgo:** si se deselecciona la línea `-vieja` de un par `-vieja/+nueva`, el index sigue teniendo `vieja`; emitir el parche sin ella rompe el contexto posterior (`error: patch does not apply`). Hay que emitirla como contexto (` vieja`). Los `+` descartados se omiten sin más, y los marcadores `\ No newline at end of file` solo valen si su línea sigue en el parche.
+- **Hallazgo 2:** git fusiona en un solo hunk los cambios separados por menos de 2×contexto (por defecto 3 líneas); al escribir tests de hunks hay que separarlos más de 6 líneas.
+- **Implicación:** implementado y cubierto en `git::patch::ParsedPatch::build`; cualquier cambio ahí exige pasar los tests de CRLF y sin newline final.
+
 ## Formatos exactos con `-z` (log, status, numstat)
 
 - **Fecha:** 2026-09-18

@@ -1,9 +1,16 @@
 import { create } from "zustand";
-import { commitFiles, diffFile, diffNumstat } from "../bridge/diff";
+import {
+  commitFiles,
+  diffFile,
+  diffNumstat,
+  stageSelection,
+  type HunkSelection,
+} from "../bridge/diff";
 import { formatGitError } from "../bridge/errors";
 import { statusRepo } from "../bridge/status";
 import type { FileDiff } from "../bridge/types";
 import { isBinaryPatch } from "../diff/patch";
+import { useStatusStore } from "./status";
 
 export type DiffTarget = { kind: "worktree" } | { kind: "commit"; rev: string };
 export type DiffMode = "unified" | "side";
@@ -28,6 +35,7 @@ type DiffState = {
   binary: boolean;
   mode: DiffMode;
   reversed: boolean;
+  selectedLines: number[];
   loading: boolean;
   error: string | null;
   openWorktree: (root: string) => Promise<void>;
@@ -36,6 +44,9 @@ type DiffState = {
   selectFile: (entry: DiffFileEntry) => Promise<void>;
   setMode: (mode: DiffMode) => void;
   toggleReverse: () => Promise<void>;
+  toggleLine: (index: number) => void;
+  clearSelection: () => void;
+  applySelection: (selection: HunkSelection) => Promise<void>;
   reset: () => void;
 };
 
@@ -59,6 +70,7 @@ export const useDiffStore = create<DiffState>((set, get) => ({
   binary: false,
   mode: "side",
   reversed: false,
+  selectedLines: [],
   loading: false,
   error: null,
 
@@ -161,6 +173,7 @@ export const useDiffStore = create<DiffState>((set, get) => ({
   selectFile: async (entry) => {
     const { root, target, reversed } = get();
     if (!root || !target) return;
+    set({ selectedLines: [] });
     if (entry.untracked) {
       set({ selected: entry, patch: "", binary: false });
       return;
@@ -190,6 +203,38 @@ export const useDiffStore = create<DiffState>((set, get) => ({
     }
   },
 
+  toggleLine: (index) =>
+    set((state) => ({
+      selectedLines: state.selectedLines.includes(index)
+        ? state.selectedLines.filter((line) => line !== index)
+        : [...state.selectedLines, index],
+    })),
+
+  clearSelection: () => set({ selectedLines: [] }),
+
+  /// Aplica stage o unstage de la selección; solo en working tree/index.
+  applySelection: async (selection) => {
+    const { root, target, selected } = get();
+    if (!root || !target || !selected || target.kind !== "worktree" || selected.untracked) {
+      return;
+    }
+    set({ loading: true, error: null });
+    try {
+      await stageSelection({
+        path: root,
+        file: selected.path,
+        staged: selected.staged,
+        selection,
+        reverse: selected.staged,
+      });
+      set({ selectedLines: [] });
+      await get().selectFile(selected);
+      await useStatusStore.getState().refresh(root);
+    } catch (error) {
+      set({ loading: false, error: formatGitError(error) });
+    }
+  },
+
   reset: () =>
     set({
       root: null,
@@ -200,6 +245,7 @@ export const useDiffStore = create<DiffState>((set, get) => ({
       binary: false,
       mode: "side",
       reversed: false,
+      selectedLines: [],
       loading: false,
       error: null,
     }),
