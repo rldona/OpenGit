@@ -182,6 +182,101 @@ describe("useRepoStore", () => {
     expect(vi.mocked(openRepo).mock.calls.length).toBe(calls);
   });
 
+  it("reorders tabs by moving one onto another and keeps the active repo", async () => {
+    const other: RepoInfo = { ...REPO, root: "/tmp/other", name: "other" };
+    const third: RepoInfo = { ...REPO, root: "/tmp/third", name: "third" };
+    vi.mocked(openRepo).mockImplementation(
+      async (path: string) => [REPO, other, third].find((repo) => repo.root === path) ?? REPO,
+    );
+
+    for (const repo of [REPO, other, third]) {
+      await useRepoStore.getState().open(repo.root);
+    }
+
+    useRepoStore.getState().moveTab(REPO.root, third.root);
+
+    expect(useRepoStore.getState().openTabs.map((tab) => tab.path)).toEqual([
+      other.root,
+      third.root,
+      REPO.root,
+    ]);
+    expect(useRepoStore.getState().repo?.root).toBe(third.root);
+  });
+
+  it("reorders tabs when moving a later tab onto an earlier one", async () => {
+    const other: RepoInfo = { ...REPO, root: "/tmp/other", name: "other" };
+    const third: RepoInfo = { ...REPO, root: "/tmp/third", name: "third" };
+    vi.mocked(openRepo).mockImplementation(
+      async (path: string) => [REPO, other, third].find((repo) => repo.root === path) ?? REPO,
+    );
+
+    for (const repo of [REPO, other, third]) {
+      await useRepoStore.getState().open(repo.root);
+    }
+
+    useRepoStore.getState().moveTab(third.root, REPO.root);
+
+    expect(useRepoStore.getState().openTabs.map((tab) => tab.path)).toEqual([
+      third.root,
+      REPO.root,
+      other.root,
+    ]);
+  });
+
+  it("reorders in memory without persisting while remembering is off", async () => {
+    const other: RepoInfo = { ...REPO, root: "/tmp/other", name: "other" };
+    vi.mocked(openRepo).mockImplementation(async (path: string) =>
+      path === other.root ? other : REPO,
+    );
+
+    await useRepoStore.getState().open(REPO.root);
+    await useRepoStore.getState().open(other.root);
+
+    useRepoStore.getState().moveTab(other.root, REPO.root);
+
+    expect(useRepoStore.getState().openTabs.map((tab) => tab.path)).toEqual([
+      other.root,
+      REPO.root,
+    ]);
+    expect(loadStoredSession()).toBeNull();
+  });
+
+  it("persists the reordered tabs when remembering is on", async () => {
+    const other: RepoInfo = { ...REPO, root: "/tmp/other", name: "other" };
+    const third: RepoInfo = { ...REPO, root: "/tmp/third", name: "third" };
+    vi.mocked(openRepo).mockImplementation(
+      async (path: string) => [REPO, other, third].find((repo) => repo.root === path) ?? REPO,
+    );
+    useSettingsStore.setState({ restoreTabs: true });
+
+    for (const repo of [REPO, other, third]) {
+      await useRepoStore.getState().open(repo.root);
+    }
+
+    useRepoStore.getState().moveTab(REPO.root, third.root);
+
+    expect(loadStoredSession()).toEqual({
+      paths: [other.root, third.root, REPO.root],
+      active: third.root,
+    });
+  });
+
+  it("ignores moveTab for the same path or an unknown one", async () => {
+    const other: RepoInfo = { ...REPO, root: "/tmp/other", name: "other" };
+    vi.mocked(openRepo).mockImplementation(async (path: string) =>
+      path === other.root ? other : REPO,
+    );
+
+    await useRepoStore.getState().open(REPO.root);
+    await useRepoStore.getState().open(other.root);
+    const before = useRepoStore.getState().openTabs;
+
+    useRepoStore.getState().moveTab(REPO.root, REPO.root);
+    useRepoStore.getState().moveTab(REPO.root, "/tmp/missing");
+
+    expect(useRepoStore.getState().openTabs).toEqual(before);
+  });
+
   it("translates the validation error into a readable message", async () => {
     vi.mocked(openRepo).mockRejectedValue({ kind: "not_a_repository", path: "/tmp/x" });
 
