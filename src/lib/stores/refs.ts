@@ -51,6 +51,8 @@ type RefsState = {
   incoming: string[];
   outgoing: string[];
   loading: boolean;
+  /** True while `git merge` runs, so the UI can show the merge is being done. */
+  merging: boolean;
   error: string | null;
   pendingForceDelete: string | null;
   load: (root: string) => Promise<void>;
@@ -83,6 +85,7 @@ export const useRefsStore = create<RefsState>((set, get) => ({
   incoming: [],
   outgoing: [],
   loading: false,
+  merging: false,
   error: null,
   pendingForceDelete: null,
 
@@ -152,7 +155,8 @@ export const useRefsStore = create<RefsState>((set, get) => ({
   },
 
   merge: async (root, rev, options) => {
-    set({ error: null });
+    set({ error: null, merging: true });
+    output(`Merging ${rev}…`);
     try {
       const result = await mergeBranch(root, rev, options);
       for (const line of result.output.split("\n")) {
@@ -177,6 +181,8 @@ export const useRefsStore = create<RefsState>((set, get) => ({
       set({ error: message });
       output(`Merge failed: ${message}`);
       return null;
+    } finally {
+      set({ merging: false });
     }
   },
 
@@ -278,6 +284,7 @@ export const useRefsStore = create<RefsState>((set, get) => ({
       incoming: [],
       outgoing: [],
       loading: false,
+      merging: false,
       error: null,
       pendingForceDelete: null,
     }),

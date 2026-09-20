@@ -3,6 +3,7 @@ import { confirmDestructive } from "../lib/bridge/dialog";
 import { openExternal, openTerminal, revealInFileManager } from "../lib/bridge/opener";
 import { useExtrasStore } from "../lib/stores/extras";
 import { useRemoteStore } from "../lib/stores/remote";
+import { useRefsStore } from "../lib/stores/refs";
 import { useRepoStore } from "../lib/stores/repo";
 import { useStatusStore } from "../lib/stores/status";
 import { useThemeStore } from "../lib/stores/theme";
@@ -56,6 +57,7 @@ export function Toolbar({
   const pickAndOpen = useRepoStore((state) => state.pickAndOpen);
   const close = useRepoStore((state) => state.close);
   const remoteRunning = useRemoteStore((state) => state.running);
+  const merging = useRefsStore((state) => state.merging);
   const changeCount = useStatusStore((state) => state.report?.entries.length ?? 0);
   const remotes = useExtrasStore((state) => state.remotes);
   const setActiveView = useUiStore((state) => state.setActiveView);
@@ -120,7 +122,12 @@ export function Toolbar({
             <ToolButton icon="download" label="Fetch" disabled={busy} onClick={onFetch} />
             <span className="toolbar-divider" />
             <ToolButton icon="branch" label="Branch" onClick={requestNewBranch} />
-            <ToolButton icon="merge" label="Merge" onClick={onMerge} />
+            <ToolButton
+              icon="merge"
+              label={merging ? "Merging…" : "Merge"}
+              disabled={merging}
+              onClick={onMerge}
+            />
             <ToolButton icon="stash" label="Stash" onClick={requestNewStash} />
             <ToolButton
               icon="refresh"

@@ -103,6 +103,18 @@ describe("useCommitStore", () => {
     expect(logPage).toHaveBeenCalledWith("/tmp/repo", 0, 200, null, null);
   });
 
+  it("re-reads the operation state after committing (it can finalize a merge)", async () => {
+    vi.mocked(commitRepo).mockResolvedValue({ hash: "abc1234", subject: "Merge" });
+    await useCommitStore.getState().load("/tmp/repo");
+    vi.mocked(repoOpState).mockClear();
+    useCommitStore.getState().setMessage("Merge");
+
+    const ok = await useCommitStore.getState().submit(1);
+
+    expect(ok).toBe(true);
+    expect(repoOpState).toHaveBeenCalledWith("/tmp/repo");
+  });
+
   it("amend asks for confirmation and preloads the previous message", async () => {
     await useCommitStore.getState().load("/tmp/repo");
 
