@@ -131,6 +131,8 @@ pub fn run() {
             commands::revert_commit,
             commands::reset_mixed,
             commands::merge_branch,
+            commands::image_pair,
+            commands::image_blob,
             commands::tag_create,
             commands::tag_delete,
             commands::stash_list,

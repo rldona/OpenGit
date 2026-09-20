@@ -47,7 +47,7 @@ pub fn discard_paths(runner: &Runner, repo: &Path, files: &[&str]) -> Result<(),
         .map(|_| ())
 }
 
-fn relative_path(file: &str) -> Result<PathBuf, GitError> {
+pub(crate) fn relative_path(file: &str) -> Result<PathBuf, GitError> {
     let relative = Path::new(file);
     if relative.is_absolute()
         || relative

@@ -249,6 +249,134 @@ pub fn revert_commit(runner: &Runner, repo: &Path, hash: &str) -> Result<(), Git
         .map(|_| ())
 }
 
+/// MIME type of an image, sniffing magic bytes and falling back to extension.
+pub fn image_mime(file: &str, bytes: &[u8]) -> Option<&'static str> {
+    if bytes.starts_with(&[0x89, b'P', b'N', b'G', 0x0D, 0x0A, 0x1A, 0x0A]) {
+        return Some("image/png");
+    }
+    if bytes.starts_with(&[0xFF, 0xD8, 0xFF]) {
+        return Some("image/jpeg");
+    }
+    if bytes.starts_with(b"GIF87a") || bytes.starts_with(b"GIF89a") {
+        return Some("image/gif");
+    }
+    if bytes.len() >= 12 && &bytes[0..4] == b"RIFF" && &bytes[8..12] == b"WEBP" {
+        return Some("image/webp");
+    }
+    if bytes.starts_with(b"BM") {
+        return Some("image/bmp");
+    }
+    if bytes.starts_with(&[0x00, 0x00, 0x01, 0x00]) {
+        return Some("image/x-icon");
+    }
+    if bytes.len() >= 12 && &bytes[4..8] == b"ftyp" {
+        match &bytes[8..12] {
+            b"avif" | b"avis" => return Some("image/avif"),
+            b"heic" | b"heix" | b"heif" | b"mif1" => return Some("image/heic"),
+            _ => {}
+        }
+    }
+    let lower = file.to_lowercase();
+    for (extension, mime) in [
+        (".png", "image/png"),
+        (".jpg", "image/jpeg"),
+        (".jpeg", "image/jpeg"),
+        (".gif", "image/gif"),
+        (".webp", "image/webp"),
+        (".bmp", "image/bmp"),
+        (".ico", "image/x-icon"),
+        (".avif", "image/avif"),
+        (".heic", "image/heic"),
+        (".tif", "image/tiff"),
+        (".tiff", "image/tiff"),
+    ] {
+        if lower.ends_with(extension) {
+            return Some(mime);
+        }
+    }
+    None
+}
+
+/// MIME types of the two sides of an image change; `None` when a side does
+/// not exist (added, deleted or unmerged file).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct ImagePair {
+    pub before: Option<String>,
+    pub after: Option<String>,
+}
+
+fn show_blob(runner: &Runner, repo: &Path, spec: &str) -> Option<Vec<u8>> {
+    let output = runner
+        .run(&GitCommand::new(["show", spec]).cwd(repo))
+        .ok()?;
+    if output.success() {
+        Some(output.stdout)
+    } else {
+        None
+    }
+}
+
+/// Blobs of both sides: commit (`rev` vs `rev^`), index (`HEAD` vs staged) or
+/// working tree (index vs file on disk).
+fn image_sides(
+    runner: &Runner,
+    repo: &Path,
+    file: &str,
+    rev: Option<&str>,
+    staged: bool,
+) -> (Option<Vec<u8>>, Option<Vec<u8>>) {
+    match rev {
+        Some(rev) => (
+            show_blob(runner, repo, &format!("{rev}^:{file}")),
+            show_blob(runner, repo, &format!("{rev}:{file}")),
+        ),
+        None if staged => (
+            show_blob(runner, repo, &format!("HEAD:{file}")),
+            show_blob(runner, repo, &format!(":{file}")),
+        ),
+        None => {
+            let before = show_blob(runner, repo, &format!(":{file}"));
+            let after = repo.join(file);
+            (before, std::fs::read(after).ok())
+        }
+    }
+}
+
+fn image_side_mime(file: &str, bytes: Option<Vec<u8>>) -> Option<String> {
+    bytes.and_then(|bytes| image_mime(file, &bytes).map(str::to_string))
+}
+
+/// Which sides of an image change exist, with their MIME types.
+pub fn image_pair(
+    runner: &Runner,
+    repo: &Path,
+    file: &str,
+    rev: Option<&str>,
+    staged: bool,
+) -> Result<ImagePair, GitError> {
+    crate::repo::ops::relative_path(file)?;
+    let (before, after) = image_sides(runner, repo, file, rev, staged);
+    Ok(ImagePair {
+        before: image_side_mime(file, before),
+        after: image_side_mime(file, after),
+    })
+}
+
+/// Raw bytes of one side of an image change.
+pub fn image_bytes(
+    runner: &Runner,
+    repo: &Path,
+    file: &str,
+    rev: Option<&str>,
+    staged: bool,
+    side: &str,
+) -> Result<Vec<u8>, GitError> {
+    crate::repo::ops::relative_path(file)?;
+    let (before, after) = image_sides(runner, repo, file, rev, staged);
+    let chosen = if side == "before" { before } else { after };
+    chosen.ok_or_else(|| GitError::invalid("image side not found"))
+}
+
 /// Reset mixed: mueve HEAD y desestagea, sin tocar el working tree.
 pub fn reset_mixed(runner: &Runner, repo: &Path, hash: &str) -> Result<(), GitError> {
     validate_commit_hash(hash)?;
