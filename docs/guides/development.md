@@ -48,12 +48,29 @@ gh run watch
 
 Artefactos: `opengit-macos`, `opengit-linux`, `opengit-windows`.
 
+### Releases
+
+Los bundles instalables solo se construyen al empujar un tag `vX.Y.Z` (macOS factura 10× por minuto, así que nunca en cada push):
+
+```bash
+git tag -a v0.1.0 -m "OpenGit 0.1.0"
+git push origin v0.1.0
+```
+
+El workflow `release.yml`:
+
+1. Comprueba que el tag coincide con la versión de `package.json` y `tauri.conf.json` (si no, falla antes de compilar).
+2. Construye los bundles en los tres SO: `.dmg` en macOS; `.deb` y `.AppImage` en Linux; `.msi` y `.exe` (NSIS) en Windows.
+3. Crea un **borrador** de release con las notas generadas y los instaladores adjuntos; revísalo en GitHub y publícalo a mano.
+
+Sin firma ni notarización todavía (fase 2): macOS y Windows avisarán al abrir el instalador. Para relanzar un release ya iniciado: `gh workflow run release.yml -f tag=vX.Y.Z` (los artefactos existentes se reemplazan).
+
 ## Estructura
 
 ```
 src/                        # React + TS
   App.tsx                   # layout: toolbar, sidebar, historial, salida
-  components/               # HistoryView, GraphCanvas, StatusView, CommitPanel, DiffView, RefsSidebar, StashSidebar, ConflictView, RebaseView
+  components/               # HistoryView, GraphCanvas, StatusView, CommitPanel, DiffView, RefsSidebar, StashSidebar, ExtrasSidebar, ConflictView, RebaseView, ShortcutsHelp
   lib/bridge/               # envoltorios tipados de invoke/eventos
   lib/conflict/             # parseo de marcadores de conflicto (OG-020)
   lib/diff/                 # separación del parche de git (OG-005)
