@@ -1,9 +1,14 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { openRepoInNewWindow } from "../lib/bridge/app";
 import type { RepoInfo } from "../lib/bridge/types";
 import { useRepoStore } from "../lib/stores/repo";
 import { RepoTabs } from "./RepoTabs";
+
+vi.mock("../lib/bridge/app", () => ({
+  openRepoInNewWindow: vi.fn().mockResolvedValue(undefined),
+}));
 
 const REPO_A: RepoInfo = {
   root: "/tmp/repo-a",
@@ -101,5 +106,19 @@ describe("RepoTabs", () => {
     await user.click(screen.getByRole("button", { name: "Open another repository" }));
 
     expect(pickAndOpen).toHaveBeenCalledTimes(1);
+  });
+
+  it("offers to open a tab in a new window", async () => {
+    const user = userEvent.setup();
+    useRepoStore.setState({ repo: REPO_A, openTabs: tabs() });
+    render(<RepoTabs />);
+
+    await user.pointer({
+      keys: "[MouseRight]",
+      target: screen.getByRole("tab", { name: "repo-b" }),
+    });
+    await user.click(await screen.findByRole("menuitem", { name: "Open in New Window" }));
+
+    expect(openRepoInNewWindow).toHaveBeenCalledWith(REPO_B.root);
   });
 });

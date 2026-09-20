@@ -1,5 +1,6 @@
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -11,11 +12,15 @@ use crate::jobs::{JobKind, JobManager, RemoteJobEvent};
 use crate::repo::{self, ops, recents::Recents, RecentRepo};
 use crate::watch::{self, WatcherHandle};
 
-/// State shared by the commands: runner, recents, watcher and jobs.
+/// State shared by the commands: runner, recents, watchers and jobs.
 pub struct AppState {
     pub runner: Runner,
     pub recents: Mutex<Recents>,
-    pub watcher: Mutex<Option<WatcherHandle>>,
+    /// One watcher per window label (ADR-0008), so windows do not stop each other.
+    pub watchers: Mutex<HashMap<String, WatcherHandle>>,
+    /// Repository a new window must open on startup, keyed by its label.
+    pub pending_repo: Mutex<HashMap<String, String>>,
+    pub window_counter: AtomicU64,
     pub jobs: Arc<JobManager>,
     pub data_dir: PathBuf,
     /// Whether the watcher events reach the UI (OG-067 "Automatically refresh").
@@ -145,16 +150,16 @@ pub fn set_auto_refresh(enabled: bool, state: State<'_, AppState>) {
 
 impl AppState {
     fn pause_watcher(&self) {
-        if let Ok(watcher) = self.watcher.lock() {
-            if let Some(watcher) = watcher.as_ref() {
+        if let Ok(watchers) = self.watchers.lock() {
+            for watcher in watchers.values() {
                 watcher.pause();
             }
         }
     }
 
     fn resume_watcher(&self) {
-        if let Ok(watcher) = self.watcher.lock() {
-            if let Some(watcher) = watcher.as_ref() {
+        if let Ok(watchers) = self.watchers.lock() {
+            for watcher in watchers.values() {
                 watcher.resume();
             }
         }
@@ -185,6 +190,7 @@ pub fn git_version(state: State<'_, AppState>) -> Result<GitVersion, GitError> {
 #[tauri::command]
 pub fn open_repo(
     app: AppHandle,
+    window: tauri::WebviewWindow,
     path: String,
     state: State<'_, AppState>,
 ) -> Result<repo::RepoInfo, GitError> {
@@ -197,12 +203,8 @@ pub fn open_repo(
     state.recents.lock().map_err(lock_error)?.add(&recent)?;
 
     let event_root = info.root.clone();
-    let mut guard = state.watcher.lock().map_err(lock_error)?;
-    if let Some(previous) = guard.take() {
-        previous.stop();
-    }
     let auto_refresh = Arc::clone(&state.auto_refresh);
-    if let Ok(handle) = watch::start(
+    let started = watch::start(
         state.runner.clone(),
         PathBuf::from(&info.root),
         move |kind| {
@@ -210,10 +212,57 @@ pub fn open_repo(
                 let _ = app.emit(kind.event_name(), event_root.clone());
             }
         },
-    ) {
-        *guard = Some(handle);
+    );
+
+    let label = window.label().to_string();
+    let mut watchers = state.watchers.lock().map_err(lock_error)?;
+    if let Some(previous) = watchers.remove(&label) {
+        previous.stop();
+    }
+    if let Ok(handle) = started {
+        watchers.insert(label, handle);
     }
     Ok(info)
+}
+
+/// Opens `path` in a new window (ADR-0008); the new window asks for it through
+/// `initial_repo` on startup.
+#[tauri::command]
+pub fn open_repo_in_new_window(
+    app: AppHandle,
+    path: String,
+    state: State<'_, AppState>,
+) -> Result<(), GitError> {
+    let label = format!(
+        "repo-{}",
+        state.window_counter.fetch_add(1, Ordering::SeqCst)
+    );
+    state
+        .pending_repo
+        .lock()
+        .map_err(lock_error)?
+        .insert(label.clone(), path);
+
+    tauri::WebviewWindowBuilder::new(&app, &label, tauri::WebviewUrl::default())
+        .title("OpenGit")
+        .inner_size(1200.0, 800.0)
+        .build()
+        .map_err(|error| GitError::invalid(format!("could not open a new window: {error}")))?;
+    Ok(())
+}
+
+/// Repository a new window must open, once (ADR-0008); `None` for the main one.
+#[tauri::command]
+pub fn initial_repo(
+    window: tauri::WebviewWindow,
+    state: State<'_, AppState>,
+) -> Result<Option<String>, GitError> {
+    let label = window.label().to_string();
+    Ok(state
+        .pending_repo
+        .lock()
+        .map_err(lock_error)?
+        .remove(&label))
 }
 
 /// `.gitignore` templates for the "Create repository" dialog (OG-086).
@@ -241,8 +290,12 @@ pub fn init_repo(
 }
 
 #[tauri::command]
-pub fn close_repo(state: State<'_, AppState>) -> Result<(), GitError> {
-    if let Some(watcher) = state.watcher.lock().map_err(lock_error)?.take() {
+pub fn close_repo(
+    window: tauri::WebviewWindow,
+    state: State<'_, AppState>,
+) -> Result<(), GitError> {
+    let label = window.label().to_string();
+    if let Some(watcher) = state.watchers.lock().map_err(lock_error)?.remove(&label) {
         watcher.stop();
     }
     Ok(())

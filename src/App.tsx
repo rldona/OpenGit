@@ -26,6 +26,7 @@ import { StashView } from "./components/StashView";
 import { StatusView } from "./components/StatusView";
 import { Toolbar } from "./components/Toolbar";
 import { UpdateDialog } from "./components/UpdateDialog";
+import { initialRepo } from "./lib/bridge/app";
 import { confirmDestructive } from "./lib/bridge/dialog";
 import { subscribeMenuEvents } from "./lib/bridge/events";
 import { openExternal } from "./lib/bridge/opener";
@@ -134,16 +135,32 @@ function App() {
   const [restoringSession, setRestoringSession] = useState(shouldRestoreSession);
 
   useEffect(() => {
-    // Reopen the previous session when the preference is on (OG-082).
-    const session = shouldRestoreSession() ? loadStoredSession() : null;
-    if (session === null) {
-      setRestoringSession(false);
-      return;
-    }
-    void useRepoStore
-      .getState()
-      .restoreSession(session.paths, session.active)
-      .finally(() => setRestoringSession(false));
+    let cancelled = false;
+    void (async () => {
+      // A new window opens the repository it was created for (ADR-0008).
+      const initial = await initialRepo().catch(() => null);
+      if (cancelled) {
+        return;
+      }
+      if (initial !== null) {
+        await useRepoStore.getState().open(initial);
+        if (!cancelled) {
+          setRestoringSession(false);
+        }
+        return;
+      }
+      // Otherwise reopen the previous session when the preference is on (OG-082).
+      const session = shouldRestoreSession() ? loadStoredSession() : null;
+      if (session !== null) {
+        await useRepoStore.getState().restoreSession(session.paths, session.active);
+      }
+      if (!cancelled) {
+        setRestoringSession(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
