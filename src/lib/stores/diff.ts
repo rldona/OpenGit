@@ -8,6 +8,7 @@ import {
   discardSelection,
   stageSelection,
   untrackedFileDiff,
+  type DiffOptions,
   type HunkSelection,
 } from "../bridge/diff";
 import { formatGitError } from "../bridge/errors";
@@ -45,6 +46,8 @@ type DiffState = {
   /** Mode picked by hand per file; the rest use the automatic one. */
   modeByFile: Record<string, DiffMode>;
   reversed: boolean;
+  /** View-only diff options (OG-095), kept for the session. */
+  options: DiffOptions;
   selectedLines: number[];
   loading: boolean;
   error: string | null;
@@ -62,6 +65,7 @@ type DiffState = {
   selectFile: (entry: DiffFileEntry) => Promise<void>;
   setMode: (mode: DiffMode) => void;
   toggleReverse: () => Promise<void>;
+  toggleOption: (key: keyof DiffOptions) => Promise<void>;
   toggleLine: (index: number) => void;
   clearSelection: () => void;
   applySelection: (selection: HunkSelection) => Promise<void>;
@@ -148,6 +152,7 @@ export const useDiffStore = create<DiffState>((set, get) => ({
   mode: "unified",
   modeByFile: {},
   reversed: false,
+  options: { ignore_all_space: false, ignore_blank_lines: false, word_diff: false },
   selectedLines: [],
   loading: false,
   error: null,
@@ -310,7 +315,7 @@ export const useDiffStore = create<DiffState>((set, get) => ({
   },
 
   selectFile: async (entry) => {
-    const { root, target, reversed } = get();
+    const { root, target, reversed, options } = get();
     if (!root || !target) return;
     const mode = get().modeByFile[entry.key] ?? autoMode(entry);
     set({ selectedLines: [], mode });
@@ -336,6 +341,7 @@ export const useDiffStore = create<DiffState>((set, get) => ({
           rev: target.rev,
           file: entry.path,
           reversed,
+          options,
         });
       } else {
         patch = await diffFile({
@@ -344,6 +350,7 @@ export const useDiffStore = create<DiffState>((set, get) => ({
           staged: target.kind === "worktree" && entry.staged,
           rev: target.kind === "commit" ? target.rev : null,
           reversed,
+          options,
         });
       }
       set({ patch, binary: entry.binary || isBinaryPatch(patch), loading: false });
@@ -363,6 +370,14 @@ export const useDiffStore = create<DiffState>((set, get) => ({
 
   toggleReverse: async () => {
     set({ reversed: !get().reversed });
+    const selected = get().selected;
+    if (selected && !selected.untracked) {
+      await get().selectFile(selected);
+    }
+  },
+
+  toggleOption: async (key) => {
+    set({ options: { ...get().options, [key]: !get().options[key] } });
     const selected = get().selected;
     if (selected && !selected.untracked) {
       await get().selectFile(selected);
