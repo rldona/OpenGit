@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { formatGitError } from "../bridge/errors";
 import {
   cherryPick as cherryPickRequest,
+  cherryPickRange as cherryPickRangeRequest,
   resetMixed,
   revertCommit as revertRequest,
 } from "../bridge/history";
@@ -53,6 +54,7 @@ type LogState = {
   /** Loads pages until the commit is found, selects it and requests the scroll. */
   revealCommit: (root: string, hash: string) => Promise<void>;
   cherryPick: (root: string, hash: string) => Promise<void>;
+  cherryPickRange: (root: string, revs: string[], recordSource: boolean) => Promise<void>;
   revert: (root: string, hash: string) => Promise<void>;
   resetTo: (root: string, hash: string) => Promise<void>;
   reset: () => void;
@@ -295,6 +297,22 @@ export const useLogStore = create<LogState>((set, get) => ({
     try {
       await cherryPickRequest(root, hash);
       output(`Cherry-picked ${hash.slice(0, 7)}`);
+      await refreshAfterRewrite(root, () => get().reload(root));
+    } catch (error) {
+      const message = formatGitError(error);
+      set({ error: message });
+      output(`Cherry-pick failed: ${message}`);
+    }
+  },
+
+  cherryPickRange: async (root, revs, recordSource) => {
+    try {
+      const result = await cherryPickRangeRequest(root, revs, recordSource);
+      if (result.conflicted) {
+        output("Cherry-pick has conflicts; resolve them or abort");
+      } else {
+        output(result.output.trim() || `Cherry-picked ${revs.length} commit(s)`);
+      }
       await refreshAfterRewrite(root, () => get().reload(root));
     } catch (error) {
       const message = formatGitError(error);

@@ -146,6 +146,7 @@ pub fn run() {
             commands::repo_op_continue,
             commands::repo_op_skip,
             commands::cherry_pick,
+            commands::cherry_pick_range,
             commands::revert_commit,
             commands::reset_mixed,
             commands::merge_branch,

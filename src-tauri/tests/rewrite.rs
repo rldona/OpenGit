@@ -1,6 +1,8 @@
 mod support;
 
-use opengit_lib::git::{cherry_pick, repo_op_state, reset_mixed, revert_commit, status, Runner};
+use opengit_lib::git::{
+    cherry_pick, cherry_pick_range, repo_op_state, reset_mixed, revert_commit, status, Runner,
+};
 use support::TestRepo;
 
 fn runner() -> Runner {
@@ -109,4 +111,58 @@ fn invalid_hash_fails() {
         format!("{error}").contains("invalid commit hash"),
         "{error}"
     );
+}
+
+fn feature_with_two_commits(repo: &TestRepo) -> (String, String) {
+    commit_file(repo, "base.txt", "base\n", "base");
+    repo.git_ok(&["checkout", "-q", "-b", "feature"]);
+    commit_file(repo, "f1.txt", "1\n", "f1");
+    let first = head(repo);
+    commit_file(repo, "f2.txt", "2\n", "f2");
+    let second = head(repo);
+    repo.git_ok(&["checkout", "-q", "main"]);
+    (first, second)
+}
+
+#[test]
+fn cherry_pick_range_applies_several_commits_in_order() {
+    let repo = TestRepo::init();
+    let (first, second) = feature_with_two_commits(&repo);
+
+    let result = cherry_pick_range(&runner(), repo.path(), &[first, second], false)
+        .expect("cherry-pick range");
+
+    assert!(!result.conflicted, "{}", result.output);
+    assert!(repo.path().join("f1.txt").exists());
+    assert!(repo.path().join("f2.txt").exists());
+}
+
+#[test]
+fn cherry_pick_range_accepts_a_revision_range() {
+    let repo = TestRepo::init();
+    let (_first, _second) = feature_with_two_commits(&repo);
+
+    let result = cherry_pick_range(
+        &runner(),
+        repo.path(),
+        &["main..feature".to_string()],
+        false,
+    )
+    .expect("cherry-pick range");
+
+    assert!(!result.conflicted, "{}", result.output);
+    assert!(repo.path().join("f1.txt").exists());
+    assert!(repo.path().join("f2.txt").exists());
+}
+
+#[test]
+fn cherry_pick_range_records_the_source_with_x() {
+    let repo = TestRepo::init();
+    let (first, _second) = feature_with_two_commits(&repo);
+
+    cherry_pick_range(&runner(), repo.path(), &[first], true).expect("cherry-pick -x");
+
+    let body =
+        String::from_utf8_lossy(&repo.git_ok(&["log", "-1", "--format=%b"]).stdout).to_string();
+    assert!(body.contains("cherry picked from commit"), "{body}");
 }
