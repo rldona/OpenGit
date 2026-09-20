@@ -1,6 +1,7 @@
 pub mod commands;
 pub mod git;
 pub mod repo;
+pub mod watch;
 
 use std::sync::Mutex;
 
@@ -20,6 +21,7 @@ pub fn run() {
             app.manage(AppState {
                 runner: Runner::locate(),
                 recents: Mutex::new(Recents::new(data_dir.join("recent_repos.json"))),
+                watcher: Mutex::new(None),
             });
             Ok(())
         })
@@ -27,8 +29,14 @@ pub fn run() {
             commands::app_version,
             commands::git_version,
             commands::open_repo,
+            commands::close_repo,
             commands::log_page,
             commands::list_refs,
+            commands::status_repo,
+            commands::stage_path,
+            commands::unstage_path,
+            commands::discard_path,
+            commands::delete_untracked,
             commands::recent_repos,
             commands::remove_recent_repo
         ])

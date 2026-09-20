@@ -1,5 +1,6 @@
 //! Apertura y validación de repositorios (OG-002) y persistencia de recientes.
 
+pub mod ops;
 pub mod recents;
 
 use std::path::{Path, PathBuf};
