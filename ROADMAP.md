@@ -231,7 +231,7 @@ Make the app safer after mistakes and more capable for investigating history.
 - [ ] Reflog view with restore/reset to an entry (undo) (OG-089).
 - [ ] Bisect: start, good/bad and reset, with a status banner (OG-090).
 - [x] Reset modes: soft, mixed and hard with explicit confirmation (OG-091).
-- [ ] Revert a merge commit with a mainline selection (OG-092).
+- [x] Revert a merge commit with a mainline selection (OG-092).
 
 **Exit:** recover a lost commit, find the commit that introduced a bug and undo
 a merge without the terminal.

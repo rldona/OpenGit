@@ -463,7 +463,17 @@ export function HistoryView() {
                               },
                             ]
                           : []),
-                        { label: "Revert", onSelect: () => void commitActions.revert(commit) },
+                        ...(commit.parents.length > 1
+                          ? commit.parents.map((_, index) => ({
+                              label: `Revert (mainline ${index + 1})`,
+                              onSelect: () => void commitActions.revert(commit, index + 1),
+                            }))
+                          : [
+                              {
+                                label: "Revert",
+                                onSelect: () => void commitActions.revert(commit),
+                              },
+                            ]),
                         {
                           label: "Soft reset to here",
                           onSelect: () => void commitActions.reset(commit, "soft"),
