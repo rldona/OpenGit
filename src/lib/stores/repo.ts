@@ -21,6 +21,7 @@ type RepoState = {
   pickAndOpen: () => Promise<void>;
   removeRecent: (path: string) => Promise<void>;
   closeTab: (path: string) => Promise<void>;
+  moveTab: (fromPath: string, toPath: string) => void;
   switchTab: (direction: 1 | -1) => Promise<void>;
   close: () => Promise<void>;
   /** Reopens a stored session in order, leaving `active` selected (OG-082). */
@@ -79,8 +80,9 @@ export const useRepoStore = create<RepoState>((set, get) => ({
       // Drop the previous repository's diff: without this, its files and patch
       // were briefly rendered under the new repo while the new one loaded.
       useDiffStore.getState().reset();
-      // Session tabs keep a fixed order: append on first open, never reorder
-      // on switch. The persisted recents file stays as history only.
+      // Session tabs append on first open; switching never reorders them, only
+      // dragging one onto another does (OG-107). The persisted recents file
+      // stays as history only.
       const tabs = get().openTabs;
       const nextTabs = tabs.some((tab) => tab.path === info.root)
         ? tabs
@@ -160,6 +162,20 @@ export const useRepoStore = create<RepoState>((set, get) => ({
     set({ openTabs: remaining });
     const neighbor = index > 0 ? tabs[index - 1].path : remaining[0].path;
     await get().open(neighbor);
+  },
+
+  moveTab: (fromPath, toPath) => {
+    const tabs = get().openTabs;
+    const from = tabs.findIndex((tab) => tab.path === fromPath);
+    const to = tabs.findIndex((tab) => tab.path === toPath);
+    if (from < 0 || to < 0 || from === to) {
+      return;
+    }
+    const next = [...tabs];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    set({ openTabs: next });
+    persistSession(next, get().repo?.root ?? null);
   },
 
   switchTab: async (direction) => {
