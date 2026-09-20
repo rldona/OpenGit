@@ -89,7 +89,8 @@ describe("Toolbar", () => {
     expect(screen.getByRole("button", { name: /Pull/ })).toBeDisabled();
     expect(screen.getByRole("button", { name: /Push/ })).toBeDisabled();
     expect(screen.getByRole("button", { name: /Fetch/ })).toBeDisabled();
-    expect(screen.getByRole("button", { name: /Cancel/ })).toBeEnabled();
+    // Cancelar vive en la ventana de progreso, no en la barra.
+    expect(screen.queryByRole("button", { name: /Cancel/ })).not.toBeInTheDocument();
   });
 
   it("sin repo abierto solo ofrece abrir", () => {

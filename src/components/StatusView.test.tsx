@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { confirmDestructive } from "../lib/bridge/dialog";
-import { discardPath, stagePath, statusRepo } from "../lib/bridge/status";
+import { discardPath, stagePath, statusRepo, unstagePath } from "../lib/bridge/status";
 import type { RepoInfo, StatusReport } from "../lib/bridge/types";
 import { useExtrasStore } from "../lib/stores/extras";
 import { useRepoStore } from "../lib/stores/repo";
@@ -34,6 +34,10 @@ vi.mock("../lib/bridge/commit", () => ({
   commitMessage: vi.fn().mockResolvedValue(""),
   commitRepo: vi.fn(),
   repoOpState: vi.fn().mockResolvedValue({ merge: false, rebase: false, cherry_pick: false }),
+}));
+
+vi.mock("../lib/bridge/repo", () => ({
+  authorIdent: vi.fn().mockResolvedValue({ name: "Ana", email: "ana@example.com" }),
 }));
 
 vi.mock("../lib/bridge/log", () => ({
@@ -75,24 +79,31 @@ describe("StatusView", () => {
     useUiStore.setState({ fileTree: true });
   });
 
-  it("muestra las secciones con sus ficheros", async () => {
+  it("muestra las dos secciones con sus ficheros", async () => {
     render(<StatusView />);
 
-    expect(await screen.findByRole("heading", { name: /Staged/ })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /Unstaged/ })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /Untracked/ })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /Staged files/ })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Unstaged files/ })).toBeInTheDocument();
     expect(screen.getByText("modificado.txt")).toBeInTheDocument();
     expect(screen.getByText("nuevo.txt")).toBeInTheDocument();
   });
 
-  it("hace stage de un fichero modificado", async () => {
+  it("hace stage de un fichero modificado con su checkbox", async () => {
     const user = userEvent.setup();
     render(<StatusView />);
 
-    const rows = await screen.findAllByText("Stage");
-    await user.click(rows[0]);
+    await user.click(await screen.findByLabelText("Stage modificado.txt"));
 
     expect(stagePath).toHaveBeenCalledWith("/tmp/repo", "modificado.txt", null);
+  });
+
+  it("hace unstage desde el checkbox de un fichero staged", async () => {
+    const user = userEvent.setup();
+    render(<StatusView />);
+
+    await user.click(await screen.findByLabelText("Unstage staged.txt"));
+
+    expect(unstagePath).toHaveBeenCalledWith("/tmp/repo", "staged.txt", null);
   });
 
   it("solo descarta si se confirma", async () => {
@@ -100,12 +111,22 @@ describe("StatusView", () => {
     render(<StatusView />);
 
     vi.mocked(confirmDestructive).mockResolvedValue(false);
-    await user.click((await screen.findAllByText("Discard"))[0]);
+    await user.click(await screen.findByLabelText("Actions for modificado.txt"));
+    await user.click(screen.getByRole("menuitem", { name: "Discard" }));
     expect(discardPath).not.toHaveBeenCalled();
 
     vi.mocked(confirmDestructive).mockResolvedValue(true);
-    await user.click(screen.getAllByText("Discard")[0]);
+    await user.click(screen.getByLabelText("Actions for modificado.txt"));
+    await user.click(screen.getByRole("menuitem", { name: "Discard" }));
     expect(discardPath).toHaveBeenCalledWith("/tmp/repo", "modificado.txt", null);
+  });
+
+  it("permite redimensionar el área de commit", async () => {
+    render(<StatusView />);
+
+    await screen.findByLabelText("Commit message");
+    expect(screen.getByRole("separator", { name: "Resize commit area" })).toBeInTheDocument();
+    expect(screen.getByRole("separator", { name: "Resize pending files" })).toBeInTheDocument();
   });
 
   it("avisa si el repo usa LFS y git-lfs no está instalado", async () => {
@@ -119,7 +140,7 @@ describe("StatusView", () => {
 
   it("abre el menú contextual de un fichero", async () => {
     render(<StatusView />);
-    fireEvent.contextMenu(await screen.findByText("modificado.txt"));
+    fireEvent.contextMenu(await screen.findByText("modificado.txt"), { clientX: 10, clientY: 10 });
 
     expect(screen.getByRole("menuitem", { name: "Stage" })).toBeInTheDocument();
     expect(screen.getByRole("menuitem", { name: "Discard" })).toBeInTheDocument();
@@ -134,13 +155,13 @@ describe("StatusView", () => {
     });
     render(<StatusView />);
 
-    expect(await screen.findByRole("button", { name: /src\// })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: /src\/$/ })).toBeInTheDocument();
     expect(screen.getByText("a.txt")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "List" }));
 
     expect(screen.getByText("src/a.txt")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /src\// })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /src\/$/ })).not.toBeInTheDocument();
   });
 
   it("no avisa si Git LFS está instalado", async () => {
@@ -149,7 +170,7 @@ describe("StatusView", () => {
     });
     render(<StatusView />);
 
-    await screen.findAllByText("Staged");
+    await screen.findAllByText(/Staged files/);
     expect(screen.queryByText(/git-lfs is not installed/)).not.toBeInTheDocument();
   });
 });

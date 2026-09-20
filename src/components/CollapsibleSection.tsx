@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { MouseEvent, ReactNode } from "react";
 import { useCollapseStore } from "../lib/stores/collapse";
 import { Icon, type IconName } from "./Icon";
 
@@ -13,6 +13,8 @@ type Props = {
   defaultCollapsed?: boolean;
   /** Nivel visual: las secciones anidadas (un remoto) van con sangría. */
   nested?: boolean;
+  /** Menú contextual de la cabecera (botón derecho), como SourceTree. */
+  onContextMenu?: (event: MouseEvent<HTMLElement>) => void;
   children: ReactNode;
 };
 
@@ -27,6 +29,7 @@ export function CollapsibleSection({
   extra,
   defaultCollapsed = false,
   nested = false,
+  onContextMenu,
   children,
 }: Props) {
   const collapsed = useCollapseStore((state) => state.collapsed[id] ?? defaultCollapsed);
@@ -34,7 +37,7 @@ export function CollapsibleSection({
 
   return (
     <section className={`sidebar-section${nested ? " nested" : ""}`}>
-      <div className="sidebar-heading">
+      <div className="sidebar-heading" onContextMenu={onContextMenu}>
         <button
           type="button"
           className="sidebar-toggle"

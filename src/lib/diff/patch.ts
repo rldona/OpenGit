@@ -94,6 +94,61 @@ export function classifyPatchLines(patch: string): ClassifiedPatchLine[] {
   });
 }
 
+export type FilePatch = {
+  path: string;
+  patch: string;
+};
+
+/** Ruta del fichero nuevo a partir de `diff --git a/… b/…`. */
+function pathFromDiffHeader(line: string): string {
+  const rest = line.slice("diff --git ".length);
+  const marker = rest.lastIndexOf(" b/");
+  const path = marker >= 0 ? rest.slice(marker + 3) : rest;
+  return path.replace(/^"|"$/g, "");
+}
+
+/**
+ * Divide un parche con varios ficheros en trozos por `diff --git`.
+ * Lo usa la vista de stash, que recibe todo el parche de una vez.
+ */
+export function splitPatchByFile(patch: string): FilePatch[] {
+  const files: FilePatch[] = [];
+  let lines: string[] | null = null;
+  let path = "";
+
+  const flush = () => {
+    if (lines && lines.length > 0) {
+      files.push({ path, patch: lines.join("\n") });
+    }
+  };
+
+  for (const line of patch.split("\n")) {
+    if (line.startsWith("diff --git ")) {
+      flush();
+      lines = [line];
+      path = pathFromDiffHeader(line);
+    } else if (lines) {
+      lines.push(line);
+    }
+  }
+  flush();
+  return files;
+}
+
+/** Suma de líneas añadidas y borradas de un parche de un solo fichero. */
+export function patchCounts(patch: string): { added: number; deleted: number } {
+  let added = 0;
+  let deleted = 0;
+  for (const line of patch.split("\n")) {
+    if (line.startsWith("+") && !line.startsWith("+++")) {
+      added += 1;
+    } else if (line.startsWith("-") && !line.startsWith("---")) {
+      deleted += 1;
+    }
+  }
+  return { added, deleted };
+}
+
 export function isBinaryPatch(patch: string): boolean {
   return patch
     .split("\n")

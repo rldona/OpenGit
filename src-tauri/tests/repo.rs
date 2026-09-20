@@ -40,6 +40,16 @@ fn abre_repo_con_historial() {
 }
 
 #[test]
+fn lee_la_identidad_efectiva_de_git() {
+    let repo = TestRepo::init();
+
+    let ident = git::author_ident(&runner(), repo.path()).expect("identidad");
+
+    assert_eq!(ident.name, "OpenGit Test");
+    assert_eq!(ident.email, "test@opengit.dev");
+}
+
+#[test]
 fn desde_subcarpeta_devuelve_la_raiz() {
     let repo = TestRepo::init();
     repo.write("a/b/c.txt", b"x\n");

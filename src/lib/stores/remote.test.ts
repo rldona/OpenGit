@@ -3,7 +3,7 @@ import { cancelRemoteJob, startRemoteJob } from "../bridge/jobs";
 import { listRefs, logPage } from "../bridge/log";
 import { branchTracking } from "../bridge/refs";
 import { statusRepo } from "../bridge/status";
-import type { StatusReport } from "../bridge/types";
+import type { JobKind, StatusReport } from "../bridge/types";
 import { useLogStore } from "./log";
 import { useRefsStore } from "./refs";
 import { useRemoteStore } from "./remote";
@@ -34,6 +34,16 @@ vi.mock("../bridge/status", () => ({
   discardPath: vi.fn(),
   deleteUntracked: vi.fn(),
 }));
+
+const PULL: JobKind = {
+  kind: "pull",
+  remote: null,
+  branch: null,
+  rebase: false,
+  no_ff: false,
+  no_commit: false,
+  include_messages: false,
+};
 
 const CLEAN: StatusReport = {
   head: "a",
@@ -126,15 +136,78 @@ describe("useRemoteStore", () => {
   });
 
   it("cancela el job en curso", async () => {
-    await useRemoteStore.getState().start("/tmp/repo", { kind: "pull" });
+    await useRemoteStore.getState().start("/tmp/repo", PULL);
 
     await useRemoteStore.getState().cancel();
 
     expect(cancelRemoteJob).toHaveBeenCalledWith("job-1");
   });
 
+  it("titula el job y conserva el título en el error", async () => {
+    await useRemoteStore.getState().start("/tmp/repo", {
+      kind: "pull",
+      remote: "origin",
+      branch: "main",
+      rebase: false,
+      no_ff: false,
+      no_commit: false,
+      include_messages: false,
+    });
+    expect(useRemoteStore.getState().title).toBe('Pulling Branch "main" From "origin"');
+
+    useRemoteStore.getState().handleFinished({
+      job_id: "job-1",
+      success: false,
+      exit_code: 1,
+      cancelled: false,
+    });
+
+    expect(useRemoteStore.getState().error).toBeTruthy();
+    expect(useRemoteStore.getState().title).toBe('Pulling Branch "main" From "origin"');
+
+    useRemoteStore.getState().dismiss();
+
+    expect(useRemoteStore.getState().error).toBeNull();
+    expect(useRemoteStore.getState().recentLines).toEqual([]);
+    expect(useRemoteStore.getState().title).toBeNull();
+  });
+
+  it("no se queda en running si el fin llega antes de conocer el id", async () => {
+    vi.mocked(startRemoteJob).mockImplementation(async () => {
+      useRemoteStore.getState().handleFinished({
+        job_id: "job-1",
+        success: true,
+        exit_code: 0,
+        cancelled: false,
+      });
+      return "job-1";
+    });
+
+    await useRemoteStore.getState().start("/tmp/repo", PULL);
+
+    expect(useRemoteStore.getState().running).toBe(false);
+    expect(useRemoteStore.getState().jobId).toBeNull();
+  });
+
+  it("cancela aunque el id del job no haya llegado todavía", async () => {
+    let release: (id: string) => void = () => {};
+    vi.mocked(startRemoteJob).mockImplementation(
+      () =>
+        new Promise<string>((resolve) => {
+          release = resolve;
+        }),
+    );
+
+    const started = useRemoteStore.getState().start("/tmp/repo", PULL);
+    await useRemoteStore.getState().cancel();
+    release("job-1");
+    await started;
+
+    expect(cancelRemoteJob).toHaveBeenCalledWith("job-1");
+  });
+
   it("ignora eventos de otro job", async () => {
-    await useRemoteStore.getState().start("/tmp/repo", { kind: "pull" });
+    await useRemoteStore.getState().start("/tmp/repo", PULL);
 
     useRemoteStore.getState().handleFinished({
       job_id: "job-99",
