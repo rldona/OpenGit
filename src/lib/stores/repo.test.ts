@@ -256,7 +256,7 @@ describe("useRepoStore", () => {
     useRepoStore.getState().moveTab(REPO.root, third.root);
 
     expect(loadStoredSession()).toEqual({
-      paths: [other.root, third.root, REPO.root],
+      tabs: [{ path: other.root }, { path: third.root }, { path: REPO.root }],
       active: third.root,
     });
   });
@@ -275,6 +275,129 @@ describe("useRepoStore", () => {
     useRepoStore.getState().moveTab(REPO.root, "/tmp/missing");
 
     expect(useRepoStore.getState().openTabs).toEqual(before);
+  });
+
+  it("renames a tab in memory without persisting while remembering is off", async () => {
+    vi.mocked(openRepo).mockResolvedValue(REPO);
+
+    await useRepoStore.getState().open(REPO.root);
+    useRepoStore.getState().renameTab(REPO.root, "My repo");
+
+    expect(useRepoStore.getState().openTabs[0].title).toBe("My repo");
+    expect(loadStoredSession()).toBeNull();
+  });
+
+  it("persists the renamed tab when remembering is on", async () => {
+    vi.mocked(openRepo).mockResolvedValue(REPO);
+    useSettingsStore.setState({ restoreTabs: true });
+
+    await useRepoStore.getState().open(REPO.root);
+    useRepoStore.getState().renameTab(REPO.root, "  My repo  ");
+
+    expect(useRepoStore.getState().openTabs[0].title).toBe("My repo");
+    expect(loadStoredSession()).toEqual({
+      tabs: [{ path: REPO.root, title: "My repo" }],
+      active: REPO.root,
+    });
+  });
+
+  it("renames a background tab without switching the active one", async () => {
+    const other: RepoInfo = { ...REPO, root: "/tmp/other", name: "other" };
+    vi.mocked(openRepo).mockImplementation(async (path: string) =>
+      path === other.root ? other : REPO,
+    );
+
+    await useRepoStore.getState().open(REPO.root);
+    await useRepoStore.getState().open(other.root);
+    await useRepoStore.getState().open(REPO.root);
+
+    useRepoStore.getState().renameTab(other.root, "Background");
+
+    expect(useRepoStore.getState().repo?.root).toBe(REPO.root);
+    expect(useRepoStore.getState().openTabs.find((tab) => tab.path === other.root)?.title).toBe(
+      "Background",
+    );
+  });
+
+  it("clears the title with a whitespace rename", async () => {
+    vi.mocked(openRepo).mockResolvedValue(REPO);
+
+    await useRepoStore.getState().open(REPO.root);
+    useRepoStore.getState().renameTab(REPO.root, "Named");
+    useRepoStore.getState().renameTab(REPO.root, "   ");
+
+    expect(useRepoStore.getState().openTabs[0].title).toBeUndefined();
+  });
+
+  it("ignores renameTab for an unknown path", async () => {
+    vi.mocked(openRepo).mockResolvedValue(REPO);
+
+    await useRepoStore.getState().open(REPO.root);
+    const before = useRepoStore.getState().openTabs;
+
+    useRepoStore.getState().renameTab("/tmp/missing", "Nope");
+
+    expect(useRepoStore.getState().openTabs).toEqual(before);
+  });
+
+  it("ignores a rename that matches the current title without rewriting", async () => {
+    vi.mocked(openRepo).mockResolvedValue(REPO);
+    useSettingsStore.setState({ restoreTabs: true });
+
+    await useRepoStore.getState().open(REPO.root);
+    useRepoStore.getState().renameTab(REPO.root, "Same");
+    const before = useRepoStore.getState().openTabs;
+    const setItem = vi.spyOn(Storage.prototype, "setItem");
+
+    useRepoStore.getState().renameTab(REPO.root, "  Same  ");
+
+    expect(useRepoStore.getState().openTabs).toBe(before);
+    expect(setItem).not.toHaveBeenCalled();
+    setItem.mockRestore();
+  });
+
+  it("keeps a custom title across a tab switch and a reopen", async () => {
+    const other: RepoInfo = { ...REPO, root: "/tmp/other", name: "other" };
+    vi.mocked(openRepo).mockImplementation(async (path: string) =>
+      path === other.root ? other : REPO,
+    );
+
+    await useRepoStore.getState().open(REPO.root);
+    await useRepoStore.getState().open(other.root);
+    useRepoStore.getState().renameTab(REPO.root, "Alpha");
+
+    await useRepoStore.getState().open(REPO.root);
+    expect(useRepoStore.getState().openTabs.find((tab) => tab.path === REPO.root)?.title).toBe(
+      "Alpha",
+    );
+
+    await useRepoStore.getState().open(other.root);
+    await useRepoStore.getState().open(REPO.root);
+
+    const tabs = useRepoStore.getState().openTabs;
+    expect(tabs).toHaveLength(2);
+    expect(tabs.find((tab) => tab.path === REPO.root)?.title).toBe("Alpha");
+  });
+
+  it("restores the stored titles and keeps them persisted", async () => {
+    const other: RepoInfo = { ...REPO, root: "/tmp/other", name: "other" };
+    vi.mocked(openRepo).mockImplementation(async (path: string) =>
+      path === other.root ? other : REPO,
+    );
+    useSettingsStore.setState({ restoreTabs: true });
+
+    await useRepoStore
+      .getState()
+      .restoreSession([{ path: REPO.root, title: "Renamed" }, { path: other.root }], REPO.root);
+
+    expect(useRepoStore.getState().openTabs).toEqual([
+      { path: REPO.root, name: REPO.name, opened_at: expect.any(Number), title: "Renamed" },
+      { path: other.root, name: other.name, opened_at: expect.any(Number) },
+    ]);
+    expect(loadStoredSession()).toEqual({
+      tabs: [{ path: REPO.root, title: "Renamed" }, { path: other.root }],
+      active: REPO.root,
+    });
   });
 
   it("translates the validation error into a readable message", async () => {
@@ -336,11 +459,16 @@ describe("useRepoStore", () => {
 
     await useRepoStore.getState().open(REPO.root);
     await useRepoStore.getState().open(other.root);
-    expect(loadStoredSession()).toEqual({ paths: [REPO.root, other.root], active: other.root });
+    expect(loadStoredSession()).toEqual({
+      tabs: [{ path: REPO.root }, { path: other.root }],
+      active: other.root,
+    });
 
     // Simulate a fresh launch: no tabs in memory, then restore.
     useRepoStore.setState({ repo: null, openTabs: [] });
-    await useRepoStore.getState().restoreSession([REPO.root, other.root], REPO.root);
+    await useRepoStore
+      .getState()
+      .restoreSession([{ path: REPO.root }, { path: other.root }], REPO.root);
 
     expect(useRepoStore.getState().openTabs.map((tab) => tab.path)).toEqual([
       REPO.root,

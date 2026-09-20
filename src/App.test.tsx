@@ -334,6 +334,15 @@ describe("App", () => {
     expect(await screen.findByRole("tab", { name: "mi-repo" })).toBeInTheDocument();
   });
 
+  it("restores a renamed tab with its stored title", async () => {
+    useSettingsStore.setState({ restoreTabs: true });
+    saveStoredSession([{ path: "/tmp/mi-repo", title: "Custom name" }], "/tmp/mi-repo");
+    render(<App />);
+
+    await waitFor(() => expect(openRepo).toHaveBeenCalledWith("/tmp/mi-repo"));
+    expect(await screen.findByRole("tab", { name: "Custom name" })).toBeInTheDocument();
+  });
+
   it("does not flash the home while restoring the session", async () => {
     useSettingsStore.setState({ restoreTabs: true });
     saveStoredSession([{ path: "/tmp/mi-repo" }], "/tmp/mi-repo");
