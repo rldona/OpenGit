@@ -44,4 +44,4 @@ Un fichero por ticket, nombrado `OG-NNN-slug.md`. Todo cambio del repositorio na
 | [OG-009](OG-009-working-tree-status.md) | Working tree status | M1 | backlog |
 | [OG-010](OG-010-watcher-repo.md) | Watcher de `.git` y refresco | M1 | backlog |
 | [OG-011](OG-011-remotos-fetch-pull-push.md) | Fetch, pull y push | M2 | backlog |
-| [OG-012](OG-012-ci-build-a-demanda.md) | CI: build multiplataforma a demanda | M0 | in-progress |
+| [OG-012](OG-012-ci-build-a-demanda.md) | CI: build multiplataforma a demanda | M0 | done |
