@@ -5,12 +5,16 @@ import { HistoryView } from "./components/HistoryView";
 import { OpBanner } from "./components/OpBanner";
 import { RebaseView } from "./components/RebaseView";
 import { RefsSidebar } from "./components/RefsSidebar";
+import { ShortcutsHelp } from "./components/ShortcutsHelp";
 import { StashSidebar } from "./components/StashSidebar";
 import { StatusView } from "./components/StatusView";
 import { getAppVersion } from "./lib/bridge/core";
 import { confirmDestructive } from "./lib/bridge/dialog";
 import { useJobEvents } from "./lib/hooks/useJobEvents";
 import { useRepoEvents } from "./lib/hooks/useRepoEvents";
+import { useShortcuts } from "./lib/hooks/useShortcuts";
+import { hasActiveOperation, stagedEntries, useCommitStore } from "./lib/stores/commit";
+import { useLogStore } from "./lib/stores/log";
 import { useRefsStore } from "./lib/stores/refs";
 import { useRemoteStore } from "./lib/stores/remote";
 import { useRepoStore } from "./lib/stores/repo";
@@ -25,6 +29,7 @@ function App() {
   const outputLines = useUiStore((state) => state.outputLines);
   const activeView = useUiStore((state) => state.activeView);
   const setActiveView = useUiStore((state) => state.setActiveView);
+  const toggleShortcuts = useUiStore((state) => state.toggleShortcuts);
 
   const themePreference = useThemeStore((state) => state.preference);
   const theme = useThemeStore((state) => state.resolved);
@@ -117,6 +122,62 @@ function App() {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
 
+  const refreshAll = () => {
+    const root = useRepoStore.getState().repo?.root;
+    if (!root) {
+      return;
+    }
+    void useLogStore.getState().reload(root);
+    void useStatusStore.getState().refresh(root);
+    void useRefsStore.getState().refresh(root);
+  };
+
+  const commitStaged = () => {
+    if (!useRepoStore.getState().repo) {
+      return;
+    }
+    const { loading, opState, submit } = useCommitStore.getState();
+    if (loading || hasActiveOperation(opState)) {
+      return;
+    }
+    void submit(stagedEntries(useStatusStore.getState().report).length);
+  };
+
+  const focusHistorySearch = () => {
+    if (!useRepoStore.getState().repo) {
+      return;
+    }
+    setActiveView("history");
+    useUiStore.getState().requestSearchFocus();
+  };
+
+  const closeOverlayOrSelection = () => {
+    const ui = useUiStore.getState();
+    if (ui.shortcutsOpen) {
+      ui.setShortcutsOpen(false);
+      return;
+    }
+    useLogStore.getState().select(null);
+  };
+
+  useShortcuts({
+    open: () => void pickAndOpen(),
+    refresh: refreshAll,
+    commit: commitStaged,
+    search: focusHistorySearch,
+    viewStatus: () => {
+      if (useRepoStore.getState().repo) setActiveView("status");
+    },
+    viewHistory: () => {
+      if (useRepoStore.getState().repo) setActiveView("history");
+    },
+    viewDiff: () => {
+      if (useRepoStore.getState().repo) setActiveView("diff");
+    },
+    help: toggleShortcuts,
+    close: closeOverlayOrSelection,
+  });
+
   return (
     <div className="app">
       <header className="toolbar">
@@ -161,8 +222,13 @@ function App() {
           <button type="button" onClick={toggleOutput} aria-pressed={outputOpen}>
             Output
           </button>
+          <button type="button" aria-label="Keyboard shortcuts" onClick={toggleShortcuts}>
+            ?
+          </button>
         </div>
       </header>
+
+      <ShortcutsHelp />
 
       {repo && <OpBanner />}
 

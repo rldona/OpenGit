@@ -8,13 +8,14 @@ import { readConflictFile } from "./lib/bridge/conflict";
 import { subscribeRepoEvents } from "./lib/bridge/events";
 import { cherryPick } from "./lib/bridge/history";
 import { repoOpAbort } from "./lib/bridge/ops";
-import { repoOpState } from "./lib/bridge/commit";
+import { commitRepo, repoOpState } from "./lib/bridge/commit";
 import { listRefs, logPage } from "./lib/bridge/log";
 import { openRepo, recentRepos } from "./lib/bridge/repo";
 import { commitFiles, diffFile, diffNumstat } from "./lib/bridge/diff";
 import { statusRepo } from "./lib/bridge/status";
 import type { Commit, RepoInfo, StatusReport } from "./lib/bridge/types";
 import { useDiffStore } from "./lib/stores/diff";
+import { useCommitStore } from "./lib/stores/commit";
 import { useLogStore } from "./lib/stores/log";
 import { useRepoStore } from "./lib/stores/repo";
 import { useStatusStore } from "./lib/stores/status";
@@ -175,7 +176,16 @@ describe("App", () => {
     ]);
     vi.mocked(diffNumstat).mockResolvedValue([]);
     vi.mocked(diffFile).mockResolvedValue("diff --git a/a.txt b/a.txt\n@@ -1 +1 @@\n-a\n+b\n");
+    vi.mocked(repoOpState).mockResolvedValue({
+      merge: false,
+      rebase: false,
+      cherry_pick: false,
+      revert: false,
+      rebase_current: null,
+      rebase_total: null,
+    });
     useRepoStore.setState({ repo: null, recents: [], loading: false, error: null });
+    useCommitStore.getState().reset();
     useLogStore.getState().reset();
     useStatusStore.getState().reset();
     useDiffStore.getState().reset();
@@ -183,6 +193,8 @@ describe("App", () => {
       outputOpen: true,
       outputLines: ["OpenGit listo."],
       activeView: "history",
+      shortcutsOpen: false,
+      searchFocusRequest: 0,
     });
     localStorage.clear();
     delete document.documentElement.dataset.theme;
@@ -354,5 +366,89 @@ describe("App", () => {
     await user.selectOptions(select, "dark");
 
     expect(document.documentElement.dataset.theme).toBe("dark");
+  });
+
+  it("abre la ayuda de atajos con ? y la cierra con Esc", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.keyboard("?");
+
+    expect(screen.getByRole("dialog", { name: "Keyboard shortcuts" })).toBeInTheDocument();
+    expect(screen.getByText("Ctrl+O")).toBeInTheDocument();
+
+    await user.keyboard("{Escape}");
+
+    expect(screen.queryByRole("dialog", { name: "Keyboard shortcuts" })).not.toBeInTheDocument();
+  });
+
+  it("abre y cierra la ayuda desde el botón de la toolbar", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Keyboard shortcuts" }));
+    expect(screen.getByRole("dialog", { name: "Keyboard shortcuts" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Close" }));
+    expect(screen.queryByRole("dialog", { name: "Keyboard shortcuts" })).not.toBeInTheDocument();
+  });
+
+  it("abre el selector de repositorio con Ctrl+O", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.keyboard("{Control>}o{/Control}");
+
+    expect(pickDirectory).toHaveBeenCalled();
+  });
+
+  it("refresca status, refs e historial con Ctrl+R", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Choose folder" }));
+    await screen.findByText("commit de prueba");
+    vi.mocked(listRefs).mockClear();
+
+    await user.keyboard("{Control>}r{/Control}");
+
+    expect(listRefs).toHaveBeenCalledWith("/tmp/mi-repo");
+    expect(logPage).toHaveBeenCalled();
+  });
+
+  it("enfoca la búsqueda del historial con Ctrl+F", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Choose folder" }));
+    await user.click(await screen.findByRole("button", { name: "File status" }));
+    await user.keyboard("{Control>}f{/Control}");
+
+    expect(await screen.findByLabelText("Search message")).toHaveFocus();
+  });
+
+  it("hace commit con Ctrl+Enter", async () => {
+    const user = userEvent.setup();
+    vi.mocked(commitRepo).mockResolvedValue({ hash: "bbbb0000", subject: "mi mensaje" });
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Choose folder" }));
+    await user.click(await screen.findByRole("button", { name: "File status" }));
+    await user.type(screen.getByLabelText("Commit message"), "mi mensaje");
+    await user.keyboard("{Control>}{Enter}{/Control}");
+
+    expect(commitRepo).toHaveBeenCalledWith("/tmp/mi-repo", "mi mensaje", false);
+  });
+
+  it("no dispara atajos mientras se escribe en un campo", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Choose folder" }));
+    const input = await screen.findByLabelText("Search message");
+    await user.type(input, "?");
+
+    expect(input).toHaveValue("?");
+    expect(screen.queryByRole("dialog", { name: "Keyboard shortcuts" })).not.toBeInTheDocument();
   });
 });

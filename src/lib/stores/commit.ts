@@ -3,7 +3,7 @@ import { commitMessage, commitRepo, repoOpState } from "../bridge/commit";
 import { confirmDestructive } from "../bridge/dialog";
 import { formatGitError } from "../bridge/errors";
 import { repoOpAbort, repoOpContinue } from "../bridge/ops";
-import type { RepoOpState } from "../bridge/types";
+import type { FileStatus, RepoOpState, StatusReport } from "../bridge/types";
 import { useLogStore } from "./log";
 import { useRefsStore } from "./refs";
 import { useStatusStore } from "./status";
@@ -17,6 +17,16 @@ const EMPTY_OP_STATE: RepoOpState = {
   rebase_current: null,
   rebase_total: null,
 };
+
+export function hasActiveOperation(opState: RepoOpState): boolean {
+  return opState.merge || opState.rebase || opState.cherry_pick || opState.revert;
+}
+
+export function stagedEntries(report: StatusReport | null): FileStatus[] {
+  return (report?.entries ?? []).filter(
+    (entry) => entry.kind !== "untracked" && entry.kind !== "unmerged" && entry.xy[0] !== ".",
+  );
+}
 
 type CommitState = {
   root: string | null;

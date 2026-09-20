@@ -52,11 +52,20 @@ export function HistoryView() {
   const root = repo?.root ?? null;
   const rows = layout.rows;
 
+  const searchFocusRequest = useUiStore((state) => state.searchFocusRequest);
+  const searchMessageRef = useRef<HTMLInputElement | null>(null);
+
   useEffect(() => {
     if (root) {
       void load(root);
     }
   }, [root, load]);
+
+  useEffect(() => {
+    if (searchFocusRequest > 0) {
+      searchMessageRef.current?.focus();
+    }
+  }, [searchFocusRequest]);
 
   const updateRange = useCallback(() => {
     const scroller = scrollRef.current;
@@ -115,6 +124,7 @@ export function HistoryView() {
         {loading && <span className="muted">Loading…</span>}
         <div className="history-search">
           <input
+            ref={searchMessageRef}
             type="search"
             aria-label="Search message"
             placeholder="Message"
