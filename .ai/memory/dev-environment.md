@@ -26,7 +26,8 @@
 - **Fecha:** 2026-09-18
 - **Contexto:** primer CI en GitHub Actions; el job de frontend falló en 7 s con `npm error code E401`.
 - **Hallazgo:** el `~/.npmrc` de esta máquina configura un Artifactory corporativo, así que `npm install` escribió las 276 URLs `resolved` del lock contra ese host. GitHub no tiene (ni debe tener) esas credenciales.
-- **Implicación:** el `package-lock.json` debe resolver contra `https://registry.npmjs.org`. El `.npmrc` del repo fija `replace-registry-host=always` para que npm sustituya el host del lock por el registry configurado en cada máquina (CI → público; local → corporativo). Si un `npm install` vuelve a meter URLs del Artifactory, hay que regenerar el lock antes de pushear.
+- **Implicación:** el `package-lock.json` debe resolver contra `https://registry.npmjs.org`. El `.npmrc` del repo fija `registry=https://registry.npmjs.org/` (npmjs es alcanzable desde la máquina de desarrollo) para que cualquier `npm install` escriba URLs públicas.
+- **Ojo con `replace-registry-host=always`:** no sirve como arreglo. Solo sustituye el **host** del lock por el registry configurado, pero deja la ruta corporativa (`/artifactory/api/npm/...`), generando URLs rotas en CI (404 en vez de E401). Se probó y se descartó.
 
 ## Los commits van con el noreply de GitHub, no con la cuenta corporativa
 
