@@ -2064,6 +2064,11 @@ body {
 .image-frame img {
   width: auto;
   height: auto;
+  /* Flex items refuse to shrink below their natural size unless told to:
+     without these, the mininum wins over the maximums below and big
+     images overflow the frame. */
+  min-width: 0;
+  min-height: 0;
   max-width: 100%;
   /* The frame height is indefinite (`.diff-pane` is not a flex column), so
      a percentage cap never applies: use viewport units, which always are.
