@@ -6,7 +6,7 @@ Cliente de Git de escritorio, multiplataforma (Windows, macOS y Linux), inspirad
 
 ## Estado
 
-**M5 completado** el 2026-09-18. Además del MVP local, los remotos, el historial avanzado y el rebase con editor de conflictos, la app incluye temas claro/oscuro, atajos de teclado, submódulos y worktrees en lectura, avisos de Git LFS y releases para los tres SO con instaladores sin firmar. La firma y la notarización quedan descartadas: los certificados son de pago y el proyecto no los asume.
+**M6 completado** el 2026-09-18. Sobre el MVP local, remotos, historial avanzado, rebase con editor de conflictos y el pulido (temas, atajos, submódulos/worktrees, avisos LFS, releases sin firmar), la UI se acerca a SourceTree: menú nativo, toolbar con iconos, splits redimensionables, tabla de commits con cabecera, menús contextuales, paneles con numeración y badges de tracking.
 
 | Área | Decisión | ADR |
 | --- | --- | --- |

@@ -64,7 +64,7 @@ Todo lo necesario para trabajar sin tocar el terminal en repos locales.
 
 **Salida:** temas, atajos, submódulos/worktrees y avisos LFS en la app, y borrador de release con instaladores desde un tag. ✅
 
-## M6 — Paridad visual con SourceTree
+## M6 — Paridad visual con SourceTree ✅ _(cerrado el 2026-09-18)_
 
 Acercar el chasis y los paneles a la UX de SourceTree sin perder el rendimiento en repos grandes.
 
@@ -74,6 +74,8 @@ Acercar el chasis y los paneles a la UX de SourceTree sin perder el rendimiento 
 - [x] Menús contextuales en commits, refs y ficheros (OG-038).
 - [x] Paneles de status/diff estilo SourceTree: columnas, cabecera por hunk con Reverse, búsqueda en el panel (OG-039).
 - [x] Commits entrantes/salientes con badges ↓/↑ por rama (OG-040).
+
+**Salida:** menú nativo, toolbar con iconos, splits persistidos, tabla de commits con cabecera, menús contextuales, paneles con numeración y badges de tracking. ✅
 
 ## Fuera de alcance
 
