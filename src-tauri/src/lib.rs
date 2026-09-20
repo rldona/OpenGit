@@ -164,7 +164,10 @@ pub fn run() {
             commands::remote_set_url,
             commands::remote_rename,
             commands::remote_remove,
-            commands::git_config_path
+            commands::git_config_path,
+            commands::commit_template_read,
+            commands::commit_template_write,
+            commands::read_text_file
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

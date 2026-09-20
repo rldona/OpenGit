@@ -1,7 +1,8 @@
 mod support;
 
 use opengit_lib::git::{
-    config_get, config_set, config_unset, ignore_exclude_path, ConfigScope, Runner,
+    commit_template_read, commit_template_write, config_get, config_set, config_unset,
+    ignore_exclude_path, read_text_file, ConfigScope, Runner,
 };
 use support::TestRepo;
 
@@ -92,6 +93,55 @@ fn invalid_config_keys_are_rejected() {
         ConfigScope::Local,
     );
     assert!(error.is_err());
+}
+
+#[test]
+fn commit_template_round_trips_and_points_the_config_at_it() {
+    let repo = TestRepo::init();
+    let runner = runner();
+
+    assert_eq!(
+        commit_template_read(&runner, repo.path()).expect("read"),
+        ""
+    );
+
+    let path = commit_template_write(&runner, repo.path(), "feat: \n").expect("write");
+    assert!(path.ends_with("commit-template.txt"));
+    assert_eq!(
+        commit_template_read(&runner, repo.path()).expect("read"),
+        "feat: \n"
+    );
+    assert_eq!(
+        config_get(&runner, repo.path(), "commit.template", ConfigScope::Local)
+            .expect("get")
+            .as_deref(),
+        Some(path.as_str())
+    );
+}
+
+#[test]
+fn commit_template_read_follows_the_configured_file() {
+    let repo = TestRepo::init();
+    let runner = runner();
+    repo.write("template.txt", b"custom\n");
+    config_set(
+        &runner,
+        repo.path(),
+        "commit.template",
+        "template.txt",
+        ConfigScope::Local,
+    )
+    .expect("set");
+
+    assert_eq!(
+        commit_template_read(&runner, repo.path()).expect("read"),
+        "custom\n"
+    );
+}
+
+#[test]
+fn read_text_file_rejects_a_missing_file() {
+    assert!(read_text_file("/nope/definitely-missing.txt").is_err());
 }
 
 #[test]
