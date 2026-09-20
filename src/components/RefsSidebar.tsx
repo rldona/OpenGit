@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { copyText } from "../lib/clipboard";
 import { confirmDestructive } from "../lib/bridge/dialog";
 import { openExternal } from "../lib/bridge/opener";
 import { useExtrasStore } from "../lib/stores/extras";
@@ -6,6 +7,7 @@ import { useLogStore } from "../lib/stores/log";
 import { useRefsStore } from "../lib/stores/refs";
 import { useRemoteStore } from "../lib/stores/remote";
 import { useRepoStore } from "../lib/stores/repo";
+import { useContextMenu } from "../lib/hooks/useContextMenu";
 
 export function RefsSidebar() {
   const root = useRepoStore((state) => state.repo?.root ?? null);
@@ -33,6 +35,7 @@ export function RefsSidebar() {
   const startRemote = useRemoteStore((state) => state.start);
 
   const [creating, setCreating] = useState(false);
+  const refMenu = useContextMenu();
   const [newName, setNewName] = useState("");
   const [renaming, setRenaming] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
@@ -193,6 +196,25 @@ export function RefsSidebar() {
                     className={`refs-name${current === short ? " current" : ""}`}
                     title={ref.name}
                     onClick={() => root && void checkout(root, ref)}
+                    onContextMenu={(event) =>
+                      refMenu.open(event, [
+                        { label: "Checkout", onSelect: () => root && void checkout(root, ref) },
+                        {
+                          label: "Rename",
+                          onSelect: () => {
+                            setRenaming(short);
+                            setRenameValue(short);
+                          },
+                        },
+                        {
+                          label: "Delete",
+                          danger: true,
+                          disabled: current === short,
+                          onSelect: () => root && void remove(root, short),
+                        },
+                        { label: "Copy name", onSelect: () => void copyText(short) },
+                      ])
+                    }
                   >
                     {current === short && (
                       <span className="refs-dot" aria-label="Current branch">
@@ -288,6 +310,12 @@ export function RefsSidebar() {
                       className="refs-name"
                       title={ref.name}
                       onClick={() => root && void checkout(root, ref)}
+                      onContextMenu={(event) =>
+                        refMenu.open(event, [
+                          { label: "Checkout", onSelect: () => root && void checkout(root, ref) },
+                          { label: "Copy name", onSelect: () => void copyText(short) },
+                        ])
+                      }
                     >
                       {short}
                     </button>
@@ -347,7 +375,20 @@ export function RefsSidebar() {
               className="refs-item"
               title={ref.object_type === "tag" ? "Annotated tag" : "Lightweight tag"}
             >
-              <span className="refs-tag">
+              <span
+                className="refs-tag"
+                onContextMenu={(event) =>
+                  refMenu.open(event, [
+                    { label: "Push", onSelect: () => pushTag(short) },
+                    {
+                      label: "Delete",
+                      danger: true,
+                      onSelect: () => void confirmDeleteTag(short),
+                    },
+                    { label: "Copy name", onSelect: () => void copyText(short) },
+                  ])
+                }
+              >
                 <span className={`refs-tag-mark${ref.object_type === "tag" ? " annotated" : ""}`} />
                 {short}
               </span>
@@ -373,6 +414,7 @@ export function RefsSidebar() {
           {error}
         </p>
       )}
+      {refMenu.menu}
     </>
   );
 }
