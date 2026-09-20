@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { confirmDestructive } from "../lib/bridge/dialog";
-import { diffFile, diffNumstat, discardSelection } from "../lib/bridge/diff";
+import { diffFile, diffNumstat, discardSelection, imageBlob, imagePair } from "../lib/bridge/diff";
 import { statusRepo } from "../lib/bridge/status";
 import type { RepoInfo, StatusReport } from "../lib/bridge/types";
 import { useDiffStore } from "../lib/stores/diff";
@@ -25,6 +25,8 @@ vi.mock("../lib/bridge/diff", () => ({
   diffNumstat: vi.fn(),
   stageSelection: vi.fn(),
   discardSelection: vi.fn(),
+  imagePair: vi.fn(),
+  imageBlob: vi.fn(),
 }));
 
 vi.mock("../lib/bridge/status", () => ({
@@ -100,6 +102,27 @@ describe("DiffView", () => {
     expect(head).toHaveTextContent("a.txt");
     expect(head).toHaveTextContent("+1");
     expect(head).toHaveTextContent("-1");
+  });
+
+  it("previsualiza imágenes binarias en vez del aviso de binario", async () => {
+    Object.defineProperty(URL, "createObjectURL", {
+      value: vi.fn(() => "blob:mock"),
+      writable: true,
+    });
+    Object.defineProperty(URL, "revokeObjectURL", { value: vi.fn(), writable: true });
+    vi.mocked(diffNumstat).mockResolvedValue([
+      { path: "logo.png", orig_path: null, binary: true, added: null, deleted: null },
+    ]);
+    vi.mocked(statusRepo).mockResolvedValue({
+      ...REPORT,
+      entries: [{ kind: "ordinary", xy: ".M", path: "logo.png", orig_path: null }],
+    });
+    vi.mocked(imagePair).mockResolvedValue({ before: "image/png", after: "image/png" });
+    vi.mocked(imageBlob).mockResolvedValue(new ArrayBuffer(4));
+    render(<DiffView />);
+
+    expect(await screen.findByAltText("After")).toBeInTheDocument();
+    expect(screen.queryByText(/Binary file/)).not.toBeInTheDocument();
   });
 
   it("no pinta las cabeceras del parche sobre el primer hunk", async () => {

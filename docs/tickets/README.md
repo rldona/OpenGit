@@ -93,3 +93,4 @@ Un fichero por ticket, nombrado `OG-NNN-slug.md`. Todo cambio del repositorio na
 | [OG-058](OG-058-worktrees.md) | Worktrees gestionables | M8 | ready |
 | [OG-059](OG-059-merge-estrategias.md) | Estrategias de merge y menú nativo | M8 | ready |
 | [OG-060](OG-060-drag-and-drop.md) | Drag & drop para merge y staging | M8 | ready |
+| [OG-061](OG-061-image-preview.md) | Image preview and comparison | M8 | done |

@@ -17,6 +17,30 @@ export function commitFiles(path: string, rev: string): Promise<FileDiff[]> {
   return invoke<FileDiff[]>("commit_files", { path, rev });
 }
 
+export type ImageRequest = {
+  path: string;
+  file: string;
+  rev: string | null;
+  staged: boolean;
+};
+
+/** MIME types of the sides that exist for an image change (null if missing). */
+export type ImagePair = {
+  before: string | null;
+  after: string | null;
+};
+
+export function imagePair(request: ImageRequest): Promise<ImagePair> {
+  return invoke<ImagePair>("image_pair", request);
+}
+
+/** Raw bytes of one side; Tauri delivers an ArrayBuffer. */
+export function imageBlob(
+  request: ImageRequest & { side: "before" | "after" },
+): Promise<ArrayBuffer> {
+  return invoke<ArrayBuffer>("image_blob", request);
+}
+
 export function diffNumstat(path: string, cached: boolean): Promise<FileDiff[]> {
   return invoke<FileDiff[]>("diff_numstat", { path, cached });
 }
