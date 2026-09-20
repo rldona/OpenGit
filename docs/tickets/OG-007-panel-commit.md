@@ -1,7 +1,7 @@
 # OG-007 · Panel de commit
 
 - **Milestone:** M1 — MVP local
-- **Estado:** in-progress
+- **Estado:** done
 - **Depende de:** OG-006, OG-009
 - **Referencias:** ADR-0003
 
@@ -44,4 +44,4 @@ Cerrar el ciclo básico: stage, mensaje y commit, con la información necesaria 
 - UI: `CommitPanel` al pie de File status, con lista compacta de lo staged, checkbox de amend (con confirmación nativa y mensaje precargado), textarea con contador, validaciones y aviso de merge/rebase/cherry-pick en curso (deshabilita el botón; las acciones de continuar/abortar llegan en M4).
 - El stage de untracked ya se cubre desde File status (OG-009); el panel refleja el index en vivo.
 - Tests: 5 de Rust (UTF-8 multilínea, sin staged, amend, hook que falla, merge en curso) y 10 de frontend (store + panel).
-- Pendiente para cerrar: PR y CI verde.
+- Cerrado el 2026-09-18 con CI verde (Frontend 23 s, Rust 1m4s) en el PR #9.
