@@ -22,9 +22,14 @@ import {
   setAutoRefresh,
 } from "../lib/bridge/settings";
 import type { GpgKey, Remote, RepoInfo } from "../lib/bridge/types";
+import { loadStoredSession, saveStoredSession } from "../lib/tabs";
 import { useExtrasStore } from "../lib/stores/extras";
 import { useRepoStore } from "../lib/stores/repo";
-import { AUTO_REFRESH_STORAGE_KEY, useSettingsStore } from "../lib/stores/settings";
+import {
+  AUTO_REFRESH_STORAGE_KEY,
+  RESTORE_TABS_STORAGE_KEY,
+  useSettingsStore,
+} from "../lib/stores/settings";
 import { useThemeStore } from "../lib/stores/theme";
 import { SettingsWindow } from "./SettingsWindow";
 
@@ -96,7 +101,7 @@ describe("SettingsWindow", () => {
     vi.mocked(remoteUrls).mockResolvedValue(REMOTES);
     vi.mocked(confirmDestructive).mockResolvedValue(true);
     vi.mocked(gpgSecretKeys).mockResolvedValue(GPG_KEYS);
-    useSettingsStore.setState({ autoRefresh: true });
+    useSettingsStore.setState({ autoRefresh: true, restoreTabs: false });
     useThemeStore.setState({ preference: "system", systemDark: true, resolved: "dark" });
     vi.mocked(configGet).mockImplementation(async (_path, key, scope) => {
       if (key === "user.name") return scope === "local" ? "Local Name" : "Global Name";
@@ -172,6 +177,39 @@ describe("SettingsWindow", () => {
     expect(setAutoRefresh).toHaveBeenCalledWith(false);
     expect(useSettingsStore.getState().autoRefresh).toBe(false);
     expect(localStorage.getItem(AUTO_REFRESH_STORAGE_KEY)).toBe("false");
+  });
+
+  it("enables restoring the open tabs from the General tab on OK", async () => {
+    const user = userEvent.setup();
+    useRepoStore.setState({
+      openTabs: [{ path: "/tmp/repo", name: "repo", opened_at: 1 }],
+    });
+    render(<SettingsWindow onClose={() => {}} />);
+
+    await user.click(screen.getByRole("tab", { name: "General" }));
+    const checkbox = screen.getByLabelText(/Reopen the repositories/);
+    expect(checkbox).not.toBeChecked();
+
+    await user.click(checkbox);
+    await user.click(screen.getByRole("button", { name: "OK" }));
+
+    expect(useSettingsStore.getState().restoreTabs).toBe(true);
+    expect(localStorage.getItem(RESTORE_TABS_STORAGE_KEY)).toBe("true");
+    expect(loadStoredSession()).toEqual({ paths: ["/tmp/repo"], active: "/tmp/repo" });
+  });
+
+  it("disabling the preference clears the stored session", async () => {
+    const user = userEvent.setup();
+    useSettingsStore.setState({ restoreTabs: true });
+    saveStoredSession([{ path: "/tmp/repo" }], "/tmp/repo");
+    render(<SettingsWindow onClose={() => {}} />);
+
+    await user.click(screen.getByRole("tab", { name: "General" }));
+    await user.click(screen.getByLabelText(/Reopen the repositories/));
+    await user.click(screen.getByRole("button", { name: "OK" }));
+
+    expect(useSettingsStore.getState().restoreTabs).toBe(false);
+    expect(loadStoredSession()).toBeNull();
   });
 
   it("changes the theme from the Appearance tab on OK", async () => {
