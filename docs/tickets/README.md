@@ -68,7 +68,7 @@ Un fichero por ticket, nombrado `OG-NNN-slug.md`. Todo cambio del repositorio na
 | [OG-033](OG-033-skip.md) | `--skip` en rebase y cherry-pick | M5 | done |
 | [OG-034](OG-034-url-remoto.md) | Abrir la URL del remoto | M5 | done |
 | [OG-035](OG-035-chrome.md) | Chrome de la ventana (menú, toolbar, título, status bar) | M6 | done |
-| OG-036 | Splits redimensionables | M6 | pending |
+| [OG-036](OG-036-splits.md) | Splits redimensionables | M6 | done |
 | OG-037 | Tabla de commits con cabecera | M6 | pending |
 | OG-038 | Menús contextuales | M6 | pending |
 | OG-039 | Paneles de status/diff estilo SourceTree | M6 | pending |
