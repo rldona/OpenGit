@@ -5,6 +5,7 @@ import { openExternal, openTerminal, revealInFileManager } from "../lib/bridge/o
 import type { RepoInfo } from "../lib/bridge/types";
 import { useExtrasStore } from "../lib/stores/extras";
 import { useRemoteStore } from "../lib/stores/remote";
+import { useRefsStore } from "../lib/stores/refs";
 import { useRepoStore } from "../lib/stores/repo";
 import { useStatusStore } from "../lib/stores/status";
 import { useUiStore } from "../lib/stores/ui";
@@ -53,6 +54,7 @@ describe("Toolbar", () => {
     vi.clearAllMocks();
     useRepoStore.setState({ repo: REPO, recents: [], loading: false, error: null });
     useRemoteStore.setState({ running: false });
+    useRefsStore.setState({ merging: false });
     useStatusStore.setState({ report: null });
     useExtrasStore.setState({ remotes: [] });
     useUiStore.setState({ newBranchRequest: 0, newStashRequest: 0 });
@@ -106,6 +108,13 @@ describe("Toolbar", () => {
     expect(screen.getByRole("button", { name: /Open/ })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Pull/ })).not.toBeInTheDocument();
     expect(screen.getByText("No repository open")).toBeInTheDocument();
+  });
+
+  it("shows Merge busy while a merge is running", () => {
+    useRefsStore.setState({ merging: true });
+    render(<Toolbar {...handlers} />);
+
+    expect(screen.getByRole("button", { name: /Merging/ })).toBeDisabled();
   });
 
   it("shows Refresh busy while a refresh is running", () => {

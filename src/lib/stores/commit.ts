@@ -39,6 +39,8 @@ type CommitState = {
   loading: boolean;
   error: string | null;
   load: (root: string) => Promise<void>;
+  /** Re-reads only the operation state (merge/rebase/cherry-pick/revert). */
+  refreshOpState: (root: string) => Promise<void>;
   setMessage: (message: string) => void;
   setAmend: (amend: boolean) => Promise<void>;
   submit: (stagedCount: number) => Promise<boolean>;
@@ -85,6 +87,14 @@ export const useCommitStore = create<CommitState>((set, get) => ({
       // panel simply does not paint an author and the real error is seen when
       // trying.
       set({ author: null });
+    }
+  },
+
+  refreshOpState: async (root) => {
+    try {
+      set({ opState: await repoOpState(root) });
+    } catch (error) {
+      set({ error: formatGitError(error) });
     }
   },
 
@@ -135,6 +145,9 @@ export const useCommitStore = create<CommitState>((set, get) => ({
       set({ message: "", amend: false, loading: false });
       await useStatusStore.getState().refresh(root);
       await useLogStore.getState().reload(root);
+      // A commit can finalize a merge (conflict resolution): re-read the
+      // operation state so the banner does not linger (OG-066).
+      await get().refreshOpState(root);
       return true;
     } catch (error) {
       set({ loading: false, error: formatGitError(error) });
