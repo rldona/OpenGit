@@ -159,6 +159,11 @@ export type Remote = {
   web_url: string | null;
 };
 
+export type TrackingCommits = {
+  incoming: string[];
+  outgoing: string[];
+};
+
 export type RefEntry = {
   name: string;
   object_id: string;

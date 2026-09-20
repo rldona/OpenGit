@@ -146,7 +146,8 @@ pub fn run() {
             commands::submodule_status,
             commands::worktree_list,
             commands::lfs_status,
-            commands::remote_urls
+            commands::remote_urls,
+            commands::tracking_commits
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
