@@ -1,3 +1,5 @@
+import { openRepoInNewWindow } from "../lib/bridge/app";
+import { useContextMenu } from "../lib/hooks/useContextMenu";
 import { useRepoStore } from "../lib/stores/repo";
 import { Icon } from "./Icon";
 
@@ -13,6 +15,7 @@ export function RepoTabs() {
   const open = useRepoStore((state) => state.open);
   const closeTab = useRepoStore((state) => state.closeTab);
   const pickAndOpen = useRepoStore((state) => state.pickAndOpen);
+  const menu = useContextMenu();
 
   if (openTabs.length === 0) {
     return null;
@@ -31,6 +34,14 @@ export function RepoTabs() {
               className="repo-tab-open"
               title={tab.path}
               onClick={() => void open(tab.path)}
+              onContextMenu={(event) =>
+                menu.open(event, [
+                  {
+                    label: "Open in New Window",
+                    onSelect: () => void openRepoInNewWindow(tab.path),
+                  },
+                ])
+              }
             >
               {tab.name}
             </button>
@@ -55,6 +66,7 @@ export function RepoTabs() {
       >
         <Icon name="plus" size={14} />
       </button>
+      {menu.menu}
     </nav>
   );
 }
