@@ -64,6 +64,17 @@ Todo lo necesario para trabajar sin tocar el terminal en repos locales.
 
 **Salida:** temas, atajos, submódulos/worktrees y avisos LFS en la app, y borrador de release con instaladores desde un tag. ✅
 
+## M6 — Paridad visual con SourceTree
+
+Acercar el chasis y los paneles a la UX de SourceTree sin perder el rendimiento en repos grandes.
+
+- [ ] Chrome de la ventana: menú nativo, toolbar con iconos, título con la ruta del repo y barra de estado (OG-035).
+- [ ] Splits redimensionables entre sidebar, lista y paneles, con tamaños persistidos (OG-036).
+- [ ] Tabla de commits con cabecera (Graph, Description, Commit, Author, Date) y refs coloreadas (OG-037).
+- [ ] Menús contextuales en commits, refs y ficheros (OG-038).
+- [ ] Paneles de status/diff estilo SourceTree: columnas, cabecera por hunk con Reverse, búsqueda en el panel (OG-039).
+- [ ] Commits entrantes/salientes con badges ↓/↑ por rama (OG-040).
+
 ## Fuera de alcance
 
 - Reimplementar git (nunca).
