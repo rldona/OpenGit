@@ -153,7 +153,7 @@ describe("RefsSidebar", () => {
     await user.click(screen.getByRole("button", { name: "origin" }));
     expect(screen.getByText("origin/remota")).toBeInTheDocument();
     expect(screen.getByText("v1.0.0")).toBeInTheDocument();
-    expect(screen.getByLabelText("Current branch")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "main" })).toHaveAttribute("aria-current", "true");
     expect(screen.getByText("v1.0.0").querySelector(".refs-tag-mark.annotated")).not.toBeNull();
     expect(screen.getByText("ligero").querySelector(".refs-tag-mark.annotated")).toBeNull();
     expect(screen.getByText("1↑")).toBeInTheDocument();
