@@ -3,8 +3,9 @@ import { formatGitError } from "../bridge/errors";
 import {
   cherryPick as cherryPickRequest,
   cherryPickRange as cherryPickRangeRequest,
-  resetMixed,
+  resetTo as resetRequest,
   revertCommit as revertRequest,
+  type ResetMode,
 } from "../bridge/history";
 import { listRefs, logPage } from "../bridge/log";
 import type { Commit, LogSearch, RefEntry } from "../bridge/types";
@@ -56,7 +57,7 @@ type LogState = {
   cherryPick: (root: string, hash: string) => Promise<void>;
   cherryPickRange: (root: string, revs: string[], recordSource: boolean) => Promise<void>;
   revert: (root: string, hash: string) => Promise<void>;
-  resetTo: (root: string, hash: string) => Promise<void>;
+  resetTo: (root: string, hash: string, mode: ResetMode) => Promise<void>;
   reset: () => void;
 };
 
@@ -333,10 +334,10 @@ export const useLogStore = create<LogState>((set, get) => ({
     }
   },
 
-  resetTo: async (root, hash) => {
+  resetTo: async (root, hash, mode) => {
     try {
-      await resetMixed(root, hash);
-      output(`Reset to ${hash.slice(0, 7)} (mixed)`);
+      await resetRequest(root, hash, mode);
+      output(`Reset to ${hash.slice(0, 7)} (${mode})`);
       await refreshAfterRewrite(root, () => get().reload(root));
     } catch (error) {
       const message = formatGitError(error);
