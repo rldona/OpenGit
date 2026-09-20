@@ -22,6 +22,18 @@ pub enum GitError {
     Cancelled { args: Vec<String> },
     /// La salida de git no tiene el formato esperado.
     InvalidOutput { message: String },
+    /// La ruta indicada no existe o no es un directorio.
+    PathNotFound { path: String },
+    /// La carpeta no es un repositorio git.
+    NotARepository { path: String },
+    /// Es un repositorio bare: no hay working tree que abrir.
+    NotAWorkTree { path: String },
+    /// HEAD no apunta a ninguna rama ni commit válidos.
+    InvalidHead { path: String },
+    /// La versión de git instalada es anterior al mínimo soportado.
+    GitTooOld { found: String, minimum: String },
+    /// No se pudo leer o escribir el estado persistido de la app.
+    Store { message: String },
 }
 
 impl GitError {
@@ -54,6 +66,25 @@ impl fmt::Display for GitError {
             Self::Cancelled { .. } => write!(f, "operación cancelada"),
             Self::InvalidOutput { message } => {
                 write!(f, "salida de git inesperada: {message}")
+            }
+            Self::PathNotFound { path } => write!(f, "la carpeta no existe: {path}"),
+            Self::NotARepository { path } => {
+                write!(f, "la carpeta no es un repositorio git: {path}")
+            }
+            Self::NotAWorkTree { path } => {
+                write!(f, "los repositorios bare no están soportados: {path}")
+            }
+            Self::InvalidHead { path } => {
+                write!(f, "el repositorio tiene un HEAD inválido: {path}")
+            }
+            Self::GitTooOld { found, minimum } => {
+                write!(
+                    f,
+                    "se requiere git {minimum} o superior (instalado {found})"
+                )
+            }
+            Self::Store { message } => {
+                write!(f, "no se pudo guardar el estado de la app: {message}")
             }
         }
     }
