@@ -1,7 +1,7 @@
 # OG-031 · Descartar hunks y líneas (inversión por hunk)
 
 - **Milestone:** M5 — Pulido (v2 de OG-006)
-- **Estado:** in-progress
+- **Estado:** done
 - **Depende de:** OG-006, OG-009
 - **Referencias:** ROADMAP.md
 
@@ -43,4 +43,4 @@ El stage/unstage parcial (OG-006) ya permite hunks y líneas en ambos sentidos, 
 - UI: botón **Discard hunk** en el parche y **Discard N line(s)** en la toolbar, ambos con confirmación destructiva; el descarte solo aparece en el lado unstaged.
 - Corrección: con **Reverse** activo se ocultan stage/unstage/discard (los índices del parche invertido no corresponden al diff que el backend re-lee).
 - Tests: 114 Rust (2 de integración) y 191 frontend (7 entre store, PatchView y DiffView).
-- Pendiente para cerrar: PR y CI verde.
+- Cerrado el 2026-09-18 con CI verde (Frontend 27 s, Rust 2m11s) en el PR #28.
