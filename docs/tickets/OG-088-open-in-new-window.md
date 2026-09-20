@@ -1,9 +1,9 @@
 # OG-088 · Open a repository in a new window
 
 - **Milestone:** M16 — Repository lifecycle (optional)
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** OG-069
-- **References:** `src-tauri/tauri.conf.json`, `src/lib/stores/repo.ts`
+- **References:** ADR-0008, `src-tauri/src/commands.rs`, `src/components/RepoTabs.tsx`
 
 ## Context
 
@@ -21,11 +21,13 @@ watcher. It is optional and starts with a decision.
 
 ## Acceptance criteria
 
-- [ ] The chosen model is recorded in an ADR before implementing.
-- [ ] Opening a repository in a new window shows its history and status there.
-- [ ] Closing the window does not disturb the main window's tabs.
-- [ ] The watcher and auto-refresh behave per window.
-- [ ] Checks green.
+- [x] The chosen model is recorded in an ADR before implementing (ADR-0008:
+      window per repository).
+- [x] Opening a repository in a new window shows its history and status there.
+- [x] Closing the window does not disturb the main window's tabs.
+- [x] The watcher is per window (keyed by label) and removed when the window is
+      destroyed; `auto-refresh` stays global.
+- [x] Checks green.
 
 ## Out of scope
 
@@ -38,3 +40,18 @@ watcher. It is optional and starts with a decision.
   shared, so per-window repository state must be explicit.
 - This ticket is a placeholder to keep the idea tracked; it is not required for
   the M16 exit criteria.
+
+## Implementation notes (2026-09-20)
+
+- `AppState.watchers` is a map keyed by window label (ADR-0008) and
+  `pending_repo` holds the repository a new window must open; `on_window_event`
+  stops and removes a window's watcher on `Destroyed`.
+- `open_repo`/`close_repo` take the calling `WebviewWindow` and use its label;
+  `open_repo_in_new_window` creates the window, `initial_repo` hands the path to
+  it once on startup.
+- Frontend: the tab context menu offers **Open in New Window**; `App` opens the
+  pending repository before the session restore.
+- Tests: RepoTabs context menu and the `App` new-window startup; the Rust side
+  is a thin wrapper over Tauri windows.
+- Verified: `typecheck`, `lint`, `format:check`, `npm test` (70 files, 519
+  tests), `cargo clippy -D warnings`, `cargo fmt --check`.
