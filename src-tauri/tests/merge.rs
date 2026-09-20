@@ -1,6 +1,6 @@
 mod support;
 
-use opengit_lib::git::{merge_branch, repo_op_abort, repo_op_state, Runner};
+use opengit_lib::git::{merge_branch, repo_op_abort, repo_op_state, MergeOptions, Runner};
 use support::TestRepo;
 
 fn runner() -> Runner {
@@ -37,7 +37,8 @@ fn fast_forward_merge_advances_branch_without_merge_commit() {
     let feature = head(&repo);
     repo.git_ok(&["checkout", "-q", "main"]);
 
-    let result = merge_branch(&runner(), repo.path(), "feature", false).expect("merge");
+    let result =
+        merge_branch(&runner(), repo.path(), "feature", MergeOptions::default()).expect("merge");
 
     assert!(!result.conflicted);
     assert_eq!(head(&repo), feature);
@@ -52,7 +53,16 @@ fn no_ff_merge_creates_merge_commit() {
     commit_file(&repo, "b.txt", "dos\n", "feature");
     repo.git_ok(&["checkout", "-q", "main"]);
 
-    let result = merge_branch(&runner(), repo.path(), "feature", true).expect("merge no-ff");
+    let result = merge_branch(
+        &runner(),
+        repo.path(),
+        "feature",
+        MergeOptions {
+            no_ff: true,
+            ..MergeOptions::default()
+        },
+    )
+    .expect("merge no-ff");
 
     assert!(!result.conflicted);
     assert_eq!(parents(&repo).len(), 2, "no-ff: commit with two parents");
@@ -67,7 +77,8 @@ fn conflicted_merge_leaves_operation_in_progress() {
     repo.git_ok(&["checkout", "-q", "main"]);
     commit_file(&repo, "a.txt", "main\n", "cambio main");
 
-    let result = merge_branch(&runner(), repo.path(), "feature", false).expect("merge");
+    let result =
+        merge_branch(&runner(), repo.path(), "feature", MergeOptions::default()).expect("merge");
 
     assert!(result.conflicted, "conflict must not be an error");
     assert!(
@@ -91,7 +102,8 @@ fn up_to_date_merge_is_not_an_error() {
     let repo = TestRepo::init();
     commit_file(&repo, "a.txt", "uno\n", "base");
 
-    let result = merge_branch(&runner(), repo.path(), "main", false).expect("merge up to date");
+    let result = merge_branch(&runner(), repo.path(), "main", MergeOptions::default())
+        .expect("merge up to date");
 
     assert!(!result.conflicted);
     assert!(
@@ -107,8 +119,8 @@ fn failed_merge_without_conflict_is_an_error() {
     let repo = TestRepo::init();
     commit_file(&repo, "a.txt", "uno\n", "base");
 
-    let error =
-        merge_branch(&runner(), repo.path(), "no-existe", false).expect_err("missing branch");
+    let error = merge_branch(&runner(), repo.path(), "no-existe", MergeOptions::default())
+        .expect_err("missing branch");
 
     let text = format!("{error}").to_lowercase();
     assert!(
@@ -116,4 +128,60 @@ fn failed_merge_without_conflict_is_an_error() {
         "{text}"
     );
     assert!(!repo_op_state(&runner(), repo.path()).unwrap().merge);
+}
+
+#[test]
+fn merge_no_commit_stages_the_result_without_committing() {
+    let repo = TestRepo::init();
+    commit_file(&repo, "a.txt", "uno\n", "base");
+    repo.git_ok(&["checkout", "-q", "-b", "feature"]);
+    commit_file(&repo, "b.txt", "dos\n", "feature");
+    repo.git_ok(&["checkout", "-q", "main"]);
+    commit_file(&repo, "c.txt", "tres\n", "main moves");
+
+    let result = merge_branch(
+        &runner(),
+        repo.path(),
+        "feature",
+        MergeOptions {
+            no_commit: true,
+            ..MergeOptions::default()
+        },
+    )
+    .expect("merge --no-commit");
+
+    assert!(!result.conflicted);
+    assert_eq!(parents(&repo).len(), 1, "no merge commit yet");
+    assert!(repo_op_state(&runner(), repo.path()).unwrap().merge);
+    let staged =
+        String::from_utf8(repo.git_ok(&["diff", "--cached", "--name-only"]).stdout).unwrap();
+    assert!(staged.contains("b.txt"), "{staged}");
+}
+
+#[test]
+fn merge_rebase_replays_the_current_branch() {
+    let repo = TestRepo::init();
+    commit_file(&repo, "a.txt", "uno\n", "base");
+    repo.git_ok(&["checkout", "-q", "-b", "feature"]);
+    commit_file(&repo, "b.txt", "dos\n", "feature");
+    let feature = head(&repo);
+    repo.git_ok(&["checkout", "-q", "main"]);
+    commit_file(&repo, "c.txt", "tres\n", "main moves");
+
+    let result = merge_branch(
+        &runner(),
+        repo.path(),
+        "feature",
+        MergeOptions {
+            rebase: true,
+            ..MergeOptions::default()
+        },
+    )
+    .expect("merge --rebase");
+
+    assert!(!result.conflicted);
+    assert_eq!(parents(&repo).len(), 1, "rebase: no merge commit");
+    assert_eq!(parents(&repo)[0], feature);
+    let subjects = String::from_utf8(repo.git_ok(&["log", "--format=%s", "-2"]).stdout).unwrap();
+    assert!(subjects.contains("main moves"), "{subjects}");
 }

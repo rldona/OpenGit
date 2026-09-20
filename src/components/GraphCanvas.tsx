@@ -16,6 +16,8 @@ type Props = {
   offset?: number;
   /** Draws the hollow "Uncommitted changes" node on top of HEAD. */
   worktree?: boolean;
+  /** Canvas class; the merge window uses its own to drop the history offset. */
+  className?: string;
 };
 
 /**
@@ -30,6 +32,7 @@ export function GraphCanvas({
   scrollRef,
   offset = 0,
   worktree = false,
+  className = "history-graph",
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const frameRef = useRef<number | null>(null);
@@ -173,5 +176,5 @@ export function GraphCanvas({
     };
   }, [scrollRef, schedule]);
 
-  return <canvas ref={canvasRef} className="history-graph" aria-hidden="true" />;
+  return <canvas ref={canvasRef} className={className} aria-hidden="true" />;
 }
