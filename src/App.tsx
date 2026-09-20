@@ -35,7 +35,7 @@ import { useStatusStore } from "./lib/stores/status";
 import { useThemeStore } from "./lib/stores/theme";
 import { useUiStore } from "./lib/stores/ui";
 
-const PROJECT_URL = "https://github.com/rldona/opengit";
+const PROJECT_URL = "https://github.com/rldona/OpenGit";
 
 function App() {
   const outputOpen = useUiStore((state) => state.outputOpen);
