@@ -121,7 +121,7 @@ One file per ticket, named `OG-NNN-slug.md`. Every change in the repository star
 | [OG-086](OG-086-init-repository.md) | Create (init) a repository | M16 | done |
 | [OG-087](OG-087-home-clone-create.md) | Clone and Create entry points on the home screen | M16 | done |
 | [OG-088](OG-088-open-in-new-window.md) | Open a repository in a new window | M16 | done |
-| [OG-089](OG-089-reflog-undo.md) | Reflog view with restore/reset (undo) | M17 | backlog |
+| [OG-089](OG-089-reflog-undo.md) | Reflog view with restore/reset (undo) | M17 | done |
 | [OG-090](OG-090-bisect.md) | Bisect | M17 | backlog |
 | [OG-091](OG-091-reset-modes.md) | Reset modes (soft, mixed, hard) | M17 | done |
 | [OG-092](OG-092-revert-merge-mainline.md) | Revert a merge commit with a mainline | M17 | done |

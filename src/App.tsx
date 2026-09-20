@@ -14,6 +14,7 @@ import { OpBanner } from "./components/OpBanner";
 import { PullDialog } from "./components/PullDialog";
 import { RecentProjects } from "./components/RecentProjects";
 import { RebaseView } from "./components/RebaseView";
+import { ReflogView } from "./components/ReflogView";
 import { SearchView } from "./components/SearchView";
 import { RemoteJobModal } from "./components/RemoteJobModal";
 import { RepoTabs } from "./components/RepoTabs";
@@ -444,6 +445,15 @@ function App() {
                     Search
                   </button>
                 </li>
+                <li>
+                  <button
+                    type="button"
+                    className={`view-button${activeView === "reflog" ? " active" : ""}`}
+                    onClick={() => setActiveView("reflog")}
+                  >
+                    Reflog
+                  </button>
+                </li>
               </ul>
             </CollapsibleSection>
 
@@ -473,6 +483,8 @@ function App() {
                 <BlameView />
               ) : activeView === "search" ? (
                 <SearchView />
+              ) : activeView === "reflog" ? (
+                <ReflogView />
               ) : (
                 <HistoryView />
               )
