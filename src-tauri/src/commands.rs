@@ -386,6 +386,31 @@ pub fn delete_branch(
 }
 
 #[tauri::command]
+pub fn cherry_pick(path: String, hash: String, state: State<'_, AppState>) -> Result<(), GitError> {
+    pause_while(&state, || {
+        crate::git::cherry_pick(&state.runner, Path::new(&path), &hash)
+    })
+}
+
+#[tauri::command]
+pub fn revert_commit(
+    path: String,
+    hash: String,
+    state: State<'_, AppState>,
+) -> Result<(), GitError> {
+    pause_while(&state, || {
+        crate::git::revert_commit(&state.runner, Path::new(&path), &hash)
+    })
+}
+
+#[tauri::command]
+pub fn reset_mixed(path: String, hash: String, state: State<'_, AppState>) -> Result<(), GitError> {
+    pause_while(&state, || {
+        crate::git::reset_mixed(&state.runner, Path::new(&path), &hash)
+    })
+}
+
+#[tauri::command]
 pub fn tag_create(
     path: String,
     name: String,
