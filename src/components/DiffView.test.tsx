@@ -16,6 +16,7 @@ vi.mock("../lib/bridge/diff", () => ({
   diffFile: vi.fn(),
   commitFiles: vi.fn(),
   diffNumstat: vi.fn(),
+  stageSelection: vi.fn(),
 }));
 
 vi.mock("../lib/bridge/status", () => ({
@@ -84,12 +85,14 @@ describe("DiffView", () => {
     expect(screen.queryByTestId("diff-editor")).not.toBeInTheDocument();
   });
 
-  it("cambia a modo unificado", async () => {
+  it("cambia a modo unificado con acciones de staging", async () => {
     const user = userEvent.setup();
     render(<DiffView />);
 
     await user.click(await screen.findByRole("button", { name: "Unificado" }));
 
     expect(useDiffStore.getState().mode).toBe("unified");
+    expect(await screen.findByRole("button", { name: "Stage hunk" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Stage file" })).toBeInTheDocument();
   });
 });

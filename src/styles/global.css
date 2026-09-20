@@ -789,3 +789,74 @@ body {
 .detail-action:hover {
   border-color: var(--accent);
 }
+
+.patch-view {
+  position: relative;
+  height: 100%;
+  overflow: auto;
+}
+
+.patch-inner {
+  position: relative;
+}
+
+.patch-line {
+  position: absolute;
+  right: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 20px;
+  padding: 0 8px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  white-space: pre;
+}
+
+.patch-line .patch-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.patch-line.add {
+  background: rgb(46 160 67 / 15%);
+}
+
+.patch-line.del {
+  background: rgb(248 81 73 / 15%);
+}
+
+.patch-line.meta {
+  color: var(--text-muted);
+}
+
+.patch-line.hunk {
+  justify-content: space-between;
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+}
+
+.patch-line.selectable {
+  cursor: pointer;
+}
+
+.patch-line.selected {
+  background: rgb(59 130 246 / 25%);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.patch-action {
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.patch-action:hover {
+  border-color: var(--accent);
+}

@@ -162,6 +162,28 @@ pub fn discard_path(
     })
 }
 
+/// Stage/unstage parcial por hunk o por líneas (OG-006).
+#[tauri::command]
+pub fn stage_selection(
+    path: String,
+    file: String,
+    staged: bool,
+    selection: crate::git::patch::HunkSelection,
+    reverse: bool,
+    state: State<'_, AppState>,
+) -> Result<(), GitError> {
+    pause_while(&state, || {
+        crate::git::stage_selection(
+            &state.runner,
+            Path::new(&path),
+            &file,
+            staged,
+            &selection,
+            reverse,
+        )
+    })
+}
+
 /// Destructivo: borra un fichero sin trackear (confirmado antes en la UI).
 #[tauri::command]
 pub fn delete_untracked(

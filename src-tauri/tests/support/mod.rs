@@ -4,7 +4,12 @@
 
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
+
+/// Dos tests en paralelo no deben compartir carpeta aunque el reloj devuelva
+/// el mismo instante: el contador garantiza unicidad dentro del proceso.
+static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
 pub struct TempDir {
     path: PathBuf,
@@ -16,8 +21,11 @@ impl TempDir {
             .duration_since(UNIX_EPOCH)
             .expect("reloj del sistema")
             .as_nanos();
-        let path =
-            std::env::temp_dir().join(format!("opengit-{prefix}-{}-{nanos}", std::process::id()));
+        let unique = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
+        let path = std::env::temp_dir().join(format!(
+            "opengit-{prefix}-{}-{nanos}-{unique}",
+            std::process::id()
+        ));
         std::fs::create_dir_all(&path).expect("crear tempdir");
         Self { path }
     }
