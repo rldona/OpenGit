@@ -20,6 +20,8 @@ export function DiffView() {
   const openWorktree = useDiffStore((state) => state.openWorktree);
   const setMode = useDiffStore((state) => state.setMode);
   const toggleReverse = useDiffStore((state) => state.toggleReverse);
+  const options = useDiffStore((state) => state.options);
+  const toggleOption = useDiffStore((state) => state.toggleOption);
   const applySelection = useDiffStore((state) => state.applySelection);
   const discardSelection = useDiffStore((state) => state.discardSelection);
   const fileTree = useUiStore((state) => state.fileTree);
@@ -97,6 +99,35 @@ export function DiffView() {
         >
           Reverse
         </button>
+        <div className="diff-modes" role="group" aria-label="Diff options">
+          <button
+            type="button"
+            className={options.ignore_all_space ? "active" : ""}
+            aria-pressed={options.ignore_all_space}
+            disabled={!selected || selected.untracked}
+            onClick={() => void toggleOption("ignore_all_space")}
+          >
+            Ignore whitespace
+          </button>
+          <button
+            type="button"
+            className={options.ignore_blank_lines ? "active" : ""}
+            aria-pressed={options.ignore_blank_lines}
+            disabled={!selected || selected.untracked}
+            onClick={() => void toggleOption("ignore_blank_lines")}
+          >
+            Ignore blank lines
+          </button>
+          <button
+            type="button"
+            className={options.word_diff ? "active" : ""}
+            aria-pressed={options.word_diff}
+            disabled={!selected || selected.untracked}
+            onClick={() => void toggleOption("word_diff")}
+          >
+            Word diff
+          </button>
+        </div>
         {patchActions && selected && !selected.untracked && (
           <button
             type="button"

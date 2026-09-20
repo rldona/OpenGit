@@ -1653,6 +1653,29 @@ pub fn compare_numstat(
 }
 
 /// Patch of a file between two revisions (OG-054).
+/// View-only options for a diff (OG-095); they never affect what is staged.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize)]
+pub struct DiffOptions {
+    #[serde(default)]
+    pub ignore_all_space: bool,
+    #[serde(default)]
+    pub ignore_blank_lines: bool,
+    #[serde(default)]
+    pub word_diff: bool,
+}
+
+fn push_diff_options(args: &mut Vec<OsString>, options: &DiffOptions) {
+    if options.ignore_all_space {
+        args.push("-w".into());
+    }
+    if options.ignore_blank_lines {
+        args.push("--ignore-blank-lines".into());
+    }
+    if options.word_diff {
+        args.push("--word-diff=plain".into());
+    }
+}
+
 pub fn compare_file_diff(
     runner: &Runner,
     repo: &Path,
@@ -1660,6 +1683,7 @@ pub fn compare_file_diff(
     rev: &str,
     file: &str,
     reversed: bool,
+    options: &DiffOptions,
 ) -> Result<String, GitError> {
     let mut args: Vec<OsString> = vec![
         "diff".into(),
@@ -1667,6 +1691,7 @@ pub fn compare_file_diff(
         "--no-ext-diff".into(),
         "-M".into(),
     ];
+    push_diff_options(&mut args, options);
     if reversed {
         args.push("-R".into());
     }
@@ -1687,6 +1712,7 @@ pub fn worktree_file_diff(
     file: &str,
     staged: bool,
     reversed: bool,
+    options: &DiffOptions,
 ) -> Result<String, GitError> {
     let mut args: Vec<OsString> = vec![
         "diff".into(),
@@ -1694,6 +1720,7 @@ pub fn worktree_file_diff(
         "--no-ext-diff".into(),
         "-M".into(),
     ];
+    push_diff_options(&mut args, options);
     if staged {
         args.push("--cached".into());
     }
@@ -1866,6 +1893,7 @@ pub fn commit_file_diff(
     rev: &str,
     file: &str,
     reversed: bool,
+    options: &DiffOptions,
 ) -> Result<String, GitError> {
     let mut args: Vec<OsString> = vec![
         "show".into(),
@@ -1874,6 +1902,7 @@ pub fn commit_file_diff(
         "-M".into(),
         "--format=".into(),
     ];
+    push_diff_options(&mut args, options);
     if reversed {
         args.push("-R".into());
     }

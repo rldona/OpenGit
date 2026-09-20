@@ -1,12 +1,20 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { FileDiff } from "./types";
 
+/** View-only diff options (OG-095); they never change what is staged. */
+export type DiffOptions = {
+  ignore_all_space: boolean;
+  ignore_blank_lines: boolean;
+  word_diff: boolean;
+};
+
 export type DiffRequest = {
   path: string;
   file: string;
   staged: boolean;
   rev: string | null;
   reversed: boolean;
+  options: DiffOptions;
 };
 
 export function diffFile(request: DiffRequest): Promise<string> {
@@ -62,6 +70,7 @@ export function compareFile(request: {
   rev: string;
   file: string;
   reversed: boolean;
+  options: DiffOptions;
 }): Promise<string> {
   return invoke<string>("compare_file", request);
 }

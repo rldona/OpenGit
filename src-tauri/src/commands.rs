@@ -436,15 +436,26 @@ pub fn diff_file(
     staged: bool,
     rev: Option<String>,
     reversed: bool,
+    options: crate::git::DiffOptions,
     state: State<'_, AppState>,
 ) -> Result<String, GitError> {
     match rev {
-        Some(rev) => {
-            crate::git::commit_file_diff(&state.runner, Path::new(&path), &rev, &file, reversed)
-        }
-        None => {
-            crate::git::worktree_file_diff(&state.runner, Path::new(&path), &file, staged, reversed)
-        }
+        Some(rev) => crate::git::commit_file_diff(
+            &state.runner,
+            Path::new(&path),
+            &rev,
+            &file,
+            reversed,
+            &options,
+        ),
+        None => crate::git::worktree_file_diff(
+            &state.runner,
+            Path::new(&path),
+            &file,
+            staged,
+            reversed,
+            &options,
+        ),
     }
 }
 
@@ -493,6 +504,7 @@ pub fn compare_file(
     rev: String,
     file: String,
     reversed: bool,
+    options: crate::git::DiffOptions,
     state: State<'_, AppState>,
 ) -> Result<String, GitError> {
     crate::git::compare_file_diff(
@@ -502,6 +514,7 @@ pub fn compare_file(
         &rev,
         &file,
         reversed,
+        &options,
     )
 }
 
