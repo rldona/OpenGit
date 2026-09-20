@@ -38,10 +38,18 @@ between them and without touching behaviour.
 
 ## Out of scope
 
-- Translating past commit messages or PR titles/bodies (optional, editable on
-  GitHub; tracked in ROADMAP.md).
+- Translating past commit messages: rewriting history to translate them would
+  change every hash for a cosmetic gain. The merge commits already reference
+  PR numbers, and the branch commits were written in English.
 - Translating UI into more languages (the interface stays English; i18n is a
   separate decision).
+
+## Closing notes
+
+The old PR texts were translated on 2026-09-19 with `gh pr edit`: 41 Spanish
+bodies and 4 Spanish titles (PRs #1–#42), keeping commands, flags, paths, test
+counts and the `Closes OG-NNN` lines. There were no issues or review comments
+to translate.
 
 ## Technical notes
 
