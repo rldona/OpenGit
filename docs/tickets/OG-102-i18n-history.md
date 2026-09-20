@@ -1,7 +1,7 @@
 # OG-102 · i18n: history and commit views
 
 - **Milestone:** M20 — Internationalization
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** OG-099, OG-100
 - **References:** `docs/decisions/ADR-0009-i18n.md`
 
@@ -23,11 +23,11 @@ the most visible remaining surface and still has hardcoded English strings.
 
 ## Acceptance criteria
 
-- [ ] No literal UI string left in the listed components (only brand names and
+- [x] No literal UI string left in the listed components (only brand names and
       technical identifiers).
-- [ ] English rendering unchanged; Spanish reads naturally.
-- [ ] Tests assert the English rendering and at least one Spanish case.
-- [ ] `lint`, `typecheck`, `format:check` and `npm test` green.
+- [x] English rendering unchanged; Spanish reads naturally.
+- [x] Tests assert the English rendering and at least one Spanish case.
+- [x] `lint`, `typecheck`, `format:check` and `npm test` green.
 
 ## Out of scope
 
@@ -40,6 +40,15 @@ the most visible remaining surface and still has hardcoded English strings.
   pass `t` down or memoise.
 - The canvas does not inherit CSS; it only gets strings from props/state.
 
-## Implementation notes
+## Implementation notes (2026-09-21)
 
-_(filled in when the ticket closes)_
+- Catalog sections `common`, `columns`, `history`, `commit` and `mergeLog`.
+- `HistoryView` (filters, search, results, file history, column headers, row
+  tooltips and the whole commit context menu), `CommitPanel`, `CommitDetailPanel`
+  and `MergeFromLogPanel` now use `useI18n`; `GraphCanvas` and `FileTree` had no
+  user-facing strings.
+- `columns.ts` keeps the header order; the labels come from the catalog through
+  `COLUMN_MESSAGES`.
+- Tests: `CommitPanel` renders in Spanish (`Mensaje del commit`, `Cancelar`); the
+  English assertions of the rest are unchanged. Verified `typecheck`, `lint`,
+  `format:check` and `npm test` (545).

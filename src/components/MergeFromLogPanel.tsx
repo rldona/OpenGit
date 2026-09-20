@@ -10,6 +10,7 @@ import {
   visibleLaneCount,
   type GraphLayout,
 } from "../lib/graph/layout";
+import { useI18n } from "../lib/i18n";
 import { useDiffStore } from "../lib/stores/diff";
 import { DiffFilesPanel } from "./DiffFilesPanel";
 import { DiffPatchPanel } from "./DiffPatchPanel";
@@ -31,6 +32,7 @@ type Props = {
  * follow-up if it hurts.
  */
 export function MergeFromLogPanel({ root, onPick }: Props) {
+  const { t } = useI18n();
   const [refs, setRefs] = useState<RefEntry[]>([]);
   const [commits, setCommits] = useState<Commit[]>([]);
   const [layout, setLayout] = useState<GraphLayout>(emptyLayout);
@@ -163,11 +165,11 @@ export function MergeFromLogPanel({ root, onPick }: Props) {
     <div className="merge-tab-panel">
       <div className="merge-log-toolbar">
         <select
-          aria-label="Filter branch"
+          aria-label={t("mergeLog.filterBranch")}
           value={rev}
           onChange={(event) => setRev(event.target.value)}
         >
-          <option value="">All Branches</option>
+          <option value="">{t("mergeLog.allBranches")}</option>
           {branchOptions.map((ref) => (
             <option key={ref.name} value={ref.name}>
               {shortRefName(ref.name)}
@@ -180,7 +182,7 @@ export function MergeFromLogPanel({ root, onPick }: Props) {
             checked={showRemotes}
             onChange={(event) => setShowRemotes(event.target.checked)}
           />
-          Show Remote Branches
+          {t("mergeLog.showRemoteBranches")}
         </label>
         <label>
           <input
@@ -188,23 +190,23 @@ export function MergeFromLogPanel({ root, onPick }: Props) {
             checked={ancestorsOnly}
             onChange={(event) => setAncestorsOnly(event.target.checked)}
           />
-          Ancestor Order
+          {t("mergeLog.ancestorOrder")}
         </label>
         <input
           type="search"
-          aria-label="Search commits"
-          placeholder="Search"
+          aria-label={t("mergeLog.searchCommits")}
+          placeholder={t("mergeLog.search")}
           value={search}
           onChange={(event) => setSearch(event.target.value)}
         />
         <label className="merge-jump">
-          Jump to:
+          {t("mergeLog.jumpTo")}
           <select
-            aria-label="Jump to"
+            aria-label={t("mergeLog.jumpToAria")}
             value={jump}
             onChange={(event) => jumpTo(event.target.value)}
           >
-            <option value="">Select a ref</option>
+            <option value="">{t("mergeLog.selectRef")}</option>
             {jumpOptions.map((ref) => (
               <option key={ref.name} value={ref.name}>
                 {shortRefName(ref.name)}
@@ -212,7 +214,7 @@ export function MergeFromLogPanel({ root, onPick }: Props) {
             ))}
           </select>
         </label>
-        {loading && <span className="muted">Loading…</span>}
+        {loading && <span className="muted">{t("common.loading")}</span>}
       </div>
 
       {error && (
@@ -251,7 +253,7 @@ export function MergeFromLogPanel({ root, onPick }: Props) {
             ))}
           </div>
           {!loading && shown.length === 0 && (
-            <p className="muted status-empty">No commits to show</p>
+            <p className="muted status-empty">{t("mergeLog.noCommits")}</p>
           )}
         </div>
 

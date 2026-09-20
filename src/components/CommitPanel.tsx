@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useI18n } from "../lib/i18n";
 import { hasActiveOperation, stagedEntries, useCommitStore } from "../lib/stores/commit";
 import { useExtrasStore } from "../lib/stores/extras";
 import { useRefsStore } from "../lib/stores/refs";
@@ -11,6 +12,7 @@ import { useStatusStore } from "../lib/stores/status";
  * opciones plegadas, mensaje, push inmediato opcional y Cancel/Commit.
  */
 export function CommitPanel() {
+  const { t } = useI18n();
   const root = useRepoStore((state) => state.repo?.root ?? null);
   const report = useStatusStore((state) => state.report);
   const message = useCommitStore((state) => state.message);
@@ -60,9 +62,7 @@ export function CommitPanel() {
 
   const staged = stagedEntries(report);
   const operationActive = hasActiveOperation(opState);
-  const pushLabel = upstream
-    ? `Push changes immediately to ${upstream}`
-    : "Push changes immediately";
+  const pushLabel = upstream ? t("commit.pushTo", { upstream }) : t("commit.pushImmediately");
 
   const commit = async () => {
     const ok = await submit(staged.length);
@@ -81,22 +81,22 @@ export function CommitPanel() {
   };
 
   return (
-    <section className="commit-panel" aria-label="Commit">
+    <section className="commit-panel" aria-label={t("commit.aria")}>
       <div className="commit-author">
         <span className="commit-avatar" aria-hidden="true">
           {author ? author.name.trim().charAt(0).toUpperCase() : "?"}
         </span>
         <span className="commit-author-name">
-          {author ? `${author.name} <${author.email}>` : "No git identity configured"}
+          {author ? `${author.name} <${author.email}>` : t("commit.noIdentity")}
         </span>
         <div className="commit-options" ref={optionsRef}>
           <button
             type="button"
-            aria-label="Commit Options"
+            aria-label={t("commit.options")}
             aria-expanded={optionsOpen}
             onClick={() => setOptionsOpen((open) => !open)}
           >
-            Commit Options… <span aria-hidden="true">⌄</span>
+            {t("commit.optionsMenu")} <span aria-hidden="true">⌄</span>
           </button>
           {optionsOpen && (
             <div className="commit-options-menu" role="menu">
@@ -106,7 +106,7 @@ export function CommitPanel() {
                   checked={amend}
                   onChange={(event) => void setAmend(event.target.checked)}
                 />
-                Amend last commit
+                {t("commit.amendLast")}
               </label>
             </div>
           )}
@@ -115,8 +115,8 @@ export function CommitPanel() {
 
       <textarea
         className="commit-message"
-        aria-label="Commit message"
-        placeholder="Commit message"
+        aria-label={t("commit.message")}
+        placeholder={t("commit.message")}
         spellCheck={false}
         autoCorrect="off"
         autoCapitalize="off"
@@ -125,10 +125,7 @@ export function CommitPanel() {
       />
 
       <div className="commit-footer">
-        <label
-          className="commit-push"
-          title={remoteCount === 0 ? "No remote configured" : undefined}
-        >
+        <label className="commit-push" title={remoteCount === 0 ? t("commit.noRemote") : undefined}>
           <input
             type="checkbox"
             checked={pushImmediately}
@@ -138,7 +135,7 @@ export function CommitPanel() {
           {pushLabel}
         </label>
         <button type="button" className="commit-cancel" onClick={cancel}>
-          Cancel
+          {t("commit.cancel")}
         </button>
         <button
           type="button"
@@ -146,7 +143,7 @@ export function CommitPanel() {
           onClick={() => void commit()}
           disabled={loading || operationActive}
         >
-          {amend ? "Amend" : "Commit"}
+          {amend ? t("commit.amend") : t("commit.submit")}
         </button>
       </div>
 

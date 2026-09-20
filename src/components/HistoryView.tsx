@@ -16,6 +16,7 @@ import {
 import { LAYOUT_KEYS } from "../lib/layout";
 import { useCommitActions } from "../lib/hooks/useCommitActions";
 import { useContextMenu } from "../lib/hooks/useContextMenu";
+import { useI18n, type MessageKey } from "../lib/i18n";
 import { useDiffStore } from "../lib/stores/diff";
 import { useDragStore } from "../lib/stores/drag";
 import { WORKTREE_SELECTION, useLogStore } from "../lib/stores/log";
@@ -30,7 +31,14 @@ import { GraphCanvas } from "./GraphCanvas";
 import { SplitPane } from "./SplitPane";
 import { WorktreeDetailPanel } from "./WorktreeDetailPanel";
 
+const COLUMN_MESSAGES: Record<ColumnName, MessageKey> = {
+  hash: "columns.commit",
+  author: "columns.author",
+  date: "columns.date",
+};
+
 export function HistoryView() {
+  const { t } = useI18n();
   const repo = useRepoStore((state) => state.repo);
   const commits = useLogStore((state) => state.commits);
   const layout = useLogStore((state) => state.layout);
@@ -243,7 +251,7 @@ export function HistoryView() {
     <div className="history">
       <div className="history-toolbar">
         <label className="history-filter">
-          <span>Branch</span>
+          <span>{t("history.branch")}</span>
           <select
             value={filter ?? ""}
             onChange={(event) => {
@@ -252,7 +260,7 @@ export function HistoryView() {
               }
             }}
           >
-            <option value="">All branches</option>
+            <option value="">{t("history.allBranches")}</option>
             {branchRefs.map((ref) => (
               <option key={ref.name} value={ref.name}>
                 {shortRefName(ref.name)}
@@ -267,8 +275,8 @@ export function HistoryView() {
             className="history-search-message"
             type="search"
             value={grep}
-            placeholder="Search message"
-            aria-label="Search message"
+            placeholder={t("history.searchMessage")}
+            aria-label={t("history.searchMessage")}
             onChange={(event) => setGrep(event.target.value)}
           />
           <button
@@ -277,48 +285,49 @@ export function HistoryView() {
             aria-expanded={searchOpen}
             onClick={() => setSearchOpen((open) => !open)}
           >
-            Filters
+            {t("history.filters")}
           </button>
           {searchOpen && (
             <>
               <input
                 type="text"
                 value={author}
-                placeholder="Author"
-                aria-label="Search author"
+                placeholder={t("history.author")}
+                aria-label={t("history.searchAuthor")}
                 onChange={(event) => setAuthor(event.target.value)}
               />
               <input
                 type="text"
                 value={path}
-                placeholder="Path"
-                aria-label="Search path"
+                placeholder={t("history.path")}
+                aria-label={t("history.searchPath")}
                 onChange={(event) => setPath(event.target.value)}
               />
             </>
           )}
           <button type="submit" className="history-search-submit">
-            Search
+            {t("history.search")}
           </button>
           {(searching || hasDraft) && (
             <button type="button" className="history-search-clear" onClick={clear}>
-              Clear
+              {t("history.clear")}
             </button>
           )}
           {searching && (
             <span className="history-search-count muted">
               {commits.length}
-              {hasMore ? "+" : ""} {commits.length === 1 ? "result" : "results"}
+              {hasMore ? "+" : ""}{" "}
+              {t(commits.length === 1 ? "history.resultOne" : "history.resultMany")}
             </span>
           )}
         </form>
 
-        {loading && <span className="muted">Loading…</span>}
+        {loading && <span className="muted">{t("common.loading")}</span>}
       </div>
 
       {fileHistory && (
         <div className="history-scope">
-          <span className="muted">File history:</span>
+          <span className="muted">{t("history.fileHistory")}</span>
           <span className="history-scope-path" title={historyPath ?? ""}>
             {historyPath}
           </span>
@@ -327,7 +336,7 @@ export function HistoryView() {
             className="history-scope-clear"
             onClick={() => root && void clearFileHistory(root)}
           >
-            Show full history
+            {t("history.showFullHistory")}
           </button>
         </div>
       )}
@@ -340,18 +349,23 @@ export function HistoryView() {
         defaultSize={520}
         min={160}
         max={720}
-        label="Resize commit details"
+        label={t("history.resizeDetails")}
         collapsed={!selectedCommit && !worktreeSelected && !twoSelected}
       >
         <div className={`history-list-wrap${mergeTarget ? " drop-target" : ""}`} data-drop="merge">
           <div className="commit-header">
             {!sorted && (
               <span className="commit-header-graph" style={{ width: graphWidth }}>
-                Graph
+                {t("history.graph")}
               </span>
             )}
             <div className="commit-header-cell commit-header-description">
-              <SortButton column="description" label="Description" sort={sort} onSort={setSort} />
+              <SortButton
+                column="description"
+                label={t("columns.description")}
+                sort={sort}
+                onSort={setSort}
+              />
             </div>
             {(Object.keys(COLUMN_LABELS) as ColumnName[]).map((column) => (
               <div
@@ -361,13 +375,13 @@ export function HistoryView() {
               >
                 <ColumnResizer
                   column={column}
-                  label={COLUMN_LABELS[column]}
+                  label={t(COLUMN_MESSAGES[column])}
                   width={widths[column]}
                   onResize={(width) => setWidth(column, width)}
                 />
                 <SortButton
                   column={column}
-                  label={COLUMN_LABELS[column]}
+                  label={t(COLUMN_MESSAGES[column])}
                   sort={sort}
                   onSort={setSort}
                 />
@@ -386,7 +400,7 @@ export function HistoryView() {
             />
           )}
           {filtered && !loading && commits.length === 0 && (
-            <p className="history-empty muted">No commits match the search</p>
+            <p className="history-empty muted">{t("history.noMatches")}</p>
           )}
           <div className="history-list" ref={scrollRef} onScroll={updateRange}>
             <div className="history-inner" style={{ height: totalRows * ROW_HEIGHT }}>
@@ -401,7 +415,7 @@ export function HistoryView() {
                       style={{ top: index * ROW_HEIGHT, paddingLeft: graphWidth }}
                       onClick={() => select(WORKTREE_SELECTION)}
                     >
-                      <span className="commit-subject">Uncommitted changes</span>
+                      <span className="commit-subject">{t("history.uncommitted")}</span>
                       <span className="commit-hash" style={{ width: widths.hash }} />
                       <span className="commit-author" style={{ width: widths.author }} />
                       <span className="commit-date" style={{ width: widths.date }}>
@@ -437,27 +451,27 @@ export function HistoryView() {
                     onContextMenu={(event) =>
                       commitMenu.open(event, [
                         {
-                          label: "Open in Diff view",
+                          label: t("history.openInDiff"),
                           onSelect: () => void commitActions.showDiff(commit),
                         },
                         {
-                          label: "Compare selected",
+                          label: t("history.compareSelected"),
                           disabled: compareSelection.length !== 2,
                           onSelect: () => compareSelected(),
                         },
                         {
-                          label: "Cherry-pick",
+                          label: t("history.cherryPick"),
                           onSelect: () => void commitActions.cherryPick(commit),
                         },
                         ...(compareSelection.length === 2
                           ? [
                               {
-                                label: "Cherry-pick selected commits",
+                                label: t("history.cherryPickSelected"),
                                 onSelect: () =>
                                   void commitActions.cherryPickRange(compareSelection),
                               },
                               {
-                                label: "Cherry-pick selected commits (-x)",
+                                label: t("history.cherryPickSelectedX"),
                                 onSelect: () =>
                                   void commitActions.cherryPickRange(compareSelection, true),
                               },
@@ -465,45 +479,48 @@ export function HistoryView() {
                           : []),
                         ...(commit.parents.length > 1
                           ? commit.parents.map((_, index) => ({
-                              label: `Revert (mainline ${index + 1})`,
+                              label: t("history.revertMainline", { index: index + 1 }),
                               onSelect: () => void commitActions.revert(commit, index + 1),
                             }))
                           : [
                               {
-                                label: "Revert",
+                                label: t("history.revert"),
                                 onSelect: () => void commitActions.revert(commit),
                               },
                             ]),
                         {
-                          label: "Soft reset to here",
+                          label: t("history.softReset"),
                           onSelect: () => void commitActions.reset(commit, "soft"),
                         },
                         {
-                          label: "Mixed reset to here",
+                          label: t("history.mixedReset"),
                           onSelect: () => void commitActions.reset(commit, "mixed"),
                         },
                         {
-                          label: "Hard reset to here…",
+                          label: t("history.hardReset"),
                           onSelect: () => void commitActions.reset(commit, "hard"),
                         },
                         {
-                          label: "Interactive rebase from here",
+                          label: t("history.interactiveRebase"),
                           onSelect: () => void commitActions.rebase(commit),
                         },
-                        { label: "Copy hash", onSelect: () => void copyText(commit.hash) },
                         {
-                          label: "Create Patch…",
+                          label: t("common.copyHash"),
+                          onSelect: () => void copyText(commit.hash),
+                        },
+                        {
+                          label: t("history.createPatch"),
                           onSelect: () => void commitActions.createPatch(commit),
                         },
                         {
-                          label: "Create Patches to HEAD…",
+                          label: t("history.createPatchesToHead"),
                           onSelect: () => void commitActions.createPatchesToHead(commit),
                         },
                       ])
                     }
                   >
                     {compareIndex >= 0 && (
-                      <span className="commit-compare" title="Comparison order">
+                      <span className="commit-compare" title={t("history.comparisonOrder")}>
                         {compareIndex + 1}
                       </span>
                     )}
@@ -511,12 +528,12 @@ export function HistoryView() {
                       <span className="commit-refs">{renderRefs(commit.refs)}</span>
                     )}
                     {incomingSet.has(commit.hash) && (
-                      <span className="commit-track incoming" title="Incoming commit">
+                      <span className="commit-track incoming" title={t("history.incoming")}>
                         ↓
                       </span>
                     )}
                     {outgoingSet.has(commit.hash) && (
-                      <span className="commit-track outgoing" title="Outgoing commit">
+                      <span className="commit-track outgoing" title={t("history.outgoing")}>
                         ↑
                       </span>
                     )}
@@ -542,9 +559,9 @@ export function HistoryView() {
         </div>
         {twoSelected ? (
           <div className="compare-hint">
-            <p className="muted">Two commits selected for comparison.</p>
+            <p className="muted">{t("history.twoSelected")}</p>
             <button type="button" className="primary" onClick={compareSelected}>
-              Compare selected
+              {t("history.compareSelected")}
             </button>
           </div>
         ) : worktreeSelected && root ? (
@@ -570,13 +587,14 @@ function SortButton({
   sort: SortOrder | null;
   onSort: (order: SortOrder | null) => void;
 }) {
+  const { t } = useI18n();
   const active = sort?.column === column;
   const indicator = active ? (sort.direction === "asc" ? "▲" : "▼") : "";
   return (
     <button
       type="button"
       className={`commit-header-sort${active ? " active" : ""}`}
-      aria-label={`Sort by ${label}`}
+      aria-label={t("history.sortBy", { label })}
       onClick={() => onSort(nextSort(sort, column))}
     >
       {label}

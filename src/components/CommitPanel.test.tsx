@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { commitRepo, repoOpState } from "../lib/bridge/commit";
 import type { RepoInfo, StatusReport } from "../lib/bridge/types";
 import { useCommitStore } from "../lib/stores/commit";
+import { useLocaleStore } from "../lib/stores/locale";
 import { useRepoStore } from "../lib/stores/repo";
 import { useStatusStore } from "../lib/stores/status";
 import { CommitPanel } from "./CommitPanel";
@@ -73,6 +74,7 @@ describe("CommitPanel", () => {
     useStatusStore.getState().reset();
     useStatusStore.setState({ report: REPORT, root: REPO.root });
     useCommitStore.getState().reset();
+    useLocaleStore.setState({ preference: null, locale: "en" });
   });
 
   it("shows the git identity that will sign the commit", async () => {
@@ -117,5 +119,13 @@ describe("CommitPanel", () => {
 
     await screen.findByLabelText("Commit message");
     expect(screen.getByRole("button", { name: "Commit" })).toBeDisabled();
+  });
+
+  it("renders the panel in Spanish", async () => {
+    useLocaleStore.setState({ preference: "es", locale: "es" });
+    render(<CommitPanel />);
+
+    expect(await screen.findByLabelText("Mensaje del commit")).toBeInTheDocument();
+    expect(screen.getByText("Cancelar")).toBeInTheDocument();
   });
 });

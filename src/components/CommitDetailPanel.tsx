@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import type { Commit } from "../lib/bridge/types";
 import { copyText } from "../lib/clipboard";
 import { formatAuthor, formatCommitDate } from "../lib/format";
+import { useI18n } from "../lib/i18n";
 import { LAYOUT_KEYS } from "../lib/layout";
 import { useDiffStore } from "../lib/stores/diff";
 import { useRepoStore } from "../lib/stores/repo";
@@ -26,6 +27,7 @@ type Props = {
  * here: they are in the context menu of the commit row.
  */
 export function CommitDetailPanel({ commit }: Props) {
+  const { t } = useI18n();
   const root = useRepoStore((state) => state.repo?.root ?? null);
   const openCommit = useDiffStore((state) => state.openCommit);
   const loading = useDiffStore((state) => state.loading);
@@ -52,7 +54,7 @@ export function CommitDetailPanel({ commit }: Props) {
   const showingCommit = target?.kind === "commit" && target.rev === hash;
 
   return (
-    <section className="commit-detail-panel" aria-label="Commit details">
+    <section className="commit-detail-panel" aria-label={t("commit.detailsAria")}>
       <SplitPane
         className="commit-detail-body"
         direction="horizontal"
@@ -61,7 +63,7 @@ export function CommitDetailPanel({ commit }: Props) {
         defaultSize={470}
         min={200}
         max={560}
-        label="Resize commit file list"
+        label={t("commit.resizeFileList")}
       >
         <div className="commit-left">
           <div className="commit-diff-toolbar">
@@ -71,14 +73,14 @@ export function CommitDetailPanel({ commit }: Props) {
                 className={mode === "unified" ? "active" : ""}
                 onClick={() => setMode("unified")}
               >
-                Unified
+                {t("commit.unified")}
               </button>
               <button
                 type="button"
                 className={mode === "side" ? "active" : ""}
                 onClick={() => setMode("side")}
               >
-                Side by side
+                {t("commit.sideBySide")}
               </button>
             </div>
             <div className="diff-modes">
@@ -87,14 +89,14 @@ export function CommitDetailPanel({ commit }: Props) {
                 className={fileTree ? "" : "active"}
                 onClick={() => setFileTree(false)}
               >
-                List
+                {t("commit.list")}
               </button>
               <button
                 type="button"
                 className={fileTree ? "active" : ""}
                 onClick={() => setFileTree(true)}
               >
-                Tree
+                {t("commit.tree")}
               </button>
             </div>
           </div>
@@ -107,7 +109,7 @@ export function CommitDetailPanel({ commit }: Props) {
             defaultSize={150}
             min={80}
             max={400}
-            label="Resize commit message"
+            label={t("commit.resizeMessage")}
           >
             <DiffFilesPanel />
 
@@ -122,14 +124,17 @@ export function CommitDetailPanel({ commit }: Props) {
                 <button
                   type="button"
                   className="commit-meta-hash mono"
-                  title="Copy hash"
+                  title={t("common.copyHash")}
                   onClick={() => void copyText(commit.hash)}
                 >
                   {commit.hash.slice(0, 10)}
                 </button>
                 {" · "}
-                {commit.parents.length} parent(s) · {commit.refs.length} ref(s)
-                {loading && <span> · Loading…</span>}
+                {t("commit.parentsRefs", {
+                  parents: commit.parents.length,
+                  refs: commit.refs.length,
+                })}
+                {loading && <span> · {t("common.loading")}</span>}
               </p>
               {commit.body !== "" && <pre className="commit-meta-body">{commit.body}</pre>}
             </div>
@@ -140,7 +145,7 @@ export function CommitDetailPanel({ commit }: Props) {
           <DiffPatchPanel />
         ) : (
           <div className="diff-pane">
-            <p className="muted status-empty">Loading commit…</p>
+            <p className="muted status-empty">{t("commit.loadingCommit")}</p>
           </div>
         )}
       </SplitPane>
