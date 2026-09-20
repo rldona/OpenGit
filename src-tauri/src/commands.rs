@@ -974,6 +974,84 @@ pub fn open_path(path: String) -> Result<(), GitError> {
         .ok_or_else(|| GitError::invalid("no application available to open the file".to_string()))
 }
 
+/// Opens a file in Visual Studio Code.
+///
+/// Same argv rule as `open_terminal`/`open_path`: the binary and the file
+/// are passed as argv, never through a shell. GUI apps inherit a minimal
+/// PATH, so absolute install locations come before the bare name.
+#[tauri::command]
+pub fn open_editor(path: String) -> Result<(), GitError> {
+    let target = Path::new(&path);
+    if !target.is_file() {
+        return Err(GitError::invalid(format!("path does not exist: {path}")));
+    }
+    let missing = || {
+        GitError::invalid(
+            "Visual Studio Code was not found (install it with its `code` command)".to_string(),
+        )
+    };
+    for program in editor_programs() {
+        if std::process::Command::new(&program)
+            .arg(target)
+            .spawn()
+            .is_ok()
+        {
+            return Ok(());
+        }
+    }
+    // Windows `code` is a `.cmd` shim, which only runs through `cmd`; its
+    // exit code tells whether the CLI exists.
+    #[cfg(target_os = "windows")]
+    {
+        let launched = std::process::Command::new("cmd")
+            .args(["/c", "code"])
+            .arg(target)
+            .status()
+            .map(|status| status.success())
+            .unwrap_or(false);
+        if launched {
+            return Ok(());
+        }
+    }
+    Err(missing())
+}
+
+/// Locations of the VS Code CLI in order of preference, with the bare name
+/// (whatever PATH resolves) last.
+fn editor_programs() -> Vec<std::ffi::OsString> {
+    let mut programs: Vec<std::ffi::OsString> = Vec::new();
+    #[cfg(target_os = "macos")]
+    {
+        programs.extend(
+            [
+                "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code",
+                "/usr/local/bin/code",
+                "/opt/homebrew/bin/code",
+            ]
+            .map(std::ffi::OsString::from),
+        );
+    }
+    #[cfg(target_os = "windows")]
+    {
+        if let Some(mut exe) = std::env::var_os("LOCALAPPDATA").map(PathBuf::from) {
+            exe.push("Programs");
+            exe.push("Microsoft VS Code");
+            exe.push("Code.exe");
+            programs.push(exe.into_os_string());
+        }
+        programs.push("code".into());
+    }
+    #[cfg(all(unix, not(target_os = "macos")))]
+    {
+        programs.extend(
+            ["/usr/bin/code", "/usr/local/bin/code", "/snap/bin/code"]
+                .map(std::ffi::OsString::from),
+        );
+    }
+    programs.push("code".into());
+    programs
+}
+
 /// Candidates per platform, in order of preference.
 fn open_candidates(path: &Path) -> Vec<(&'static str, Vec<std::ffi::OsString>)> {
     let target = path.as_os_str().to_os_string();

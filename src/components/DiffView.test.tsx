@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { confirmDestructive } from "../lib/bridge/dialog";
@@ -11,6 +11,8 @@ import {
   untrackedFileDiff,
 } from "../lib/bridge/diff";
 import { statusRepo } from "../lib/bridge/status";
+import { openEditor, revealInFileManager } from "../lib/bridge/opener";
+import { openPath } from "../lib/bridge/settings";
 import type { RepoInfo, StatusReport } from "../lib/bridge/types";
 import { useDiffStore } from "../lib/stores/diff";
 import { useRepoStore } from "../lib/stores/repo";
@@ -35,6 +37,21 @@ vi.mock("../lib/bridge/diff", () => ({
   discardSelection: vi.fn(),
   imagePair: vi.fn(),
   imageBlob: vi.fn(),
+}));
+
+vi.mock("../lib/bridge/opener", () => ({
+  openExternal: vi.fn().mockResolvedValue(undefined),
+  openTerminal: vi.fn().mockResolvedValue(undefined),
+  revealInFileManager: vi.fn().mockResolvedValue(undefined),
+  openEditor: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("../lib/bridge/settings", () => ({
+  openPath: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("../lib/bridge/settings", () => ({
+  openPath: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("../lib/bridge/status", () => ({
@@ -304,5 +321,51 @@ describe("DiffView", () => {
       rev: null,
       staged: false,
     });
+  });
+
+  it("opens worktree files externally from the context menu", async () => {
+    const user = userEvent.setup();
+    render(<DiffView />);
+    const files = document.querySelector(".diff-files") as HTMLElement;
+    fireEvent.contextMenu(await within(files).findByText("a.txt"), { clientX: 10, clientY: 10 });
+
+    await user.click(screen.getByRole("menuitem", { name: "Open" }));
+    expect(openPath).toHaveBeenCalledWith("/tmp/repo/a.txt");
+
+    fireEvent.contextMenu(within(files).getByText("a.txt"), { clientX: 10, clientY: 10 });
+    await user.click(screen.getByRole("menuitem", { name: "Open in VS Code" }));
+    expect(openEditor).toHaveBeenCalledWith("/tmp/repo/a.txt");
+
+    fireEvent.contextMenu(within(files).getByText("a.txt"), { clientX: 10, clientY: 10 });
+    await user.click(screen.getByRole("menuitem", { name: "Show in Finder" }));
+    expect(revealInFileManager).toHaveBeenCalledWith("/tmp/repo/a.txt");
+  });
+
+  it("offers no external actions on commit files", async () => {
+    const entry = {
+      key: "commit:a.txt",
+      path: "a.txt",
+      orig_path: null,
+      added: 1,
+      deleted: 1,
+      binary: false,
+      untracked: false,
+      staged: false,
+    };
+    useDiffStore.setState({
+      root: "/tmp/repo",
+      target: { kind: "commit", rev: "abc1234" },
+      files: [entry],
+      selected: entry,
+      patch: PATCH,
+      binary: false,
+    });
+    render(<DiffView />);
+    const files = document.querySelector(".diff-files") as HTMLElement;
+    fireEvent.contextMenu(within(files).getByText("a.txt"), { clientX: 10, clientY: 10 });
+
+    expect(screen.queryByRole("menuitem", { name: "Open" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: "Open in VS Code" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: "Show in Finder" })).not.toBeInTheDocument();
   });
 });

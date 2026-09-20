@@ -2,6 +2,8 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { confirmDestructive } from "../lib/bridge/dialog";
+import { openEditor, revealInFileManager } from "../lib/bridge/opener";
+import { openPath } from "../lib/bridge/settings";
 import { logPage } from "../lib/bridge/log";
 import { discardPath, stagePath, statusRepo, unstagePath } from "../lib/bridge/status";
 import type { RepoInfo, StatusReport } from "../lib/bridge/types";
@@ -45,6 +47,17 @@ vi.mock("../lib/bridge/repo", () => ({
 vi.mock("../lib/bridge/log", () => ({
   logPage: vi.fn().mockResolvedValue([]),
   listRefs: vi.fn().mockResolvedValue([]),
+}));
+
+vi.mock("../lib/bridge/opener", () => ({
+  openExternal: vi.fn().mockResolvedValue(undefined),
+  openTerminal: vi.fn().mockResolvedValue(undefined),
+  revealInFileManager: vi.fn().mockResolvedValue(undefined),
+  openEditor: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("../lib/bridge/settings", () => ({
+  openPath: vi.fn().mockResolvedValue(undefined),
 }));
 
 const REPO: RepoInfo = {
@@ -160,6 +173,23 @@ describe("StatusView", () => {
     expect(screen.getByRole("menuitem", { name: "Discard" })).toBeInTheDocument();
     expect(screen.getByRole("menuitem", { name: "Blame" })).toBeInTheDocument();
     expect(screen.getByRole("menuitem", { name: "Copy path" })).toBeInTheDocument();
+  });
+
+  it("opens files externally from the context menu", async () => {
+    const user = userEvent.setup();
+    render(<StatusView />);
+    fireEvent.contextMenu(await screen.findByText("modificado.txt"), { clientX: 10, clientY: 10 });
+
+    await user.click(screen.getByRole("menuitem", { name: "Open" }));
+    expect(openPath).toHaveBeenCalledWith("/tmp/repo/modificado.txt");
+
+    fireEvent.contextMenu(await screen.findByText("modificado.txt"), { clientX: 10, clientY: 10 });
+    await user.click(screen.getByRole("menuitem", { name: "Open in VS Code" }));
+    expect(openEditor).toHaveBeenCalledWith("/tmp/repo/modificado.txt");
+
+    fireEvent.contextMenu(await screen.findByText("modificado.txt"), { clientX: 10, clientY: 10 });
+    await user.click(screen.getByRole("menuitem", { name: "Show in Finder" }));
+    expect(revealInFileManager).toHaveBeenCalledWith("/tmp/repo/modificado.txt");
   });
 
   it("opens the file history from the context menu", async () => {

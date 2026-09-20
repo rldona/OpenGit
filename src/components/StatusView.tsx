@@ -3,6 +3,7 @@ import { copyText } from "../lib/clipboard";
 import { confirmDestructive } from "../lib/bridge/dialog";
 import type { FileStatus } from "../lib/bridge/types";
 import { LAYOUT_KEYS } from "../lib/layout";
+import { openFileDefault, openFileEditor, revealFile } from "../lib/openFiles";
 import { useRepoStore } from "../lib/stores/repo";
 import { useConflictStore } from "../lib/stores/conflict";
 import { useDiffStore } from "../lib/stores/diff";
@@ -142,6 +143,13 @@ export function StatusView() {
     ...(entry.kind === "untracked"
       ? []
       : [{ label: "Blame", onSelect: () => root && void openBlame(root, entry.path) }]),
+    ...(root
+      ? [
+          { label: "Open", onSelect: () => openFileDefault(root, entry.path) },
+          { label: "Open in VS Code", onSelect: () => openFileEditor(root, entry.path) },
+          { label: "Show in Finder", onSelect: () => revealFile(root, entry.path) },
+        ]
+      : []),
     staged
       ? { label: "Unstage", onSelect: () => void unstage(entry.path, entry.orig_path) }
       : { label: "Stage", onSelect: () => void stage(entry.path, entry.orig_path) },

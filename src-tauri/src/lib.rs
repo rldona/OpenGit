@@ -173,6 +173,7 @@ pub fn run() {
             commands::ignore_exclude_path,
             commands::set_auto_refresh,
             commands::open_path,
+            commands::open_editor,
             commands::remote_add,
             commands::remote_set_url,
             commands::remote_rename,
