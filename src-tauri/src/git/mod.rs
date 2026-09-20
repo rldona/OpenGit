@@ -1505,6 +1505,157 @@ pub fn repo_op_state(runner: &Runner, repo: &Path) -> Result<RepoOpState, GitErr
     })
 }
 
+/// State of a `git bisect` in progress (OG-090).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct BisectState {
+    pub active: bool,
+    /// Current candidate (detached HEAD) while bisecting.
+    pub current: Option<String>,
+    /// Commits still to test, when it can be computed.
+    pub remaining: Option<u32>,
+}
+
+/// How the current bisect candidate is judged.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum BisectMark {
+    Good,
+    Bad,
+    Skip,
+}
+
+impl BisectMark {
+    fn arg(self) -> &'static str {
+        match self {
+            BisectMark::Good => "good",
+            BisectMark::Bad => "bad",
+            BisectMark::Skip => "skip",
+        }
+    }
+}
+
+/// Resolves a revision to a full hash; `None` when it does not exist.
+fn rev_parse_opt(runner: &Runner, repo: &Path, rev: &str) -> Result<Option<String>, GitError> {
+    let output =
+        runner.run(&GitCommand::new(["rev-parse", "--verify", "--quiet", rev]).cwd(repo))?;
+    if !output.success() {
+        return Ok(None);
+    }
+    let value = output.stdout_lossy().trim().to_string();
+    Ok(if value.is_empty() { None } else { Some(value) })
+}
+
+/// Resolves the `.git` directory of the repository.
+fn git_dir(runner: &Runner, repo: &Path) -> Result<PathBuf, GitError> {
+    let raw = runner
+        .run_checked(&GitCommand::new(["rev-parse", "--git-dir"]).cwd(repo))?
+        .stdout_lossy()
+        .trim()
+        .to_string();
+    Ok(if Path::new(&raw).is_absolute() {
+        PathBuf::from(raw)
+    } else {
+        repo.join(raw)
+    })
+}
+
+/// Starts a bisect, optionally with the bad commit and one or more good ones.
+pub fn bisect_start(
+    runner: &Runner,
+    repo: &Path,
+    bad: Option<&str>,
+    good: &[String],
+) -> Result<(), GitError> {
+    let mut args: Vec<OsString> = vec!["bisect".into(), "start".into()];
+    if let Some(bad) = bad.map(str::trim).filter(|value| !value.is_empty()) {
+        if bad.starts_with('-') {
+            return Err(GitError::invalid("invalid revision"));
+        }
+        args.push(bad.into());
+        for good in good {
+            let good = good.trim();
+            if good.is_empty() || good.starts_with('-') {
+                return Err(GitError::invalid("invalid revision"));
+            }
+            args.push(good.into());
+        }
+    }
+    runner
+        .run_checked(&GitCommand::new(args).cwd(repo).write())
+        .map(|_| ())
+}
+
+/// Marks the current bisect candidate.
+pub fn bisect_mark(runner: &Runner, repo: &Path, mark: BisectMark) -> Result<(), GitError> {
+    runner
+        .run_checked(&GitCommand::new(["bisect", mark.arg()]).cwd(repo).write())
+        .map(|_| ())
+}
+
+/// Ends the bisect and returns to the original branch.
+pub fn bisect_reset(runner: &Runner, repo: &Path) -> Result<(), GitError> {
+    runner
+        .run_checked(&GitCommand::new(["bisect", "reset"]).cwd(repo).write())
+        .map(|_| ())
+}
+
+fn bisect_goods(runner: &Runner, repo: &Path) -> Vec<String> {
+    let output = runner.run(
+        &GitCommand::new(["for-each-ref", "--format=%(refname)", "refs/bisect/good-*"]).cwd(repo),
+    );
+    match output {
+        Ok(output) if output.success() => output
+            .stdout_lossy()
+            .lines()
+            .map(str::trim)
+            .filter(|line| !line.is_empty())
+            .map(str::to_string)
+            .collect(),
+        _ => Vec::new(),
+    }
+}
+
+/// Reads the bisect state without parsing localized output (OG-090).
+pub fn bisect_state(runner: &Runner, repo: &Path) -> Result<BisectState, GitError> {
+    let active = git_dir(runner, repo)?.join("BISECT_START").exists();
+    if !active {
+        return Ok(BisectState {
+            active: false,
+            current: None,
+            remaining: None,
+        });
+    }
+
+    let current = rev_parse_opt(runner, repo, "HEAD")?;
+    let bad = rev_parse_opt(runner, repo, "refs/bisect/bad")?;
+    let goods = bisect_goods(runner, repo);
+    let remaining = match bad {
+        Some(bad) if !goods.is_empty() => {
+            let mut args: Vec<OsString> = vec![
+                "rev-list".into(),
+                "--count".into(),
+                bad.into(),
+                "--not".into(),
+            ];
+            for good in goods {
+                args.push(good.into());
+            }
+            let output = runner.run(&GitCommand::new(args).cwd(repo))?;
+            output
+                .success()
+                .then(|| output.stdout_lossy().trim().parse::<u32>().ok())
+                .flatten()
+        }
+        _ => None,
+    };
+
+    Ok(BisectState {
+        active: true,
+        current,
+        remaining,
+    })
+}
+
 /// Cancels the operation in progress (merge, rebase, cherry-pick or revert).
 pub fn repo_op_abort(runner: &Runner, repo: &Path) -> Result<(), GitError> {
     let state = repo_op_state(runner, repo)?;
