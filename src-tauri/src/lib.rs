@@ -14,9 +14,9 @@ use crate::git::Runner;
 use crate::jobs::JobManager;
 use crate::repo::recents::Recents;
 
-/// Menú nativo: los clics emiten `menu-action` con el id del ítem y la UI los
-/// enruta a los mismos handlers que los atajos. Sin aceleradores (salvo los
-/// predefinidos de Edit) para no duplicar la gestión del teclado.
+/// Native menu: clicks emit `menu-action` with the item id and the UI routes
+/// them to the same handlers as the shortcuts. No accelerators (except the
+/// Edit defaults) to avoid duplicating keyboard handling.
 fn build_menu(app: &tauri::App) -> tauri::Result<()> {
     let app_menu = SubmenuBuilder::new(app, "OpenGit")
         .about(Some(AboutMetadata::default()))

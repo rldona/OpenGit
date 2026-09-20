@@ -12,8 +12,8 @@ const REFS: &[u8] = include_bytes!("fixtures/refs.bin");
 const NUMSTAT: &[u8] = include_bytes!("fixtures/numstat.bin");
 
 #[test]
-fn log_parsea_merge_refs_y_non_ascii() {
-    let commits = parse_log(LOG_TOPO).expect("parsear log");
+fn log_parses_merge_refs_and_non_ascii() {
+    let commits = parse_log(LOG_TOPO).expect("parse log");
 
     assert_eq!(commits.len(), 6);
     let merge = &commits[0];
@@ -25,10 +25,10 @@ fn log_parsea_merge_refs_y_non_ascii() {
     let feature = commits
         .iter()
         .find(|commit| commit.refs.contains(&"feature".to_string()))
-        .expect("commit de la rama feature");
+        .expect("feature branch commit");
     assert!(feature.subject.contains("añade fichero con espacios"));
 
-    let root = commits.last().expect("commit raíz");
+    let root = commits.last().expect("root commit");
     assert!(root.parents.is_empty());
     assert!(root.subject.starts_with("raíz:"));
     assert_eq!(root.author_name, "OpenGit Test");
@@ -37,21 +37,21 @@ fn log_parsea_merge_refs_y_non_ascii() {
 }
 
 #[test]
-fn log_parsea_cuerpo_multilinea_sin_romper_el_registro() {
-    let commits = parse_log(LOG_TOPO).expect("parsear log");
+fn log_parses_multiline_body_without_breaking_the_record() {
+    let commits = parse_log(LOG_TOPO).expect("parse log");
 
     let con_cuerpo = commits
         .iter()
         .find(|commit| commit.subject == "feat: asunto con cuerpo")
-        .expect("commit con cuerpo");
+        .expect("commit with a body");
 
-    // El cuerpo lleva saltos de línea dentro del mismo registro -z.
+    // The body contains line breaks within the same -z record.
     assert!(con_cuerpo.body.starts_with("Primera línea del cuerpo."));
     assert!(con_cuerpo.body.contains("Segunda línea con ñ y 日本."));
     assert!(con_cuerpo.body.ends_with("Refs: OG-044"));
     assert!(con_cuerpo.body.contains('\n'));
 
-    // Y los commits siguientes se siguen leyendo: el cuerpo no se comió el separador.
+    // And the following commits are still read: the body did not eat the separator.
     assert_eq!(commits.len(), 6);
     assert!(commits.iter().all(|commit| !commit.hash.is_empty()));
     assert!(commits
@@ -60,20 +60,20 @@ fn log_parsea_cuerpo_multilinea_sin_romper_el_registro() {
 }
 
 #[test]
-fn log_deja_el_cuerpo_vacio_cuando_no_hay() {
-    let commits = parse_log(LOG_TOPO).expect("parsear log");
+fn log_leaves_body_empty_when_there_is_none() {
+    let commits = parse_log(LOG_TOPO).expect("parse log");
 
-    let root = commits.last().expect("commit raíz");
+    let root = commits.last().expect("root commit");
     assert_eq!(root.body, "");
 }
 
 #[test]
-fn log_vacio_devuelve_lista_vacia() {
-    assert!(parse_log(b"").expect("log vacío").is_empty());
+fn empty_log_returns_empty_list() {
+    assert!(parse_log(b"").expect("empty log").is_empty());
 }
 
 #[test]
-fn log_con_formato_inesperado_falla() {
+fn log_with_unexpected_format_fails() {
     assert!(matches!(
         parse_log(b"no-es-un-log"),
         Err(GitError::InvalidOutput { .. })
@@ -81,8 +81,8 @@ fn log_con_formato_inesperado_falla() {
 }
 
 #[test]
-fn status_parsea_cabecera_y_todas_las_entradas() {
-    let report = parse_status(STATUS_V2).expect("parsear status");
+fn status_parses_header_and_all_entries() {
+    let report = parse_status(STATUS_V2).expect("parse status");
 
     assert_eq!(report.branch.as_deref(), Some("main"));
     assert!(!report.detached);
@@ -110,8 +110,8 @@ fn status_parsea_cabecera_y_todas_las_entradas() {
 }
 
 #[test]
-fn status_detached_no_tiene_rama() {
-    let report = parse_status(STATUS_DETACHED).expect("parsear status detached");
+fn detached_status_has_no_branch() {
+    let report = parse_status(STATUS_DETACHED).expect("parse detached status");
     assert!(report.detached);
     assert!(report.branch.is_none());
     assert!(report.head.is_some());
@@ -119,15 +119,15 @@ fn status_detached_no_tiene_rama() {
 }
 
 #[test]
-fn status_de_repo_sin_commits() {
-    let report = parse_status(STATUS_INITIAL).expect("parsear status inicial");
+fn status_of_repo_without_commits() {
+    let report = parse_status(STATUS_INITIAL).expect("parse initial status");
     assert!(report.head.is_none());
     assert_eq!(report.branch.as_deref(), Some("main"));
     assert!(report.entries.is_empty());
 }
 
 #[test]
-fn status_con_entrada_desconocida_falla() {
+fn status_with_unknown_entry_fails() {
     assert!(matches!(
         parse_status(b"x algo\0"),
         Err(GitError::InvalidOutput { .. })
@@ -135,14 +135,14 @@ fn status_con_entrada_desconocida_falla() {
 }
 
 #[test]
-fn refs_parsea_ramas_remotas_tags_y_upstream() {
-    let refs = parse_refs(REFS).expect("parsear refs");
+fn refs_parses_remote_branches_tags_and_upstream() {
+    let refs = parse_refs(REFS).expect("parse refs");
     assert_eq!(refs.len(), 6);
 
     let main = refs
         .iter()
         .find(|reference| reference.name == "refs/heads/main")
-        .expect("rama main");
+        .expect("main branch");
     assert_eq!(main.object_type, "commit");
     assert_eq!(main.upstream.as_deref(), Some("refs/remotes/origin/main"));
     assert!(main.track.is_none());
@@ -150,15 +150,15 @@ fn refs_parsea_ramas_remotas_tags_y_upstream() {
     let annotated = refs
         .iter()
         .find(|reference| reference.name == "refs/tags/v0.2.0")
-        .expect("tag anotado");
+        .expect("annotated tag");
     assert_eq!(annotated.object_type, "tag");
-    // El tag anotado apunta al commit pelado, no al objeto tag.
+    // The annotated tag points to the peeled commit, not to the tag object.
     assert_eq!(annotated.target, "7b5940ceec35abc54a73f69bab5dfd936ba95cc5");
 
     let lightweight = refs
         .iter()
         .find(|reference| reference.name == "refs/tags/v0.1.0")
-        .expect("tag ligero");
+        .expect("lightweight tag");
     assert_eq!(lightweight.target, lightweight.object_id);
 
     assert!(refs
@@ -170,7 +170,7 @@ fn refs_parsea_ramas_remotas_tags_y_upstream() {
 }
 
 #[test]
-fn refs_con_formato_inesperado_falla() {
+fn refs_with_unexpected_format_fails() {
     assert!(matches!(
         parse_refs(b"solo\0dos\0"),
         Err(GitError::InvalidOutput { .. })
@@ -178,14 +178,14 @@ fn refs_con_formato_inesperado_falla() {
 }
 
 #[test]
-fn numstat_parsea_binarios_renombrados_y_contadores() {
-    let diffs = parse_numstat(NUMSTAT).expect("parsear numstat");
+fn numstat_parses_binaries_renames_and_counters() {
+    let diffs = parse_numstat(NUMSTAT).expect("parse numstat");
     assert_eq!(diffs.len(), 5);
 
     let binary = diffs
         .iter()
         .find(|diff| diff.path == "bin.bin")
-        .expect("binario");
+        .expect("binary");
     assert!(binary.binary);
     assert!(binary.added.is_none());
     assert!(binary.deleted.is_none());
@@ -193,7 +193,7 @@ fn numstat_parsea_binarios_renombrados_y_contadores() {
     let renamed = diffs
         .iter()
         .find(|diff| diff.path == "nuevo.txt")
-        .expect("renombrado");
+        .expect("renamed");
     assert_eq!(renamed.orig_path.as_deref(), Some("viejo.txt"));
     assert_eq!(renamed.added, Some(1));
     assert_eq!(renamed.deleted, Some(0));
@@ -203,14 +203,14 @@ fn numstat_parsea_binarios_renombrados_y_contadores() {
         let diff = diffs
             .iter()
             .find(|diff| diff.path == path)
-            .unwrap_or_else(|| panic!("falta {path}"));
+            .unwrap_or_else(|| panic!("missing {path}"));
         assert_eq!(diff.added, Some(1), "{path}");
         assert_eq!(diff.deleted, Some(1), "{path}");
     }
 }
 
 #[test]
-fn numstat_con_formato_inesperado_falla() {
+fn numstat_with_unexpected_format_fails() {
     assert!(matches!(
         parse_numstat(b"1\t2\0"),
         Err(GitError::InvalidOutput { .. })
@@ -225,8 +225,8 @@ const SUBMODULE_STATUS: &str = concat!(
 );
 
 #[test]
-fn submodule_status_parsea_estados_y_describe() {
-    let submodules = parse_submodule_status(SUBMODULE_STATUS.as_bytes()).expect("parsear");
+fn submodule_status_parses_states_and_describe() {
+    let submodules = parse_submodule_status(SUBMODULE_STATUS.as_bytes()).expect("parse");
 
     assert_eq!(submodules.len(), 4);
 
@@ -248,8 +248,8 @@ fn submodule_status_parsea_estados_y_describe() {
 }
 
 #[test]
-fn submodule_status_vacio_y_errores() {
-    assert!(parse_submodule_status(b"").expect("vacío").is_empty());
+fn submodule_status_empty_and_errors() {
+    assert!(parse_submodule_status(b"").expect("empty").is_empty());
     assert!(matches!(
         parse_submodule_status(b"sin-formato\n"),
         Err(GitError::InvalidOutput { .. })
@@ -262,9 +262,9 @@ fn submodule_status_vacio_y_errores() {
 }
 
 #[test]
-fn submodule_status_con_parentesis_sin_cerrar_es_path() {
+fn submodule_status_with_unclosed_parenthesis_is_path() {
     let line = format!(" {} weird (path\n", "a".repeat(40));
-    let submodules = parse_submodule_status(line.as_bytes()).expect("parsear");
+    let submodules = parse_submodule_status(line.as_bytes()).expect("parse");
     assert_eq!(submodules[0].path, "weird (path");
     assert_eq!(submodules[0].describe, None);
 }
@@ -277,8 +277,8 @@ const WORKTREE_LIST: &str = concat!(
 );
 
 #[test]
-fn worktree_list_parsea_ramas_detached_locked_y_bare() {
-    let worktrees = parse_worktree_list(WORKTREE_LIST.as_bytes()).expect("parsear");
+fn worktree_list_parses_branches_detached_locked_and_bare() {
+    let worktrees = parse_worktree_list(WORKTREE_LIST.as_bytes()).expect("parse");
 
     assert_eq!(worktrees.len(), 4);
     assert_eq!(worktrees[0].path, "/repo/main");
@@ -295,8 +295,8 @@ fn worktree_list_parsea_ramas_detached_locked_y_bare() {
 }
 
 #[test]
-fn worktree_list_vacio_y_error() {
-    assert!(parse_worktree_list(b"").expect("vacío").is_empty());
+fn worktree_list_empty_and_error() {
+    assert!(parse_worktree_list(b"").expect("empty").is_empty());
     assert!(matches!(
         parse_worktree_list(b"branch refs/heads/main\n"),
         Err(GitError::InvalidOutput { .. })
@@ -304,14 +304,14 @@ fn worktree_list_vacio_y_error() {
 }
 
 #[test]
-fn gitattributes_paths_filtra_solo_los_atributos() {
+fn gitattributes_paths_filters_only_attributes() {
     let data = b".gitattributes\0src/.gitattributes\0src/main.rs\0docs/notas.gitattributesx\0";
     let paths = parse_gitattributes_paths(data);
     assert_eq!(paths, vec![".gitattributes", "src/.gitattributes"]);
 }
 
 #[test]
-fn gitattributes_uses_lfs_detecta_lineas_activas() {
+fn gitattributes_uses_lfs_detects_active_lines() {
     assert!(parse_gitattributes_uses_lfs(
         b"*.bin filter=lfs diff=lfs merge=lfs -text\n"
     ));
@@ -325,7 +325,7 @@ fn gitattributes_uses_lfs_detecta_lineas_activas() {
 }
 
 #[test]
-fn remote_web_url_convierte_los_formatos_habituales() {
+fn remote_web_url_converts_common_formats() {
     assert_eq!(
         remote_web_url("https://github.com/rldona/opengit.git").as_deref(),
         Some("https://github.com/rldona/opengit")
@@ -353,7 +353,7 @@ fn remote_web_url_convierte_los_formatos_habituales() {
 }
 
 #[test]
-fn remote_web_url_rechaza_rutas_locales() {
+fn remote_web_url_rejects_local_paths() {
     assert_eq!(remote_web_url("/tmp/repo"), None);
     assert_eq!(remote_web_url("../otro/repo"), None);
     assert_eq!(remote_web_url("file:///tmp/repo"), None);

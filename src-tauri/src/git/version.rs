@@ -4,7 +4,7 @@ use serde::Serialize;
 
 use super::error::GitError;
 
-/// Versión mínima soportada (ADR-0003).
+/// Minimum supported version (ADR-0003).
 pub const MINIMUM_GIT_VERSION: GitVersion = GitVersion {
     major: 2,
     minor: 34,
@@ -19,7 +19,7 @@ pub struct GitVersion {
 }
 
 impl GitVersion {
-    /// Parsea la salida de `git --version`, p. ej. `git version 2.50.1 (Apple Git-155)`.
+    /// Parses the output of `git --version`, e.g. `git version 2.50.1 (Apple Git-155)`.
     pub fn parse(output: &str) -> Result<Self, GitError> {
         let rest = output
             .trim()

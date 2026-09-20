@@ -11,7 +11,7 @@ const MAX_RECENTS: usize = 10;
 pub struct RecentRepo {
     pub path: String,
     pub name: String,
-    /// Timestamp UNIX de la última apertura.
+    /// UNIX timestamp of the last open.
     pub opened_at: i64,
 }
 
@@ -20,8 +20,8 @@ struct RecentFile {
     repos: Vec<RecentRepo>,
 }
 
-/// Lista de repositorios recientes persistida en un JSON de la carpeta de datos
-/// de la app. Nunca escribe en el repositorio del usuario.
+/// Recent repositories list persisted as JSON in the app data folder,
+/// never inside the user's repository.
 pub struct Recents {
     file: PathBuf,
 }
@@ -35,7 +35,7 @@ impl Recents {
         load(&self.file).repos
     }
 
-    /// Inserta o mueve al principio; sin duplicados y con tope de entradas.
+    /// Inserts or moves to the front; no duplicates and a capped number of entries.
     pub fn add(&self, repo: &RecentRepo) -> Result<(), GitError> {
         let mut data = load(&self.file);
         data.repos.retain(|item| item.path != repo.path);

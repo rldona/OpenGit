@@ -63,7 +63,7 @@ fn setup() -> (TestRepo, TempDir, String, Vec<String>) {
 }
 
 #[test]
-fn el_plan_lista_los_commits_de_la_base_a_head_en_orden() {
+fn plan_lists_commits_from_base_to_head_in_order() {
     let (repo, _data, base, hashes) = setup();
 
     let plan = rebase_plan(&runner(), repo.path(), &base).expect("plan");
@@ -81,7 +81,7 @@ fn el_plan_lista_los_commits_de_la_base_a_head_en_orden() {
 }
 
 #[test]
-fn squash_y_fixup_unen_commits() {
+fn squash_and_fixup_join_commits() {
     let (repo, data, base, hashes) = setup();
 
     interactive_rebase(
@@ -97,8 +97,8 @@ fn squash_y_fixup_unen_commits() {
     )
     .expect("rebase");
 
-    // squash conserva el asunto del commit anterior (c1) y añade el mensaje de c2 al cuerpo;
-    // el fixup de c3 descarta su mensaje.
+    // squash keeps the previous commit subject (c1) and appends c2's message to the body;
+    // the c3 fixup drops its message.
     assert_eq!(subjects(&repo, &base), vec!["c1"]);
     let body = String::from_utf8(repo.git_ok(&["log", "-1", "--format=%B"]).stdout).unwrap();
     assert!(body.contains("c2"), "{body}");
@@ -114,7 +114,7 @@ fn squash_y_fixup_unen_commits() {
 }
 
 #[test]
-fn drop_elimina_los_cambios_del_commit() {
+fn drop_removes_the_commit_changes() {
     let (repo, data, base, hashes) = setup();
 
     interactive_rebase(
@@ -139,7 +139,7 @@ fn drop_elimina_los_cambios_del_commit() {
 }
 
 #[test]
-fn reword_cambia_el_mensaje() {
+fn reword_changes_the_message() {
     let (repo, data, base, hashes) = setup();
 
     interactive_rebase(
@@ -159,7 +159,7 @@ fn reword_cambia_el_mensaje() {
 }
 
 #[test]
-fn reordenar_commits() {
+fn reorder_commits() {
     let (repo, data, base, hashes) = setup();
 
     interactive_rebase(
@@ -179,7 +179,7 @@ fn reordenar_commits() {
 }
 
 #[test]
-fn reword_sin_mensaje_falla() {
+fn reword_without_message_fails() {
     let (repo, data, base, hashes) = setup();
 
     let error = interactive_rebase(
@@ -192,7 +192,7 @@ fn reword_sin_mensaje_falla() {
             reword(&hashes[1], "mensaje"),
         ],
     )
-    .expect_err("reword sin mensaje");
+    .expect_err("reword without a message");
     assert!(
         format!("{error}").contains("reword needs a message"),
         "{error}"
@@ -200,7 +200,7 @@ fn reword_sin_mensaje_falla() {
 }
 
 #[test]
-fn dos_rewords_aplican_mensajes_distintos() {
+fn two_rewords_apply_different_messages() {
     let (repo, data, base, hashes) = setup();
 
     interactive_rebase(
@@ -227,7 +227,7 @@ fn dos_rewords_aplican_mensajes_distintos() {
 }
 
 #[test]
-fn un_conflicto_deja_el_rebase_en_curso_y_se_aborta() {
+fn a_conflict_leaves_the_rebase_in_progress_and_it_aborts() {
     let repo = TestRepo::init();
     commit_file(&repo, "a.txt", "base\n", "base");
     let base = head(&repo);

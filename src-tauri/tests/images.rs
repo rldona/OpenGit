@@ -17,21 +17,21 @@ fn commit_file(repo: &TestRepo, name: &str, bytes: &[u8], message: &str) {
 }
 
 #[test]
-fn sniffa_el_mime_por_magic_bytes_y_por_extension() {
+fn sniffs_mime_by_magic_bytes_and_extension() {
     assert_eq!(image_mime("x.bin", TINY_PNG), Some("image/png"));
     assert_eq!(
         image_mime("foto.JPG", b"\xFF\xD8\xFF\xE0"),
         Some("image/jpeg")
     );
     assert_eq!(image_mime("x.bin", b"GIF89a....."), Some("image/gif"));
-    // Sin firma conocida manda la extensión (contenedores raros).
+    // With no known signature the extension wins (unusual containers).
     assert_eq!(image_mime("foto.avif", b"nada"), Some("image/avif"));
     assert_eq!(image_mime("foto.tiff", b"nada"), Some("image/tiff"));
     assert_eq!(image_mime("datos.bin", b"nada"), None);
 }
 
 #[test]
-fn un_fichero_de_imagen_nuevo_solo_tiene_lado_after() {
+fn a_new_image_file_only_has_an_after_side() {
     let repo = TestRepo::init();
     commit_file(&repo, "a.txt", b"uno\n", "base");
     commit_file(&repo, "logo.png", TINY_PNG, "logo");
@@ -59,7 +59,7 @@ fn un_fichero_de_imagen_nuevo_solo_tiene_lado_after() {
 }
 
 #[test]
-fn un_commit_con_imagen_modificada_devuelve_los_dos_lados() {
+fn a_commit_with_modified_image_returns_both_sides() {
     let repo = TestRepo::init();
     commit_file(&repo, "logo.png", TINY_PNG, "logo");
     commit_file(&repo, "logo.png", TINY_PNG_ALT, "logo nuevo");
@@ -99,7 +99,7 @@ fn un_commit_con_imagen_modificada_devuelve_los_dos_lados() {
 }
 
 #[test]
-fn el_working_tree_compara_index_contra_disco() {
+fn working_tree_compares_index_against_disk() {
     let repo = TestRepo::init();
     commit_file(&repo, "logo.png", TINY_PNG, "logo");
     repo.write("logo.png", TINY_PNG_ALT);
@@ -119,7 +119,7 @@ fn el_working_tree_compara_index_contra_disco() {
 }
 
 #[test]
-fn un_binario_que_no_es_imagen_no_tiene_lados() {
+fn a_binary_that_is_not_an_image_has_no_sides() {
     let repo = TestRepo::init();
     commit_file(&repo, "datos.bin", b"\x00\x01\x02", "binario");
     let rev = String::from_utf8(repo.git_ok(&["rev-parse", "HEAD"]).stdout)
@@ -134,7 +134,7 @@ fn un_binario_que_no_es_imagen_no_tiene_lados() {
 }
 
 #[test]
-fn una_imagen_borrada_solo_tiene_lado_before() {
+fn a_deleted_image_only_has_a_before_side() {
     let repo = TestRepo::init();
     commit_file(&repo, "logo.png", TINY_PNG, "logo");
     repo.git_ok(&["rm", "-q", "logo.png"]);

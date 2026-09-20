@@ -6,10 +6,10 @@ use super::{split_fields, split_records, text};
 const RECORD_SEP: u8 = 0;
 const FIELD_SEP: u8 = b'\t';
 
-/// Parsea `git diff --numstat -z -M`.
+/// Parses `git diff --numstat -z -M`.
 ///
-/// Un rename en modo `-z` llega como `A\tD\t\0<old>\0<new>`: el primer token
-/// trae los contadores y la ruta vacía, y las dos rutas van en tokens aparte.
+/// A rename in `-z` mode arrives as `A\tD\t\0<old>\0<new>`: the first token
+/// carries the counters and the empty path, and both paths go in separate tokens.
 pub fn parse_numstat(data: &[u8]) -> Result<Vec<FileDiff>, GitError> {
     let tokens = split_records(data, RECORD_SEP);
     let mut diffs = Vec::new();
