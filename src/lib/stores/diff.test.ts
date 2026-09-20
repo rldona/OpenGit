@@ -71,6 +71,54 @@ describe("useDiffStore", () => {
     });
   });
 
+  it("abre las imágenes en side by side y el texto en unified", async () => {
+    vi.mocked(diffNumstat).mockResolvedValue([
+      { path: "a.txt", orig_path: null, binary: false, added: 1, deleted: 1 },
+      { path: "logo.png", orig_path: null, binary: true, added: null, deleted: null },
+    ]);
+    vi.mocked(statusRepo).mockResolvedValue({
+      ...REPORT,
+      entries: [
+        { kind: "ordinary", xy: ".M", path: "a.txt", orig_path: null },
+        { kind: "ordinary", xy: ".M", path: "logo.png", orig_path: null },
+      ],
+    });
+    await useDiffStore.getState().openWorktree("/tmp/repo");
+    expect(useDiffStore.getState().selected?.path).toBe("a.txt");
+    expect(useDiffStore.getState().mode).toBe("unified");
+
+    const image = useDiffStore.getState().files.find((file) => file.path === "logo.png")!;
+    await useDiffStore.getState().selectFile(image);
+
+    expect(useDiffStore.getState().mode).toBe("side");
+  });
+
+  it("respeta el modo elegido a mano para ese fichero", async () => {
+    vi.mocked(diffNumstat).mockResolvedValue([
+      { path: "a.txt", orig_path: null, binary: false, added: 1, deleted: 1 },
+      { path: "logo.png", orig_path: null, binary: true, added: null, deleted: null },
+    ]);
+    vi.mocked(statusRepo).mockResolvedValue({
+      ...REPORT,
+      entries: [
+        { kind: "ordinary", xy: ".M", path: "a.txt", orig_path: null },
+        { kind: "ordinary", xy: ".M", path: "logo.png", orig_path: null },
+      ],
+    });
+    await useDiffStore.getState().openWorktree("/tmp/repo");
+    const files = useDiffStore.getState().files;
+    const text = files.find((file) => file.path === "a.txt")!;
+    const image = files.find((file) => file.path === "logo.png")!;
+
+    await useDiffStore.getState().selectFile(image);
+    useDiffStore.getState().setMode("unified");
+    await useDiffStore.getState().selectFile(text);
+    expect(useDiffStore.getState().mode).toBe("unified");
+
+    await useDiffStore.getState().selectFile(image);
+    expect(useDiffStore.getState().mode).toBe("unified");
+  });
+
   it("no pide parche para ficheros sin trackear", async () => {
     await useDiffStore.getState().openWorktree("/tmp/repo");
     const untracked = useDiffStore.getState().files.find((file) => file.untracked);
