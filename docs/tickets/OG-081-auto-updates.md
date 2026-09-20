@@ -1,7 +1,7 @@
 # OG-081 · In-app auto-updates
 
 - **Milestone:** M14 — In-app auto-updates
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** OG-077, OG-068
 - **References:** ADR-0007, `src/lib/stores/update.ts`, `src-tauri/tauri.conf.json`, `.github/workflows/release.yml`
 
@@ -38,9 +38,8 @@ artifact, and offers "Restart to install". See ADR-0007 for the decision to use
 - [x] The native **Check for Updates…** item forces a check and reports
   available / up to date / error.
 - [x] Offline startup stays silent and never blocks the UI.
-- [ ] The release workflow produces signed updater artifacts and a valid
-  `latest.json` attached to the draft release. _(requires the signing key and a
-  real tag; verified end-to-end on the first release)_
+- [x] The release workflow produces signed updater artifacts and a valid
+  `latest.json` attached to the draft release (validated with `v0.6.0`).
 - [x] `npm run typecheck`, `npm run lint`, `npm run format:check`, `npm test`,
   `cargo test`, `cargo clippy --all-targets -- -D warnings` and
   `cargo fmt --check` green.
@@ -80,7 +79,14 @@ artifact, and offers "Restart to install". See ADR-0007 for the decision to use
   477 tests), `cargo clippy --all-targets -D warnings`, `cargo fmt --check`.
   The manifest script was also run against a fake artifacts tree.
 - Minisign key generated (`~/.tauri/opengit.key`); the public key is committed
-  in `tauri.conf.json` and `TAURI_SIGNING_PRIVATE_KEY` is set as a repo secret.
-- Pending (manual): add `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`, then validate the
-  first tagged release end-to-end and publish the install instructions. Back up
-  the private key offline: losing it breaks updates for installed users.
+  in `tauri.conf.json` and both `TAURI_SIGNING_PRIVATE_KEY` and
+  `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` are repo secrets.
+- Validated end-to-end with `v0.6.0` (2026-09-20): `release.yml` built and
+  signed the updater artifacts, generated `latest.json` and created the draft;
+  after publishing, `releases/latest/download/latest.json` serves `0.6.0` with
+  `darwin-aarch64`, `linux-x86_64` and `windows-x86_64`. The first attempt
+  failed with "Wrong password for that key" because the password secret was
+  wrong; re-setting it fixed the signing.
+- `v0.6.0` is the first release with the updater, so it has to be installed by
+  hand; later releases auto-update. Keep an offline backup of the private key:
+  losing it breaks updates for installed users.
