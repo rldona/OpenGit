@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { cherryPick, resetMixed, revertCommit } from "../bridge/history";
+import { cherryPick, cherryPickRange, resetMixed, revertCommit } from "../bridge/history";
 import { listRefs, logPage } from "../bridge/log";
 import type { Commit } from "../bridge/types";
 import { WORKTREE_SELECTION, useLogStore } from "./log";
@@ -13,6 +13,7 @@ vi.mock("../bridge/log", () => ({
 
 vi.mock("../bridge/history", () => ({
   cherryPick: vi.fn(),
+  cherryPickRange: vi.fn(),
   revertCommit: vi.fn(),
   resetMixed: vi.fn(),
 }));
@@ -235,6 +236,33 @@ describe("useLogStore", () => {
     expect(logPage).toHaveBeenCalled();
     expect(listRefs).toHaveBeenCalled();
     expect(useUiStore.getState().outputLines.join("\n")).toContain("Cherry-picked abcdef1");
+  });
+
+  it("cherry-picks a range and reports the output", async () => {
+    vi.mocked(cherryPickRange).mockResolvedValue({
+      conflicted: false,
+      output: "Applying: f1\n",
+    });
+    useUiStore.setState({ outputLines: [] });
+    await useLogStore.getState().load("/tmp/repo");
+
+    await useLogStore.getState().cherryPickRange("/tmp/repo", ["aaaa", "bbbb"], true);
+
+    expect(cherryPickRange).toHaveBeenCalledWith("/tmp/repo", ["aaaa", "bbbb"], true);
+    expect(useUiStore.getState().outputLines.join("\n")).toContain("Applying: f1");
+  });
+
+  it("reports a range cherry-pick that stops on a conflict", async () => {
+    vi.mocked(cherryPickRange).mockResolvedValue({
+      conflicted: true,
+      output: "CONFLICT (content)\n",
+    });
+    useUiStore.setState({ outputLines: [] });
+    await useLogStore.getState().load("/tmp/repo");
+
+    await useLogStore.getState().cherryPickRange("/tmp/repo", ["aaaa"], false);
+
+    expect(useUiStore.getState().outputLines.join("\n")).toContain("conflicts");
   });
 
   it("exposes the failure of a cherry-pick with conflicts", async () => {

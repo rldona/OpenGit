@@ -189,6 +189,56 @@ pub fn cherry_pick(runner: &Runner, repo: &Path, hash: &str) -> Result<(), GitEr
         .map(|_| ())
 }
 
+/// Cherry-picks several commits or a range in order (OG-096). `-x` records the
+/// source commit in the message. A conflict is reported, not an error.
+pub fn cherry_pick_range(
+    runner: &Runner,
+    repo: &Path,
+    revs: &[String],
+    record_source: bool,
+) -> Result<MergeResult, GitError> {
+    if revs.is_empty() {
+        return Err(GitError::invalid("choose at least one commit"));
+    }
+    let mut args: Vec<OsString> = vec!["cherry-pick".into()];
+    if record_source {
+        args.push("-x".into());
+    }
+    // Revisions may be a range (`A..B`), so they are not validated as hashes;
+    // `--end-of-options` keeps a leading `-` from becoming an option.
+    args.push("--end-of-options".into());
+    for rev in revs {
+        let rev = rev.trim();
+        if rev.is_empty() || rev.starts_with('-') {
+            return Err(GitError::invalid("invalid revision"));
+        }
+        args.push(rev.into());
+    }
+
+    let output = runner.run(&GitCommand::new(args.clone()).cwd(repo).write())?;
+    let conflicted = has_unmerged(runner, repo)?;
+    if !output.success() && !conflicted {
+        return Err(GitError::CommandFailed {
+            exit_code: output.exit_code(),
+            stdout: output.stdout_lossy(),
+            stderr: output.stderr_lossy(),
+            args: args
+                .iter()
+                .map(|arg| arg.to_string_lossy().into_owned())
+                .collect(),
+        });
+    }
+    let mut text = output.stdout_lossy();
+    let stderr = output.stderr_lossy();
+    if !stderr.trim().is_empty() {
+        text.push_str(&stderr);
+    }
+    Ok(MergeResult {
+        conflicted,
+        output: text,
+    })
+}
+
 /// Result of a merge. A conflict is not a git error: it leaves the
 /// operation half-done and the OG-019/OG-020 flow takes over.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]

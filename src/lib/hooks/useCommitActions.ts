@@ -12,6 +12,7 @@ import { useUiStore } from "../stores/ui";
 export type CommitActions = {
   showDiff: (commit: Commit) => Promise<void>;
   cherryPick: (commit: Commit) => Promise<void>;
+  cherryPickRange: (revs: string[], recordSource?: boolean) => Promise<void>;
   revert: (commit: Commit) => Promise<void>;
   reset: (commit: Commit) => Promise<void>;
   rebase: (commit: Commit) => Promise<void>;
@@ -44,6 +45,7 @@ export function useCommitActions(): CommitActions {
   const openCommit = useDiffStore((state) => state.openCommit);
   const setActiveView = useUiStore((state) => state.setActiveView);
   const cherryPick = useLogStore((state) => state.cherryPick);
+  const cherryPickRangeStore = useLogStore((state) => state.cherryPickRange);
   const revert = useLogStore((state) => state.revert);
   const resetTo = useLogStore((state) => state.resetTo);
   const openRebase = useRebaseStore((state) => state.open);
@@ -64,6 +66,17 @@ export function useCommitActions(): CommitActions {
         ))
       ) {
         await cherryPick(root, commit.hash);
+      }
+    },
+    cherryPickRange: async (revs, recordSource = false) => {
+      if (
+        root &&
+        revs.length > 0 &&
+        (await confirmDestructive(
+          `Cherry-pick ${revs.length} commit(s) onto ${currentBranch ?? "HEAD"}?`,
+        ))
+      ) {
+        await cherryPickRangeStore(root, revs, recordSource);
       }
     },
     revert: async (commit) => {

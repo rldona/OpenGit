@@ -449,6 +449,20 @@ export function HistoryView() {
                           label: "Cherry-pick",
                           onSelect: () => void commitActions.cherryPick(commit),
                         },
+                        ...(compareSelection.length === 2
+                          ? [
+                              {
+                                label: "Cherry-pick selected commits",
+                                onSelect: () =>
+                                  void commitActions.cherryPickRange(compareSelection),
+                              },
+                              {
+                                label: "Cherry-pick selected commits (-x)",
+                                onSelect: () =>
+                                  void commitActions.cherryPickRange(compareSelection, true),
+                              },
+                            ]
+                          : []),
                         { label: "Revert", onSelect: () => void commitActions.revert(commit) },
                         {
                           label: "Reset to here",

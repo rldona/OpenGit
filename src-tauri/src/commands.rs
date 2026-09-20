@@ -678,6 +678,19 @@ pub fn cherry_pick(path: String, hash: String, state: State<'_, AppState>) -> Re
     })
 }
 
+/// Cherry-picks several commits or a range (OG-096).
+#[tauri::command]
+pub fn cherry_pick_range(
+    path: String,
+    revs: Vec<String>,
+    record_source: bool,
+    state: State<'_, AppState>,
+) -> Result<crate::git::MergeResult, GitError> {
+    pause_while(&state, || {
+        crate::git::cherry_pick_range(&state.runner, Path::new(&path), &revs, record_source)
+    })
+}
+
 #[tauri::command]
 pub fn image_pair(
     path: String,
