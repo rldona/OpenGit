@@ -1,53 +1,53 @@
-# OG-026 · Empaquetado y releases (fase 1: sin firma)
+# OG-026 · Packaging and releases (phase 1: unsigned)
 
-- **Milestone:** M5 — Pulido
-- **Estado:** done
-- **Depende de:** OG-012
-- **Referencias:** ROADMAP.md
+- **Milestone:** M5 — Polish
+- **Status:** done
+- **Depends on:** OG-012
+- **References:** ROADMAP.md
 
-## Contexto
+## Context
 
-`build.yml` genera binarios de desarrollo a demanda (`--no-bundle`), pero no hay forma de publicar un release con instaladores. La firma y la notarización exigen certificados (Apple Developer, Windows) que todavía no existen.
+`build.yml` generates development binaries on demand (`--no-bundle`), but there is no way to publish a release with installers. Signing and notarization require certificates (Apple Developer, Windows) that do not exist yet.
 
-## Alcance (fase 1)
+## Scope (phase 1)
 
-- Workflow `release.yml` que se dispara al empujar un tag `v*` (y a mano con `workflow_dispatch` + tag).
-- Bundles por SO:
+- `release.yml` workflow triggered when pushing a `v*` tag (and manually with `workflow_dispatch` + tag).
+- Bundles per OS:
   - macOS: `.dmg`
-  - Linux: `.deb` y `.AppImage`
-  - Windows: `.msi` y `.exe` (NSIS)
-- Comprobación de que el tag coincide con la versión de `package.json` y `tauri.conf.json`; si no, el workflow falla antes de compilar.
-- Release en GitHub **en borrador**, con notas generadas y todos los artefactos adjuntos; el mantenedor revisa y publica.
-- Re-ejecuciones: si el borrador ya existe, se suben los artefactos con `--clobber` en vez de fallar.
-- Documentación del flujo en `docs/guides/development.md`.
+  - Linux: `.deb` and `.AppImage`
+  - Windows: `.msi` and `.exe` (NSIS)
+- Check that the tag matches the version in `package.json` and `tauri.conf.json`; if not, the workflow fails before compiling.
+- GitHub release **as a draft**, with generated notes and all artifacts attached; the maintainer reviews and publishes.
+- Re-runs: if the draft already exists, the artifacts are uploaded with `--clobber` instead of failing.
+- Documentation of the flow in `docs/guides/development.md`.
 
-## Criterios de aceptación
+## Acceptance criteria
 
-- [x] El workflow solo compila bundles en tags (`v*`) o dispatch manual; no se ejecuta en cada push.
-- [x] Un tag con versión distinta a `package.json`/`tauri.conf.json` falla con un mensaje claro.
-- [x] El workflow define el adjuntado por SO (dmg validado en local; deb/AppImage/msi/exe pendientes del primer tag).
-- [x] El bundle local sin firmar genera la ruta que espera el workflow (`bundle/dmg/*.dmg`); la ejecución real se validará en el primer tag.
-- [x] Sin firma ni notarización: documentado como fase 2 (certificados Apple/Windows, universal binary, updater y rpm).
+- [x] The workflow only builds bundles on tags (`v*`) or manual dispatch; it does not run on every push.
+- [x] A tag with a version different from `package.json`/`tauri.conf.json` fails with a clear message.
+- [x] The workflow defines the attachment per OS (dmg validated locally; deb/AppImage/msi/exe pending the first tag).
+- [x] The local unsigned bundle generates the path the workflow expects (`bundle/dmg/*.dmg`); the real run will be validated on the first tag.
+- [x] No signing or notarization: documented as phase 2 (Apple/Windows certificates, universal binary, updater and rpm).
 
-## Fuera de alcance
+## Out of scope
 
-- Firma/notarización de macOS y Windows, y binario universal (arm64 + x64).
-- Auto-updater y canales beta.
-- Empaquetado `.rpm` (fase 2) y publicación automática sin revisión.
+- macOS and Windows signing/notarization, and universal binary (arm64 + x64).
+- Auto-updater and beta channels.
+- `.rpm` packaging (phase 2) and automatic publishing without review.
 
-## Notas técnicas
+## Technical notes
 
-- El trabajo se divide en un job `build` (matriz de 3 SO, sube artefactos) y un job `release` (Ubuntu, descarga todo y crea el borrador una sola vez para evitar carreras).
-- Los minutos de macOS facturan 10×: por eso los bundles solo se construyen en tags, nunca por push.
-- `--bundles` explícito por plataforma para que el resultado sea determinista (`dmg`; `deb,appimage`; `msi,nsis`).
-- `CI=true` en el entorno evita intentos de firma con el llavero del runner.
-- La versión de la app vive duplicada en `package.json`, `tauri.conf.json` y `Cargo.toml`; el workflow valida las dos primeras y la tercera queda como deuda (sincronización automática en fase 2).
+- The work is split into a `build` job (3-OS matrix, uploads artifacts) and a `release` job (Ubuntu, downloads everything and creates the draft only once to avoid races).
+- macOS minutes are billed 10×: that is why bundles are only built on tags, never on push.
+- Explicit `--bundles` per platform so the result is deterministic (`dmg`; `deb,appimage`; `msi,nsis`).
+- `CI=true` in the environment avoids signing attempts with the runner keychain.
+- The app version lives duplicated in `package.json`, `tauri.conf.json` and `Cargo.toml`; the workflow validates the first two and the third remains as debt (automatic synchronization in phase 2).
 
-## Notas de implementación (2026-09-18)
+## Implementation notes (2026-09-18)
 
-- `.github/workflows/release.yml`: jobs `build` (matriz 3 SO, `--bundles` por plataforma, artefactos) y `release` (descarga todo y crea el borrador una vez, con `--clobber` si ya existe).
-- El check de versión se probó localmente con `TAG=v0.1.0` (ok) y `TAG=v9.9.9` (falla con mensaje).
-- Bundle macOS validado sin firma (`CI=true npm run tauri build -- --bundles dmg`): dmg aarch64 en `bundle/dmg/`. Los flags de Linux/Windows se comprobaron contra `tauri build --help` (valores válidos por host).
-- Pendiente de validar en el primer tag real: `.deb`, `.AppImage`, `.msi`, `.exe` y creación del borrador.
-- Cerrado el 2026-09-18 con CI verde (Frontend 36 s, Rust 1m43s) en el PR #22. Con esto queda completo M5 salvo la validación del primer release.
-- Actualización (OG-028, 2026-09-18): la firma/notarización no es una fase 2 pendiente; se descarta por coste de certificados y los instaladores se distribuyen sin firmar.
+- `.github/workflows/release.yml`: `build` job (3-OS matrix, `--bundles` per platform, artifacts) and `release` job (downloads everything and creates the draft once, with `--clobber` if it already exists).
+- The version check was tested locally with `TAG=v0.1.0` (ok) and `TAG=v9.9.9` (fails with a message).
+- macOS bundle validated unsigned (`CI=true npm run tauri build -- --bundles dmg`): aarch64 dmg in `bundle/dmg/`. The Linux/Windows flags were checked against `tauri build --help` (valid values per host).
+- Pending validation on the first real tag: `.deb`, `.AppImage`, `.msi`, `.exe` and draft creation.
+- Closed on 2026-09-18 with green CI (Frontend 36 s, Rust 1m43s) in PR #22. With this, M5 is complete except for the first release validation.
+- Update (OG-028, 2026-09-18): signing/notarization is not a pending phase 2; it is dropped due to certificate cost and the installers are distributed unsigned.

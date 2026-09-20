@@ -1,34 +1,34 @@
-# OG-046 · Detalle de stash como vista
+# OG-046 · Stash detail as a view
 
-- **Milestone:** M7 — Paridad SourceTree (fase 2)
-- **Estado:** done
-- **Depende de:** OG-030, OG-044
-- **Referencias:** ROADMAP.md, OG-030
+- **Milestone:** M7 — SourceTree parity (phase 2)
+- **Status:** done
+- **Depends on:** OG-030, OG-044
+- **References:** ROADMAP.md, OG-030
 
-## Contexto
+## Context
 
-OG-030 resolvió el diff de un stash con `StashDiffDialog`, un modal. Un modal corta el flujo: no se puede comparar con el historial ni navegar mientras está abierto. Con el layout de 3 zonas de OG-044 ya existe el sitio natural para mostrarlo embebido.
+OG-030 solved the diff of a stash with `StashDiffDialog`, a modal. A modal breaks the flow: you cannot compare with the history or navigate while it is open. With the 3-zone layout of OG-044 the natural place to show it embedded already exists.
 
-## Alcance
+## Scope
 
-- Al pulsar un stash en la sidebar, la zona principal muestra sus ficheros a la izquierda y el diff del fichero seleccionado a la derecha.
-- Cabecera con el mensaje del stash, su rama de origen y acciones Apply / Pop / Drop (Drop con confirmación explícita).
-- Retirar `StashDiffDialog` una vez la vista cubre su función.
+- When clicking a stash in the sidebar, the main zone shows its files on the left and the diff of the selected file on the right.
+- Header with the stash message, its source branch and Apply / Pop / Drop actions (Drop with explicit confirmation).
+- Remove `StashDiffDialog` once the view covers its function.
 
-## Criterios de aceptación
+## Acceptance criteria
 
-- [x] Pulsar un stash muestra sus ficheros y el diff sin abrir ningún modal.
-- [x] La cabecera muestra mensaje y rama de origen del stash.
-- [x] Apply/Pop/Drop funcionan desde la vista, y Drop pide confirmación.
-- [x] Tras Pop o Drop la vista se cierra y la lista de stashes se refresca.
-- [x] Tests: selección carga ficheros, confirmación de Drop y refresco posterior.
+- [x] Clicking a stash shows its files and the diff without opening any modal.
+- [x] The header shows the stash message and source branch.
+- [x] Apply/Pop/Drop work from the view, and Drop asks for confirmation.
+- [x] After Pop or Drop the view closes and the stash list refreshes.
+- [x] Tests: selection loads files, Drop confirmation and subsequent refresh.
 
-## Fuera de alcance
+## Out of scope
 
-- Stash parcial o por fichero.
-- Editar el mensaje de un stash.
+- Partial or per-file stash.
+- Editing the message of a stash.
 
-## Notas técnicas
+## Technical notes
 
-- Reutilizar el backend de OG-030; esto es reubicación de UI, no nueva funcionalidad de git.
-- Drop es destructivo: entra en la regla 1 de AGENTS.md, confirmación explícita obligatoria.
+- Reuse the backend of OG-030; this is UI relocation, not new git functionality.
+- Drop is destructive: it falls under rule 1 of AGENTS.md, explicit confirmation mandatory.

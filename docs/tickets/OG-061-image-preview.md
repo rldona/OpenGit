@@ -1,11 +1,11 @@
 # OG-061 · Image preview and comparison
 
-- **Milestone:** M8 — Paridad SourceTree (fase 3)
-- **Estado:** done
-- **Depende de:** OG-005, OG-044
-- **Referencias:** ROADMAP.md, OG-039
+- **Milestone:** M8 — SourceTree parity (phase 3)
+- **Status:** done
+- **Depends on:** OG-005, OG-044
+- **References:** ROADMAP.md, OG-039
 
-## Contexto
+## Context
 
 A binary file only says "Binary file: no text diff available". SourceTree
 previews image changes: the result for a new file and a before/after
@@ -13,7 +13,7 @@ comparison for a modified one, over a checkerboard so transparency is
 visible. Today, seeing an image change means opening the file outside the
 app.
 
-## Alcance
+## Scope
 
 - `image_pair` detects both sides of the change and returns their MIME types
   (sniffed from magic bytes, extension as fallback); `image_blob` returns the
@@ -26,7 +26,7 @@ app.
 - Checkerboard background and `object-fit: contain`, so transparent and
   oversized images read well.
 
-## Criterios de aceptación
+## Acceptance criteria
 
 - [x] A new image in a commit shows the "After" image.
 - [x] A modified image shows Before and After in side-by-side mode and only
@@ -37,13 +37,13 @@ app.
 - [x] Tests: Rust integration for pair/bytes and MIME sniffing; frontend for
       the panel and the routing in the patch panel.
 
-## Fuera de alcance
+## Out of scope
 
 - Zoom, pan and pixel diff.
 - SVG (it is text and keeps the text diff).
 - Video, PDF or other non-image binaries.
 
-## Notas técnicas
+## Technical notes
 
 - Raw bytes travel through `tauri::ipc::Response`; the UI builds an object URL
   with the returned MIME, so there is no base64 dependency.

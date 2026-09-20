@@ -1,44 +1,44 @@
-# OG-039 · Paneles de status/diff estilo SourceTree
+# OG-039 · SourceTree-style status/diff panels
 
-- **Milestone:** M6 — Paridad visual con SourceTree
-- **Estado:** done
-- **Depende de:** OG-038
-- **Referencias:** ROADMAP.md
+- **Milestone:** M6 — Visual parity with SourceTree
+- **Status:** done
+- **Depends on:** OG-038
+- **References:** ROADMAP.md
 
-## Contexto
+## Context
 
-El visor de parches muestra las líneas sin numeración y con una cabecera de hunk que solo enseña el `@@…@@`; el panel de ficheros del diff no se puede filtrar. En SourceTree cada hunk lleva su rango y cada línea sus números antiguo/nuevo, y el panel de ficheros tiene búsqueda.
+The patch viewer shows lines without numbering and with a hunk header that only shows the `@@…@@`; the diff file panel cannot be filtered. In SourceTree each hunk carries its range and each line its old/new numbers, and the file panel has search.
 
-## Alcance
+## Scope
 
-- Parser puro: `parseHunkHeader` (rangos antiguo/nuevo y sección) y `classifyPatchLines` con `oldLine`/`newLine` por línea (adds solo nuevo, deletes solo antiguo, contexto en ambos, marcadores sin número).
-- `PatchView` con columnas de números de línea (antiguo y nuevo, monoespaciadas, alineadas a la derecha) y cabecera de hunk con etiqueta `Hunk N · Lines x–y` más las acciones existentes (Stage/Unstage/Discard) a la derecha.
-- Buscador en el panel de ficheros del diff (filtra por ruta, insensible a mayúsculas, incluye `orig_path` de renombrados) con estado vacío "No files match".
-- El filtrado no toca la selección ni el estado del store; solo lo que se pinta.
+- Pure parser: `parseHunkHeader` (old/new ranges and section) and `classifyPatchLines` with `oldLine`/`newLine` per line (adds only new, deletes only old, context in both, markers without number).
+- `PatchView` with line-number columns (old and new, monospaced, right-aligned) and hunk header with `Hunk N · Lines x–y` label plus the existing actions (Stage/Unstage/Discard) on the right.
+- Search box in the diff file panel (filters by path, case-insensitive, includes `orig_path` of renames) with empty state "No files match".
+- Filtering does not touch the selection or the store state; only what is rendered.
 
-## Criterios de aceptación
+## Acceptance criteria
 
-- [x] Cada línea del parche muestra su número antiguo/nuevo cuando corresponde y queda vacío cuando no.
-- [x] La cabecera de hunk muestra el índice y el rango nuevo, y mantiene las acciones de staging.
-- [x] Escribir en el buscador del panel filtra los ficheros y "No files match" aparece si nada coincide.
-- [x] Tests: parser (rangos y numeración), PatchView (columnas y etiqueta) y DiffView (filtro).
+- [x] Each line of the patch shows its old/new number when applicable and stays empty when not.
+- [x] The hunk header shows the index and the new range, and keeps the staging actions.
+- [x] Typing in the panel's search box filters the files and "No files match" appears if nothing matches.
+- [x] Tests: parser (ranges and numbering), PatchView (columns and label) and DiffView (filter).
 
-## Fuera de alcance
+## Out of scope
 
-- Buscar dentro del propio parche.
-- Control "Sorted by path" desplegable y otras ordenaciones.
-- Numeración en el modo lado a lado (CodeMirror ya pinta sus gutters).
+- Searching inside the patch itself.
+- Collapsible "Sorted by path" control and other orderings.
+- Numbering in side-by-side mode (CodeMirror already renders its gutters).
 
-## Notas técnicas
+## Technical notes
 
-- `parseHunkHeader` acepta el formato `@@ -a[,b] +c[,d] @@ sección` y devuelve `null` si no encaja; con conteos 0 se usa el inicio como única línea.
-- La numeración se calcula en la misma pasada que la clasificación, así que mantenerla es O(n) sin estructuras extra.
-- El buscador del diff es estado local (`useState`) y filtra `files` antes de pintar árbol o lista.
+- `parseHunkHeader` accepts the format `@@ -a[,b] +c[,d] @@ section` and returns `null` if it does not fit; with counts 0 the start is used as the only line.
+- Numbering is computed in the same pass as classification, so keeping it is O(n) without extra structures.
+- The diff search box is local state (`useState`) and filters `files` before rendering tree or list.
 
-## Notas de implementación (2026-09-18)
+## Implementation notes (2026-09-18)
 
-- `parseHunkHeader` puro (`@@ -a[,b] +c[,d] @@ sección`) y `classifyPatchLines` con `oldLine`/`newLine` en la misma pasada; los marcadores `\ No newline` y las cabeceras quedan sin número.
-- `PatchView`: columnas de números (40 px, mono, muted), etiqueta `Hunk N · Lines x–y` con la sección del header al lado y acciones de staging a la derecha.
-- `DiffView`: input "Filter files" local que filtra por ruta y `orig_path`; estado "No files match" sin tocar la selección.
-- Tests: 228 frontend (numeración del parser, etiqueta de hunk y filtro) y 120 Rust intactos.
-- Cerrado el 2026-09-18 con CI verde (Frontend 36 s, Rust 1m30s) en el PR #36.
+- Pure `parseHunkHeader` (`@@ -a[,b] +c[,d] @@ section`) and `classifyPatchLines` with `oldLine`/`newLine` in the same pass; the `\ No newline` markers and the headers stay without a number.
+- `PatchView`: number columns (40 px, mono, muted), `Hunk N · Lines x–y` label with the header section next to it and staging actions on the right.
+- `DiffView`: local "Filter files" input that filters by path and `orig_path`; "No files match" state without touching the selection.
+- Tests: 228 frontend (parser numbering, hunk label and filter) and 120 Rust untouched.
+- Closed on 2026-09-18 with green CI (Frontend 36 s, Rust 1m30s) in PR #36.

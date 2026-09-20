@@ -1,46 +1,46 @@
-# OG-040 · Commits entrantes/salientes con badges
+# OG-040 · Incoming/outgoing commits with badges
 
-- **Milestone:** M6 — Paridad visual con SourceTree
-- **Estado:** done
-- **Depende de:** OG-008, OG-037
-- **Referencias:** ROADMAP.md
+- **Milestone:** M6 — Visual parity with SourceTree
+- **Status:** done
+- **Depends on:** OG-008, OG-037
+- **References:** ROADMAP.md
 
-## Contexto
+## Context
 
-El tracking solo se muestra junto a la rama actual (↑/↓ globales) y el grafo no distingue los commits que están por llegar del upstream o los pendientes de subir. SourceTree marca cada rama con sus contadores y pinta los commits entrantes de forma distinta.
+Tracking is only shown next to the current branch (global ↑/↓) and the graph does not distinguish commits that are yet to arrive from the upstream or pending to be pushed. SourceTree marks each branch with its counters and paints incoming commits differently.
 
-## Alcance
+## Scope
 
-- **Badges por rama**: el sidebar usa el campo `track` de `for-each-ref` (`[ahead N, behind M]`) para mostrar `↑n`/`↓m` en cualquier rama con upstream, no solo en la actual. Parser puro `parseTrack`.
-- **Commits entrantes/salientes**:
-  - Rust: `tracking_commits(path, upstream)` devuelve los hashes de `HEAD..upstream` (incoming) y `upstream..HEAD` (outgoing), limitados a 200 por lado y con validación de la ref.
-  - Store de refs: `incoming`/`outgoing` se cargan y refrescan junto a `branchTracking` cuando hay upstream.
-  - Historial: cada fila con hash en `incoming`/`outgoing` muestra un badge `↓`/`↑` y una marca de color (los entrantes en acento), sin tocar la virtualización.
+- **Per-branch badges**: the sidebar uses the `track` field of `for-each-ref` (`[ahead N, behind M]`) to show `↑n`/`↓m` on any branch with an upstream, not only the current one. Pure parser `parseTrack`.
+- **Incoming/outgoing commits**:
+  - Rust: `tracking_commits(path, upstream)` returns the hashes of `HEAD..upstream` (incoming) and `upstream..HEAD` (outgoing), limited to 200 per side and with ref validation.
+  - Refs store: `incoming`/`outgoing` are loaded and refreshed along with `branchTracking` when there is an upstream.
+  - History: each row with a hash in `incoming`/`outgoing` shows a `↓`/`↑` badge and a color mark (incoming ones in accent), without touching virtualization.
 
-## Criterios de aceptación
+## Acceptance criteria
 
-- [x] Cualquier rama con upstream muestra sus contadores ↑/↓ en el sidebar.
-- [x] `tracking_commits` valida la ref y devuelve los hashes correctos de incoming/outgoing.
-- [x] Las filas del historial marcan los commits entrantes y salientes con badge y clase.
-- [x] Sin upstream, las listas quedan vacías y no hay llamada extra a git.
-- [x] Tests: parser de track, integración de `tracking_commits`, store, sidebar e historial.
+- [x] Any branch with an upstream shows its ↑/↓ counters in the sidebar.
+- [x] `tracking_commits` validates the ref and returns the correct incoming/outgoing hashes.
+- [x] History rows mark incoming and outgoing commits with badge and class.
+- [x] Without an upstream, the lists are empty and there is no extra git call.
+- [x] Tests: track parser, `tracking_commits` integration, store, sidebar and history.
 
-## Fuera de alcance
+## Out of scope
 
-- Fetch automático al abrir el repo o al refrescar (los conjuntos se calculan contra las refs locales).
-- Contadores por remoto o por rama remota individual (solo la upstream de cada local).
-- Reescribir el grafo para colorear lanes enteras de incoming.
+- Automatic fetch when opening the repo or refreshing (the sets are computed against local refs).
+- Per-remote or per-remote-branch counters (only each local's upstream).
+- Rewriting the graph to color whole incoming lanes.
 
-## Notas técnicas
+## Technical notes
 
-- `parseTrack` acepta `[ahead 1, behind 2]`, `[ahead 1]`, `[behind 2]`, `[gone]` y vacío (devuelve `null` para los dos últimos).
-- `tracking_commits` usa `git rev-list --max-count=200 --end-of-options` con el rango y rechaza refs con espacios, `..` o guion inicial.
-- Los conjuntos viven en el store de refs para que el sidebar y el historial compartan la misma foto.
+- `parseTrack` accepts `[ahead 1, behind 2]`, `[ahead 1]`, `[behind 2]`, `[gone]` and empty (returns `null` for the last two).
+- `tracking_commits` uses `git rev-list --max-count=200 --end-of-options` with the range and rejects refs with spaces, `..` or a leading hyphen.
+- The sets live in the refs store so that the sidebar and the history share the same snapshot.
 
-## Notas de implementación (2026-09-18)
+## Implementation notes (2026-09-18)
 
-- Rust: `TrackingCommits` y `tracking_commits` con `rev-list --max-count=200 --end-of-options`; rechaza refs con espacios, `..` o guion inicial. Test de integración con commit remoto que sale de la base (si descendiera del local, ambos conjuntos quedarían vacíos).
-- Frontend: `parseTrack` para `[ahead N, behind M]` (también `[gone]`/vacío → null); el sidebar pinta ↑/↓ en cualquier rama con upstream usando el campo `track` de `for-each-ref`; el store de refs carga incoming/outgoing solo si hay upstream (una llamada extra por refresco).
-- Historial: badge ↓/↑ y clase `incoming`/`outgoing` por fila; los entrantes tiñen el asunto con el acento.
-- Tests: 232 frontend (2 de parseTrack, 2 de store, aserciones en sidebar y App) y 121 Rust (1 de integración).
-- Cerrado el 2026-09-18 con CI verde (Frontend 50 s, Rust 1m58s) en el PR #37. Con esto queda completo M6.
+- Rust: `TrackingCommits` and `tracking_commits` with `rev-list --max-count=200 --end-of-options`; rejects refs with spaces, `..` or a leading hyphen. Integration test with a remote commit that leaves the base (if it descended from the local, both sets would be empty).
+- Frontend: `parseTrack` for `[ahead N, behind M]` (also `[gone]`/empty → null); the sidebar renders ↑/↓ on any branch with an upstream using the `track` field of `for-each-ref`; the refs store loads incoming/outgoing only if there is an upstream (one extra call per refresh).
+- History: ↓/↑ badge and `incoming`/`outgoing` class per row; incoming ones tint the subject with the accent.
+- Tests: 232 frontend (2 parseTrack, 2 store, assertions in sidebar and App) and 121 Rust (1 integration).
+- Closed on 2026-09-18 with green CI (Frontend 50 s, Rust 1m58s) in PR #37. With this, M6 is complete.

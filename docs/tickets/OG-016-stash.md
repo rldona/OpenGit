@@ -1,44 +1,44 @@
 # OG-016 · Stash
 
-- **Milestone:** M3 — Historial avanzado
-- **Estado:** done
-- **Depende de:** OG-009, OG-010
-- **Referencias:** docs/architecture/overview.md
+- **Milestone:** M3 — Advanced history
+- **Status:** done
+- **Depends on:** OG-009, OG-010
+- **References:** docs/architecture/overview.md
 
-## Contexto
+## Context
 
-El sidebar tiene un hueco de Stashes sin funcionalidad. Guardar y recuperar trabajo en curso sin miedo es parte del flujo diario.
+The sidebar has a Stashes slot with no functionality. Saving and recovering work in progress without fear is part of the daily flow.
 
-## Alcance
+## Scope
 
-- Listar stashes con mensaje, fecha y referencia.
-- Crear stash (mensaje opcional, incluir untracked opcional).
-- Aplicar (apply) y sacar (pop) con manejo de conflictos: si falla, el stash se conserva.
-- Borrar (drop) con confirmación explícita.
-- Refresco tras watcher y tras cada operación.
+- List stashes with message, date and reference.
+- Create a stash (optional message, optionally include untracked).
+- Apply and pop with conflict handling: if it fails, the stash is kept.
+- Drop with explicit confirmation.
+- Refresh after the watcher and after every operation.
 
-## Criterios de aceptación
+## Acceptance criteria
 
-- [x] Crear un stash deja el working tree limpio y aparece en el sidebar con su mensaje. _(test de Rust + UI)_
-- [x] `--include-untracked` guarda también los ficheros sin trackear. _(test)_
-- [x] Apply restaura los cambios sin borrar el stash; Pop lo aplica y lo borra. _(tests)_
-- [x] Si apply/pop entra en conflicto, el error es claro y el stash sigue existiendo. _(test con conflicto real)_
-- [x] Drop pide confirmación y solo entonces borra. _(confirmación nativa + test)_
+- [x] Creating a stash leaves the working tree clean and it appears in the sidebar with its message. _(Rust test + UI)_
+- [x] `--include-untracked` also saves untracked files. _(test)_
+- [x] Apply restores the changes without deleting the stash; Pop applies and deletes it. _(tests)_
+- [x] If apply/pop hits a conflict, the error is clear and the stash still exists. _(test with a real conflict)_
+- [x] Drop asks for confirmation and only then deletes. _(native confirmation + test)_
 
-## Fuera de alcance
+## Out of scope
 
-- Previsualización del diff del stash (se valorará más adelante).
-- Stash por hunks.
+- Preview of the stash diff (to be considered later).
+- Stash by hunks.
 
-## Notas técnicas
+## Technical notes
 
-- Listar: `git stash list --format=... -z` con separadores NUL.
-- Crear: `git stash push [--include-untracked] [-m msg]`; aplicar: `git stash apply <ref>`; pop: `git stash pop <ref>`; borrar: `git stash drop <ref>`.
-- La referencia se valida (`stash@{n}`) antes de usarla como argumento.
+- List: `git stash list --format=... -z` with NUL separators.
+- Create: `git stash push [--include-untracked] [-m msg]`; apply: `git stash apply <ref>`; pop: `git stash pop <ref>`; delete: `git stash drop <ref>`.
+- The reference is validated (`stash@{n}`) before being used as an argument.
 
-## Notas de implementación (2026-09-18)
+## Implementation notes (2026-09-18)
 
-- Rust: `stash_list`, `stash_push`, `stash_apply(drop)` y `stash_drop` con validación de referencia; comandos equivalentes que pausan el watcher.
-- UI: `StashSidebar` sustituye el placeholder: crear (mensaje + incluir untracked), y por stash Apply / Pop / Drop con confirmación; refresco de refs/status/grafo tras cada operación.
-- Tests: Rust (crear/lista/aplicar/pop/drop, untracked, conflicto conserva el stash) y frontend (store y sidebar).
-- Cerrado el 2026-09-18 con CI verde (Frontend 30 s, Rust 1m13s) en el PR #12, junto con OG-015.
+- Rust: `stash_list`, `stash_push`, `stash_apply(drop)` and `stash_drop` with reference validation; equivalent commands that pause the watcher.
+- UI: `StashSidebar` replaces the placeholder: create (message + include untracked), and per stash Apply / Pop / Drop with confirmation; refresh of refs/status/graph after every operation.
+- Tests: Rust (create/list/apply/pop/drop, untracked, conflict keeps the stash) and frontend (store and sidebar).
+- Closed on 2026-09-18 with green CI (Frontend 30 s, Rust 1m13s) in PR #12, together with OG-015.

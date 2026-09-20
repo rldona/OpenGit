@@ -1,46 +1,47 @@
-# OG-056 · Gestión de remotos
+# OG-056 · Remote management
 
-- **Milestone:** M8 — Paridad SourceTree (fase 3)
-- **Estado:** ready
-- **Depende de:** OG-011, OG-041
-- **Referencias:** ROADMAP.md, OG-034
+- **Milestone:** M8 — SourceTree parity (phase 3)
+- **Status:** ready
+- **Depends on:** OG-011, OG-041
+- **References:** ROADMAP.md, OG-034
 
-## Contexto
+## Context
 
-La sidebar lista remotos y sus ramas, y el menú de Branches ya enseña
-`New Remote…` **deshabilitado** porque no hay backend. Añadir o corregir un
-remoto obliga a salir al terminal: es el hueco más visible de la UI.
+The sidebar lists remotes and their branches, and the Branches menu already
+shows `New Remote…` **disabled** because there is no backend. Adding or fixing
+a remote forces you to drop out to the terminal: it is the most visible gap in
+the UI.
 
-## Alcance
+## Scope
 
-- Comandos Rust: `remote_add`, `remote_set_url`, `remote_rename` y
-  `remote_remove` (argv, sin shell; nombre validado).
-- Diálogo "New Remote…" (nombre + URL) desde el menú contextual de Branches y
-  desde el de Remotes; URL mostrada bajo el nombre como ya hace el diálogo de
-  Pull.
-- Menú contextual de cada remoto: Edit URL, Rename y Remove (con confirmación
-  explícita; borrar un remoto no toca las ramas locales, pero se avisa de que
-  sus ramas remotas desaparecen del repo).
-- Refrescar refs y salida al panel de Output tras cada operación.
+- Rust commands: `remote_add`, `remote_set_url`, `remote_rename` and
+  `remote_remove` (argv, no shell; validated name).
+- "New Remote…" dialog (name + URL) from the Branches context menu and from
+  the Remotes one; URL shown under the name as the Pull dialog already does.
+- Context menu for each remote: Edit URL, Rename and Remove (with explicit
+  confirmation; deleting a remote does not touch local branches, but a warning
+  says that its remote branches disappear from the repo).
+- Refresh refs and output to the Output panel after each operation.
 
-## Criterios de aceptación
+## Acceptance criteria
 
-- [ ] Añadir un remoto con URL válida aparece en la sidebar y en el diálogo de
-      Pull sin reiniciar.
-- [ ] Editar la URL y renombrar funcionan y refrescan refs.
-- [ ] Remove pide confirmación y explica el efecto.
-- [ ] Nombre duplicado o inválido y URL vacía se comunican sin error crudo.
-- [ ] Tests de integración en repo temporal (add/rename/set-url/remove).
+- [ ] Adding a remote with a valid URL appears in the sidebar and in the Pull
+      dialog without restarting.
+- [ ] Editing the URL and renaming work and refresh refs.
+- [ ] Remove asks for confirmation and explains the effect.
+- [ ] Duplicate or invalid name and empty URL are reported without a raw
+      error.
+- [ ] Integration tests on a temporary repo (add/rename/set-url/remove).
 
-## Fuera de alcance
+## Out of scope
 
-- Credenciales: las sigue resolviendo el credential helper del sistema.
-- `insteadOf`, `push url` separada y fetch refspecs a medida.
-- Crear el repositorio remoto desde la app.
+- Credentials: the system credential helper still resolves them.
+- `insteadOf`, separate `push url` and custom fetch refspecs.
+- Creating the remote repository from the app.
 
-## Notas técnicas
+## Technical notes
 
-- `git remote rename` actualiza también las ramas de tracking locales: no hay
-  que hacer nada extra, pero conviene refrescar refs y status.
-- Validar el nombre con `git check-ref-format` no aplica a remotos; usar
-  `git remote add` como validación y propagar su stderr.
+- `git remote rename` also updates local tracking branches: nothing extra
+  needs to be done, but it is worth refreshing refs and status.
+- Validating the name with `git check-ref-format` does not apply to remotes;
+  use `git remote add` as validation and propagate its stderr.

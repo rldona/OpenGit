@@ -1,45 +1,45 @@
-# OG-037 · Tabla de commits con cabecera
+# OG-037 · Commit table with header
 
-- **Milestone:** M6 — Paridad visual con SourceTree
-- **Estado:** done
-- **Depende de:** OG-035, OG-036
-- **Referencias:** ROADMAP.md
+- **Milestone:** M6 — Visual parity with SourceTree
+- **Status:** done
+- **Depends on:** OG-035, OG-036
+- **References:** ROADMAP.md
 
-## Contexto
+## Context
 
-El historial no tiene cabecera ni columnas: los datos (hash, autor, fecha) van en posiciones fijas de CSS sin ninguna referencia visual, y el grafo flota sobre la lista sin contexto.
+The history has no header or columns: the data (hash, author, date) goes in fixed CSS positions without any visual reference, and the graph floats over the list without context.
 
-## Alcance
+## Scope
 
-- Cabecera fija sobre la lista con las columnas **Graph · Description · Commit · Author · Date**, alineada con las filas (mismo gap y padding, ancho del grafo dinámico).
-- Columnas de la fila alineadas con la cabecera: `Description` agrupa badges de refs + asunto y se lleva el espacio flexible; `Commit` (7 caracteres), `Author` y `Date` con ancho fijo.
-- El canvas del grafo y la lista arrancan **debajo** de la cabecera (offset de 24 px) para que las filas y el grafo sigan alineados al hacer scroll.
-- Asunto y autor con `title` (texto completo) para cuando se truncan con elipsis.
-- Sin cambios en virtualización, scroll incremental ni layout del grafo.
+- Fixed header over the list with the columns **Graph · Description · Commit · Author · Date**, aligned with the rows (same gap and padding, dynamic graph width).
+- Row columns aligned with the header: `Description` groups ref badges + subject and takes the flexible space; `Commit` (7 characters), `Author` and `Date` with fixed width.
+- The graph canvas and the list start **below** the header (24 px offset) so that the rows and the graph remain aligned when scrolling.
+- Subject and author with `title` (full text) for when they are truncated with ellipsis.
+- No changes in virtualization, incremental scroll or graph layout.
 
-## Criterios de aceptación
+## Acceptance criteria
 
-- [x] La cabecera muestra las cinco columnas y no se desplaza con el scroll.
-- [x] Las celdas de cada fila quedan alineadas con su columna y el grafo empieza a la misma altura.
-- [x] Los textos largos se truncan con elipsis y muestran el completo en `title`.
-- [x] Los tests existentes del historial siguen pasando y hay aserciones de la cabecera.
+- [x] The header shows the five columns and does not scroll with the list.
+- [x] The cells of each row are aligned with their column and the graph starts at the same height.
+- [x] Long texts are truncated with ellipsis and show the full text in `title`.
+- [x] The existing history tests keep passing and there are assertions for the header.
 
-## Fuera de alcance
+## Out of scope
 
-- Ordenar por columna (el orden lo define git con `--topo-order`).
-- Redimensionar columnas a mano.
-- Agrupar por fecha o separadores de día.
+- Sorting by column (the order is defined by git with `--topo-order`).
+- Resizing columns by hand.
+- Grouping by date or day separators.
 
-## Notas técnicas
+## Technical notes
 
-- La cabecera repite la estructura de la fila (gap 10 px, padding-right 12 px) y usa `paddingLeft` dinámico igual que las filas para casar con el ancho del grafo.
-- `.history-list` y `.history-graph` pasan de `top: 0` a `top: 24px`; la altura del canvas la sigue calculando `GraphCanvas` con `clientHeight`.
+- The header repeats the row structure (gap 10 px, padding-right 12 px) and uses dynamic `paddingLeft` like the rows to match the graph width.
+- `.history-list` and `.history-graph` go from `top: 0` to `top: 24px`; the canvas height is still computed by `GraphCanvas` with `clientHeight`.
 
-## Notas de implementación (2026-09-18)
+## Implementation notes (2026-09-18)
 
-- Cabecera `.commit-header` con el mismo gap/padding que las filas y `paddingLeft` dinámico igual al ancho del grafo; `Description` agrupa refs + asunto (la columna de refs sigue fija en 220 px dentro de la fila).
-- La cabecera es `aria-hidden` (es una guía visual); las filas siguen siendo botones accesibles.
-- Lista y canvas bajan 24 px para no quedar bajo la cabecera; virtualización y scroll intactos.
-- Asunto y autor con `title` para el texto completo.
-- Tests: 218 frontend (aserciones de cabecera en App) y 120 Rust intactos.
-- Cerrado el 2026-09-18 con CI verde (Frontend 36 s, Rust 2m7s tras reejecutar el job por un flake del test de watcher, anotado en `.ai/memory/ci.md`) en el PR #34.
+- `.commit-header` header with the same gap/padding as the rows and dynamic `paddingLeft` equal to the graph width; `Description` groups refs + subject (the refs column remains fixed at 220 px inside the row).
+- The header is `aria-hidden` (it is a visual guide); the rows remain accessible buttons.
+- List and canvas move down 24 px so they do not go under the header; virtualization and scroll untouched.
+- Subject and author with `title` for the full text.
+- Tests: 218 frontend (header assertions in App) and 120 Rust untouched.
+- Closed on 2026-09-18 with green CI (Frontend 36 s, Rust 2m7s after rerunning the job due to a flake in the watcher test, noted in `.ai/memory/ci.md`) in PR #34.

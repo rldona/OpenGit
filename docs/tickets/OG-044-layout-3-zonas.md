@@ -1,74 +1,74 @@
-# OG-044 · Layout de 3 zonas en el historial
+# OG-044 · 3-zone layout in history
 
-- **Milestone:** M7 — Paridad SourceTree (fase 2)
-- **Estado:** done
-- **Depende de:** OG-036, OG-037, OG-039
-- **Referencias:** ROADMAP.md, docs/architecture/overview.md
+- **Milestone:** M7 — SourceTree parity (phase 2)
+- **Status:** done
+- **Depends on:** OG-036, OG-037, OG-039
+- **References:** ROADMAP.md, docs/architecture/overview.md
 
-## Contexto
+## Context
 
-Hoy `HistoryView` es un split horizontal: a la izquierda grafo + tabla de commits, a la derecha un `CommitDetail` estrecho con metadatos y botones. Para ver el diff de un commit hay que pulsar "View diff", lo que llama a `useCommitActions.showDiff` y **navega fuera** a la vista `diff` (`useCommitActions.ts:30-36`), perdiendo de vista el historial.
+Today `HistoryView` is a horizontal split: on the left graph + commit table, on the right a narrow `CommitDetail` with metadata and buttons. To see the diff of a commit you have to press "View diff", which calls `useCommitActions.showDiff` and **navigates away** to the `diff` view (`useCommitActions.ts:30-36`), losing sight of the history.
 
-SourceTree no navega: al seleccionar un commit la misma pantalla se parte en tres zonas y el diff aparece debajo, manteniendo el contexto del grafo.
+SourceTree does not navigate: when selecting a commit the same screen splits into three zones and the diff appears below, keeping the graph context.
 
-## Alcance
+## Scope
 
-- Reestructurar `HistoryView` en un split **vertical**:
-  - **Zona superior:** grafo + tabla de commits (lo actual, sin tocar el virtualizado).
-  - **Zona inferior:** split horizontal con lista de ficheros del commit | diff del fichero.
-  - **Metadatos del commit** (hash, autor, fecha, mensaje completo, padres/refs) en una banda entre ambas zonas, no en la columna derecha.
-- Al seleccionar un commit se carga su diff en la zona inferior (`useDiffStore.openCommit`) sin cambiar `activeView`.
-- Sin selección, la zona inferior queda colapsada y el historial ocupa toda la altura.
-- Tamaños de los dos nuevos splits persistidos vía `LAYOUT_KEYS`.
-- Reutilizar los componentes de fichero/parche que ya usa `DiffView`; no duplicar el renderizado de parches.
-- Controles del diff (Unified/Side by side, List/Tree) accesibles desde la zona inferior.
-- Backend: `%b` en `LOG_FORMAT` para que el mensaje completo llegue a la UI.
+- Restructure `HistoryView` into a **vertical** split:
+  - **Top zone:** graph + commit table (the current one, without touching virtualization).
+  - **Bottom zone:** horizontal split with the commit's file list | file diff.
+  - **Commit metadata** (hash, author, date, full message, parents/refs) in a band between both zones, not in the right column.
+- Selecting a commit loads its diff in the bottom zone (`useDiffStore.openCommit`) without changing `activeView`.
+- With no selection, the bottom zone stays collapsed and the history takes the full height.
+- Sizes of the two new splits persisted via `LAYOUT_KEYS`.
+- Reuse the file/patch components already used by `DiffView`; do not duplicate patch rendering.
+- Diff controls (Unified/Side by side, List/Tree) accessible from the bottom zone.
+- Backend: `%b` in `LOG_FORMAT` so that the full message reaches the UI.
 
-## Criterios de aceptación
+## Acceptance criteria
 
-- [x] Al seleccionar un commit aparecen sus ficheros abajo a la izquierda y el diff a la derecha, sin salir de la vista de historial.
-- [x] Los metadatos del commit (autor, fecha, mensaje completo) se ven bajo la lista de commits.
-- [x] La zona inferior permite cambiar entre Unified/Side by side y List/Tree.
-- [x] Al deseleccionar (Esc) la zona inferior se colapsa y el historial recupera la altura completa.
-- [x] Los tamaños de las zonas sobreviven a un reinicio de la app.
-- [x] Navegar rápido entre commits no dispara una llamada a git por cada pulsación (ver notas técnicas).
-- [x] La vista `diff` independiente sigue funcionando para el working tree.
-- [x] Tests: selección carga ficheros, deselección colapsa, y el diff se pide una sola vez por commit estabilizado.
+- [x] Selecting a commit shows its files at the bottom left and the diff on the right, without leaving the history view.
+- [x] The commit metadata (author, date, full message) is shown below the commit list.
+- [x] The bottom zone allows switching between Unified/Side by side and List/Tree.
+- [x] When deselecting (Esc) the bottom zone collapses and the history recovers the full height.
+- [x] The zone sizes survive an app restart.
+- [x] Navigating quickly between commits does not trigger a git call per keystroke (see technical notes).
+- [x] The standalone `diff` view still works for the working tree.
+- [x] Tests: selection loads files, deselection collapses, and the diff is requested only once per settled commit.
 
-## Fuera de alcance
+## Out of scope
 
-- Vista de commit para crear (OG-043).
-- Ordenación de columnas de la tabla (OG-045).
-- Detalle de stash (OG-046).
-- Cambios en el algoritmo de lanes o en `GraphCanvas`.
+- Commit view for creating commits (OG-043).
+- Table column sorting (OG-045).
+- Stash detail (OG-046).
+- Changes to the lane algorithm or `GraphCanvas`.
 
-## Notas técnicas
+## Technical notes
 
-- `openCommit` ejecuta git. Con navegación por teclado se encadenarían llamadas: debounce corto sobre `selected` y descartar respuestas de un hash que ya no es el seleccionado (guard por hash, no solo `cancelled`).
-- `useCommitActions.showDiff` deja de ser la ruta principal; se mantiene en el menú contextual pero sin `setActiveView("diff")` cuando ya estamos en historial.
-- El virtualizado de la lista depende de `clientHeight` del scroller: al cambiar la altura por el split hay que recalcular `range` (`updateRange` ya existe, falta dispararlo en resize).
-- `GraphCanvas` pinta sobre un canvas alineado con el scroller; cualquier cambio de altura obliga a repintar con el DPR correcto.
+- `openCommit` runs git. With keyboard navigation calls would chain: short debounce on `selected` and discard responses for a hash that is no longer the selected one (guard by hash, not just `cancelled`).
+- `useCommitActions.showDiff` stops being the main route; it stays in the context menu but without `setActiveView("diff")` when we are already in history.
+- List virtualization depends on the scroller's `clientHeight`: when the height changes because of the split, `range` must be recalculated (`updateRange` already exists, it just needs to be triggered on resize).
+- `GraphCanvas` paints on a canvas aligned with the scroller; any height change forces a repaint with the correct DPR.
 
-## Notas de implementación (2026-09-18)
+## Implementation notes (2026-09-18)
 
-- `DiffView` se parte en `DiffFilesPanel` (lista/árbol + filtro) y `DiffPatchPanel` (parche, LFS, binario), ambos alimentados del store. `DiffView` queda como toolbar + composición; el historial reutiliza los mismos paneles en vez de duplicar el renderizado de parches.
-- `HistoryView`: el split pasa de horizontal (lista | aside) a **vertical** (lista arriba / `CommitDetailPanel` abajo), con `collapsed={!selectedCommit}`, que además desmonta el panel y evita cargas inútiles.
-- `CommitDetailPanel`: banda de metadatos (subject, autor, fecha, hash copiable, padres/refs) + split horizontal ficheros | diff. Las acciones del antiguo `CommitDetail` se mantienen en la banda.
-- **Respuestas obsoletas:** el debounce (120 ms) no bastaba, porque dos `openCommit` solapados podían resolverse en orden inverso. El guard real vive en el store (`openToken` en `diff.ts`), que descarta cualquier respuesta que no sea la de la última apertura; `openWorktree` también lo incrementa para que un commit pendiente no pise el working tree.
-- El virtualizado de la lista depende de la altura del scroller: se añadió un `ResizeObserver` que recalcula el rango visible cuando el panel inferior cambia la altura.
-- "View diff" del menú contextual pasa a llamarse "Open in Diff view": seleccionar la fila ya muestra el diff en línea, así que la entrada queda solo como salto a la vista a pantalla completa.
-- `LAYOUT_KEYS.historyDetail` se sustituye por `historyBottom` y `historyFiles`.
-- Tests: 236 frontend (antes 232) y 121 Rust. Nuevos: detalle inline, colapso al deseleccionar, debounce de navegación rápida y descarte de respuesta obsoleta en el store.
+- `DiffView` is split into `DiffFilesPanel` (list/tree + filter) and `DiffPatchPanel` (patch, LFS, binary), both fed from the store. `DiffView` remains as toolbar + composition; history reuses the same panels instead of duplicating patch rendering.
+- `HistoryView`: the split goes from horizontal (list | aside) to **vertical** (list on top / `CommitDetailPanel` below), with `collapsed={!selectedCommit}`, which also unmounts the panel and avoids useless loads.
+- `CommitDetailPanel`: metadata band (subject, author, date, copyable hash, parents/refs) + horizontal split files | diff. The actions of the old `CommitDetail` are kept in the band.
+- **Stale responses:** the debounce (120 ms) was not enough, because two overlapping `openCommit` calls could resolve in reverse order. The real guard lives in the store (`openToken` in `diff.ts`), which discards any response that is not from the latest open; `openWorktree` also increments it so that a pending commit does not overwrite the working tree.
+- List virtualization depends on the scroller's height: a `ResizeObserver` was added that recalculates the visible range when the bottom panel changes the height.
+- "View diff" in the context menu is renamed to "Open in Diff view": selecting the row already shows the diff inline, so the entry remains only as a jump to the full-screen view.
+- `LAYOUT_KEYS.historyDetail` is replaced by `historyBottom` and `historyFiles`.
+- Tests: 236 frontend (previously 232) and 121 Rust. New: inline detail, collapse on deselect, fast-navigation debounce and discarding a stale response in the store.
 
-### Corrección: dos huecos detectados tras la primera pasada
+### Fix: two gaps detected after the first pass
 
-La primera implementación dio por cumplido "mensaje completo" mostrando solo el `subject`, y al reutilizar los paneles de `DiffView` se dejó la zona inferior sin los controles del diff. Ambos cerrados:
+The first implementation considered "full message" done by showing only the `subject`, and by reusing `DiffView`'s panels the bottom zone was left without the diff controls. Both closed:
 
-- **Cuerpo del commit (backend).** `LOG_FORMAT` terminaba en `%s`, así que el cuerpo ni siquiera salía de git. Ahora es `…%x1f%s%x1f%b`, con `body` en el modelo Rust y en el tipo TS.
-  - El cuerpo va **el último a propósito**: contiene saltos de línea y podría contener el propio `0x1f`. El parser pasa de `split_fields` a `splitn(record, FIELD_SEP, 8)`, de modo que cualquier separador sobrante se queda dentro del cuerpo en vez de romper el registro. Los registros siguen separados por NUL (`-z`), que un mensaje de commit no puede contener.
-  - `%b` viene con saltos de línea finales sobrantes; se aplica `trim_end` para que un commit sin cuerpo quede como cadena vacía y no como `"\n\n"`.
-  - Fixture `log_topo.bin` regenerado con un commit de cuerpo multilínea (con ñ y 日本). Al regenerar, los otros cinco fixtures salieron byte a byte idénticos, lo que confirma que `generate.sh` es determinista.
-  - Tests nuevos: cuerpo multilínea sin romper el registro, y cuerpo vacío en el commit raíz. El `assert_eq!(commits.len(), 5)` pasa a 6.
-- **Controles del diff.** Banda `commit-diff-toolbar` con Unified/Side by side y List/Tree. `Reverse` y las acciones de staging se quedan fuera a propósito: el diff de un commit es de solo lectura.
-- El cambio de tipo TS lo señalaron tres fixtures de test al compilar; ninguno se detectó por fallo en ejecución.
-- Tests: 239 frontend (antes 236) y 123 Rust (antes 121).
+- **Commit body (backend).** `LOG_FORMAT` ended in `%s`, so the body did not even leave git. Now it is `…%x1f%s%x1f%b`, with `body` in the Rust model and in the TS type.
+  - The body goes **last on purpose**: it contains newlines and could contain the `0x1f` itself. The parser moves from `split_fields` to `splitn(record, FIELD_SEP, 8)`, so that any leftover separator stays inside the body instead of breaking the record. Records remain separated by NUL (`-z`), which a commit message cannot contain.
+  - `%b` comes with leftover trailing newlines; `trim_end` is applied so that a commit with no body remains an empty string and not `"\n\n"`.
+  - Fixture `log_topo.bin` regenerated with a commit with a multiline body (with ñ and 日本). On regeneration, the other five fixtures came out byte-for-byte identical, which confirms that `generate.sh` is deterministic.
+  - New tests: multiline body without breaking the record, and empty body in the root commit. The `assert_eq!(commits.len(), 5)` becomes 6.
+- **Diff controls.** `commit-diff-toolbar` band with Unified/Side by side and List/Tree. `Reverse` and staging actions are deliberately left out: a commit's diff is read-only.
+- The TS type change was flagged by three test fixtures at compile time; none was detected by a runtime failure.
+- Tests: 239 frontend (previously 236) and 123 Rust (previously 121).
