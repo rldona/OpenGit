@@ -1,7 +1,17 @@
 import { invoke } from "@tauri-apps/api/core";
+import type { MergeResult } from "./types";
 
 export function cherryPick(path: string, hash: string): Promise<void> {
   return invoke<void>("cherry_pick", { path, hash });
+}
+
+/** Cherry-picks several commits or a range (OG-096). */
+export function cherryPickRange(
+  path: string,
+  revs: string[],
+  recordSource: boolean,
+): Promise<MergeResult> {
+  return invoke<MergeResult>("cherry_pick_range", { path, revs, recordSource });
 }
 
 export function revertCommit(path: string, hash: string): Promise<void> {
