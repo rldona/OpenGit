@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/open-git-logo.png" alt="OpenGit" width="140" />
+  <img src="assets/open-git-logo-trans.png" alt="OpenGit" width="140" />
 </p>
 
 <h1 align="center">OpenGit</h1>
