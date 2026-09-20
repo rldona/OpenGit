@@ -855,6 +855,59 @@ body {
   font: inherit;
 }
 
+.history-search {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.history-search input {
+  min-width: 160px;
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-elevated);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+}
+
+.history-search input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.history-search button {
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-elevated);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.history-search button:hover {
+  border-color: var(--accent);
+}
+
+.history-search-count {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.history-empty {
+  position: absolute;
+  top: 48px;
+  right: 16px;
+  left: 16px;
+  z-index: 1;
+  text-align: center;
+  font-size: 13px;
+}
+
 .history-body {
   display: flex;
   flex: 1;

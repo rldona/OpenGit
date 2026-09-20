@@ -172,6 +172,12 @@ function App() {
     open: () => void pickAndOpen(),
     refresh: refreshAll,
     commit: commitStaged,
+    search: () => {
+      if (useRepoStore.getState().repo) {
+        setActiveView("history");
+        useUiStore.getState().requestSearchFocus();
+      }
+    },
     viewStatus: () => {
       if (useRepoStore.getState().repo) setActiveView("status");
     },

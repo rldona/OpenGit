@@ -1,6 +1,6 @@
 # Development guide
 
-> Status: M7 completed (2026-09-19); M8 planned. See `ROADMAP.md`.
+> Status: M8 in progress (M7 completed on 2026-09-19; OG-052 commit search done). See `ROADMAP.md`.
 
 ## Requirements
 

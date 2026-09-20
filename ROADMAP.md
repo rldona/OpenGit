@@ -102,7 +102,7 @@ capability: searching and navigating history (file, blame, compare refs) and
 managing from the UI what is read-only today (remotes, submodules, worktrees),
 plus the merge loose ends and drag gestures.
 
-- [ ] Commit search by message, author and path, with its own UI (OG-052).
+- [x] Commit search by message, author and path, with its own UI (OG-052).
 - [ ] File history ("Log selected") from status and diff (OG-053).
 - [ ] Compare commits and branches: diff between two refs (OG-054).
 - [ ] Per-line blame with a jump to the commit (OG-055).
