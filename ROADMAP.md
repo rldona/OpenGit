@@ -2,7 +2,7 @@
 
 A milestone closes when its tickets are `done` and its exit criteria are met. Tickets live in [`docs/tickets/`](docs/tickets/README.md).
 
-**Current state:** latest release **v0.6.2** (2026-09-20), with in-app auto-updates and remembered tabs. M0–M16 and **M18 (history and content search depth)** are closed; M17 (recovery and debugging) and the optional OG-088 (open a repository in a new window) stay in the backlog. There is no active milestone.
+**Current state:** latest release **v0.6.2** (2026-09-20), with in-app auto-updates and remembered tabs. M0–M16 and **M18 (history and content search depth)** are closed; M17 (recovery and debugging) stays in the backlog. There is no active milestone.
 
 ## M0 — Foundation ✅ _(closed 2026-09-18)_
 
@@ -219,8 +219,7 @@ of only opening folders that already exist.
 - [x] Create (init) a repository, with an initial branch and optional first
   commit and `.gitignore` (OG-086).
 - [x] Clone and Create entry points on the home screen (OG-087).
-- [ ] Open a repository in a new window (OG-088, optional; not required for the
-  exit criteria).
+- [x] Open a repository in a new window (OG-088, ADR-0008).
 
 **Exit:** with no repository on disk, clone or create one and start working
 without leaving the app. ✅

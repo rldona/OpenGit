@@ -92,6 +92,18 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
+        .on_window_event(|window, event| {
+            // A closed window must not leave its watcher running (ADR-0008).
+            if matches!(event, tauri::WindowEvent::Destroyed) {
+                if let Some(state) = window.try_state::<AppState>() {
+                    if let Ok(mut watchers) = state.watchers.lock() {
+                        if let Some(handle) = watchers.remove(window.label()) {
+                            handle.stop();
+                        }
+                    }
+                }
+            }
+        })
         .setup(|app| {
             let data_dir = app.path().app_data_dir()?;
             std::fs::create_dir_all(&data_dir)?;
@@ -99,7 +111,9 @@ pub fn run() {
             app.manage(AppState {
                 runner: Runner::locate(),
                 recents: Mutex::new(Recents::new(data_dir.join("recent_repos.json"))),
-                watcher: Mutex::new(None),
+                watchers: Mutex::new(std::collections::HashMap::new()),
+                pending_repo: Mutex::new(std::collections::HashMap::new()),
+                window_counter: std::sync::atomic::AtomicU64::new(0),
                 jobs: Arc::new(JobManager::new()),
                 data_dir,
                 auto_refresh: Arc::new(std::sync::atomic::AtomicBool::new(true)),
@@ -110,6 +124,8 @@ pub fn run() {
             commands::app_version,
             commands::git_version,
             commands::open_repo,
+            commands::open_repo_in_new_window,
+            commands::initial_repo,
             commands::init_repo,
             commands::gitignore_templates,
             commands::close_repo,

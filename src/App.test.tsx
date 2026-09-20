@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { check } from "@tauri-apps/plugin-updater";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
+import { initialRepo } from "./lib/bridge/app";
 import { pickDirectory } from "./lib/bridge/dialog";
 import { startRemoteJob } from "./lib/bridge/jobs";
 import { readConflictFile } from "./lib/bridge/conflict";
@@ -34,6 +35,11 @@ import { THEME_STORAGE_KEY } from "./lib/theme";
 vi.mock("./lib/bridge/dialog", () => ({
   pickDirectory: vi.fn(),
   confirmDestructive: vi.fn().mockResolvedValue(true),
+}));
+
+vi.mock("./lib/bridge/app", () => ({
+  initialRepo: vi.fn().mockResolvedValue(null),
+  openRepoInNewWindow: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("./lib/bridge/opener", () => ({
@@ -236,6 +242,7 @@ describe("App", () => {
     useRepoStore.setState({ repo: null, recents: [], openTabs: [], loading: false, error: null });
     useUpdateStore.getState().reset();
     useSettingsStore.setState({ restoreTabs: false });
+    vi.mocked(initialRepo).mockResolvedValue(null);
     // The updater plugin is mocked; the startup check never touches the network.
     vi.mocked(check).mockReset();
     vi.mocked(check).mockResolvedValue(null);
@@ -314,8 +321,16 @@ describe("App", () => {
     // The recents home must not appear while the stored repo is opening.
     expect(screen.queryByRole("heading", { name: "No repository open" })).not.toBeInTheDocument();
 
+    await waitFor(() => expect(resolveOpen).toBeDefined());
     resolveOpen?.(REPO);
     expect(await screen.findByRole("tab", { name: "mi-repo" })).toBeInTheDocument();
+  });
+
+  it("opens the repository a new window was created for", async () => {
+    vi.mocked(initialRepo).mockResolvedValue("/tmp/mi-repo");
+    render(<App />);
+
+    await waitFor(() => expect(openRepo).toHaveBeenCalledWith("/tmp/mi-repo"));
   });
 
   it("opens the chosen repository and shows the history", async () => {
