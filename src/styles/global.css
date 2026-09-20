@@ -3166,3 +3166,90 @@ body {
   padding: 12px 18px;
   border-top: 1px solid var(--border);
 }
+
+/* Remotes tab of the Settings modal (OG-067 phase 2). */
+.remotes-table {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.remotes-head,
+.remotes-row {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 10px;
+  text-align: left;
+}
+
+.remotes-head {
+  border-bottom: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.remotes-row {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.remotes-row:hover {
+  background: var(--hover);
+}
+
+.remotes-row.selected {
+  background: var(--row-selected);
+}
+
+.remotes-url {
+  overflow: hidden;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.remotes-form {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.remotes-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.remotes-actions button {
+  padding: 4px 14px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.remotes-actions button:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.remotes-actions button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.settings-footer-left {
+  margin-right: auto;
+}

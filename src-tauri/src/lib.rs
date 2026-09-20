@@ -159,7 +159,12 @@ pub fn run() {
             commands::config_unset,
             commands::ignore_exclude_path,
             commands::set_auto_refresh,
-            commands::open_path
+            commands::open_path,
+            commands::remote_add,
+            commands::remote_set_url,
+            commands::remote_rename,
+            commands::remote_remove,
+            commands::git_config_path
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
