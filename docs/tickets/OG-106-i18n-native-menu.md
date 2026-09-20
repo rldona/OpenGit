@@ -1,9 +1,9 @@
 # OG-106 · i18n: native menu and Rust user-facing strings
 
 - **Milestone:** M20 — Internationalization
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** OG-099, OG-100
-- **References:** `docs/decisions/ADR-0009-i18n.md`, `src-tauri/src/lib.rs`
+- **References:** `docs/decisions/ADR-0009-i18n.md`, `src-tauri/src/menu.rs`
 
 ## Context
 
@@ -24,11 +24,11 @@ the backend stays language-neutral, so this is the last surface to align.
 
 ## Acceptance criteria
 
-- [ ] Switching the language updates the native menu without restarting.
-- [ ] Menu ids and the `menu-action` payload are unchanged.
-- [ ] No UI-visible hardcoded English left in `lib.rs` beyond brand names.
-- [ ] Rust tests cover the label lookup; the frontend side is mocked.
-- [ ] `cargo test`, `cargo clippy -D warnings`, `cargo fmt --check` and the
+- [x] Switching the language updates the native menu without restarting.
+- [x] Menu ids and the `menu-action` payload are unchanged.
+- [x] No UI-visible hardcoded English left in `lib.rs` beyond brand names.
+- [x] Rust tests cover the label lookup; the frontend side is mocked.
+- [x] `cargo test`, `cargo clippy -D warnings`, `cargo fmt --check` and the
       frontend checks green.
 
 ## Out of scope
@@ -44,6 +44,20 @@ the backend stays language-neutral, so this is the last surface to align.
 - Rebuilding a menu on macOS requires setting it again on the app handle; verify
   it does not reset the About metadata or the shortcuts registered in Rust.
 
-## Implementation notes
+## Implementation notes (2026-09-21)
 
-_(filled in when the ticket closes)_
+- Chose the **Rust table**: `src-tauri/src/menu.rs` holds `MenuLabels` with an
+  English and a Spanish table and `menu_labels(locale)` (Spanish when the tag
+  starts with `es`, English otherwise). The menu is rebuilt with
+  `build_menu(manager, labels)` using the same item ids; the `menu-action`
+  listener registered at startup is not touched.
+- `set_menu_locale(app, locale)` rebuilds and applies the menu; the `App` shell
+  calls it on startup and whenever the locale changes (`bridge/menu.ts`).
+- Audited the rest of Rust: window title fallbacks are brand names and the
+  remaining user-facing text reaches the UI through typed errors (OG-105).
+- The now-unused English `label` fields of `SHORTCUTS` were removed so there is
+  a single source of truth for the shortcut descriptions.
+- Tests: Rust unit tests for the Spanish, English and fallback lookups; the App
+  test asserts `set_menu_locale` is called with the active locale. Verified
+  `cargo test`, `cargo clippy -D warnings`, `cargo fmt --check`, `typecheck`,
+  `lint`, `format:check` and `npm test` (552).

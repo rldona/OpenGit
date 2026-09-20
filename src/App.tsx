@@ -32,6 +32,7 @@ import { UpdateDialog } from "./components/UpdateDialog";
 import { initialRepo } from "./lib/bridge/app";
 import { confirmDestructive } from "./lib/bridge/dialog";
 import { subscribeMenuEvents } from "./lib/bridge/events";
+import { setMenuLocale } from "./lib/bridge/menu";
 import { openExternal } from "./lib/bridge/opener";
 import { setWindowTitle } from "./lib/bridge/window";
 import { useJobEvents } from "./lib/hooks/useJobEvents";
@@ -60,7 +61,7 @@ function shouldRestoreSession(): boolean {
 }
 
 function App() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const outputOpen = useUiStore((state) => state.outputOpen);
   const toggleOutput = useUiStore((state) => state.toggleOutput);
   const outputLines = useUiStore((state) => state.outputLines);
@@ -194,6 +195,13 @@ function App() {
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
+
+  useEffect(() => {
+    // The native menu is built in Rust; it follows the active UI locale (OG-106).
+    void setMenuLocale(locale).catch(() => {
+      // Without a native menu (or outside Tauri) the UI keeps working.
+    });
+  }, [locale]);
 
   const refreshAll = async () => {
     const opened = useRepoStore.getState().repo;
