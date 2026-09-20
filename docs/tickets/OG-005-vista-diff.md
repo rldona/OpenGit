@@ -1,7 +1,7 @@
 # OG-005 · Vista de diff con resaltado
 
 - **Milestone:** M1 — MVP local
-- **Estado:** in-progress
+- **Estado:** done
 - **Depende de:** OG-003, OG-009
 - **Referencias:** ADR-0002, ADR-0006, skill `hunk-staging`
 
@@ -46,4 +46,4 @@ El diff es la segunda vista más usada. Debe ser rápido, legible y servir de ba
 - El "Invertir" actual invierte el fichero completo (`git diff -R`); la inversión por hunk llegará con OG-006.
 - La lista de ficheros es plana (con contadores), no un árbol jerárquico: pendiente de pulido si molesta.
 - `diff.algorithm` y `diff.context` del usuario se respetan: no se pasan flags que los fuercen.
-- Pendiente para cerrar: PR y CI verde.
+- Cerrado el 2026-09-18 con CI verde (Frontend 59 s, Rust 1m27s) en el PR #6, junto con los iconos de la app.
