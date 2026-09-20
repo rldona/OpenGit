@@ -72,6 +72,8 @@ The `release.yml` workflow:
    `.AppImage` on Linux; `.msi` and `.exe` (NSIS) on Windows.
 3. Creates a **draft** release with the generated notes and the installers
    attached; review it on GitHub and publish it by hand.
+4. After publishing, point the README Download links at the new tag's
+   assets (they hardcode the version).
 
 No signing or notarization (project decision, OG-028): macOS and Windows will
 warn when opening the installer. User instructions live in the README. To

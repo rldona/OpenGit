@@ -106,3 +106,4 @@ One file per ticket, named `OG-NNN-slug.md`. Every change in the repository star
 | [OG-071](OG-071-untracked-preview.md) | Preview untracked files in the diff view | Next | done |
 | [OG-072](OG-072-live-worktree-list.md) | Live worktree file list on watcher events | Next | done |
 | [OG-073](OG-073-submodule-env-race.md) | Fix submodule test env race in CI | Next | done |
+| [OG-074](OG-074-readme-downloads.md) | Point README downloads at the new release | Next | done |
