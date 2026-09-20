@@ -20,6 +20,19 @@ export type RecentRepo = {
   opened_at: number;
 };
 
+export type PlanCommit = {
+  hash: string;
+  short: string;
+  subject: string;
+};
+
+export type TodoAction = "pick" | "reword" | "squash" | "fixup" | "drop";
+
+export type TodoItem = {
+  hash: string;
+  action: TodoAction;
+};
+
 export type ConflictFile = {
   content: string;
   binary: boolean;

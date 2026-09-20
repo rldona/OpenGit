@@ -25,6 +25,7 @@ pub fn run() {
                 recents: Mutex::new(Recents::new(data_dir.join("recent_repos.json"))),
                 watcher: Mutex::new(None),
                 jobs: Arc::new(JobManager::new()),
+                data_dir,
             });
             Ok(())
         })
@@ -50,6 +51,8 @@ pub fn run() {
             commands::create_branch,
             commands::rename_branch,
             commands::delete_branch,
+            commands::rebase_plan,
+            commands::interactive_rebase,
             commands::read_conflict_file,
             commands::resolve_conflict,
             commands::repo_op_abort,
