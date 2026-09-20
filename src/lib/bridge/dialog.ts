@@ -1,11 +1,11 @@
 import { ask, open } from "@tauri-apps/plugin-dialog";
 
 /** Native folder picker; `null` when the user cancels. */
-export async function pickDirectory(): Promise<string | null> {
+export async function pickDirectory(title = "Open repository"): Promise<string | null> {
   const selected = await open({
     directory: true,
     multiple: false,
-    title: "Open repository",
+    title,
   });
   return typeof selected === "string" ? selected : null;
 }

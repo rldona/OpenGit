@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { CollapsibleSection } from "./components/CollapsibleSection";
+import { ApplyPatchDialog } from "./components/ApplyPatchDialog";
 import { BlameView } from "./components/BlameView";
 import { CloneDialog } from "./components/CloneDialog";
 import { ConflictView } from "./components/ConflictView";
@@ -85,6 +86,7 @@ function App() {
   const [mergeOpen, setMergeOpen] = useState(false);
   const [cloneOpen, setCloneOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
+  const [applyPatchOpen, setApplyPatchOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -242,6 +244,9 @@ function App() {
       case "create-repo":
         setCreateOpen(true);
         break;
+      case "apply-patch":
+        setApplyPatchOpen(true);
+        break;
       case "close-repo":
         void useRepoStore.getState().close();
         break;
@@ -342,6 +347,7 @@ function App() {
       {repo && mergeOpen && <MergeWindow onClose={() => setMergeOpen(false)} />}
       {cloneOpen && <CloneDialog onClose={() => setCloneOpen(false)} />}
       {createOpen && <CreateDialog onClose={() => setCreateOpen(false)} />}
+      {repo && applyPatchOpen && <ApplyPatchDialog onClose={() => setApplyPatchOpen(false)} />}
       {settingsOpen && <SettingsWindow onClose={() => setSettingsOpen(false)} />}
       <RemoteJobModal />
 

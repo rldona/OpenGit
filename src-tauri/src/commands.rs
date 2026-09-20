@@ -258,6 +258,42 @@ pub fn grep_worktree(
     crate::git::grep_worktree(&state.runner, Path::new(&path), &query)
 }
 
+/// Writes patch files for a commit or a range (OG-094).
+#[tauri::command]
+pub fn format_patch(
+    path: String,
+    spec: String,
+    single: bool,
+    out_dir: String,
+    state: State<'_, AppState>,
+) -> Result<Vec<String>, GitError> {
+    crate::git::format_patch(
+        &state.runner,
+        Path::new(&path),
+        &spec,
+        single,
+        Path::new(&out_dir),
+    )
+}
+
+/// Applies a mailbox patch or a plain diff (OG-094).
+#[tauri::command]
+pub fn apply_patch(
+    path: String,
+    file: String,
+    mailbox: bool,
+    three_way: bool,
+    state: State<'_, AppState>,
+) -> Result<String, GitError> {
+    crate::git::apply_patch(
+        &state.runner,
+        Path::new(&path),
+        Path::new(&file),
+        mailbox,
+        three_way,
+    )
+}
+
 #[tauri::command]
 pub fn log_page(
     path: String,
