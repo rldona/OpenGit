@@ -112,6 +112,7 @@ pub fn run() {
             commands::init_repo,
             commands::gitignore_templates,
             commands::close_repo,
+            commands::grep_worktree,
             commands::log_page,
             commands::list_refs,
             commands::blame_file,

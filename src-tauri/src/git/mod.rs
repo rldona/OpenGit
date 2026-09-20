@@ -1885,6 +1885,176 @@ pub fn commit_file_diff(
     Ok(output.stdout_lossy())
 }
 
+/// Options for a working-tree search (`git grep`, OG-093).
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+pub struct GrepQuery {
+    pub pattern: String,
+    /// Git is case-sensitive by default; the UI sends this explicitly.
+    pub case_sensitive: bool,
+    #[serde(default)]
+    pub whole_word: bool,
+    /// Extended regex (`-E`) instead of fixed strings (`-F`).
+    #[serde(default)]
+    pub regex: bool,
+    /// Optional pathspec/glob filter.
+    pub path: Option<String>,
+    pub max_results: Option<usize>,
+}
+
+/// One match of a working-tree search.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct GrepMatch {
+    pub path: String,
+    pub line: u32,
+    pub text: String,
+}
+
+/// Matches plus whether the result was capped.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct GrepResult {
+    pub matches: Vec<GrepMatch>,
+    pub truncated: bool,
+}
+
+/// Parses `git grep --line-number --null` output: `path\0line\0text\n` records.
+fn parse_grep(bytes: &[u8]) -> Vec<GrepMatch> {
+    let mut matches = Vec::new();
+    let mut index = 0;
+    while index < bytes.len() {
+        let Some(path_end) = bytes[index..].iter().position(|byte| *byte == 0) else {
+            break;
+        };
+        let path = String::from_utf8_lossy(&bytes[index..index + path_end]).into_owned();
+        index += path_end + 1;
+
+        let Some(line_end) = bytes[index..].iter().position(|byte| *byte == 0) else {
+            break;
+        };
+        let line = String::from_utf8_lossy(&bytes[index..index + line_end])
+            .trim()
+            .parse::<u32>()
+            .unwrap_or(0);
+        index += line_end + 1;
+
+        // The line text runs to its newline; the last line of a file may lack
+        // one, in which case it is the end of the output.
+        let content_end = bytes[index..]
+            .iter()
+            .position(|byte| *byte == b'\n')
+            .map_or(bytes.len(), |offset| index + offset);
+        let mut text = String::from_utf8_lossy(&bytes[index..content_end]).into_owned();
+        if text.ends_with('\r') {
+            text.pop();
+        }
+        index = if content_end < bytes.len() {
+            content_end + 1
+        } else {
+            bytes.len()
+        };
+
+        matches.push(GrepMatch { path, line, text });
+    }
+    matches
+}
+
+/// Searches the working tree with `git grep` (OG-093). The pattern goes after
+/// `-e` so it can never be read as an option, and there is no shell involved.
+pub fn grep_worktree(
+    runner: &Runner,
+    repo: &Path,
+    query: &GrepQuery,
+) -> Result<GrepResult, GitError> {
+    if query.pattern.is_empty() {
+        return Ok(GrepResult {
+            matches: Vec::new(),
+            truncated: false,
+        });
+    }
+
+    let mut args: Vec<OsString> = vec![
+        "grep".into(),
+        "--line-number".into(),
+        "--null".into(),
+        "--no-color".into(),
+        "-I".into(),
+    ];
+    if !query.case_sensitive {
+        args.push("-i".into());
+    }
+    if query.whole_word {
+        args.push("-w".into());
+    }
+    args.push(if query.regex {
+        "-E".into()
+    } else {
+        "-F".into()
+    });
+    args.push("-e".into());
+    args.push(query.pattern.clone().into());
+
+    if let Some(path) = query
+        .path
+        .as_deref()
+        .map(str::trim)
+        .filter(|p| !p.is_empty())
+    {
+        args.push("--".into());
+        args.push(path.into());
+    }
+
+    let output = runner.run(&GitCommand::new(args).cwd(repo))?;
+    // `git grep` exits 1 when there is no match: that is not an error.
+    if output.exit_code() != 0 && output.exit_code() != 1 {
+        return Err(GitError::invalid(format!(
+            "git grep failed: {}",
+            output.stderr_lossy().trim()
+        )));
+    }
+
+    let mut matches = parse_grep(output.stdout.as_slice());
+    let limit = query.max_results.unwrap_or(200);
+    let truncated = matches.len() > limit;
+    if truncated {
+        matches.truncate(limit);
+    }
+    Ok(GrepResult { matches, truncated })
+}
+
+#[cfg(test)]
+mod grep_tests {
+    use super::*;
+
+    #[test]
+    fn parse_grep_reads_path_line_and_text() {
+        let bytes: &[u8] = b"a.txt\x0012\x00hello world\nb/c.txt\x003\x00\ttabbed\n";
+
+        let matches = parse_grep(bytes);
+
+        assert_eq!(matches.len(), 2);
+        assert_eq!(matches[0].path, "a.txt");
+        assert_eq!(matches[0].line, 12);
+        assert_eq!(matches[0].text, "hello world");
+        assert_eq!(matches[1].path, "b/c.txt");
+        assert_eq!(matches[1].line, 3);
+        assert_eq!(matches[1].text, "\ttabbed");
+    }
+
+    #[test]
+    fn parse_grep_handles_a_missing_trailing_newline() {
+        let matches = parse_grep(b"only.txt\x007\x00last line");
+
+        assert_eq!(matches.len(), 1);
+        assert_eq!(matches[0].text, "last line");
+    }
+
+    #[test]
+    fn parse_grep_strips_carriage_returns() {
+        let matches = parse_grep(b"win.txt\x001\x00text\r\n");
+
+        assert_eq!(matches[0].text, "text");
+    }
+}
+
 #[cfg(test)]
 mod merge_args_tests {
     use super::*;
