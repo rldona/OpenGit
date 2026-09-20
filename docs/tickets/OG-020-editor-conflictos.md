@@ -1,7 +1,7 @@
 # OG-020 · Editor de conflictos por bloques
 
 - **Milestone:** M4 — Rebase y conflictos
-- **Estado:** in-progress
+- **Estado:** done
 - **Depende de:** OG-005, OG-019
 - **Referencias:** ROADMAP.md
 
@@ -44,4 +44,4 @@ Con el banner de operaciones (OG-019) ya se puede abortar o continuar, pero reso
 - Rust: `read_worktree_file` y `write_and_stage` en `repo/ops.rs`; comandos `read_conflict_file` y `resolve_conflict`.
 - Frontend: `lib/conflict/parse.ts` (bloques + reconstrucción), `stores/conflict.ts` y `ConflictView` con acciones por bloque; se entra desde la sección Conflicts de File status.
 - De paso, el panel de commit ya no lista los ficheros en conflicto como staged (bug detectado por los tests).
-- Pendiente para cerrar: PR y CI verde.
+- Cerrado el 2026-09-18 con CI verde (Frontend 32 s, Rust 1m27s) en el PR #16.
