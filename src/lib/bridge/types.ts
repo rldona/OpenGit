@@ -31,6 +31,7 @@ export type TodoAction = "pick" | "reword" | "squash" | "fixup" | "drop";
 export type TodoItem = {
   hash: string;
   action: TodoAction;
+  message?: string | null;
 };
 
 export type ConflictFile = {
