@@ -1,6 +1,6 @@
 mod support;
 
-use opengit_lib::git::{log_page, LogSearch, Runner};
+use opengit_lib::git::{grep_worktree, log_page, GrepQuery, GrepResult, LogSearch, Runner};
 use support::TestRepo;
 
 fn runner() -> Runner {
@@ -199,4 +199,49 @@ fn follows_a_file_across_renames() {
         subjects(&repo, &filter),
         vec!["edita new", "renombra", "crea old"]
     );
+}
+
+fn grep(repo: &TestRepo, pattern: &str, overrides: impl FnOnce(&mut GrepQuery)) -> GrepResult {
+    let mut query = GrepQuery {
+        pattern: pattern.to_string(),
+        case_sensitive: true,
+        whole_word: false,
+        regex: false,
+        path: None,
+        max_results: None,
+    };
+    overrides(&mut query);
+    grep_worktree(&runner(), repo.path(), &query).expect("grep")
+}
+
+#[test]
+fn grep_worktree_finds_matches_and_honours_the_options() {
+    let repo = TestRepo::init();
+    repo.write("src/a.txt", b"hello world\nHello World\n");
+    repo.write("src/b.txt", b"nothing here\n");
+    repo.git_ok(&["add", "."]);
+
+    let sensitive = grep(&repo, "hello", |_| {});
+    assert_eq!(sensitive.matches.len(), 1);
+    assert_eq!(sensitive.matches[0].path, "src/a.txt");
+    assert_eq!(sensitive.matches[0].line, 1);
+    assert_eq!(sensitive.matches[0].text, "hello world");
+
+    let insensitive = grep(&repo, "hello", |query| query.case_sensitive = false);
+    assert_eq!(insensitive.matches.len(), 2);
+
+    let whole_word = grep(&repo, "hell", |query| query.whole_word = true);
+    assert!(whole_word.matches.is_empty());
+
+    let filtered = grep(&repo, "hello", |query| {
+        query.path = Some("src/b.txt".into())
+    });
+    assert!(filtered.matches.is_empty());
+
+    let capped = grep(&repo, "hello", |query| {
+        query.case_sensitive = false;
+        query.max_results = Some(1);
+    });
+    assert_eq!(capped.matches.len(), 1);
+    assert!(capped.truncated);
 }
