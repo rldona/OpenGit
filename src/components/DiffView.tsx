@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { confirmDestructive } from "../lib/bridge/dialog";
 import { parseLfsPointerPatch } from "../lib/lfs";
 import { useRepoStore } from "../lib/stores/repo";
 import { useDiffStore } from "../lib/stores/diff";
@@ -24,6 +25,7 @@ export function DiffView() {
   const toggleReverse = useDiffStore((state) => state.toggleReverse);
   const toggleLine = useDiffStore((state) => state.toggleLine);
   const applySelection = useDiffStore((state) => state.applySelection);
+  const discardSelection = useDiffStore((state) => state.discardSelection);
 
   useEffect(() => {
     // Solo carga el working tree si no hay un objetivo previo (p. ej. un commit).
@@ -34,6 +36,15 @@ export function DiffView() {
 
   const label = target?.kind === "commit" ? `commit ${target.rev.slice(0, 7)}` : "Working tree";
   const pointer = selected && !selected.untracked && !binary ? parseLfsPointerPatch(patch) : null;
+  // Con el parche invertido los índices de hunk/línea no corresponden al diff
+  // que el backend vuelve a leer, así que no se ofrecen acciones de parche.
+  const patchActions = target?.kind === "worktree" && !reversed;
+
+  const confirmDiscard = async (selection: Parameters<typeof discardSelection>[0]) => {
+    if (await confirmDestructive("Discard the selected changes? This cannot be undone.")) {
+      await discardSelection(selection);
+    }
+  };
 
   return (
     <div className="diff-view">
@@ -63,7 +74,7 @@ export function DiffView() {
         >
           Reverse
         </button>
-        {target?.kind === "worktree" && selected && !selected.untracked && (
+        {patchActions && selected && !selected.untracked && (
           <button
             type="button"
             onClick={() => void applySelection({ kind: "file" })}
@@ -72,7 +83,7 @@ export function DiffView() {
             {selected.staged ? "Unstage file" : "Stage file"}
           </button>
         )}
-        {target?.kind === "worktree" && selected && selectedLines.length > 0 && (
+        {patchActions && selected && selectedLines.length > 0 && (
           <button
             type="button"
             onClick={() => void applySelection({ kind: "lines", indices: selectedLines })}
@@ -81,6 +92,20 @@ export function DiffView() {
             {selected.staged ? "Unstage" : "Stage"} {selectedLines.length} line(s)
           </button>
         )}
+        {patchActions &&
+          selected &&
+          !selected.untracked &&
+          !selected.staged &&
+          selectedLines.length > 0 && (
+            <button
+              type="button"
+              className="danger"
+              onClick={() => void confirmDiscard({ kind: "lines", indices: selectedLines })}
+              disabled={loading}
+            >
+              Discard {selectedLines.length} line(s)
+            </button>
+          )}
         {loading && <span className="muted">Loading…</span>}
       </div>
 
@@ -137,11 +162,16 @@ export function DiffView() {
           {selected && !selected.untracked && !binary && patch !== "" && mode === "unified" && (
             <PatchView
               patch={patch}
-              staging={target?.kind === "worktree"}
+              staging={patchActions}
               stagedSide={selected.staged}
               selectedLines={selectedLines}
               onToggleLine={toggleLine}
               onApply={(selection) => void applySelection(selection)}
+              onDiscard={
+                patchActions && !selected.staged
+                  ? (selection) => void confirmDiscard(selection)
+                  : undefined
+              }
             />
           )}
           {selected && !selected.untracked && !binary && patch !== "" && mode === "side" && (

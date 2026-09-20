@@ -1,7 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { diffFile, diffNumstat } from "../lib/bridge/diff";
+import { confirmDestructive } from "../lib/bridge/dialog";
+import { diffFile, diffNumstat, discardSelection } from "../lib/bridge/diff";
 import { statusRepo } from "../lib/bridge/status";
 import type { RepoInfo, StatusReport } from "../lib/bridge/types";
 import { useDiffStore } from "../lib/stores/diff";
@@ -12,11 +13,17 @@ vi.mock("./DiffEditor", () => ({
   DiffEditor: () => <div data-testid="diff-editor" />,
 }));
 
+vi.mock("../lib/bridge/dialog", () => ({
+  pickDirectory: vi.fn(),
+  confirmDestructive: vi.fn().mockResolvedValue(true),
+}));
+
 vi.mock("../lib/bridge/diff", () => ({
   diffFile: vi.fn(),
   commitFiles: vi.fn(),
   diffNumstat: vi.fn(),
   stageSelection: vi.fn(),
+  discardSelection: vi.fn(),
 }));
 
 vi.mock("../lib/bridge/status", () => ({
@@ -109,5 +116,47 @@ describe("DiffView", () => {
     render(<DiffView />);
 
     expect(await screen.findByText(/Git LFS pointer/)).toHaveTextContent("4096 bytes");
+  });
+
+  it("descarta un hunk tras confirmar", async () => {
+    const user = userEvent.setup();
+    vi.mocked(discardSelection).mockResolvedValue(undefined);
+    vi.mocked(confirmDestructive).mockResolvedValue(true);
+    render(<DiffView />);
+
+    await user.click(await screen.findByRole("button", { name: "Unified" }));
+    await user.click(await screen.findByRole("button", { name: "Discard hunk" }));
+
+    expect(confirmDestructive).toHaveBeenCalled();
+    expect(discardSelection).toHaveBeenCalledWith({
+      path: "/tmp/repo",
+      file: "a.txt",
+      selection: { kind: "hunk", index: 0 },
+    });
+  });
+
+  it("no descarta si se cancela la confirmación", async () => {
+    const user = userEvent.setup();
+    vi.mocked(confirmDestructive).mockResolvedValue(false);
+    render(<DiffView />);
+
+    await user.click(await screen.findByRole("button", { name: "Unified" }));
+    await user.click(await screen.findByRole("button", { name: "Discard hunk" }));
+
+    expect(discardSelection).not.toHaveBeenCalled();
+  });
+
+  it("oculta stage y discard con el diff invertido", async () => {
+    const user = userEvent.setup();
+    render(<DiffView />);
+
+    await user.click(await screen.findByRole("button", { name: "Unified" }));
+    expect(await screen.findByRole("button", { name: "Stage hunk" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Reverse" }));
+
+    expect(screen.queryByRole("button", { name: "Stage hunk" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Discard hunk" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Stage file" })).not.toBeInTheDocument();
   });
 });

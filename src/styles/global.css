@@ -1256,6 +1256,20 @@ body {
   border-color: var(--accent);
 }
 
+.patch-action.danger {
+  border-color: var(--danger-border);
+  color: var(--danger-text);
+}
+
+.patch-action.danger:hover {
+  border-color: var(--danger);
+}
+
+.patch-actions {
+  display: inline-flex;
+  gap: 4px;
+}
+
 .refs-toolbar {
   display: flex;
   gap: 6px;

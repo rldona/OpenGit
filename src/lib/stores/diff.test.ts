@@ -1,5 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { commitFiles, diffFile, diffNumstat, stageSelection } from "../bridge/diff";
+import {
+  commitFiles,
+  diffFile,
+  diffNumstat,
+  discardSelection,
+  stageSelection,
+} from "../bridge/diff";
 import { statusRepo } from "../bridge/status";
 import type { StatusReport } from "../bridge/types";
 import { useDiffStore } from "./diff";
@@ -9,6 +15,7 @@ vi.mock("../bridge/diff", () => ({
   commitFiles: vi.fn(),
   diffNumstat: vi.fn(),
   stageSelection: vi.fn(),
+  discardSelection: vi.fn(),
 }));
 
 vi.mock("../bridge/status", () => ({
@@ -122,6 +129,37 @@ describe("useDiffStore", () => {
     await useDiffStore.getState().applySelection({ kind: "file" });
 
     expect(stageSelection).not.toHaveBeenCalled();
+  });
+
+  it("descarta hunks del lado unstaged y refresca", async () => {
+    vi.mocked(discardSelection).mockResolvedValue(undefined);
+    await useDiffStore.getState().openWorktree("/tmp/repo");
+    useDiffStore.setState({ selectedLines: [6] });
+
+    await useDiffStore.getState().discardSelection({ kind: "lines", indices: [6] });
+
+    expect(discardSelection).toHaveBeenCalledWith({
+      path: "/tmp/repo",
+      file: "a.txt",
+      selection: { kind: "lines", indices: [6] },
+    });
+    expect(useDiffStore.getState().selectedLines).toEqual([]);
+    expect(statusRepo).toHaveBeenCalled();
+  });
+
+  it("no descarta desde el index ni desde un commit", async () => {
+    vi.mocked(statusRepo).mockResolvedValue({
+      ...REPORT,
+      entries: [{ kind: "ordinary", xy: "M.", path: "a.txt", orig_path: null }],
+    });
+    await useDiffStore.getState().openWorktree("/tmp/repo");
+
+    await useDiffStore.getState().discardSelection({ kind: "file" });
+    expect(discardSelection).not.toHaveBeenCalled();
+
+    await useDiffStore.getState().openCommit("/tmp/repo", "abc1234");
+    await useDiffStore.getState().discardSelection({ kind: "file" });
+    expect(discardSelection).not.toHaveBeenCalled();
   });
 
   it("abre el diff de un commit", async () => {

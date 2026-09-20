@@ -3,6 +3,7 @@ import {
   commitFiles,
   diffFile,
   diffNumstat,
+  discardSelection,
   stageSelection,
   type HunkSelection,
 } from "../bridge/diff";
@@ -47,6 +48,7 @@ type DiffState = {
   toggleLine: (index: number) => void;
   clearSelection: () => void;
   applySelection: (selection: HunkSelection) => Promise<void>;
+  discardSelection: (selection: HunkSelection) => Promise<void>;
   reset: () => void;
 };
 
@@ -227,6 +229,30 @@ export const useDiffStore = create<DiffState>((set, get) => ({
         selection,
         reverse: selected.staged,
       });
+      set({ selectedLines: [] });
+      await get().selectFile(selected);
+      await useStatusStore.getState().refresh(root);
+    } catch (error) {
+      set({ loading: false, error: formatGitError(error) });
+    }
+  },
+
+  /// Destructivo: descarta la selección del lado unstaged del working tree.
+  discardSelection: async (selection) => {
+    const { root, target, selected } = get();
+    if (
+      !root ||
+      !target ||
+      target.kind !== "worktree" ||
+      !selected ||
+      selected.untracked ||
+      selected.staged
+    ) {
+      return;
+    }
+    set({ loading: true, error: null });
+    try {
+      await discardSelection({ path: root, file: selected.path, selection });
       set({ selectedLines: [] });
       await get().selectFile(selected);
       await useStatusStore.getState().refresh(root);
