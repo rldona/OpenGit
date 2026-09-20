@@ -35,6 +35,13 @@
 - **Hallazgo:** interpolar el mensaje en `-m` requiere escapar comillas y rompe saltos de línea.
 - **Implicación:** pasar el mensaje por stdin (`-F -`), nunca concatenado.
 
+## El tracking exige un remoto configurado, no solo la ref
+
+- **Fecha:** 2026-09-18
+- **Contexto:** tests de OG-008 con `refs/remotes/origin/x` creadas con `update-ref`.
+- **Hallazgo:** `git branch --set-upstream-to=origin/x` y `git checkout --track origin/x` fallan con `starting point is not a branch` si no existe un remoto `origin` en la config, aunque la ref remota exista.
+- **Implicación:** en tests, añadir `git remote add origin <ruta-inexistente>` antes (sin red). En la app no aplica porque los remotos vienen del repo del usuario.
+
 ## La salida de los hooks de commit va a stdout
 
 - **Fecha:** 2026-09-18

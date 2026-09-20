@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { subscribeRepoEvents } from "../bridge/events";
 import { useLogStore } from "../stores/log";
+import { useRefsStore } from "../stores/refs";
 import { useStatusStore } from "../stores/status";
 
 /** Conecta los eventos del watcher con los stores (OG-010). */
@@ -17,12 +18,20 @@ export function useRepoEvents(root: string | null): void {
     const reloadStatus = () => {
       void useStatusStore.getState().refresh(root);
     };
+    const reloadRefs = () => {
+      void useRefsStore.getState().refresh(root);
+    };
     void subscribeRepoEvents({
-      onRefsChanged: reloadLog,
+      onRefsChanged: () => {
+        reloadLog();
+        reloadRefs();
+        reloadStatus();
+      },
       onIndexChanged: reloadStatus,
       onWorktreeChanged: reloadStatus,
       onRefreshed: () => {
         reloadLog();
+        reloadRefs();
         reloadStatus();
       },
     })

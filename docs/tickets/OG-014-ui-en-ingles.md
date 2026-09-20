@@ -17,9 +17,9 @@ La app nació con los textos de UI en español. La convención del proyecto es c
 
 ## Criterios de aceptación
 
-- [ ] No queda ningún texto de UI en español (fuera de `docs/`, `.ai/` y comentarios).
-- [ ] Tests de frontend y Rust en verde con las nuevas cadenas.
-- [ ] Lint, typecheck, build y `tauri build` en verde.
+- [x] No queda ningún texto de UI en español (fuera de `docs/`, `.ai/` y comentarios). _(verificado con grep sobre `src/`)_
+- [x] Tests de frontend y Rust en verde con las nuevas cadenas. _(74 y 62 tests)_
+- [x] Lint, typecheck, build y `tauri build` en verde.
 
 ## Fuera de alcance
 

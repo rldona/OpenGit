@@ -63,6 +63,16 @@ vi.mock("./lib/bridge/commit", () => ({
   repoOpState: vi.fn().mockResolvedValue({ merge: false, rebase: false, cherry_pick: false }),
 }));
 
+vi.mock("./lib/bridge/refs", () => ({
+  branchTracking: vi
+    .fn()
+    .mockResolvedValue({ current: "main", upstream: null, ahead: 0, behind: 0 }),
+  checkoutRef: vi.fn(),
+  createBranch: vi.fn(),
+  renameBranch: vi.fn(),
+  deleteBranch: vi.fn(),
+}));
+
 vi.mock("./components/DiffEditor", () => ({
   DiffEditor: () => <div data-testid="diff-editor" />,
 }));
