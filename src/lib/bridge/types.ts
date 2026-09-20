@@ -78,6 +78,9 @@ export type RepoOpState = {
   merge: boolean;
   rebase: boolean;
   cherry_pick: boolean;
+  revert: boolean;
+  rebase_current: number | null;
+  rebase_total: number | null;
 };
 
 export type FileDiff = {

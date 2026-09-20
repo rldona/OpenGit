@@ -54,7 +54,14 @@ const REPORT: StatusReport = {
 
 describe("CommitPanel", () => {
   beforeEach(() => {
-    vi.mocked(repoOpState).mockResolvedValue({ merge: false, rebase: false, cherry_pick: false });
+    vi.mocked(repoOpState).mockResolvedValue({
+      merge: false,
+      rebase: false,
+      cherry_pick: false,
+      revert: false,
+      rebase_current: null,
+      rebase_total: null,
+    });
     vi.mocked(commitRepo).mockResolvedValue({ hash: "abc1234", subject: "feat: algo" });
     useRepoStore.setState({ repo: REPO, recents: [], loading: false, error: null });
     useStatusStore.getState().reset();
@@ -89,11 +96,18 @@ describe("CommitPanel", () => {
     expect(commitRepo).toHaveBeenCalledWith("/tmp/repo", "feat: algo", false);
   });
 
-  it("avisa de un merge en curso y deshabilita el commit", async () => {
-    vi.mocked(repoOpState).mockResolvedValue({ merge: true, rebase: false, cherry_pick: false });
+  it("deshabilita el commit mientras hay una operación en curso", async () => {
+    vi.mocked(repoOpState).mockResolvedValue({
+      merge: true,
+      rebase: false,
+      cherry_pick: false,
+      revert: false,
+      rebase_current: null,
+      rebase_total: null,
+    });
     render(<CommitPanel />);
 
-    expect(await screen.findByRole("status")).toHaveTextContent("merge in progress");
+    await screen.findByText("staged.txt");
     expect(screen.getByRole("button", { name: "Commit" })).toBeDisabled();
   });
 });

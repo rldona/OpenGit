@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { commitMessage, commitRepo, repoOpState } from "../bridge/commit";
 import { confirmDestructive } from "../bridge/dialog";
+import { repoOpAbort, repoOpContinue } from "../bridge/ops";
 import { listRefs, logPage } from "../bridge/log";
 import { statusRepo } from "../bridge/status";
 import type { StatusReport } from "../bridge/types";
@@ -16,6 +17,11 @@ vi.mock("../bridge/commit", () => ({
 vi.mock("../bridge/dialog", () => ({
   pickDirectory: vi.fn(),
   confirmDestructive: vi.fn(),
+}));
+
+vi.mock("../bridge/ops", () => ({
+  repoOpAbort: vi.fn(),
+  repoOpContinue: vi.fn(),
 }));
 
 vi.mock("../bridge/status", () => ({
@@ -45,7 +51,14 @@ describe("useCommitStore", () => {
   beforeEach(() => {
     useCommitStore.getState().reset();
     useUiStore.setState({ outputLines: [] });
-    vi.mocked(repoOpState).mockResolvedValue({ merge: false, rebase: false, cherry_pick: false });
+    vi.mocked(repoOpState).mockResolvedValue({
+      merge: false,
+      rebase: false,
+      cherry_pick: false,
+      revert: false,
+      rebase_current: null,
+      rebase_total: null,
+    });
     vi.mocked(statusRepo).mockResolvedValue(REPORT);
     vi.mocked(listRefs).mockResolvedValue([]);
     vi.mocked(logPage).mockResolvedValue([]);
@@ -107,6 +120,27 @@ describe("useCommitStore", () => {
 
     expect(useCommitStore.getState().amend).toBe(false);
     expect(useCommitStore.getState().message).toBe("");
+  });
+
+  it("aborta la operación en curso y refresca", async () => {
+    vi.mocked(repoOpAbort).mockResolvedValue(undefined);
+    await useCommitStore.getState().load("/tmp/repo");
+
+    await useCommitStore.getState().abort("/tmp/repo");
+
+    expect(repoOpAbort).toHaveBeenCalledWith("/tmp/repo");
+    expect(statusRepo).toHaveBeenCalled();
+    expect(useUiStore.getState().outputLines.join("\n")).toContain("Operation aborted");
+  });
+
+  it("continúa la operación en curso y refresca", async () => {
+    vi.mocked(repoOpContinue).mockResolvedValue(undefined);
+    await useCommitStore.getState().load("/tmp/repo");
+
+    await useCommitStore.getState().continueOp("/tmp/repo");
+
+    expect(repoOpContinue).toHaveBeenCalledWith("/tmp/repo");
+    expect(useUiStore.getState().outputLines.join("\n")).toContain("Operation continued");
   });
 
   it("muestra la salida del hook cuando el commit falla", async () => {
