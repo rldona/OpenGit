@@ -38,7 +38,7 @@ Conventions: **documentation, issues, code and comments in English** since 2026-
 ## Rules
 
 1. **Never run destructive operations without explicit confirmation** from the user: `reset --hard`, `push --force`, `clean -fd`, `branch -D`, `stash drop`.
-2. **Never commit or push** unless the user explicitly asks.
+2. **Never push** unless the user explicitly asks. **Commits:** one commit per ticket (`OG-NNN`) on completion — no partial, batch, or multi-ticket commits unless the user explicitly asks.
 3. **Invoke git with argument arrays**, without a shell and without interpolating user input. `sh -c "git ... $VAR"` is forbidden.
 4. **Robust parsing:** `-z`, `--porcelain=v2`, `--format` with separators. Never parse "human" or localized output.
 5. **Do not add dependencies** without justifying it in the ticket or an ADR. Prefer std and what is already present.
@@ -48,6 +48,7 @@ Conventions: **documentation, issues, code and comments in English** since 2026-
 9. Do not block the UI: no synchronous git calls on the interface thread.
 10. If in doubt between "new feature" and "do not break what works": the latter first.
 11. **Commit signing:** always `Raúl López <rldona@users.noreply.github.com>` (GitHub noreply). Never corporate emails or third-party identities; the repo sets `user.name`/`user.email` in its local config.
+12. **One commit per ticket on completion:** when a ticket (`OG-NNN`) is finished, create a single commit with all its changes. Before committing, inspect `git status`, `git diff`, and `git log --oneline -10`; stage only intended files and never commit secrets. Message in English, Conventional Commits with area scope (`feat(graph): ...`).
 
 ## Testing
 
