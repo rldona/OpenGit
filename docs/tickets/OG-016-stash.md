@@ -1,7 +1,7 @@
 # OG-016 · Stash
 
 - **Milestone:** M3 — Historial avanzado
-- **Estado:** in-progress
+- **Estado:** done
 - **Depende de:** OG-009, OG-010
 - **Referencias:** docs/architecture/overview.md
 
@@ -41,4 +41,4 @@ El sidebar tiene un hueco de Stashes sin funcionalidad. Guardar y recuperar trab
 - Rust: `stash_list`, `stash_push`, `stash_apply(drop)` y `stash_drop` con validación de referencia; comandos equivalentes que pausan el watcher.
 - UI: `StashSidebar` sustituye el placeholder: crear (mensaje + incluir untracked), y por stash Apply / Pop / Drop con confirmación; refresco de refs/status/grafo tras cada operación.
 - Tests: Rust (crear/lista/aplicar/pop/drop, untracked, conflicto conserva el stash) y frontend (store y sidebar).
-- Pendiente para cerrar: PR y CI verde (comparte PR con OG-015).
+- Cerrado el 2026-09-18 con CI verde (Frontend 30 s, Rust 1m13s) en el PR #12, junto con OG-015.
