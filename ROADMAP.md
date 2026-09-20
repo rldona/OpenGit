@@ -269,7 +269,7 @@ The UI is English-only (OG-014); this milestone makes the language a choice.
 - [x] i18n framework (typed catalog, `en`/`es`) and the app shell (OG-099, ADR-0009).
 - [x] Language selector in Settings, persisted (OG-100).
 - [x] Area migration: history and commit views (OG-102).
-- [ ] Area migration: diff, status and staging (OG-103).
+- [x] Area migration: diff, status and staging (OG-103).
 - [ ] Area migration: sidebars and repository dialogs (OG-104).
 - [ ] Area migration: operations, settings and help (OG-105).
 - [ ] Native menu and Rust user-facing strings (OG-106).

@@ -1,7 +1,7 @@
 # OG-103 · i18n: diff, status and staging
 
 - **Milestone:** M20 — Internationalization
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** OG-099, OG-100
 - **References:** `docs/decisions/ADR-0009-i18n.md`
 
@@ -22,10 +22,10 @@ hunk actions, file states, image comparison and search results.
 
 ## Acceptance criteria
 
-- [ ] No literal UI string left in the listed components.
-- [ ] English rendering unchanged; Spanish reads naturally.
-- [ ] Tests assert the English rendering and at least one Spanish case.
-- [ ] `lint`, `typecheck`, `format:check` and `npm test` green.
+- [x] No literal UI string left in the listed components.
+- [x] English rendering unchanged; Spanish reads naturally.
+- [x] Tests assert the English rendering and at least one Spanish case.
+- [x] `lint`, `typecheck`, `format:check` and `npm test` green.
 
 ## Out of scope
 
@@ -39,6 +39,14 @@ hunk actions, file states, image comparison and search results.
 - Keep side-by-side/unified and whitespace option labels in the catalog so the
   two modes stay consistent.
 
-## Implementation notes
+## Implementation notes (2026-09-21)
 
-_(filled in when the ticket closes)_
+- Catalog sections `diff` (toolbar, file list, patch pane, hunks, image),
+  `status`, `blame`, `search` and `worktree`.
+- Migrated `DiffView`, `DiffFilesPanel`, `DiffPatchPanel`, `ImageDiffPanel`,
+  `StatusView`, `BlameView`, `SearchView`, `PatchView` and
+  `WorktreeDetailPanel`. `DiffEditor` had no user-facing strings (CodeMirror).
+- `ImageDiffPanel.changeLabel` is outside React: it uses the non-reactive `t`.
+- Tests: `StatusView` renders in Spanish; the English assertions of the rest
+  are unchanged. Verified `typecheck`, `lint`, `format:check` and `npm test`
+  (546).

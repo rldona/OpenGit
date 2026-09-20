@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from "react";
 import type { GrepMatch } from "../lib/bridge/types";
+import { useI18n } from "../lib/i18n";
 import { useDiffStore } from "../lib/stores/diff";
 import { useGrepStore } from "../lib/stores/grep";
 import { useRepoStore } from "../lib/stores/repo";
@@ -10,6 +11,7 @@ import { useUiStore } from "../lib/stores/ui";
  * Clicking a result opens that file in the diff view.
  */
 export function SearchView() {
+  const { t } = useI18n();
   const root = useRepoStore((state) => state.repo?.root ?? null);
   const pattern = useGrepStore((state) => state.pattern);
   const caseSensitive = useGrepStore((state) => state.caseSensitive);
@@ -65,14 +67,14 @@ export function SearchView() {
         }}
       >
         <input
-          aria-label="Search in working tree"
+          aria-label={t("search.aria")}
           value={pattern}
           autoFocus
-          placeholder="Search in working tree…"
+          placeholder={t("search.placeholder")}
           onChange={(event) => setPattern(event.target.value)}
         />
         <button type="submit" disabled={running || pattern === ""}>
-          Search
+          {t("search.submit")}
         </button>
       </form>
 
@@ -83,7 +85,7 @@ export function SearchView() {
             checked={caseSensitive}
             onChange={(event) => setOption("caseSensitive", event.target.checked)}
           />
-          Match case
+          {t("search.matchCase")}
         </label>
         <label>
           <input
@@ -91,7 +93,7 @@ export function SearchView() {
             checked={wholeWord}
             onChange={(event) => setOption("wholeWord", event.target.checked)}
           />
-          Whole word
+          {t("search.wholeWord")}
         </label>
         <label>
           <input
@@ -99,14 +101,14 @@ export function SearchView() {
             checked={regex}
             onChange={(event) => setOption("regex", event.target.checked)}
           />
-          Regex
+          {t("search.regex")}
         </label>
         <label className="search-path">
-          <span>Path:</span>
+          <span>{t("search.path")}</span>
           <input
-            aria-label="Path filter"
+            aria-label={t("search.pathFilter")}
             value={pathFilter}
-            placeholder="src/ or *.ts"
+            placeholder={t("search.pathExample")}
             onChange={(event) => setOption("pathFilter", event.target.value)}
           />
         </label>
@@ -117,13 +119,11 @@ export function SearchView() {
           {error}
         </p>
       )}
-      {running && <p className="muted">Searching…</p>}
+      {running && <p className="muted">{t("search.searching")}</p>}
       {!running && searched && !error && matches.length === 0 && (
-        <p className="muted">No matches.</p>
+        <p className="muted">{t("search.noMatches")}</p>
       )}
-      {truncated && (
-        <p className="muted">Showing the first {matches.length} matches; narrow the search.</p>
-      )}
+      {truncated && <p className="muted">{t("search.truncated", { count: matches.length })}</p>}
 
       <ul className="search-results">
         {groups.map(([path, list]) => (

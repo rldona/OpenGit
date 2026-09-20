@@ -1,4 +1,5 @@
 import { confirmDestructive } from "../lib/bridge/dialog";
+import { useI18n } from "../lib/i18n";
 import { parseLfsPointerPatch } from "../lib/lfs";
 import { patchCounts, splitPatch } from "../lib/diff/patch";
 import { isImagePath } from "../lib/images";
@@ -16,6 +17,7 @@ import { PatchView } from "./PatchView";
  * non-reversed working tree: on a commit the diff is read-only.
  */
 export function DiffPatchPanel() {
+  const { t } = useI18n();
   const target = useDiffStore((state) => state.target);
   const selected = useDiffStore((state) => state.selected);
   const patch = useDiffStore((state) => state.patch);
@@ -44,7 +46,7 @@ export function DiffPatchPanel() {
     previewOnly && !binary && patch !== "" && !untrackedEmpty ? patchCounts(patch) : null;
 
   const confirmDiscard = async (selection: Parameters<typeof discardSelection>[0]) => {
-    if (await confirmDestructive("Discard the selected changes? This cannot be undone.")) {
+    if (await confirmDestructive(t("diff.discardConfirm"))) {
       await discardSelection(selection);
     }
   };
@@ -55,12 +57,12 @@ export function DiffPatchPanel() {
       onContextMenu={(event) =>
         paneMenu.open(event, [
           {
-            label: "Show file history",
+            label: t("diff.files.showHistory"),
             disabled: !selected,
             onSelect: () => root && selected && void showFileHistory(root, selected.path),
           },
           {
-            label: "Blame",
+            label: t("diff.files.blame"),
             disabled: !selected || selected.untracked || binary,
             onSelect: () => root && selected && void openBlame(root, selected.path),
           },
@@ -97,15 +99,19 @@ export function DiffPatchPanel() {
       )}
       {pointer && (
         <p className="lfs-warning">
-          Git LFS pointer (oid {pointer.oid.slice(0, 12)}…, {pointer.size} bytes): the real content
-          is not available locally.
+          {t("diff.patch.pointer", {
+            oid: pointer.oid.slice(0, 12),
+            size: pointer.size,
+          })}
         </p>
       )}
-      {!selected && !error && <p className="muted status-empty">No file selected</p>}
-      {selected?.untracked && untrackedEmpty && <p className="muted status-empty">Empty file</p>}
+      {!selected && !error && <p className="muted status-empty">{t("diff.patch.noFile")}</p>}
+      {selected?.untracked && untrackedEmpty && (
+        <p className="muted status-empty">{t("diff.patch.emptyFile")}</p>
+      )}
       {imagePreview && <ImageDiffPanel />}
       {selected && binary && !imagePreview && (
-        <p className="muted status-empty">Binary file: no text diff available.</p>
+        <p className="muted status-empty">{t("diff.patch.binary")}</p>
       )}
       {selected && !binary && patch !== "" && !untrackedEmpty && mode === "unified" && (
         <PatchView

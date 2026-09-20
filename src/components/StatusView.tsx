@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { copyText } from "../lib/clipboard";
 import { confirmDestructive } from "../lib/bridge/dialog";
 import type { FileStatus } from "../lib/bridge/types";
+import { useI18n } from "../lib/i18n";
 import { LAYOUT_KEYS } from "../lib/layout";
 import { openFileDefault, openFileEditor, revealFile } from "../lib/openFiles";
 import { useRepoStore } from "../lib/stores/repo";
@@ -57,6 +58,7 @@ function sortEntries(entries: FileStatus[], mode: SortMode): FileStatus[] {
 }
 
 export function StatusView() {
+  const { t } = useI18n();
   const repo = useRepoStore((state) => state.repo);
   const report = useStatusStore((state) => state.report);
   const filter = useStatusStore((state) => state.filter);
@@ -121,8 +123,8 @@ export function StatusView() {
   const confirmAndRun = async (entry: FileStatus, action: "discard" | "delete") => {
     const message =
       action === "discard"
-        ? `Discard changes in ${entry.path}? This cannot be undone.`
-        : `Delete untracked file ${entry.path}? This cannot be undone.`;
+        ? t("status.discardConfirm", { path: entry.path })
+        : t("status.deleteConfirm", { path: entry.path });
     const confirmed = await confirmDestructive(message);
     if (!confirmed) {
       return;
@@ -135,35 +137,43 @@ export function StatusView() {
   };
 
   const menuItems = (entry: FileStatus, staged: boolean) => [
-    { label: "Open diff", onSelect: () => void openDiff(entry, staged) },
+    { label: t("status.openDiff"), onSelect: () => void openDiff(entry, staged) },
     {
-      label: "Show file history",
+      label: t("diff.files.showHistory"),
       onSelect: () => root && void showFileHistory(root, entry.path),
     },
     ...(entry.kind === "untracked"
       ? []
-      : [{ label: "Blame", onSelect: () => root && void openBlame(root, entry.path) }]),
+      : [
+          {
+            label: t("diff.files.blame"),
+            onSelect: () => root && void openBlame(root, entry.path),
+          },
+        ]),
     ...(root
       ? [
-          { label: "Open", onSelect: () => openFileDefault(root, entry.path) },
-          { label: "Open in VS Code", onSelect: () => openFileEditor(root, entry.path) },
-          { label: "Show in Finder", onSelect: () => revealFile(root, entry.path) },
+          { label: t("diff.files.open"), onSelect: () => openFileDefault(root, entry.path) },
+          {
+            label: t("diff.files.openInEditor"),
+            onSelect: () => openFileEditor(root, entry.path),
+          },
+          { label: t("diff.files.showInFinder"), onSelect: () => revealFile(root, entry.path) },
         ]
       : []),
     staged
-      ? { label: "Unstage", onSelect: () => void unstage(entry.path, entry.orig_path) }
-      : { label: "Stage", onSelect: () => void stage(entry.path, entry.orig_path) },
+      ? { label: t("status.unstage"), onSelect: () => void unstage(entry.path, entry.orig_path) }
+      : { label: t("status.stage"), onSelect: () => void stage(entry.path, entry.orig_path) },
     ...(staged || entry.kind === "unmerged"
       ? []
       : [
           {
-            label: "Discard",
+            label: t("status.discard"),
             danger: true,
             onSelect: () =>
               void confirmAndRun(entry, entry.kind === "untracked" ? "delete" : "discard"),
           },
         ]),
-    { label: "Copy path", onSelect: () => void copyText(entry.path) },
+    { label: t("diff.files.copyPath"), onSelect: () => void copyText(entry.path) },
   ];
 
   const renderRow = (entry: FileStatus, staged: boolean, displayPath = entry.path) => {
@@ -186,7 +196,7 @@ export function StatusView() {
         <input
           type="checkbox"
           className="status-check"
-          aria-label={`${staged ? "Unstage" : "Stage"} ${entry.path}`}
+          aria-label={`${staged ? t("status.unstage") : t("status.stage")} ${entry.path}`}
           checked={staged}
           onClick={(event) => event.stopPropagation()}
           onChange={() =>
@@ -205,7 +215,7 @@ export function StatusView() {
         <button
           type="button"
           className="status-more"
-          aria-label={`Actions for ${entry.path}`}
+          aria-label={t("status.actionsFor", { path: entry.path })}
           onClick={(event) => {
             event.stopPropagation();
             fileMenu.open(event, menuItems(entry, staged));
@@ -234,29 +244,29 @@ export function StatusView() {
   const total = report?.entries.length ?? 0;
 
   return (
-    <div className="status-view" aria-label="File status">
+    <div className="status-view" aria-label={t("status.aria")}>
       {lfs?.configured && !lfs.installed && (
         <p role="alert" className="lfs-warning">
-          This repository uses Git LFS but git-lfs is not installed: LFS files show as pointers.
+          {t("status.lfsWarning")}
         </p>
       )}
       <div className="status-toolbar">
         <label className="status-sort">
-          <span>Pending files,</span>
+          <span>{t("status.pendingFiles")}</span>
           <select
-            aria-label="Sort files"
+            aria-label={t("status.sortFiles")}
             value={sort}
             onChange={(event) => setSort(event.target.value as SortMode)}
           >
-            <option value="path">sorted by path</option>
-            <option value="status">sorted by status</option>
+            <option value="path">{t("status.sortedByPath")}</option>
+            <option value="status">{t("status.sortedByStatus")}</option>
           </select>
         </label>
         <div className="status-right">
           <input
             type="search"
-            aria-label="Search files"
-            placeholder="Search"
+            aria-label={t("status.searchFiles")}
+            placeholder={t("status.search")}
             value={filter}
             onChange={(event) => setFilter(event.target.value)}
           />
@@ -266,14 +276,14 @@ export function StatusView() {
               className={fileTree ? "" : "active"}
               onClick={() => setFileTree(false)}
             >
-              List
+              {t("status.list")}
             </button>
             <button
               type="button"
               className={fileTree ? "active" : ""}
               onClick={() => setFileTree(true)}
             >
-              Tree
+              {t("status.tree")}
             </button>
           </div>
         </div>
@@ -287,7 +297,7 @@ export function StatusView() {
         defaultSize={350}
         min={130}
         max={620}
-        label="Resize commit area"
+        label={t("status.resizeCommitArea")}
       >
         <SplitPane
           className="status-body"
@@ -297,10 +307,10 @@ export function StatusView() {
           defaultSize={410}
           min={240}
           max={720}
-          label="Resize pending files"
+          label={t("status.resizePending")}
         >
           <div className="status-files">
-            {report && total === 0 && <p className="muted status-empty">No changes</p>}
+            {report && total === 0 && <p className="muted status-empty">{t("status.noChanges")}</p>}
             <section
               className={`status-section${
                 dragOver === "status-staged" && dragPayload?.kind === "file" ? " drop-target" : ""
@@ -310,13 +320,13 @@ export function StatusView() {
               <div className="status-section-head">
                 <input
                   type="checkbox"
-                  aria-label="Unstage all files"
+                  aria-label={t("status.unstageAll")}
                   checked={staged.length > 0}
                   disabled={staged.length === 0}
                   onChange={() => void unstageMany(staged)}
                 />
                 <h3>
-                  Staged files <span className="count">{staged.length}</span>
+                  {t("status.stagedFiles")} <span className="count">{staged.length}</span>
                 </h3>
               </div>
               {fileTree ? (
@@ -338,13 +348,13 @@ export function StatusView() {
               <div className="status-section-head">
                 <input
                   type="checkbox"
-                  aria-label="Stage all files"
+                  aria-label={t("status.stageAll")}
                   checked={false}
                   disabled={stageable.length === 0}
                   onChange={() => void stageMany(stageable)}
                 />
                 <h3>
-                  Unstaged files <span className="count">{unstaged.length}</span>
+                  {t("status.unstagedFiles")} <span className="count">{unstaged.length}</span>
                 </h3>
               </div>
               {fileTree ? (
@@ -357,7 +367,7 @@ export function StatusView() {
                 unstaged.map((entry) => renderRow(entry, false))
               )}
             </section>
-            {loading && <p className="muted status-empty">Loading…</p>}
+            {loading && <p className="muted status-empty">{t("common.loading")}</p>}
           </div>
           <div className="status-screen">
             <DiffPatchPanel />

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { formatCommitDate } from "../lib/format";
 import type { BlameLine } from "../lib/bridge/types";
 import { sameRange, visibleRange, type VisibleRange } from "../lib/graph/viewport";
+import { useI18n } from "../lib/i18n";
 import { useBlameStore } from "../lib/stores/blame";
 import { useLogStore } from "../lib/stores/log";
 import { useUiStore } from "../lib/stores/ui";
@@ -11,6 +12,7 @@ const UNCOMMITTED = /^0+$/;
 
 /** Per-line blame with the author, date and commit of each line (OG-055). */
 export function BlameView() {
+  const { t } = useI18n();
   const root = useBlameStore((state) => state.root);
   const file = useBlameStore((state) => state.file);
   const lines = useBlameStore((state) => state.lines);
@@ -59,7 +61,7 @@ export function BlameView() {
   return (
     <div className="blame">
       <div className="blame-head">
-        <span className="muted">Blame:</span>
+        <span className="muted">{t("blame.title")}</span>
         <span className="blame-path" title={file ?? ""}>
           {file}
         </span>
@@ -69,9 +71,9 @@ export function BlameView() {
           {error}
         </p>
       )}
-      {loading && <p className="muted status-empty">Loading…</p>}
+      {loading && <p className="muted status-empty">{t("common.loading")}</p>}
       {!loading && !error && lines.length === 0 && (
-        <p className="muted status-empty">Nothing to blame</p>
+        <p className="muted status-empty">{t("blame.nothing")}</p>
       )}
       {lines.length > 0 && (
         <div className="blame-list" ref={scrollRef} onScroll={updateRange}>
@@ -86,7 +88,7 @@ export function BlameView() {
               >
                 <span className="blame-line-no">{line.line}</span>
                 <span className="blame-hash">
-                  {UNCOMMITTED.test(line.hash) ? "uncommitted" : line.hash.slice(0, 7)}
+                  {UNCOMMITTED.test(line.hash) ? t("blame.uncommitted") : line.hash.slice(0, 7)}
                 </span>
                 <span className="blame-author" title={line.author_name}>
                   {line.author_name}
