@@ -173,6 +173,43 @@ pub fn delete_untracked(
 }
 
 #[tauri::command]
+pub fn diff_file(
+    path: String,
+    file: String,
+    staged: bool,
+    rev: Option<String>,
+    reversed: bool,
+    state: State<'_, AppState>,
+) -> Result<String, GitError> {
+    match rev {
+        Some(rev) => {
+            crate::git::commit_file_diff(&state.runner, Path::new(&path), &rev, &file, reversed)
+        }
+        None => {
+            crate::git::worktree_file_diff(&state.runner, Path::new(&path), &file, staged, reversed)
+        }
+    }
+}
+
+#[tauri::command]
+pub fn commit_files(
+    path: String,
+    rev: String,
+    state: State<'_, AppState>,
+) -> Result<Vec<crate::git::FileDiff>, GitError> {
+    crate::git::commit_files(&state.runner, Path::new(&path), &rev)
+}
+
+#[tauri::command]
+pub fn diff_numstat(
+    path: String,
+    cached: bool,
+    state: State<'_, AppState>,
+) -> Result<Vec<crate::git::FileDiff>, GitError> {
+    crate::git::diff_numstat(&state.runner, Path::new(&path), cached)
+}
+
+#[tauri::command]
 pub fn recent_repos(state: State<'_, AppState>) -> Result<Vec<RecentRepo>, GitError> {
     Ok(state.recents.lock().map_err(lock_error)?.list())
 }

@@ -2,8 +2,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { formatDateTime, shortRefName } from "../lib/format";
 import { LANE_WIDTH, ROW_HEIGHT } from "../lib/graph/layout";
 import type { Commit } from "../lib/bridge/types";
+import { useDiffStore } from "../lib/stores/diff";
 import { useLogStore } from "../lib/stores/log";
 import { useRepoStore } from "../lib/stores/repo";
+import { useUiStore } from "../lib/stores/ui";
 import { GraphCanvas } from "./GraphCanvas";
 
 const OVERSCAN = 6;
@@ -177,6 +179,18 @@ function RefBadge({ value }: { value: string }) {
 }
 
 function CommitDetail({ commit, onClose }: { commit: Commit; onClose: () => void }) {
+  const root = useRepoStore((state) => state.repo?.root ?? null);
+  const openCommit = useDiffStore((state) => state.openCommit);
+  const setActiveView = useUiStore((state) => state.setActiveView);
+
+  const showDiff = async () => {
+    if (!root) {
+      return;
+    }
+    await openCommit(root, commit.hash);
+    setActiveView("diff");
+  };
+
   return (
     <aside className="commit-detail" aria-label="Detalle del commit">
       <header>
@@ -194,6 +208,9 @@ function CommitDetail({ commit, onClose }: { commit: Commit; onClose: () => void
       <p className="muted">
         {commit.parents.length} padre(s) · {commit.refs.length} ref(s)
       </p>
+      <button type="button" className="detail-action" onClick={() => void showDiff()}>
+        Ver diff
+      </button>
     </aside>
   );
 }

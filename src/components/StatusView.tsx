@@ -2,7 +2,9 @@ import { useEffect } from "react";
 import { confirmDestructive } from "../lib/bridge/dialog";
 import type { FileStatus } from "../lib/bridge/types";
 import { useRepoStore } from "../lib/stores/repo";
+import { useDiffStore } from "../lib/stores/diff";
 import { useStatusStore } from "../lib/stores/status";
+import { useUiStore } from "../lib/stores/ui";
 
 type SectionKey = "conflicts" | "staged" | "unstaged" | "untracked";
 
@@ -54,8 +56,19 @@ export function StatusView() {
   const unstage = useStatusStore((state) => state.unstage);
   const discard = useStatusStore((state) => state.discard);
   const removeUntracked = useStatusStore((state) => state.removeUntracked);
+  const openWorktreeFile = useDiffStore((state) => state.openWorktreeFile);
+  const setActiveView = useUiStore((state) => state.setActiveView);
 
   const root = repo?.root ?? null;
+
+  const openDiff = async (entry: FileStatus, staged: boolean) => {
+    if (!root) {
+      return;
+    }
+    select(entry.path);
+    await openWorktreeFile(root, entry.path, staged);
+    setActiveView("diff");
+  };
 
   useEffect(() => {
     if (root) {
@@ -122,14 +135,14 @@ export function StatusView() {
                 <div
                   key={`${section.key}-${entry.path}`}
                   className={`status-row${selected === entry.path ? " selected" : ""}`}
-                  onClick={() => select(entry.path)}
+                  onClick={() => void openDiff(entry, section.key === "staged")}
                 >
                   <span className="status-xy">{entry.xy}</span>
                   <span className="status-path">
                     {entry.path}
                     {entry.orig_path && <span className="muted"> ← {entry.orig_path}</span>}
                   </span>
-                  <span className="status-actions">
+                  <span className="status-actions" onClick={(event) => event.stopPropagation()}>
                     {section.key === "staged" && (
                       <button
                         type="button"
