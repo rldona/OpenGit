@@ -17,7 +17,6 @@ export function DiffFilesPanel() {
   const selected = useDiffStore((state) => state.selected);
   const selectFile = useDiffStore((state) => state.selectFile);
   const root = useRepoStore((state) => state.repo?.root ?? null);
-  const target = useDiffStore((state) => state.target);
   const showFileHistory = useLogStore((state) => state.showFileHistory);
   const openBlame = useBlameStore((state) => state.open);
   const fileTree = useUiStore((state) => state.fileTree);
@@ -38,9 +37,10 @@ export function DiffFilesPanel() {
           ...(entry.untracked
             ? []
             : [{ label: "Blame", onSelect: () => root && void openBlame(root, entry.path) }]),
-          // External applications only make sense on the working tree: on a
-          // commit the file on disk may not match the shown content (OG-078).
-          ...(root && target?.kind === "worktree"
+          // External applications always act on the file as it exists on
+          // disk right now (on a commit it may differ from the shown
+          // content; missing files report a readable error) (OG-078).
+          ...(root
             ? [
                 { label: "Open", onSelect: () => openFileDefault(root, entry.path) },
                 { label: "Open in VS Code", onSelect: () => openFileEditor(root, entry.path) },

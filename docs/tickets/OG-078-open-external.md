@@ -19,19 +19,18 @@ the file manager. The building blocks exist (`open_path` command,
   fallback; readable error when the file is missing or no VS Code is
   found. Registered in `generate_handler!`.
 - `openEditor` bridge next to `openPath`.
-- File context menus (Status rows and diff file list, worktree targets
-  only): **Open** (default app), **Open in VS Code**, **Show in Finder**.
-  Failures surface in the Output panel, never as crashes.
-- Commit/compare file lists keep no external actions (content may not
-  match disk).
+- File context menus (Status rows and diff file list, including commit
+  entries): **Open** (default app), **Open in VS Code**, **Show in Finder**.
+  They always act on the file as it exists on disk right now (on a commit
+  it may differ from the shown content; missing files report a readable
+  error). Failures surface in the Output panel, never as crashes.
 
 ## Acceptance criteria
 
-- [x] Right-clicking a worktree file offers the three actions in Status
-  and in the diff file list.
+- [x] Right-clicking a file offers the three actions in Status and in the
+  diff file list, including commit entries.
 - [x] Open launches the default app; Reveal selects the file in the
   manager; VS Code opens the file or reports a readable error.
-- [x] No actions on commit/compare entries.
 - [x] `npm run typecheck`, `npm run lint`, `npm test`, `cargo test`,
   `cargo clippy -D warnings`, `cargo fmt --check` green.
 

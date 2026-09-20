@@ -341,7 +341,8 @@ describe("DiffView", () => {
     expect(revealInFileManager).toHaveBeenCalledWith("/tmp/repo/a.txt");
   });
 
-  it("offers no external actions on commit files", async () => {
+  it("offers external actions on commit files too", async () => {
+    const user = userEvent.setup();
     const entry = {
       key: "commit:a.txt",
       path: "a.txt",
@@ -362,10 +363,9 @@ describe("DiffView", () => {
     });
     render(<DiffView />);
     const files = document.querySelector(".diff-files") as HTMLElement;
-    fireEvent.contextMenu(within(files).getByText("a.txt"), { clientX: 10, clientY: 10 });
+    fireEvent.contextMenu(await within(files).findByText("a.txt"), { clientX: 10, clientY: 10 });
 
-    expect(screen.queryByRole("menuitem", { name: "Open" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("menuitem", { name: "Open in VS Code" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("menuitem", { name: "Show in Finder" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("menuitem", { name: "Open in VS Code" }));
+    expect(openEditor).toHaveBeenCalledWith("/tmp/repo/a.txt");
   });
 });
