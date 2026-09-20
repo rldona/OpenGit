@@ -782,8 +782,9 @@ body {
 }
 
 .repo-tab-add {
+  display: inline-flex;
   flex-shrink: 0;
-  align-self: center;
+  align-items: center;
   padding: 2px 9px;
   border: 1px solid var(--border);
   border-radius: 6px;
