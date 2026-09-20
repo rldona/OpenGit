@@ -1,7 +1,7 @@
 # OG-026 · Empaquetado y releases (fase 1: sin firma)
 
 - **Milestone:** M5 — Pulido
-- **Estado:** in-progress
+- **Estado:** done
 - **Depende de:** OG-012
 - **Referencias:** ROADMAP.md
 
@@ -49,4 +49,4 @@
 - El check de versión se probó localmente con `TAG=v0.1.0` (ok) y `TAG=v9.9.9` (falla con mensaje).
 - Bundle macOS validado sin firma (`CI=true npm run tauri build -- --bundles dmg`): dmg aarch64 en `bundle/dmg/`. Los flags de Linux/Windows se comprobaron contra `tauri build --help` (valores válidos por host).
 - Pendiente de validar en el primer tag real: `.deb`, `.AppImage`, `.msi`, `.exe` y creación del borrador.
-- Pendiente para cerrar: PR y CI verde.
+- Cerrado el 2026-09-18 con CI verde (Frontend 36 s, Rust 1m43s) en el PR #22. Con esto queda completo M5 salvo la validación del primer release.
