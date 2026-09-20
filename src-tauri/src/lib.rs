@@ -25,10 +25,19 @@ pub fn run() {
             // A closed window must not leave its watcher running (ADR-0008).
             if matches!(event, tauri::WindowEvent::Destroyed) {
                 if let Some(state) = window.try_state::<AppState>() {
-                    if let Ok(mut watchers) = state.watchers.lock() {
-                        if let Some(handle) = watchers.remove(window.label()) {
-                            handle.stop();
-                        }
+                    let label = window.label();
+                    // Bump before removing: an in-flight `open_repo` for this
+                    // window then discards its watcher instead of leaking it.
+                    if let Ok(mut epochs) = state.watcher_epoch.lock() {
+                        *epochs.entry(label.to_string()).or_insert(0) += 1;
+                    }
+                    let handle = if let Ok(mut watchers) = state.watchers.lock() {
+                        watchers.remove(label)
+                    } else {
+                        None
+                    };
+                    if let Some(handle) = handle {
+                        handle.stop_detached();
                     }
                 }
             }
@@ -44,6 +53,7 @@ pub fn run() {
                 runner: Runner::locate(),
                 recents: Mutex::new(Recents::new(data_dir.join("recent_repos.json"))),
                 watchers: Mutex::new(std::collections::HashMap::new()),
+                watcher_epoch: Mutex::new(std::collections::HashMap::new()),
                 pending_repo: Mutex::new(std::collections::HashMap::new()),
                 window_counter: std::sync::atomic::AtomicU64::new(0),
                 jobs: Arc::new(JobManager::new()),
