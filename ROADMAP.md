@@ -218,7 +218,7 @@ of only opening folders that already exist.
   (OG-085).
 - [x] Create (init) a repository, with an initial branch and optional first
   commit and `.gitignore` (OG-086).
-- [ ] Clone and Create entry points on the home screen (OG-087).
+- [x] Clone and Create entry points on the home screen (OG-087).
 - [ ] Open a repository in a new window (OG-088, optional).
 
 **Exit:** with no repository on disk, clone or create one and start working
