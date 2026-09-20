@@ -2,7 +2,7 @@
 
 A milestone closes when its tickets are `done` and its exit criteria are met. Tickets live in [`docs/tickets/`](docs/tickets/README.md).
 
-**Current state:** latest release **v0.6.2** (2026-09-20), with in-app auto-updates and remembered tabs. M0–M18 are closed and there is no active milestone.
+**Current state:** latest release **v0.7.0** (2026-09-20) with the repository lifecycle, recovery and history depth. M0–M18 are closed; **M19 (Git LFS & hooks)** is the active milestone.
 
 ## M0 — Foundation ✅ _(closed 2026-09-18)_
 
@@ -249,6 +249,28 @@ history with more detail.
 
 **Exit:** find a string across the worktree, export and apply a patch and
 cherry-pick a range, all from the app. ✅
+
+## M19 — Git LFS & hooks
+
+Move LFS past detection-only and manage repository hooks without the terminal.
+
+- [ ] Git LFS complete: track patterns, pull objects and migrate existing files
+  (OG-098).
+- [ ] Hooks manager: list, edit and enable/disable (OG-099).
+
+**Exit:** track a pattern, download the missing LFS objects and migrate a file
+to LFS from the app; list a hook, edit it and enable/disable it without the
+terminal.
+
+## M20 — Internationalization
+
+The UI is English-only (OG-014); this milestone makes the language a choice.
+
+- [ ] i18n framework plus the Spanish locale (OG-100).
+- [ ] Language selector in Settings, persisted (OG-101).
+
+**Exit:** switching the UI between English and Spanish from Settings and the
+choice survives a restart; the code has no hardcoded UI strings left.
 
 ## Translating documentation and comments to English
 
