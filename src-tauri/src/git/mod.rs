@@ -354,14 +354,25 @@ pub fn merge_branch(
 }
 
 /// Creates the revert commit of the given commit (default message).
-pub fn revert_commit(runner: &Runner, repo: &Path, hash: &str) -> Result<(), GitError> {
+/// Reverts `hash`; a merge commit needs the 1-based `mainline` parent (OG-092).
+pub fn revert_commit(
+    runner: &Runner,
+    repo: &Path,
+    hash: &str,
+    mainline: Option<u32>,
+) -> Result<(), GitError> {
     validate_commit_hash(hash)?;
+    let mut args: Vec<OsString> = vec!["revert".into(), "--no-edit".into()];
+    if let Some(mainline) = mainline {
+        if mainline == 0 {
+            return Err(GitError::invalid("the mainline must be 1 or greater"));
+        }
+        args.push("-m".into());
+        args.push(mainline.to_string().into());
+    }
+    args.push(hash.into());
     runner
-        .run_checked(
-            &GitCommand::new(["revert", "--no-edit", hash])
-                .cwd(repo)
-                .write(),
-        )
+        .run_checked(&GitCommand::new(args).cwd(repo).write())
         .map(|_| ())
 }
 

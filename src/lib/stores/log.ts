@@ -56,7 +56,7 @@ type LogState = {
   revealCommit: (root: string, hash: string) => Promise<void>;
   cherryPick: (root: string, hash: string) => Promise<void>;
   cherryPickRange: (root: string, revs: string[], recordSource: boolean) => Promise<void>;
-  revert: (root: string, hash: string) => Promise<void>;
+  revert: (root: string, hash: string, mainline?: number) => Promise<void>;
   resetTo: (root: string, hash: string, mode: ResetMode) => Promise<void>;
   reset: () => void;
 };
@@ -322,9 +322,9 @@ export const useLogStore = create<LogState>((set, get) => ({
     }
   },
 
-  revert: async (root, hash) => {
+  revert: async (root, hash, mainline) => {
     try {
-      await revertRequest(root, hash);
+      await revertRequest(root, hash, mainline ?? null);
       output(`Reverted ${hash.slice(0, 7)}`);
       await refreshAfterRewrite(root, () => get().reload(root));
     } catch (error) {
