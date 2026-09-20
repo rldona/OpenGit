@@ -460,8 +460,6 @@ body {
 }
 
 .sidebar {
-  width: 240px;
-  flex-shrink: 0;
   overflow-y: auto;
   padding: 12px;
   background: var(--bg-panel);
@@ -855,8 +853,6 @@ body {
 }
 
 .commit-detail {
-  width: 300px;
-  flex-shrink: 0;
   overflow-y: auto;
   padding: 12px;
   background: var(--bg-panel);
@@ -1099,8 +1095,6 @@ body {
 }
 
 .diff-files {
-  width: 280px;
-  flex-shrink: 0;
   overflow-y: auto;
   padding: 4px 0;
   background: var(--bg-panel);
@@ -1885,4 +1879,67 @@ body {
 .stash-diff-body {
   flex: 1;
   min-height: 0;
+}
+
+.split-pane {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+}
+
+.split-pane.horizontal {
+  flex-direction: row;
+}
+
+.split-pane.vertical {
+  flex-direction: column;
+}
+
+.workspace {
+  flex: 1;
+  min-height: 0;
+}
+
+.split-fixed {
+  flex-shrink: 0;
+  overflow: hidden;
+  display: flex;
+}
+
+.split-pane.vertical > .split-fixed {
+  flex-direction: column;
+}
+
+.split-flex {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+}
+
+.split-pane.vertical > .split-flex {
+  flex-direction: column;
+}
+
+.split-separator {
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+  background: var(--border);
+}
+
+.split-pane.horizontal > .split-separator {
+  width: 4px;
+  cursor: col-resize;
+}
+
+.split-pane.vertical > .split-separator {
+  height: 4px;
+  cursor: row-resize;
+}
+
+.split-separator:hover,
+.split-separator:focus-visible {
+  background: var(--accent);
+  outline: none;
 }
