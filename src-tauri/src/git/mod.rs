@@ -494,15 +494,41 @@ pub fn image_bytes(
 }
 
 /// Mixed reset: moves HEAD and unstages, without touching the working tree.
-pub fn reset_mixed(runner: &Runner, repo: &Path, hash: &str) -> Result<(), GitError> {
+/// How a reset treats the index and the working tree (OG-091).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum ResetMode {
+    Soft,
+    Mixed,
+    Hard,
+}
+
+impl ResetMode {
+    fn flag(self) -> &'static str {
+        match self {
+            ResetMode::Soft => "--soft",
+            ResetMode::Mixed => "--mixed",
+            ResetMode::Hard => "--hard",
+        }
+    }
+}
+
+/// Moves the current branch to `hash`; `mode` decides what happens to the index
+/// and the working tree.
+pub fn reset(runner: &Runner, repo: &Path, hash: &str, mode: ResetMode) -> Result<(), GitError> {
     validate_commit_hash(hash)?;
     runner
         .run_checked(
-            &GitCommand::new(["reset", "--mixed", hash])
+            &GitCommand::new(["reset", mode.flag(), hash])
                 .cwd(repo)
                 .write(),
         )
         .map(|_| ())
+}
+
+/// Mixed reset (moves the branch and unstages, without touching the files).
+pub fn reset_mixed(runner: &Runner, repo: &Path, hash: &str) -> Result<(), GitError> {
+    reset(runner, repo, hash, ResetMode::Mixed)
 }
 
 /// Creates a lightweight tag (no message) or annotated tag (with message) at `target`.
