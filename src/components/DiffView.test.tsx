@@ -7,6 +7,7 @@ import { statusRepo } from "../lib/bridge/status";
 import type { RepoInfo, StatusReport } from "../lib/bridge/types";
 import { useDiffStore } from "../lib/stores/diff";
 import { useRepoStore } from "../lib/stores/repo";
+import { useUiStore } from "../lib/stores/ui";
 import { DiffView } from "./DiffView";
 
 vi.mock("./DiffEditor", () => ({
@@ -71,6 +72,7 @@ describe("DiffView", () => {
     );
     useRepoStore.setState({ repo: REPO, recents: [], loading: false, error: null });
     useDiffStore.getState().reset();
+    useUiStore.setState({ fileTree: true });
   });
 
   it("lista los ficheros y muestra el editor del seleccionado", async () => {
@@ -80,6 +82,30 @@ describe("DiffView", () => {
     expect(screen.getByText("bin.bin")).toBeInTheDocument();
     expect(await screen.findByTestId("diff-editor")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Side by side" })).toBeInTheDocument();
+  });
+
+  it("agrupa en árbol, agrega contadores y pliega directorios", async () => {
+    const user = userEvent.setup();
+    vi.mocked(diffNumstat).mockResolvedValue([
+      { path: "src/a.ts", orig_path: null, binary: false, added: 2, deleted: 1 },
+      { path: "src/b.ts", orig_path: null, binary: false, added: 3, deleted: 0 },
+    ]);
+    vi.mocked(statusRepo).mockResolvedValue({
+      ...REPORT,
+      entries: [
+        { kind: "ordinary", xy: ".M", path: "src/a.ts", orig_path: null },
+        { kind: "ordinary", xy: ".M", path: "src/b.ts", orig_path: null },
+      ],
+    });
+    render(<DiffView />);
+
+    expect(await screen.findByRole("button", { name: /src\// })).toBeInTheDocument();
+    expect(screen.getByText("+5")).toBeInTheDocument();
+    expect(screen.getAllByText("-1").length).toBeGreaterThan(0);
+
+    await user.click(screen.getByRole("button", { name: /src\// }));
+
+    expect(screen.queryByText("a.ts")).not.toBeInTheDocument();
   });
 
   it("avisa de ficheros binarios sin editor", async () => {
