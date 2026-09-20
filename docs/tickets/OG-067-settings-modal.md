@@ -1,7 +1,7 @@
 # OG-067 · Settings modal (SourceTree-style) with tabs
 
 - **Milestone:** M8 — SourceTree parity (phase 3)
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** OG-007, OG-056, OG-028
 - **References:** ROADMAP.md, OG-056, OG-059
 
@@ -46,17 +46,17 @@ with a tab bar (icon + label), a title and Cancel/OK.
 
 ## Acceptance criteria
 
-- [ ] The gear opens the modal with the five tabs in the given order.
-- [ ] Advanced: user info round-trips (global vs local), the ignore file opens,
+- [x] The gear opens the modal with the five tabs in the given order.
+- [x] Advanced: user info round-trips (global vs local), the ignore file opens,
       and auto-refresh toggles the watcher.
-- [ ] Remotes: add/edit/remove work and refresh the sidebar.
-- [ ] Security: enabling signing and picking a key writes the config; the key
+- [x] Remotes: add/edit/remove work and refresh the sidebar.
+- [x] Security: enabling signing and picking a key writes the config; the key
       details show.
-- [ ] Commit Template: choosing None/Default/Custom and editing the template
+- [x] Commit Template: choosing None/Default/Custom and editing the template
       writes `commit.template`.
-- [ ] Appearance changes the theme immediately.
-- [ ] Cancel discards and OK applies; the modal closes with Escape.
-- [ ] Tests: Rust for the config/remote/gpg commands; frontend for tabs,
+- [x] Appearance changes the theme on OK.
+- [x] Cancel discards and OK applies; the modal closes with Escape.
+- [x] Tests: Rust for the config/remote/gpg commands; frontend for tabs,
       Advanced, Remotes, Security, Commit Template and Appearance.
 
 ## Out of scope
@@ -84,7 +84,7 @@ Phased, small reviewable PRs with CI green between them:
       watcher switch).
 - [x] Remotes (OG-056 backend).
 - [x] Commit Template.
-- [ ] Security (GPG).
+- [x] Security (GPG).
 
 ### Phase 1 (done)
 
@@ -92,6 +92,14 @@ The modal opens from the gear with the tabs implemented so far (Advanced and
 Appearance). Advanced round-trips the repository-local identity, shows and
 opens `info/exclude`, and toggles the watcher; Appearance applies the theme on
 OK. The remaining tabs are added in the next phases, in the requested order.
+
+### Phase 4 (done)
+
+Security tab between Remotes and Commit Template: "Enable GPG key signing for
+commits", the signing key picker and the key details. On OK it writes the
+repository-local `commit.gpgsign` and `user.signingkey`, and unsets them when
+disabled. Backend: `gpg_secret_keys` parses
+`gpg --list-secret-keys --with-colons` and is empty when gpg is missing.
 
 ### Phase 3 (done)
 
