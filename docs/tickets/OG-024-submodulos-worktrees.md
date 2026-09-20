@@ -1,7 +1,7 @@
 # OG-024 · Submódulos y worktrees en modo lectura
 
 - **Milestone:** M5 — Pulido
-- **Estado:** in-progress
+- **Estado:** done
 - **Depende de:** OG-010
 - **Referencias:** ROADMAP.md
 
@@ -48,4 +48,4 @@ Un repo con submódulos o varios worktrees no muestra esa información en la app
 - El refresh del atajo `mod+R` y los eventos del watcher (refs/refresco) recargan las listas.
 - En tests, `git submodule add` local exige `protocol.file.allow=always` y el avance se commitea en el clon del submódulo (no en el repo origen); anotado en `.ai/memory/git-quirks.md`.
 - Tests: 104 Rust (5 de parsers y 2 de integración nuevos), 169 frontend (8 nuevos de store y sidebar).
-- Pendiente para cerrar: PR y CI verde.
+- Cerrado el 2026-09-18 con CI verde (Frontend 28 s, Rust 1m29s) en el PR #20.
