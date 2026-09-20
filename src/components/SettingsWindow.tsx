@@ -1,4 +1,12 @@
 import { useEffect, useState } from "react";
+import { confirmDestructive } from "../lib/bridge/dialog";
+import {
+  gitConfigPath,
+  remoteAdd,
+  remoteRemove,
+  remoteRename,
+  remoteSetUrl,
+} from "../lib/bridge/repo";
 import {
   configGet,
   configSet,
@@ -6,13 +14,14 @@ import {
   ignoreExcludePath,
   openPath,
 } from "../lib/bridge/settings";
+import { useExtrasStore } from "../lib/stores/extras";
 import { useRepoStore } from "../lib/stores/repo";
 import { useSettingsStore } from "../lib/stores/settings";
 import { useThemeStore } from "../lib/stores/theme";
 import type { ThemePreference } from "../lib/theme";
 import { Icon, type IconName } from "./Icon";
 
-type Tab = "advanced" | "appearance";
+type Tab = "advanced" | "remotes" | "appearance";
 
 type UserInfo = {
   /** Use the global identity instead of a repository-local one. */
@@ -39,8 +48,10 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
   const theme = useThemeStore((state) => state.preference);
   const setTheme = useThemeStore((state) => state.setPreference);
 
+  const remotes = useExtrasStore((state) => state.remotes);
   const tabs: Array<{ id: Tab; label: string; icon: IconName }> = [
     ...(root ? [{ id: "advanced" as const, label: "Advanced", icon: "settings" as const }] : []),
+    ...(root ? [{ id: "remotes" as const, label: "Remotes", icon: "cloud" as const }] : []),
     { id: "appearance", label: "Appearance", icon: "theme" },
   ];
   const [tab, setTab] = useState<Tab>(root ? "advanced" : "appearance");
@@ -49,6 +60,9 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
   const [draftAutoRefresh, setDraftAutoRefresh] = useState(autoRefresh);
   const [ignorePath, setIgnorePath] = useState("");
   const [user, setUser] = useState<UserInfo | null>(null);
+  const [selectedRemote, setSelectedRemote] = useState<string | null>(null);
+  const [remoteDraft, setRemoteDraft] = useState<{ name: string; url: string } | null>(null);
+  const [editingRemote, setEditingRemote] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -78,6 +92,12 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
   }, [root]);
 
   useEffect(() => {
+    if (root) {
+      void useExtrasStore.getState().refresh(root);
+    }
+  }, [root]);
+
+  useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         onClose();
@@ -88,6 +108,79 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
   }, [onClose]);
 
   const active = tabs.find((item) => item.id === tab) ?? tabs[0];
+
+  const startAddRemote = () => {
+    setRemoteDraft({ name: "", url: "" });
+    setEditingRemote(null);
+  };
+
+  const startEditRemote = () => {
+    const remote = remotes.find((item) => item.name === selectedRemote);
+    if (!remote) {
+      return;
+    }
+    setRemoteDraft({ name: remote.name, url: remote.url });
+    setEditingRemote(remote.name);
+  };
+
+  const saveRemote = async () => {
+    if (!root || !remoteDraft) {
+      return;
+    }
+    const name = remoteDraft.name.trim();
+    const url = remoteDraft.url.trim();
+    if (name === "" || url === "") {
+      setError("Remote name and URL are required");
+      return;
+    }
+    setError(null);
+    try {
+      if (editingRemote === null) {
+        await remoteAdd(root, name, url);
+      } else {
+        if (name !== editingRemote) {
+          await remoteRename(root, editingRemote, name);
+        }
+        await remoteSetUrl(root, name, url);
+      }
+      await useExtrasStore.getState().refresh(root);
+      setSelectedRemote(name);
+      setRemoteDraft(null);
+      setEditingRemote(null);
+    } catch (err) {
+      setError(errorMessage(err));
+    }
+  };
+
+  const removeRemote = async () => {
+    if (!root || selectedRemote === null) {
+      return;
+    }
+    const confirmed = await confirmDestructive(
+      `Remove remote ${selectedRemote}? Its remote branches disappear from the repo.`,
+    );
+    if (!confirmed) {
+      return;
+    }
+    try {
+      await remoteRemove(root, selectedRemote);
+      await useExtrasStore.getState().refresh(root);
+      setSelectedRemote(null);
+    } catch (err) {
+      setError(errorMessage(err));
+    }
+  };
+
+  const editConfigFile = async () => {
+    if (!root) {
+      return;
+    }
+    try {
+      await openPath(await gitConfigPath(root));
+    } catch (err) {
+      setError(errorMessage(err));
+    }
+  };
 
   const submit = async () => {
     setBusy(true);
@@ -212,6 +305,85 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
             </>
           )}
 
+          {tab === "remotes" && root && (
+            <section className="settings-section">
+              <h3>Remote repository paths</h3>
+              <div className="remotes-table" aria-label="Remotes">
+                <div className="remotes-head">
+                  <span>Name</span>
+                  <span>Path</span>
+                </div>
+                {remotes.map((remote) => (
+                  <button
+                    key={remote.name}
+                    type="button"
+                    className={`remotes-row${selectedRemote === remote.name ? " selected" : ""}`}
+                    onClick={() => setSelectedRemote(remote.name)}
+                  >
+                    <span>{remote.name}</span>
+                    <span className="remotes-url">{remote.url}</span>
+                  </button>
+                ))}
+                {remotes.length === 0 && <p className="muted">No remotes</p>}
+              </div>
+
+              {remoteDraft && (
+                <div className="remotes-form">
+                  <label className="settings-field">
+                    <span>Name:</span>
+                    <input
+                      aria-label="Remote name"
+                      value={remoteDraft.name}
+                      onChange={(event) =>
+                        setRemoteDraft({ ...remoteDraft, name: event.target.value })
+                      }
+                    />
+                  </label>
+                  <label className="settings-field">
+                    <span>Path:</span>
+                    <input
+                      aria-label="Remote URL"
+                      value={remoteDraft.url}
+                      onChange={(event) =>
+                        setRemoteDraft({ ...remoteDraft, url: event.target.value })
+                      }
+                    />
+                  </label>
+                  <div className="remote-dialog-actions">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setRemoteDraft(null);
+                        setEditingRemote(null);
+                      }}
+                    >
+                      Cancel
+                    </button>
+                    <button type="button" className="primary" onClick={() => void saveRemote()}>
+                      Save
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <div className="remotes-actions">
+                <button type="button" onClick={startAddRemote}>
+                  Add
+                </button>
+                <button type="button" disabled={selectedRemote === null} onClick={startEditRemote}>
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  disabled={selectedRemote === null}
+                  onClick={() => void removeRemote()}
+                >
+                  Remove
+                </button>
+              </div>
+            </section>
+          )}
+
           {tab === "appearance" && (
             <section className="settings-section">
               <h3>Theme</h3>
@@ -232,6 +404,15 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
         </div>
 
         <footer className="remote-dialog-actions settings-footer">
+          {tab === "remotes" && root && (
+            <button
+              type="button"
+              className="settings-footer-left"
+              onClick={() => void editConfigFile()}
+            >
+              Edit Config File…
+            </button>
+          )}
           <button type="button" onClick={onClose}>
             Cancel
           </button>

@@ -732,6 +732,51 @@ pub fn remote_urls(
 }
 
 #[tauri::command]
+pub fn remote_add(
+    path: String,
+    name: String,
+    url: String,
+    state: State<'_, AppState>,
+) -> Result<(), GitError> {
+    crate::git::remote_add(&state.runner, Path::new(&path), &name, &url)
+}
+
+#[tauri::command]
+pub fn remote_set_url(
+    path: String,
+    name: String,
+    url: String,
+    state: State<'_, AppState>,
+) -> Result<(), GitError> {
+    crate::git::remote_set_url(&state.runner, Path::new(&path), &name, &url)
+}
+
+#[tauri::command]
+pub fn remote_rename(
+    path: String,
+    old: String,
+    new: String,
+    state: State<'_, AppState>,
+) -> Result<(), GitError> {
+    crate::git::remote_rename(&state.runner, Path::new(&path), &old, &new)
+}
+
+#[tauri::command]
+pub fn remote_remove(
+    path: String,
+    name: String,
+    state: State<'_, AppState>,
+) -> Result<(), GitError> {
+    crate::git::remote_remove(&state.runner, Path::new(&path), &name)
+}
+
+/// Repository git config file (`<gitdir>/config`), for "Edit Config File…".
+#[tauri::command]
+pub fn git_config_path(path: String, state: State<'_, AppState>) -> Result<String, GitError> {
+    crate::git::git_config_path(&state.runner, Path::new(&path))
+}
+
+#[tauri::command]
 pub fn tracking_commits(
     path: String,
     upstream: String,
