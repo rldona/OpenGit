@@ -99,4 +99,4 @@ One file per ticket, named `OG-NNN-slug.md`. Every change in the repository star
 | [OG-064](OG-064-branch-reveal.md) | Clicking a branch selects its commit | M8 | done |
 | [OG-065](OG-065-refresh-button.md) | Refresh button: stashes and feedback | M8 | done |
 | [OG-066](OG-066-merge-indicator.md) | Merge indicator: busy and banner | M8 | done |
-| [OG-067](OG-067-settings-modal.md) | Settings modal (SourceTree-style) | M8 | in-progress |
+| [OG-067](OG-067-settings-modal.md) | Settings modal (SourceTree-style) | M8 | done |

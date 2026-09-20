@@ -741,6 +741,87 @@ pub fn read_text_file(path: &str) -> Result<String, GitError> {
         .map_err(|error| GitError::invalid(format!("cannot read {path}: {error}")))
 }
 
+/// Secret GPG key available for commit signing.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct GpgKey {
+    pub id: String,
+    pub fingerprint: String,
+    pub user: String,
+    pub algo: String,
+    pub created: Option<i64>,
+    pub expires: Option<i64>,
+}
+
+/// Secret keys from `gpg --list-secret-keys`; empty when gpg is missing.
+pub fn gpg_secret_keys() -> Vec<GpgKey> {
+    let output = std::process::Command::new("gpg")
+        .args(["--list-secret-keys", "--with-colons"])
+        .output();
+    let Ok(output) = output else {
+        return Vec::new();
+    };
+    if !output.status.success() {
+        return Vec::new();
+    }
+    parse_gpg_keys(&String::from_utf8_lossy(&output.stdout))
+}
+
+fn gpg_algo(code: &str) -> String {
+    match code {
+        "1" | "2" | "3" => "RSA",
+        "17" => "DSA",
+        "18" => "ECDH",
+        "19" => "ECDSA",
+        "22" => "EdDSA",
+        "27" => "Ed25519",
+        other => return other.to_string(),
+    }
+    .to_string()
+}
+
+/// Parses the `--with-colons` listing: `sec` opens a key, `fpr` and `uid`
+/// complete it.
+fn parse_gpg_keys(text: &str) -> Vec<GpgKey> {
+    let mut keys: Vec<GpgKey> = Vec::new();
+    for line in text.lines() {
+        let fields: Vec<&str> = line.split(':').collect();
+        match fields.first().copied() {
+            Some("sec") => {
+                let bits = fields.get(2).copied().unwrap_or("");
+                let algo = gpg_algo(fields.get(3).copied().unwrap_or(""));
+                keys.push(GpgKey {
+                    id: fields.get(4).copied().unwrap_or("").to_string(),
+                    fingerprint: String::new(),
+                    user: String::new(),
+                    algo: if bits.is_empty() {
+                        algo
+                    } else {
+                        format!("{algo} {bits}")
+                    },
+                    created: fields.get(5).and_then(|value| value.parse().ok()),
+                    expires: fields.get(6).and_then(|value| value.parse().ok()),
+                });
+            }
+            Some("fpr") => {
+                if let Some(key) = keys.last_mut() {
+                    if key.fingerprint.is_empty() {
+                        key.fingerprint = fields.get(9).copied().unwrap_or("").to_string();
+                    }
+                }
+            }
+            Some("uid") => {
+                if let Some(key) = keys.last_mut() {
+                    if key.user.is_empty() {
+                        key.user = fields.get(9).copied().unwrap_or("").to_string();
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+    keys
+}
+
 fn validate_remote_name(name: &str) -> Result<(), GitError> {
     let valid = !name.is_empty()
         && name.len() <= 128
@@ -1604,5 +1685,49 @@ mod merge_args_tests {
             }),
             vec!["rebase", "--end-of-options", "feature"]
         );
+    }
+}
+
+#[cfg(test)]
+mod gpg_tests {
+    use super::parse_gpg_keys;
+
+    #[test]
+    fn parses_a_secret_key_with_its_fingerprint_and_user() {
+        let text = "\
+sec:u:4096:1:ABCDEF1234567890:1700000000:1800000000:::::scESC:::+:::23::0:\n\
+fpr:::::::::0123456789ABCDEF0123456789ABCDEF01234567:\n\
+uid:u::::1700000000::HASH::Ana <ana@example.com>::::::::::0:\n\
+ssb:u:4096:1:1111222233334444:1700000000::::::e:::+:::23:\n";
+
+        let keys = parse_gpg_keys(text);
+
+        assert_eq!(keys.len(), 1);
+        assert_eq!(keys[0].id, "ABCDEF1234567890");
+        assert_eq!(keys[0].user, "Ana <ana@example.com>");
+        assert_eq!(keys[0].algo, "RSA 4096");
+        assert_eq!(keys[0].created, Some(1_700_000_000));
+        assert_eq!(keys[0].expires, Some(1_800_000_000));
+        assert_eq!(
+            keys[0].fingerprint,
+            "0123456789ABCDEF0123456789ABCDEF01234567"
+        );
+    }
+
+    #[test]
+    fn a_key_without_expiration_or_user_still_parses() {
+        let text = "sec:u:255:22:AAAABBBBCCCCDDDD:1600000000::::::scESC:::+:::23::0:\n";
+
+        let keys = parse_gpg_keys(text);
+
+        assert_eq!(keys.len(), 1);
+        assert_eq!(keys[0].algo, "EdDSA 255");
+        assert_eq!(keys[0].expires, None);
+        assert_eq!(keys[0].user, "");
+    }
+
+    #[test]
+    fn an_empty_listing_gives_no_keys() {
+        assert!(parse_gpg_keys("").is_empty());
     }
 }

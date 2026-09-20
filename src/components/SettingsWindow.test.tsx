@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { confirmDestructive, pickFile } from "../lib/bridge/dialog";
@@ -16,11 +16,12 @@ import {
   configGet,
   configSet,
   configUnset,
+  gpgSecretKeys,
   ignoreExcludePath,
   openPath,
   setAutoRefresh,
 } from "../lib/bridge/settings";
-import type { Remote, RepoInfo } from "../lib/bridge/types";
+import type { GpgKey, Remote, RepoInfo } from "../lib/bridge/types";
 import { useExtrasStore } from "../lib/stores/extras";
 import { useRepoStore } from "../lib/stores/repo";
 import { AUTO_REFRESH_STORAGE_KEY, useSettingsStore } from "../lib/stores/settings";
@@ -37,6 +38,7 @@ vi.mock("../lib/bridge/settings", () => ({
   commitTemplateRead: vi.fn().mockResolvedValue(""),
   commitTemplateWrite: vi.fn().mockResolvedValue("/tmp/repo/.git/commit-template.txt"),
   readTextFile: vi.fn().mockResolvedValue("imported\n"),
+  gpgSecretKeys: vi.fn().mockResolvedValue([]),
 }));
 
 vi.mock("../lib/bridge/repo", () => ({
@@ -64,6 +66,17 @@ const REMOTES: Remote[] = [
   { name: "upstream", url: "https://example.com/b.git", web_url: "https://example.com/b" },
 ];
 
+const GPG_KEYS: GpgKey[] = [
+  {
+    id: "ABCDEF1234567890",
+    fingerprint: "0123456789ABCDEF0123456789ABCDEF01234567",
+    user: "Ana <ana@example.com>",
+    algo: "RSA 4096",
+    created: 1_700_000_000,
+    expires: 1_800_000_000,
+  },
+];
+
 const REPO: RepoInfo = {
   root: "/tmp/repo",
   name: "repo",
@@ -82,6 +95,7 @@ describe("SettingsWindow", () => {
     useExtrasStore.setState({ remotes: REMOTES });
     vi.mocked(remoteUrls).mockResolvedValue(REMOTES);
     vi.mocked(confirmDestructive).mockResolvedValue(true);
+    vi.mocked(gpgSecretKeys).mockResolvedValue(GPG_KEYS);
     useSettingsStore.setState({ autoRefresh: true });
     useThemeStore.setState({ preference: "system", systemDark: true, resolved: "dark" });
     vi.mocked(configGet).mockImplementation(async (_path, key, scope) => {
@@ -242,6 +256,44 @@ describe("SettingsWindow", () => {
 
     expect(gitConfigPath).toHaveBeenCalledWith("/tmp/repo");
     expect(openPath).toHaveBeenCalledWith("/tmp/repo/.git/config");
+  });
+
+  it("lists the GPG keys and enables signing on OK", async () => {
+    const user = userEvent.setup();
+    render(<SettingsWindow onClose={() => {}} />);
+
+    await user.click(screen.getByRole("tab", { name: "Security" }));
+    const select = await screen.findByLabelText("Signing key");
+    expect(select).toBeDisabled();
+    expect(
+      within(select).getByRole("option", { name: "Ana <ana@example.com>" }),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByLabelText(/Enable GPG key signing/));
+    await user.selectOptions(select, "ABCDEF1234567890");
+    expect(await screen.findByText("RSA 4096")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "OK" }));
+
+    expect(configSet).toHaveBeenCalledWith("/tmp/repo", "commit.gpgsign", "true", "local");
+    expect(configSet).toHaveBeenCalledWith(
+      "/tmp/repo",
+      "user.signingkey",
+      "ABCDEF1234567890",
+      "local",
+    );
+  });
+
+  it("unsetting signing clears the local config", async () => {
+    const user = userEvent.setup();
+    render(<SettingsWindow onClose={() => {}} />);
+
+    await user.click(screen.getByRole("tab", { name: "Security" }));
+    await screen.findByLabelText(/Enable GPG key signing/);
+    await user.click(screen.getByRole("button", { name: "OK" }));
+
+    expect(configUnset).toHaveBeenCalledWith("/tmp/repo", "commit.gpgsign", "local");
+    expect(configUnset).toHaveBeenCalledWith("/tmp/repo", "user.signingkey", "local");
   });
 
   it("loads the commit template mode and disables the editor for None", async () => {
