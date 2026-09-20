@@ -442,7 +442,12 @@ function App() {
                 <HistoryView />
               )
             ) : restoringSession ? null : (
-              <Welcome loading={loading} onOpen={pickAndOpen} />
+              <Welcome
+                loading={loading}
+                onOpen={pickAndOpen}
+                onClone={() => setCloneOpen(true)}
+                onCreate={() => setCreateOpen(true)}
+              />
             )}
           </main>
         </SplitPane>
@@ -460,14 +465,32 @@ function App() {
   );
 }
 
-function Welcome({ loading, onOpen }: { loading: boolean; onOpen: () => void }) {
+function Welcome({
+  loading,
+  onOpen,
+  onClone,
+  onCreate,
+}: {
+  loading: boolean;
+  onOpen: () => void;
+  onClone: () => void;
+  onCreate: () => void;
+}) {
   return (
     <div className="empty-state">
       <h1>No repository open</h1>
       <p>Open a repository to see its commit graph and history.</p>
-      <button type="button" onClick={onOpen} disabled={loading}>
-        Choose folder
-      </button>
+      <div className="welcome-actions">
+        <button type="button" onClick={onOpen} disabled={loading}>
+          Choose folder
+        </button>
+        <button type="button" onClick={onClone} disabled={loading}>
+          Clone Repository…
+        </button>
+        <button type="button" onClick={onCreate} disabled={loading}>
+          Create Repository…
+        </button>
+      </div>
       <RecentProjects />
     </div>
   );
