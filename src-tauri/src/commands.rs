@@ -473,6 +473,13 @@ pub fn repo_op_continue(path: String, state: State<'_, AppState>) -> Result<(), 
 }
 
 #[tauri::command]
+pub fn repo_op_skip(path: String, state: State<'_, AppState>) -> Result<(), GitError> {
+    pause_while(&state, || {
+        crate::git::repo_op_skip(&state.runner, Path::new(&path))
+    })
+}
+
+#[tauri::command]
 pub fn cherry_pick(path: String, hash: String, state: State<'_, AppState>) -> Result<(), GitError> {
     pause_while(&state, || {
         crate::git::cherry_pick(&state.runner, Path::new(&path), &hash)

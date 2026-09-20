@@ -669,6 +669,27 @@ pub fn repo_op_continue(runner: &Runner, repo: &Path) -> Result<(), GitError> {
         .map(|_| ())
 }
 
+/// Salta el commit o patch conflictivo de la operación en curso.
+pub fn repo_op_skip(runner: &Runner, repo: &Path) -> Result<(), GitError> {
+    let state = repo_op_state(runner, repo)?;
+    let operation = state
+        .operation()
+        .ok_or_else(|| GitError::invalid("no operation in progress"))?;
+    if operation == "merge" {
+        return Err(GitError::invalid(
+            "merge has no skip: resolve the conflicts or abort",
+        ));
+    }
+    runner
+        .run_checked(
+            &GitCommand::new([operation, "--skip"])
+                .cwd(repo)
+                .write()
+                .env("GIT_EDITOR", "true"),
+        )
+        .map(|_| ())
+}
+
 /// Filtros de búsqueda del historial (literal, sin regex).
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct LogSearch {

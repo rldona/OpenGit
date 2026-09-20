@@ -8,6 +8,7 @@ export function OpBanner() {
   const load = useCommitStore((state) => state.load);
   const abort = useCommitStore((state) => state.abort);
   const continueOp = useCommitStore((state) => state.continueOp);
+  const skipOp = useCommitStore((state) => state.skipOp);
 
   useEffect(() => {
     if (root) {
@@ -44,6 +45,11 @@ export function OpBanner() {
         <button type="button" onClick={() => void abort(root)}>
           Abort
         </button>
+        {operation !== "merge" && (
+          <button type="button" onClick={() => void skipOp(root)}>
+            Skip
+          </button>
+        )}
         <button type="button" onClick={() => void continueOp(root)}>
           Continue
         </button>

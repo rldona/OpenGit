@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { commitMessage, commitRepo, repoOpState } from "../bridge/commit";
 import { confirmDestructive } from "../bridge/dialog";
 import { formatGitError } from "../bridge/errors";
-import { repoOpAbort, repoOpContinue } from "../bridge/ops";
+import { repoOpAbort, repoOpContinue, repoOpSkip } from "../bridge/ops";
 import type { FileStatus, RepoOpState, StatusReport } from "../bridge/types";
 import { useLogStore } from "./log";
 import { useRefsStore } from "./refs";
@@ -41,6 +41,7 @@ type CommitState = {
   submit: (stagedCount: number) => Promise<boolean>;
   abort: (root: string) => Promise<void>;
   continueOp: (root: string) => Promise<void>;
+  skipOp: (root: string) => Promise<void>;
   reset: () => void;
 };
 
@@ -145,6 +146,17 @@ export const useCommitStore = create<CommitState>((set, get) => ({
     try {
       await repoOpContinue(root);
       output("Operation continued");
+      await refreshAfterOperation(root, set);
+    } catch (error) {
+      set({ error: formatGitError(error) });
+    }
+  },
+
+  skipOp: async (root) => {
+    set({ error: null });
+    try {
+      await repoOpSkip(root);
+      output("Operation skipped");
       await refreshAfterOperation(root, set);
     } catch (error) {
       set({ error: formatGitError(error) });
