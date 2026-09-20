@@ -50,6 +50,23 @@ describe("matchesShortcut", () => {
     expect(matchesShortcut(keydown({ key: "Enter", ctrlKey: true }), "mod+enter")).toBe(true);
     expect(matchesShortcut(keydown({ key: "Escape" }), "escape")).toBe(true);
   });
+
+  it("requires Shift only for definitions that include it", () => {
+    expect(
+      matchesShortcut(keydown({ key: "[", ctrlKey: true, shiftKey: true }), "mod+shift+["),
+    ).toBe(true);
+    expect(matchesShortcut(keydown({ key: "[", ctrlKey: true }), "mod+shift+[")).toBe(false);
+    expect(
+      matchesShortcut(keydown({ key: "]", ctrlKey: true, shiftKey: true }), "mod+shift+]"),
+    ).toBe(true);
+    // Definitions without `shift` keep ignoring it, as before.
+    expect(matchesShortcut(keydown({ key: "o", ctrlKey: true, shiftKey: true }), "mod+o")).toBe(
+      true,
+    );
+    expect(
+      matchesShortcut(keydown({ key: "Enter", ctrlKey: true, shiftKey: true }), "mod+enter"),
+    ).toBe(true);
+  });
 });
 
 describe("formatKeys", () => {
@@ -58,16 +75,20 @@ describe("formatKeys", () => {
     expect(formatKeys("mod+enter")).toBe("Ctrl+Enter");
     expect(formatKeys("escape")).toBe("Esc");
     expect(formatKeys("?")).toBe("?");
+    expect(formatKeys("mod+shift+[")).toBe("Ctrl+Shift+[");
+    expect(formatKeys("mod+shift+]")).toBe("Ctrl+Shift+]");
 
     vi.spyOn(navigator, "platform", "get").mockReturnValue("MacIntel");
     expect(formatKeys("mod+o")).toBe("⌘O");
+    expect(formatKeys("mod+shift+[")).toBe("⌘⇧[");
   });
 });
 
 describe("parseKeys", () => {
   it("separates mod from the key", () => {
-    expect(parseKeys("mod+enter")).toEqual({ mod: true, key: "enter" });
-    expect(parseKeys("escape")).toEqual({ mod: false, key: "escape" });
+    expect(parseKeys("mod+enter")).toEqual({ mod: true, shift: false, key: "enter" });
+    expect(parseKeys("escape")).toEqual({ mod: false, shift: false, key: "escape" });
+    expect(parseKeys("mod+shift+[")).toEqual({ mod: true, shift: true, key: "[" });
   });
 });
 

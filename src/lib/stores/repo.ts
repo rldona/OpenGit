@@ -19,6 +19,7 @@ type RepoState = {
   pickAndOpen: () => Promise<void>;
   removeRecent: (path: string) => Promise<void>;
   closeTab: (path: string) => Promise<void>;
+  switchTab: (direction: 1 | -1) => Promise<void>;
   close: () => Promise<void>;
 };
 
@@ -138,6 +139,21 @@ export const useRepoStore = create<RepoState>((set, get) => ({
     set({ openTabs: remaining });
     const neighbor = index > 0 ? tabs[index - 1].path : remaining[0].path;
     await get().open(neighbor);
+  },
+
+  switchTab: async (direction) => {
+    const tabs = get().openTabs;
+    if (tabs.length < 2) {
+      return;
+    }
+    const activeRoot = get().repo?.root;
+    const activeIndex = tabs.findIndex((tab) => tab.path === activeRoot);
+    // Unknown active repo: fall back to the first tab instead of guessing.
+    const from = activeIndex < 0 ? (direction === 1 ? -1 : 0) : activeIndex;
+    const next = tabs[(from + direction + tabs.length) % tabs.length];
+    if (next.path !== activeRoot) {
+      await get().open(next.path);
+    }
   },
 
   close: async () => {

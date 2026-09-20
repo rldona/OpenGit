@@ -121,6 +121,44 @@ describe("useRepoStore", () => {
     expect(closeRepo).toHaveBeenCalled();
   });
 
+  it("switches tabs cyclically in both directions", async () => {
+    const repos = [
+      REPO,
+      { ...REPO, root: "/tmp/b", name: "b" },
+      { ...REPO, root: "/tmp/c", name: "c" },
+    ];
+    vi.mocked(openRepo).mockImplementation(
+      async (path: string) => repos.find((repo) => repo.root === path) ?? REPO,
+    );
+
+    for (const repo of repos) {
+      await useRepoStore.getState().open(repo.root);
+    }
+    expect(useRepoStore.getState().repo?.root).toBe("/tmp/c");
+
+    await useRepoStore.getState().switchTab(1);
+    expect(useRepoStore.getState().repo?.root).toBe(REPO.root);
+
+    await useRepoStore.getState().switchTab(-1);
+    expect(useRepoStore.getState().repo?.root).toBe("/tmp/c");
+
+    await useRepoStore.getState().switchTab(-1);
+    expect(useRepoStore.getState().repo?.root).toBe("/tmp/b");
+  });
+
+  it("switching tabs is a no-op with a single tab", async () => {
+    vi.mocked(openRepo).mockResolvedValue(REPO);
+
+    await useRepoStore.getState().open(REPO.root);
+    const calls = vi.mocked(openRepo).mock.calls.length;
+
+    await useRepoStore.getState().switchTab(1);
+    await useRepoStore.getState().switchTab(-1);
+
+    expect(useRepoStore.getState().repo?.root).toBe(REPO.root);
+    expect(vi.mocked(openRepo).mock.calls.length).toBe(calls);
+  });
+
   it("translates the validation error into a readable message", async () => {
     vi.mocked(openRepo).mockRejectedValue({ kind: "not_a_repository", path: "/tmp/x" });
 

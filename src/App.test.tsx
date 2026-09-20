@@ -266,13 +266,25 @@ describe("App", () => {
     expect(within(header).getByText("Date")).toBeInTheDocument();
   });
 
-  it("shows repo tabs only when two or more repos are open", async () => {
+  it("shows the tab strip with one repo plus the add button", async () => {
     const other: RepoInfo = { ...REPO, root: "/tmp/other", name: "other" };
-    useRepoStore.setState({ repo: REPO, openTabs: [], loading: false, error: null });
+    useRepoStore.setState({
+      repo: REPO,
+      openTabs: [{ path: REPO.root, name: REPO.name, opened_at: 1 }],
+      loading: false,
+      error: null,
+    });
     render(<App />);
 
-    // A single open repo renders no tab strip and no Recents section.
-    expect(screen.queryByRole("tablist", { name: "Open repositories" })).not.toBeInTheDocument();
+    // A single open repo renders its tab with the add button, no Recents.
+    const tablist = await screen.findByRole("tablist", { name: "Open repositories" });
+    expect(within(tablist).getByRole("tab", { name: "mi-repo" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(
+      within(tablist).getByRole("button", { name: "Open another repository" }),
+    ).toBeInTheDocument();
     expect(screen.queryByText("Recents")).not.toBeInTheDocument();
 
     act(() => {
@@ -284,11 +296,6 @@ describe("App", () => {
       });
     });
 
-    const tablist = await screen.findByRole("tablist", { name: "Open repositories" });
-    expect(within(tablist).getByRole("tab", { name: "mi-repo" })).toHaveAttribute(
-      "aria-selected",
-      "true",
-    );
     expect(within(tablist).getByRole("tab", { name: "other" })).toHaveAttribute(
       "aria-selected",
       "false",
@@ -296,6 +303,27 @@ describe("App", () => {
     // The strip sits between the toolbar and the workspace content.
     expect(tablist.previousElementSibling?.classList.contains("toolbar")).toBe(true);
     expect(tablist.nextElementSibling?.classList.contains("workspace")).toBe(true);
+  });
+
+  it("switches tabs with the keyboard shortcuts", async () => {
+    const other: RepoInfo = { ...REPO, root: "/tmp/other", name: "other" };
+    vi.mocked(openRepo).mockImplementation(async (path: string) =>
+      path === other.root ? other : REPO,
+    );
+    useRepoStore.setState({ repo: null, openTabs: [], loading: false, error: null });
+    render(<App />);
+
+    await useRepoStore.getState().open(REPO.root);
+    await useRepoStore.getState().open(other.root);
+    expect(useRepoStore.getState().repo?.root).toBe(other.root);
+
+    const tablist = await screen.findByRole("tablist", { name: "Open repositories" });
+    fireEvent.keyDown(document, { key: "[", ctrlKey: true, shiftKey: true });
+    await waitFor(() => expect(useRepoStore.getState().repo?.root).toBe(REPO.root));
+
+    fireEvent.keyDown(document, { key: "]", ctrlKey: true, shiftKey: true });
+    await waitFor(() => expect(useRepoStore.getState().repo?.root).toBe(other.root));
+    expect(tablist).toBeInTheDocument();
   });
 
   it("searches the history by message and clears back to the full log", async () => {

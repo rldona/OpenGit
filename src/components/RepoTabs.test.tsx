@@ -29,6 +29,11 @@ function tabs() {
 }
 
 describe("RepoTabs", () => {
+  const realActions = (() => {
+    const { open, closeTab, pickAndOpen } = useRepoStore.getState();
+    return { open, closeTab, pickAndOpen };
+  })();
+
   beforeEach(() => {
     vi.clearAllMocks();
     useRepoStore.setState({
@@ -37,16 +42,21 @@ describe("RepoTabs", () => {
       openTabs: [],
       loading: false,
       error: null,
+      ...realActions,
     });
   });
 
-  it("renders nothing with zero or one open repo", () => {
-    const { rerender } = render(<RepoTabs />);
+  it("renders nothing without open repos", () => {
+    render(<RepoTabs />);
     expect(screen.queryByRole("tablist")).not.toBeInTheDocument();
+  });
 
+  it("shows a single tab with the add button", () => {
     useRepoStore.setState({ repo: REPO_A, openTabs: [tabs()[0]] });
-    rerender(<RepoTabs />);
-    expect(screen.queryByRole("tablist")).not.toBeInTheDocument();
+    render(<RepoTabs />);
+
+    expect(screen.getByRole("tab", { name: "repo-a" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("button", { name: "Open another repository" })).toBeInTheDocument();
   });
 
   it("marks the active repo tab as selected with its path as tooltip", () => {
@@ -80,5 +90,16 @@ describe("RepoTabs", () => {
     await user.click(screen.getByRole("button", { name: "Close repo-b" }));
 
     expect(closeTab).toHaveBeenCalledWith(REPO_B.root);
+  });
+
+  it("opens the picker with the add button", async () => {
+    const user = userEvent.setup();
+    const pickAndOpen = vi.fn().mockResolvedValue(undefined);
+    useRepoStore.setState({ repo: REPO_A, openTabs: [tabs()[0]], pickAndOpen });
+    render(<RepoTabs />);
+
+    await user.click(screen.getByRole("button", { name: "Open another repository" }));
+
+    expect(pickAndOpen).toHaveBeenCalledTimes(1);
   });
 });

@@ -102,3 +102,4 @@ One file per ticket, named `OG-NNN-slug.md`. Every change in the repository star
 | [OG-067](OG-067-settings-modal.md) | Settings modal (SourceTree-style) | M8 | done |
 | [OG-068](OG-068-macos-adhoc-signing.md) | macOS bundle with a valid ad-hoc signature | M8 | done |
 | [OG-069](OG-069-repo-tabs.md) | Repository tabs replacing Recents | Next | done |
+| [OG-070](OG-070-tabs-plus-shortcuts.md) | Tab strip plus button and switching shortcuts | Next | done |
