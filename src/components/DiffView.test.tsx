@@ -84,6 +84,31 @@ describe("DiffView", () => {
     expect(screen.getByRole("button", { name: "Side by side" })).toBeInTheDocument();
   });
 
+  it("filtra los ficheros por ruta", async () => {
+    const user = userEvent.setup();
+    vi.mocked(diffNumstat).mockResolvedValue([
+      { path: "src/a.ts", orig_path: null, binary: false, added: 1, deleted: 0 },
+      { path: "docs/b.md", orig_path: null, binary: false, added: 2, deleted: 0 },
+    ]);
+    vi.mocked(statusRepo).mockResolvedValue({
+      ...REPORT,
+      entries: [
+        { kind: "ordinary", xy: ".M", path: "src/a.ts", orig_path: null },
+        { kind: "ordinary", xy: ".M", path: "docs/b.md", orig_path: null },
+      ],
+    });
+    render(<DiffView />);
+    await screen.findByText("a.ts");
+    expect(screen.getByText("b.md")).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText("Filter files"), "docs");
+    expect(screen.queryByText("a.ts")).not.toBeInTheDocument();
+    expect(screen.getByText("b.md")).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText("Filter files"), "zzz");
+    expect(screen.getByText("No files match")).toBeInTheDocument();
+  });
+
   it("agrupa en árbol, agrega contadores y pliega directorios", async () => {
     const user = userEvent.setup();
     vi.mocked(diffNumstat).mockResolvedValue([

@@ -35,10 +35,18 @@ describe("PatchView", () => {
     const user = userEvent.setup();
     const props = renderPatch();
 
-    expect(screen.getByText("@@ -1,3 +1,3 @@")).toBeInTheDocument();
+    expect(screen.getByText("Hunk 1 · Lines 1–3")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Stage hunk" }));
 
     expect(props.onApply).toHaveBeenCalledWith({ kind: "hunk", index: 0 });
+  });
+
+  it("numera las líneas antiguas y nuevas", () => {
+    renderPatch();
+
+    // contexto (1/1), borrada (2) y añadida (2) dejan dos "1" y dos "2" visibles
+    expect(screen.getAllByText("1").length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByText("2").length).toBeGreaterThanOrEqual(2);
   });
 
   it("etiqueta unstage cuando el parche viene del index", () => {
