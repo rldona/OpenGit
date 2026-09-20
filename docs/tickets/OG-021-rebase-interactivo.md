@@ -1,7 +1,7 @@
 # OG-021 · Rebase interactivo visual
 
 - **Milestone:** M4 — Rebase y conflictos
-- **Estado:** in-progress
+- **Estado:** done
 - **Depende de:** OG-004, OG-019, OG-020
 - **Referencias:** ROADMAP.md
 
@@ -46,4 +46,4 @@
 - Rust: `rebase_plan` e `interactive_rebase` (todo-list en el directorio de datos, un solo reword validado, timeout amplio); comandos `rebase_plan` e `interactive_rebase`.
 - UI: `RebaseView` con el plan (acción por fila, subir/bajar, mensaje si hay reword) y confirmación; se entra desde el detalle del commit en el grafo.
 - Tests: Rust (plan, squash+fixup, drop, reword, reordenar, conflicto y abort) y frontend (store y vista).
-- Con esto queda completo M4 (reword múltiple queda para una v2). Pendiente para cerrar: PR y CI verde.
+- Con esto queda completo M4 (reword múltiple queda para una v2). Cerrado el 2026-09-18 con CI verde (Frontend 32 s, Rust 1m38s) en el PR #17.

@@ -47,13 +47,13 @@ Todo lo necesario para trabajar sin tocar el terminal en repos locales.
 - [x] Cherry-pick, revert y reset suave (`--mixed`) con confirmación explícita (OG-017).
 - [x] Búsqueda de commits (mensaje, autor, fichero) y filtros (OG-018).
 
-## M4 — Rebase y conflictos
+## M4 — Rebase y conflictos ✅ _(cerrado el 2026-09-18)_
 
-- [ ] Rebase interactivo visual (pick/reword/squash/drop) con vista previa del plan.
-- [ ] Editor de conflictos con resolución por lado y por bloque.
-- [ ] `merge`/`rebase` en curso: banner de estado y opción de abortar.
+- [x] Rebase interactivo visual (pick/reword/squash/fixup/drop, reordenar) con vista previa del plan (OG-021; reword múltiple queda para v2).
+- [x] Editor de conflictos con resolución por lado y por bloque (OG-020).
+- [x] `merge`/`rebase` en curso: banner de estado y opción de abortar/continuar (OG-019).
 
-**Salida:** resolver un conflicto real de merge sin salir de la app.
+**Salida:** resolver un conflicto real de merge sin salir de la app. ✅
 
 ## M5 — Pulido
 
