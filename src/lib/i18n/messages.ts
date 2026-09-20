@@ -30,6 +30,12 @@ export const en = {
     title: "Output",
     resize: "Resize output",
   },
+  settings: {
+    language: "Language",
+    languageSystem: "System language",
+    languageEnglish: "English",
+    languageSpanish: "Español",
+  },
   welcome: {
     title: "No repository open",
     subtitle: "Open a repository to see its commit graph and history.",
