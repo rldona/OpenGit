@@ -21,7 +21,7 @@ import { StashSidebar } from "./components/StashSidebar";
 import { StashView } from "./components/StashView";
 import { StatusView } from "./components/StatusView";
 import { Toolbar } from "./components/Toolbar";
-import { UpdateNotice } from "./components/UpdateNotice";
+import { UpdateDialog } from "./components/UpdateDialog";
 import { confirmDestructive } from "./lib/bridge/dialog";
 import { subscribeMenuEvents } from "./lib/bridge/events";
 import { openExternal } from "./lib/bridge/opener";
@@ -117,8 +117,8 @@ function App() {
   }, [loadRecents]);
 
   useEffect(() => {
-    // Silent update check on startup (OG-077): only notifies when a newer
-    // release exists; the store skips it when the 24h cache is fresh.
+    // Silent update check on startup (OG-081): only surfaces a ready update;
+    // the store skips it when the 24h cache is fresh.
     void useUpdateStore.getState().check();
   }, []);
 
@@ -314,7 +314,7 @@ function App() {
 
       <RepoTabs />
 
-      <UpdateNotice />
+      <UpdateDialog />
 
       <SplitPane
         className="workspace"
