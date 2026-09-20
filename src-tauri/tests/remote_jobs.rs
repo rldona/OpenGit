@@ -298,3 +298,37 @@ fn cancelling_a_push_leaves_no_orphans() {
             .success()
     );
 }
+
+#[test]
+fn clone_creates_the_working_tree_from_a_local_remote() {
+    // Local bare repository as the "remote": a clone is a filesystem operation,
+    // so the test stays offline (rule 8 of AGENTS.md).
+    let remote = TempDir::new("bare-clone");
+    init_bare(&remote);
+    let source = TestRepo::init();
+    commit_file(&source, "a.txt", "hola\n", "first");
+    source.git_ok(&[
+        "remote",
+        "add",
+        "origin",
+        remote.path().to_str().expect("ruta del bare"),
+    ]);
+    source.git_ok(&["push", "-q", "origin", "main"]);
+
+    let clones = TempDir::new("clones-clone");
+    let destination = clones.path().join("work");
+    let (_id, receiver) = spawn_job(
+        &source,
+        JobKind::Clone {
+            url: remote.path().to_string_lossy().into_owned(),
+            destination: destination.to_string_lossy().into_owned(),
+            depth: None,
+            branch: None,
+            recurse_submodules: false,
+        },
+    );
+
+    let (lines, finished) = collect_until_finished(&receiver, Duration::from_secs(60));
+    assert_eq!(finished, Some((true, false)), "clone falló: {lines:?}");
+    assert!(destination.join("a.txt").exists());
+}
