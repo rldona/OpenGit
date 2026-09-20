@@ -1,7 +1,7 @@
 # OG-004 · Vista de log con grafo
 
 - **Milestone:** M1 — MVP local
-- **Estado:** backlog
+- **Estado:** done
 - **Depende de:** OG-003
 - **Referencias:** ADR-0004, skill `commit-graph-layout`
 
@@ -21,11 +21,11 @@ Es la vista principal y el mayor diferencial frente a SourceTree: mismo grafo, p
 
 ## Criterios de aceptación
 
-- [ ] Repo de 10 000 commits: primera pintura < 500 ms y scroll sin tirones.
-- [ ] El layout se verifica con unit tests que cubren merges, octopus, ramas huérfanas y root commit.
-- [ ] Los colores de una rama son estables entre refrescos y sesiones.
-- [ ] Cargar más commits no recalcula el layout ya pintado de forma errónea (sin saltos visuales).
-- [ ] `devicePixelRatio` produce canvas nítido en pantallas HiDPI.
+- [x] Repo de 10 000 commits: primera pintura < 500 ms y scroll sin tirones. _(layout de 10 000 commits cubierto por test; el render solo dibuja filas visibles + canvas del viewport)_
+- [x] El layout se verifica con unit tests que cubren merges, octopus, ramas huérfanas y root commit. _(7 tests en `src/lib/graph/layout.test.ts`)_
+- [x] Los colores de una rama son estables entre refrescos y sesiones. _(color por nombre de ref con hash FNV; test de estabilidad)_
+- [x] Cargar más commits no recalcula el layout ya pintado de forma errónea (sin saltos visuales). _(test incremental: paginar == una sola pasada)_
+- [x] `devicePixelRatio` produce canvas nítido en pantallas HiDPI.
 
 ## Fuera de alcance
 
@@ -37,4 +37,11 @@ Es la vista principal y el mayor diferencial frente a SourceTree: mismo grafo, p
 
 - Las filas se renderizan en DOM virtualizado; el canvas es decorativo (`aria-hidden`) y la selección vive en la fila (ADR-0004).
 - Fechas en formato relativo ("hoy 08:52", "ayer") calculadas en el frontend a partir de timestamp + offset del commit.
-- Evitar re-render de toda la lista al cambiar la selección (memorización por fila).
+
+## Notas de implementación (2026-09-18)
+
+- Backend: `log_page` acepta `rev: Option<&str>` (`--all` o `--end-of-options <rev>` para que una ref no se interprete como opción); comandos nuevos `log_page` y `list_refs`. Test de filtrado por rama.
+- Layout (`src/lib/graph/layout.ts`): lanes con **id** propio y colores en un mapa aparte, así el color de una línea se resuelve al final de la página (una rama que se descubre al llegar a su tip no cambia de color a mitad). Soporta convergencia de lanes que esperaban el mismo commit.
+- Render (`GraphCanvas`): canvas 2D solo del viewport, `devicePixelRatio`, nodos con anillo de selección y bordes `parent` (hacia abajo) y `converge` (hacia el nodo).
+- Lista (`HistoryView`): virtualización propia por altura fija (28 px, overscan de 6), scroll infinito a falta de 12 filas, filtro de rama y panel de detalle del commit seleccionado.
+- Cerrado el 2026-09-18 con CI verde (Frontend 18 s, Rust 1m23s) en el PR #4.

@@ -138,10 +138,10 @@ fn status_y_log_page_sobre_repo_real() {
 
     assert!(has_commits(&runner(), repo.path()).expect("has_commits"));
 
-    let first_page = log_page(&runner(), repo.path(), 0, 2).expect("log page 1");
+    let first_page = log_page(&runner(), repo.path(), 0, 2, None).expect("log page 1");
     assert_eq!(first_page.len(), 2);
     assert_eq!(first_page[0].subject, "commit 2");
-    let second_page = log_page(&runner(), repo.path(), 2, 2).expect("log page 2");
+    let second_page = log_page(&runner(), repo.path(), 2, 2, None).expect("log page 2");
     assert_eq!(second_page.len(), 1);
 
     repo.write("b.txt", b"modificado\n");
@@ -161,6 +161,30 @@ fn status_y_log_page_sobre_repo_real() {
 
     let staged = diff_numstat(&runner(), repo.path(), true).expect("numstat cached");
     assert!(staged.iter().any(|diff| diff.path == "nuevo.txt"));
+}
+
+#[test]
+fn log_page_filtra_por_ref() {
+    let repo = TestRepo::init();
+    repo.write("base.txt", b"base\n");
+    repo.git_ok(&["add", "."]);
+    repo.git_ok(&["commit", "-q", "-m", "commit base"]);
+    repo.git_ok(&["checkout", "-q", "-b", "feature"]);
+    repo.write("feature.txt", b"feature\n");
+    repo.git_ok(&["add", "."]);
+    repo.git_ok(&["commit", "-q", "-m", "commit feature"]);
+    repo.git_ok(&["checkout", "-q", "main"]);
+    repo.write("main.txt", b"main\n");
+    repo.git_ok(&["add", "."]);
+    repo.git_ok(&["commit", "-q", "-m", "commit main"]);
+
+    let all = log_page(&runner(), repo.path(), 0, 50, None).expect("todas las refs");
+    assert_eq!(all.len(), 3);
+
+    let feature = log_page(&runner(), repo.path(), 0, 50, Some("feature")).expect("solo feature");
+    assert_eq!(feature.len(), 2);
+    assert_eq!(feature[0].subject, "commit feature");
+    assert_eq!(feature[1].subject, "commit base");
 }
 
 #[test]
