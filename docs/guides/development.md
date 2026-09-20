@@ -69,16 +69,53 @@ The `release.yml` workflow:
 1. Checks that the tag matches the version in `package.json` and
    `tauri.conf.json` (otherwise it fails before compiling).
 2. Builds the bundles for the three OSes: `.dmg` on macOS; `.deb` and
-   `.AppImage` on Linux; `.msi` and `.exe` (NSIS) on Windows.
-3. Creates a **draft** release with the generated notes and the installers
-   attached; review it on GitHub and publish it by hand.
+   `.AppImage` on Linux; `.msi` and `.exe` (NSIS) on Windows, plus the signed
+   updater artifacts (`.app.tar.gz`, `.AppImage` re-used, NSIS `.exe`).
+3. Generates `latest.json` with `scripts/generate-latest-json.mjs` from the
+   `.sig` files and creates a **draft** release with the generated notes, the
+   installers and the manifest; review it on GitHub and publish it by hand.
 4. After publishing, point the README Download links at the new tag's
    assets (they hardcode the version).
 
-No signing or notarization (project decision, OG-028): macOS and Windows will
-warn when opening the installer. User instructions live in the README. To
+No code signing or notarization (project decision, OG-028): macOS and Windows
+will warn when opening the installer. User instructions live in the README. To
 re-run an already started release:
 `gh workflow run release.yml -f tag=vX.Y.Z` (existing artifacts are replaced).
+
+#### Auto-update keys (one-time setup)
+
+The in-app updater (`tauri-plugin-updater`, [ADR-0007](../decisions/ADR-0007-auto-updates.md))
+verifies each update with a **minisign** key pair. This is not Apple/Windows
+code signing and costs nothing, but the key is critical infrastructure: if it
+is lost, already-installed apps can no longer update.
+
+```bash
+npm run tauri signer generate -- -w ~/.tauri/opengit.key
+```
+
+- The **public** key goes into `plugins.updater.pubkey` in
+  `src-tauri/tauri.conf.json` (safe to commit).
+- The **private** key and its password go into GitHub → Settings → Secrets →
+  Actions as `TAURI_SIGNING_PRIVATE_KEY` and
+  `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`. Keep an offline backup of the key;
+  never commit it.
+- The first release that ships the updater has to be installed by hand: the
+  previously installed version has no updater, so it cannot receive it. From
+  then on, published releases are offered automatically.
+- Only the architectures the build matrix produces are published for the
+  updater (today macOS arm64, Linux x86_64 and Windows x64). Intel Macs keep
+  the manual download until an x86_64 build is added.
+
+To validate the key and password without bundling, sign a throwaway file:
+
+```bash
+npm run tauri -- signer sign -f ~/.tauri/opengit.key -p "$PASSWORD" /tmp/check.txt
+```
+
+A local macOS `tauri build` may fail at `failed to run xattr` (the bundler
+clearing `com.apple.provenance` before signing). It is a macOS/SIP quirk, not a
+code error: retry, or grant the terminal Full Disk Access. The release workflow
+runs on a clean runner and is not affected.
 
 ## Layout
 

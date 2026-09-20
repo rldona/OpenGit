@@ -10,5 +10,6 @@ Record of decisions with a high cost to revert. An accepted ADR **is not edited*
 | [0004](ADR-0004-grafo-canvas-incremental.md) | Canvas graph with incremental loading | accepted |
 | [0005](ADR-0005-estado-global-zustand.md) | Global state with Zustand | accepted |
 | [0006](ADR-0006-editor-diff-codemirror.md) | Diff editor based on CodeMirror 6 | accepted |
+| [0007](ADR-0007-auto-updates.md) | In-app auto-updates with tauri-plugin-updater | accepted |
 
 To propose a new one, copy [`TEMPLATE.md`](TEMPLATE.md) and follow the `.ai/workflows/adr.md` flow.
