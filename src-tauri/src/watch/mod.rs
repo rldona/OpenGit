@@ -7,14 +7,13 @@ use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::mpsc::{self, RecvTimeoutError};
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, Condvar, Mutex, RwLock};
 use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
 
 use notify::{EventKind, RecursiveMode, Watcher};
 use serde::Serialize;
 
-use crate::git::error::GitError;
 use crate::git::runner::{GitCommand, Runner};
 
 const DEBOUNCE: Duration = Duration::from_millis(250);
@@ -100,13 +99,11 @@ struct IgnoreMatcher {
 }
 
 impl IgnoreMatcher {
-    fn load(runner: &Runner, root: &Path) -> Self {
-        let mut matcher = Self {
+    fn new(root: &Path) -> Self {
+        Self {
             root: root.to_path_buf(),
             ignored: HashSet::new(),
-        };
-        matcher.refresh(runner);
-        matcher
+        }
     }
 
     fn refresh(&mut self, runner: &Runner) {
@@ -193,10 +190,38 @@ enum WatchMessage {
     IgnoreChanged,
 }
 
+/// Signals when the OS watch is registered, so `start` can return without
+/// waiting for the setup (git ignore load included) to finish (ADR-0010).
+#[derive(Default)]
+struct Readiness {
+    ready: Mutex<bool>,
+    cv: Condvar,
+}
+
+impl Readiness {
+    fn signal(&self) {
+        if let Ok(mut ready) = self.ready.lock() {
+            *ready = true;
+            self.cv.notify_all();
+        }
+    }
+
+    fn wait(&self, timeout: Duration) -> bool {
+        let Ok(ready) = self.ready.lock() else {
+            return false;
+        };
+        self.cv
+            .wait_timeout_while(ready, timeout, |ready| !*ready)
+            .map(|(guard, _)| *guard)
+            .unwrap_or(false)
+    }
+}
+
 pub struct WatcherHandle {
     stop: Arc<AtomicBool>,
     paused: Arc<AtomicUsize>,
     dirty: Arc<AtomicBool>,
+    ready: Arc<Readiness>,
     thread: Option<JoinHandle<()>>,
     emit: Arc<dyn Fn(RepoEventKind) + Send + Sync>,
 }
@@ -220,17 +245,29 @@ impl WatcherHandle {
         }
     }
 
+    /// Waits until the OS watch is registered, or `timeout` elapses.
+    pub fn wait_ready(&self, timeout: Duration) -> bool {
+        self.ready.wait(timeout)
+    }
+
     pub fn stop(mut self) {
         self.stop.store(true, Ordering::SeqCst);
         if let Some(thread) = self.thread.take() {
             let _ = thread.join();
         }
     }
+
+    /// Stops the watcher without blocking the caller: used when swapping a
+    /// window's watcher so the command thread is not joined on.
+    pub fn stop_detached(self) {
+        std::thread::spawn(move || self.stop());
+    }
 }
 
 /// Starts watching the working tree and `.git`. If the OS does not deliver
-/// events, it falls back to polling.
-pub fn start<F>(runner: Runner, repo_root: PathBuf, emit: F) -> Result<WatcherHandle, GitError>
+/// events, it falls back to polling. It returns immediately; the OS watch is
+/// registered asynchronously (see [`WatcherHandle::wait_ready`]).
+pub fn start<F>(runner: Runner, repo_root: PathBuf, emit: F) -> WatcherHandle
 where
     F: Fn(RepoEventKind) + Send + Sync + 'static,
 {
@@ -239,21 +276,22 @@ where
     let repo_root = repo_root.canonicalize().unwrap_or(repo_root);
     let git_dir = repo_root.join(".git");
     let (sender, receiver) = mpsc::channel::<WatchMessage>();
-    // `start` does not return until the OS watch is registered, so callers can
-    // rely on every later change producing an event.
-    let (ready_tx, ready_rx) = mpsc::channel::<()>();
     let stop = Arc::new(AtomicBool::new(false));
     let paused = Arc::new(AtomicUsize::new(0));
     let dirty = Arc::new(AtomicBool::new(false));
+    let ready = Arc::new(Readiness::default());
     let emit: Arc<dyn Fn(RepoEventKind) + Send + Sync> = Arc::new(emit);
 
     let thread = {
         let stop = Arc::clone(&stop);
         let paused = Arc::clone(&paused);
         let dirty = Arc::clone(&dirty);
+        let ready = Arc::clone(&ready);
         let emit = Arc::clone(&emit);
         thread::spawn(move || {
-            let ignored = Arc::new(RwLock::new(IgnoreMatcher::load(&runner, &repo_root)));
+            // The ignore set starts empty and without git, so the OS watch is
+            // registered before the slow `git ls-files` runs.
+            let ignored = Arc::new(RwLock::new(IgnoreMatcher::new(&repo_root)));
             let callback_git_dir = git_dir.clone();
             let callback_ignored = Arc::clone(&ignored);
             let watcher =
@@ -280,7 +318,7 @@ where
             let mut watcher = match watcher {
                 Ok(watcher) => watcher,
                 Err(_) => {
-                    let _ = ready_tx.send(());
+                    ready.signal();
                     poll_loop(&stop, &paused, &dirty, &emit);
                     return;
                 }
@@ -289,11 +327,20 @@ where
             // the ignore filter is applied per event, so we do not pay for
             // restarting the stream once per directory.
             if watcher.watch(&repo_root, RecursiveMode::Recursive).is_err() {
-                let _ = ready_tx.send(());
+                ready.signal();
                 poll_loop(&stop, &paused, &dirty, &emit);
                 return;
             }
-            let _ = ready_tx.send(());
+            if stop.load(Ordering::SeqCst) {
+                ready.signal();
+                return;
+            }
+            refresh_ignored(&ignored, &runner);
+            if stop.load(Ordering::SeqCst) {
+                ready.signal();
+                return;
+            }
+            ready.signal();
 
             let mut pending = Pending::default();
             let mut last_ignore_refresh = Instant::now();
@@ -332,15 +379,14 @@ where
         })
     };
 
-    let _ = ready_rx.recv();
-
-    Ok(WatcherHandle {
+    WatcherHandle {
         stop,
         paused,
         dirty,
+        ready,
         thread: Some(thread),
         emit,
-    })
+    }
 }
 
 fn is_ignore_file(path: &Path) -> bool {
@@ -357,6 +403,17 @@ fn refresh_ignored(ignored: &RwLock<IgnoreMatcher>, runner: &Runner) {
     matcher.refresh(runner);
 }
 
+/// Sleeps in small chunks so a stop request is noticed promptly.
+fn sleep_interruptible(stop: &AtomicBool, total: Duration) {
+    const CHUNK: Duration = Duration::from_millis(100);
+    let mut remaining = total;
+    while remaining > Duration::ZERO && !stop.load(Ordering::SeqCst) {
+        let step = remaining.min(CHUNK);
+        thread::sleep(step);
+        remaining = remaining.saturating_sub(step);
+    }
+}
+
 fn poll_loop(
     stop: &AtomicBool,
     paused: &AtomicUsize,
@@ -364,7 +421,7 @@ fn poll_loop(
     emit: &Arc<dyn Fn(RepoEventKind) + Send + Sync>,
 ) {
     while !stop.load(Ordering::SeqCst) {
-        thread::sleep(POLL_FALLBACK);
+        sleep_interruptible(stop, POLL_FALLBACK);
         if stop.load(Ordering::SeqCst) {
             return;
         }
@@ -476,6 +533,7 @@ mod tests {
             stop: Arc::new(AtomicBool::new(false)),
             paused: Arc::new(AtomicUsize::new(0)),
             dirty: Arc::new(AtomicBool::new(false)),
+            ready: Arc::new(Readiness::default()),
             thread: None,
             emit: Arc::new(move |kind| {
                 let _ = sender.send(kind);
@@ -489,5 +547,47 @@ mod tests {
         handle.resume();
         assert_eq!(receiver.try_recv().unwrap(), RepoEventKind::Refreshed);
         assert!(receiver.try_recv().is_err());
+    }
+
+    #[test]
+    fn readiness_wait_returns_true_after_signal() {
+        let ready = Readiness::default();
+        ready.signal();
+        assert!(ready.wait(Duration::from_millis(50)));
+    }
+
+    #[test]
+    fn readiness_wait_times_out_without_signal() {
+        let ready = Readiness::default();
+        assert!(!ready.wait(Duration::from_millis(20)));
+    }
+
+    #[test]
+    fn readiness_late_signal_wakes_a_waiting_thread() {
+        let ready = Arc::new(Readiness::default());
+        let waiter = {
+            let ready = Arc::clone(&ready);
+            thread::spawn(move || ready.wait(Duration::from_secs(5)))
+        };
+        thread::sleep(Duration::from_millis(20));
+        ready.signal();
+        assert!(waiter.join().unwrap());
+    }
+
+    #[test]
+    fn sleep_interruptible_wakes_on_stop_before_the_full_wait() {
+        let stop = Arc::new(AtomicBool::new(false));
+        let stopper = {
+            let stop = Arc::clone(&stop);
+            thread::spawn(move || {
+                thread::sleep(Duration::from_millis(20));
+                stop.store(true, Ordering::SeqCst);
+            })
+        };
+        let start = Instant::now();
+        sleep_interruptible(&stop, POLL_FALLBACK);
+        let elapsed = start.elapsed();
+        stopper.join().unwrap();
+        assert!(elapsed < POLL_FALLBACK);
     }
 }

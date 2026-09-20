@@ -49,3 +49,10 @@
 - **Context:** OG-081; a local `tauri build --bundles app` failed at "failed to remove extra attributes from app bundle: `failed to run xattr`".
 - **Finding:** the bundler runs `xattr -crs <App>.app` before ad-hoc signing (`tauri-bundler` `bundle/macos/app.rs`). Its `output_ok()` treats any non-zero exit as `failed to run xattr` and swallows the real stderr (only visible with `-v`). On recent macOS the SIP-protected `com.apple.provenance` xattr can make `xattr -c` fail (EPERM) without Full Disk Access, and the attribute appears on freshly copied files, so the failure is intermittent. It is unrelated to the updater: it happens in the pre-existing signing step.
 - **Implication:** retry the build, or grant the terminal Full Disk Access (System Settings → Privacy & Security). The release workflow runs on a clean macOS runner, so it is not expected there. To validate the minisign key/password without bundling, use `npm run tauri -- signer sign -f <key> -p <password> <file>`.
+
+## Non-async commands run on the main thread
+
+- **Date:** 2026-09-22
+- **Context:** OG-109; switching repository tabs froze the UI on Ubuntu but felt fine on macOS.
+- **Finding:** Tauri 2 dispatches `#[tauri::command]` functions that are **not** `async` on the application's main thread. On Linux that thread is the GTK event loop, so a `git status`/`log`/`for-each-ref` inside a command blocks painting and input. The same work was fast enough on macOS to go unnoticed.
+- **Implication:** any command that spawns git or blocks on IO must be `async` and run its work through `tauri::async_runtime::spawn_blocking`. Resolve `State` from an `AppHandle` **inside** the blocking task: a `State` borrow cannot cross the await. Keep window/menu creation synchronous, since those must run on the main thread.

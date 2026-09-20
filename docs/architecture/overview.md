@@ -39,6 +39,10 @@ issues commands. Every interaction with the repository happens in Rust.
 
 - **Tauri commands:** public API for the UI (`open_repo`, `log_page`, `diff`,
   `stage_hunk`, `commit`, `checkout`, `fetch`, `push`...).
+- **Threading:** every command that runs git or blocking IO is `async` and
+  dispatches its work to the runtime's blocking pool, so the GTK/UI thread is
+  never blocked; only GUI-thread commands (window/menu creation) and trivial
+  in-memory commands stay synchronous (ADR-0010).
 - **Git runner:** spawns processes with argument arrays, a controlled
   environment, timeout and cancellation; returns `stdout`/`stderr`/exit code.
 - **Parsers:** pure functions per command (`-z` / `--porcelain=v2` /
