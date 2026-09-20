@@ -31,14 +31,14 @@ Todo lo necesario para trabajar sin tocar el terminal en repos locales.
 
 **Salida:** commit, stage por hunks, cambio de rama y navegación de historial en un repo de 10 000 commits sin que la UI se arrastre. ✅
 
-## M2 — Remotos
+## M2 — Remotos ✅ _(cerrado el 2026-09-18)_
 
-- [ ] Fetch, pull y push con salida en streaming y progreso.
-- [ ] Credenciales delegadas al credential helper del sistema; nada de secretos en la app.
-- [ ] Errores accionables (non-fast-forward, auth fallida, remoto ausente).
-- [ ] Operaciones cancelables.
+- [x] Fetch, pull y push con salida en streaming y progreso (OG-011).
+- [x] Credenciales delegadas al credential helper del sistema; nada de secretos en la app (OG-011).
+- [x] Errores accionables (non-fast-forward, auth fallida, remoto ausente) (OG-011).
+- [x] Operaciones cancelables (OG-011).
 
-**Salida:** ciclo diario completo en un repo con remoto, sin abrir el terminal.
+**Salida:** ciclo diario completo en un repo con remoto, sin abrir el terminal. ✅
 
 ## M3 — Historial avanzado
 

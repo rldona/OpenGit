@@ -48,6 +48,12 @@ vi.mock("./lib/bridge/status", () => ({
 
 vi.mock("./lib/bridge/events", () => ({
   subscribeRepoEvents: vi.fn().mockResolvedValue([]),
+  subscribeJobEvents: vi.fn().mockResolvedValue([]),
+}));
+
+vi.mock("./lib/bridge/jobs", () => ({
+  startRemoteJob: vi.fn().mockResolvedValue("job-1"),
+  cancelRemoteJob: vi.fn().mockResolvedValue(true),
 }));
 
 vi.mock("./lib/bridge/diff", () => ({
@@ -152,6 +158,9 @@ describe("App", () => {
     expect(await screen.findByText("commit de prueba")).toBeInTheDocument();
     expect(subscribeRepoEvents).toHaveBeenCalled();
     expect(await screen.findByText(/Repository opened: mi-repo/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Fetch" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Pull" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Push" })).toBeInTheDocument();
   });
 
   it("cambia a la vista File status y muestra los cambios", async () => {
