@@ -10,3 +10,13 @@
   - The pause is an atomic counter: write commands pause, execute and resume; if there were changes, on resume a single `repo://refreshed` is emitted.
   - If `notify` can't start (containers, network volumes), it falls back to 5 s polling.
 - **Implication:** any new command that writes to the repo must be wrapped in `pause_while`; and bulk reads must keep using `GIT_OPTIONAL_LOCKS=0` so as not to touch the index. On macOS FSEvents arrive at directory level: classify by file name, don't assume exact paths.
+
+## Watching the working tree: canonical paths and one recursive root
+
+- **Date:** 2026-09-20
+- **Context:** OG-080. The status list did not react to external edits because only `.git` was watched. The fix watches the working tree too, filtering git-ignored paths.
+- **Findings:**
+  - macOS FSEvents reports **real** paths: a repo under `/var/folders/…` arrives as `/private/var/folders/…`. Prefix checks (`path.starts_with(git_dir)`, the ignore set) fail unless `repo_root` is canonicalized first. `start` canonicalizes once and derives everything from it.
+  - `notify`'s macOS backend keeps a single `FSEventStream`; every call to `watch()` appends a root and **restarts the stream**, and every event scans all roots (`recursive_info`). One root per directory would be O(dirs) per event plus a restart per directory, so we watch a single recursive root and filter per event.
+  - The ignore set comes from `git ls-files -o -i --exclude-standard --directory -z`; `--directory` collapses fully ignored directories at any depth, so an ancestor-walk lookup covers descendants. A directory that does not exist yet is not listed, so the set is rebuilt while worktree changes keep arriving (throttled) and when a `.gitignore` is edited.
+- **Implication:** do not add per-directory `watch()` calls; keep the single root and the event filter. Any path math in the watcher must start from the canonical root.
