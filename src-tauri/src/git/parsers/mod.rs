@@ -1,3 +1,4 @@
+mod lfs;
 mod log;
 mod numstat;
 mod refs;
@@ -6,6 +7,7 @@ mod status;
 mod submodules;
 mod worktrees;
 
+pub use lfs::{parse_gitattributes_paths, parse_gitattributes_uses_lfs};
 pub use log::parse_log;
 pub use numstat::parse_numstat;
 pub use refs::parse_refs;

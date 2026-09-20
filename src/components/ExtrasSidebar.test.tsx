@@ -1,8 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { openRepo, submoduleStatus, worktreeList } from "../lib/bridge/repo";
-import type { RepoInfo, Submodule, Worktree } from "../lib/bridge/types";
+import { lfsStatus, openRepo, submoduleStatus, worktreeList } from "../lib/bridge/repo";
+import type { LfsStatus, RepoInfo, Submodule, Worktree } from "../lib/bridge/types";
 import { useExtrasStore } from "../lib/stores/extras";
 import { useRepoStore } from "../lib/stores/repo";
 import { ExtrasSidebar } from "./ExtrasSidebar";
@@ -15,6 +15,7 @@ vi.mock("../lib/bridge/repo", () => ({
   closeRepo: vi.fn(),
   submoduleStatus: vi.fn(),
   worktreeList: vi.fn(),
+  lfsStatus: vi.fn(),
 }));
 
 const REPO: RepoInfo = {
@@ -52,16 +53,20 @@ const WORKTREES: Worktree[] = [
   },
 ];
 
+const LFS: LfsStatus = { installed: true, version: "git-lfs/3.5.1", configured: true };
+
 describe("ExtrasSidebar", () => {
   beforeEach(() => {
     vi.mocked(submoduleStatus).mockResolvedValue(SUBMODULES);
     vi.mocked(worktreeList).mockResolvedValue(WORKTREES);
+    vi.mocked(lfsStatus).mockResolvedValue(LFS);
     vi.mocked(openRepo).mockResolvedValue(REPO);
     useRepoStore.setState({ repo: REPO, recents: [], loading: false, error: null });
     useExtrasStore.setState({
       root: REPO.root,
       submodules: SUBMODULES,
       worktrees: WORKTREES,
+      lfs: LFS,
       loading: false,
       error: null,
     });
@@ -102,10 +107,36 @@ describe("ExtrasSidebar", () => {
   it("no se muestra sin submódulos ni worktrees extra", () => {
     vi.mocked(submoduleStatus).mockResolvedValue([]);
     vi.mocked(worktreeList).mockResolvedValue([WORKTREES[0]]);
-    useExtrasStore.setState({ submodules: [], worktrees: [WORKTREES[0]] });
+    vi.mocked(lfsStatus).mockResolvedValue({
+      installed: true,
+      version: "git-lfs/3.5.1",
+      configured: false,
+    });
+    useExtrasStore.setState({
+      submodules: [],
+      worktrees: [WORKTREES[0]],
+      lfs: { installed: true, version: "git-lfs/3.5.1", configured: false },
+    });
 
     const { container } = render(<ExtrasSidebar />);
 
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it("muestra la sección Git LFS con la versión instalada", async () => {
+    render(<ExtrasSidebar />);
+
+    expect(screen.getByRole("heading", { name: "Git LFS" })).toBeInTheDocument();
+    expect(screen.getByText("git-lfs/3.5.1")).toBeInTheDocument();
+  });
+
+  it("avisa cuando LFS está configurado pero no instalado", () => {
+    const missing: LfsStatus = { installed: false, version: null, configured: true };
+    vi.mocked(lfsStatus).mockResolvedValue(missing);
+    useExtrasStore.setState({ lfs: missing });
+
+    render(<ExtrasSidebar />);
+
+    expect(screen.getByText("Not installed")).toBeInTheDocument();
   });
 });

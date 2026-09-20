@@ -582,6 +582,14 @@ pub fn worktree_list(
 }
 
 #[tauri::command]
+pub fn lfs_status(
+    path: String,
+    state: State<'_, AppState>,
+) -> Result<crate::git::LfsStatus, GitError> {
+    crate::git::lfs_status(&state.runner, Path::new(&path))
+}
+
+#[tauri::command]
 pub fn remove_recent_repo(path: String, state: State<'_, AppState>) -> Result<(), GitError> {
     state.recents.lock().map_err(lock_error)?.remove(&path)
 }

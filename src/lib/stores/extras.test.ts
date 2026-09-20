@@ -1,11 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { submoduleStatus, worktreeList } from "../bridge/repo";
-import type { Submodule, Worktree } from "../bridge/types";
+import { lfsStatus, submoduleStatus, worktreeList } from "../bridge/repo";
+import type { LfsStatus, Submodule, Worktree } from "../bridge/types";
 import { useExtrasStore } from "./extras";
 
 vi.mock("../bridge/repo", () => ({
   submoduleStatus: vi.fn(),
   worktreeList: vi.fn(),
+  lfsStatus: vi.fn(),
 }));
 
 const SUBMODULES: Submodule[] = [
@@ -23,20 +24,25 @@ const WORKTREES: Worktree[] = [
   },
 ];
 
+const LFS: LfsStatus = { installed: false, version: null, configured: true };
+
 describe("useExtrasStore", () => {
   beforeEach(() => {
     vi.mocked(submoduleStatus).mockResolvedValue(SUBMODULES);
     vi.mocked(worktreeList).mockResolvedValue(WORKTREES);
+    vi.mocked(lfsStatus).mockResolvedValue(LFS);
     useExtrasStore.getState().reset();
   });
 
-  it("load guarda submódulos y worktrees", async () => {
+  it("load guarda submódulos, worktrees y estado LFS", async () => {
     await useExtrasStore.getState().load("/tmp/repo");
 
     expect(submoduleStatus).toHaveBeenCalledWith("/tmp/repo");
     expect(worktreeList).toHaveBeenCalledWith("/tmp/repo");
+    expect(lfsStatus).toHaveBeenCalledWith("/tmp/repo");
     expect(useExtrasStore.getState().submodules).toEqual(SUBMODULES);
     expect(useExtrasStore.getState().worktrees).toEqual(WORKTREES);
+    expect(useExtrasStore.getState().lfs).toEqual(LFS);
     expect(useExtrasStore.getState().loading).toBe(false);
     expect(useExtrasStore.getState().error).toBeNull();
   });
@@ -51,21 +57,28 @@ describe("useExtrasStore", () => {
   });
 
   it("refresh actualiza las listas", async () => {
-    useExtrasStore.setState({ root: "/tmp/repo", submodules: [], worktrees: [] });
+    useExtrasStore.setState({ root: "/tmp/repo", submodules: [], worktrees: [], lfs: null });
 
     await useExtrasStore.getState().refresh("/tmp/repo");
 
     expect(useExtrasStore.getState().submodules).toEqual(SUBMODULES);
     expect(useExtrasStore.getState().worktrees).toEqual(WORKTREES);
+    expect(useExtrasStore.getState().lfs).toEqual(LFS);
   });
 
   it("reset vacía el estado", () => {
-    useExtrasStore.setState({ root: "/tmp/repo", submodules: SUBMODULES, worktrees: WORKTREES });
+    useExtrasStore.setState({
+      root: "/tmp/repo",
+      submodules: SUBMODULES,
+      worktrees: WORKTREES,
+      lfs: LFS,
+    });
 
     useExtrasStore.getState().reset();
 
     expect(useExtrasStore.getState().root).toBeNull();
     expect(useExtrasStore.getState().submodules).toEqual([]);
     expect(useExtrasStore.getState().worktrees).toEqual([]);
+    expect(useExtrasStore.getState().lfs).toBeNull();
   });
 });

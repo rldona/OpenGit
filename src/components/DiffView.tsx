@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { parseLfsPointerPatch } from "../lib/lfs";
 import { useRepoStore } from "../lib/stores/repo";
 import { useDiffStore } from "../lib/stores/diff";
 import { DiffEditor } from "./DiffEditor";
@@ -32,6 +33,7 @@ export function DiffView() {
   }, [root, storeRoot, target, openWorktree]);
 
   const label = target?.kind === "commit" ? `commit ${target.rev.slice(0, 7)}` : "Working tree";
+  const pointer = selected && !selected.untracked && !binary ? parseLfsPointerPatch(patch) : null;
 
   return (
     <div className="diff-view">
@@ -115,6 +117,12 @@ export function DiffView() {
           {error && (
             <p role="alert" className="error-banner">
               {error}
+            </p>
+          )}
+          {pointer && (
+            <p className="lfs-warning">
+              Git LFS pointer (oid {pointer.oid.slice(0, 12)}…, {pointer.size} bytes): the real
+              content is not available locally.
             </p>
           )}
           {!selected && !error && <p className="muted status-empty">No file selected</p>}
