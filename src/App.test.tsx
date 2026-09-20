@@ -202,6 +202,7 @@ describe("App", () => {
       activeView: "history",
       shortcutsOpen: false,
       searchFocusRequest: 0,
+      fileTree: true,
     });
     localStorage.clear();
     delete document.documentElement.dataset.theme;

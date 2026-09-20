@@ -1270,6 +1270,62 @@ body {
   gap: 4px;
 }
 
+.file-tree,
+.file-tree-children {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.file-tree-row {
+  list-style: none;
+}
+
+.file-tree-dir {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: 2px 0;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.file-tree-dir:hover {
+  color: var(--text);
+}
+
+.file-tree-caret {
+  width: 10px;
+  font-size: 10px;
+}
+
+.file-tree-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.file-tree-dir .diff-counts {
+  margin-left: auto;
+  padding-right: 10px;
+}
+
+.file-tree-file .diff-file,
+.file-tree-file .status-row {
+  width: 100%;
+}
+
+.diff-file-row {
+  display: flex;
+  flex-direction: column;
+}
+
 .refs-toolbar {
   display: flex;
   gap: 6px;

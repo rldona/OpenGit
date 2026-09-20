@@ -7,6 +7,7 @@ import type { RepoInfo, StatusReport } from "../lib/bridge/types";
 import { useExtrasStore } from "../lib/stores/extras";
 import { useRepoStore } from "../lib/stores/repo";
 import { useStatusStore } from "../lib/stores/status";
+import { useUiStore } from "../lib/stores/ui";
 import { StatusView } from "./StatusView";
 
 vi.mock("../lib/bridge/status", () => ({
@@ -71,6 +72,7 @@ describe("StatusView", () => {
     useRepoStore.setState({ repo: REPO, recents: [], loading: false, error: null });
     useStatusStore.getState().reset();
     useExtrasStore.setState({ lfs: null });
+    useUiStore.setState({ fileTree: true });
   });
 
   it("muestra las secciones con sus ficheros", async () => {
@@ -113,6 +115,23 @@ describe("StatusView", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Git LFS but git-lfs is not installed",
     );
+  });
+
+  it("agrupa por directorios en modo árbol y cambia a lista", async () => {
+    const user = userEvent.setup();
+    vi.mocked(statusRepo).mockResolvedValue({
+      ...REPORT,
+      entries: [{ kind: "ordinary", xy: ".M", path: "src/a.txt", orig_path: null }],
+    });
+    render(<StatusView />);
+
+    expect(await screen.findByRole("button", { name: /src\// })).toBeInTheDocument();
+    expect(screen.getByText("a.txt")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "List" }));
+
+    expect(screen.getByText("src/a.txt")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /src\// })).not.toBeInTheDocument();
   });
 
   it("no avisa si Git LFS está instalado", async () => {
