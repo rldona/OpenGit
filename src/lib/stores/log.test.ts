@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { cherryPick, cherryPickRange, resetMixed, revertCommit } from "../bridge/history";
+import { cherryPick, cherryPickRange, resetTo, revertCommit } from "../bridge/history";
 import { listRefs, logPage } from "../bridge/log";
 import type { Commit } from "../bridge/types";
 import { WORKTREE_SELECTION, useLogStore } from "./log";
@@ -15,7 +15,7 @@ vi.mock("../bridge/history", () => ({
   cherryPick: vi.fn(),
   cherryPickRange: vi.fn(),
   revertCommit: vi.fn(),
-  resetMixed: vi.fn(),
+  resetTo: vi.fn(),
 }));
 
 vi.mock("../bridge/status", () => ({
@@ -280,16 +280,16 @@ describe("useLogStore", () => {
     expect(useLogStore.getState().error).toContain("CONFLICT");
   });
 
-  it("reverts and does a mixed reset", async () => {
+  it("reverts and resets with a mode", async () => {
     vi.mocked(revertCommit).mockResolvedValue(undefined);
-    vi.mocked(resetMixed).mockResolvedValue(undefined);
+    vi.mocked(resetTo).mockResolvedValue(undefined);
     await useLogStore.getState().load("/tmp/repo");
 
     await useLogStore.getState().revert("/tmp/repo", "abcdef1234567890");
-    await useLogStore.getState().resetTo("/tmp/repo", "abcdef1234567890");
+    await useLogStore.getState().resetTo("/tmp/repo", "abcdef1234567890", "hard");
 
     expect(revertCommit).toHaveBeenCalled();
-    expect(resetMixed).toHaveBeenCalledWith("/tmp/repo", "abcdef1234567890");
+    expect(resetTo).toHaveBeenCalledWith("/tmp/repo", "abcdef1234567890", "hard");
   });
 
   it("exposes the git error without breaking the state", async () => {

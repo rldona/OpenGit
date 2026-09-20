@@ -1,7 +1,8 @@
 mod support;
 
 use opengit_lib::git::{
-    cherry_pick, cherry_pick_range, repo_op_state, reset_mixed, revert_commit, status, Runner,
+    cherry_pick, cherry_pick_range, repo_op_state, reset, reset_mixed, revert_commit, status,
+    ResetMode, Runner,
 };
 use support::TestRepo;
 
@@ -165,4 +166,37 @@ fn cherry_pick_range_records_the_source_with_x() {
     let body =
         String::from_utf8_lossy(&repo.git_ok(&["log", "-1", "--format=%b"]).stdout).to_string();
     assert!(body.contains("cherry picked from commit"), "{body}");
+}
+
+#[test]
+fn reset_modes_soft_mixed_and_hard() {
+    let repo = TestRepo::init();
+    commit_file(&repo, "a.txt", "uno\n", "base");
+    commit_file(&repo, "a.txt", "dos\n", "second");
+    let base = String::from_utf8_lossy(&repo.git_ok(&["rev-parse", "HEAD~1"]).stdout)
+        .trim()
+        .to_string();
+
+    reset(&runner(), repo.path(), &base, ResetMode::Soft).expect("soft reset");
+    assert_eq!(
+        std::fs::read_to_string(repo.path().join("a.txt")).expect("leer a.txt"),
+        "dos\n"
+    );
+    assert_eq!(
+        String::from_utf8_lossy(&repo.git_ok(&["status", "--porcelain"]).stdout),
+        "M  a.txt\n"
+    );
+
+    reset(&runner(), repo.path(), &base, ResetMode::Mixed).expect("mixed reset");
+    assert_eq!(
+        String::from_utf8_lossy(&repo.git_ok(&["status", "--porcelain"]).stdout),
+        " M a.txt\n"
+    );
+
+    reset(&runner(), repo.path(), &base, ResetMode::Hard).expect("hard reset");
+    assert_eq!(
+        std::fs::read_to_string(repo.path().join("a.txt")).expect("leer a.txt"),
+        "uno\n"
+    );
+    assert!(repo.git_ok(&["status", "--porcelain"]).stdout.is_empty());
 }

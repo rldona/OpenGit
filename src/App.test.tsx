@@ -658,7 +658,8 @@ describe("App", () => {
 
     const menu = screen.getByRole("menu");
     expect(within(menu).getByRole("menuitem", { name: "Revert" })).toBeInTheDocument();
-    expect(within(menu).getByRole("menuitem", { name: "Reset to here" })).toBeInTheDocument();
+    expect(within(menu).getByRole("menuitem", { name: "Mixed reset to here" })).toBeInTheDocument();
+    expect(within(menu).getByRole("menuitem", { name: "Hard reset to here…" })).toBeInTheDocument();
     expect(
       within(menu).getByRole("menuitem", { name: "Interactive rebase from here" }),
     ).toBeInTheDocument();

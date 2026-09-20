@@ -18,7 +18,10 @@ export function revertCommit(path: string, hash: string): Promise<void> {
   return invoke<void>("revert_commit", { path, hash });
 }
 
-/** Mixed reset: moves the branch and unstages, without touching the files. */
-export function resetMixed(path: string, hash: string): Promise<void> {
-  return invoke<void>("reset_mixed", { path, hash });
+/** How a reset treats the index and the working tree (OG-091). */
+export type ResetMode = "soft" | "mixed" | "hard";
+
+/** Moves the current branch to `hash`; `mode` decides the index and worktree. */
+export function resetTo(path: string, hash: string, mode: ResetMode): Promise<void> {
+  return invoke<void>("reset_to", { path, hash, mode });
 }
