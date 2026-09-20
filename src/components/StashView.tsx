@@ -10,7 +10,7 @@ import { useRepoStore } from "../lib/stores/repo";
 import { useStashStore } from "../lib/stores/stash";
 import { Icon } from "./Icon";
 
-/** El subject de git stash guarda la rama: `WIP on main: …` o `On main: …`. */
+/** The git stash subject stores the branch: `WIP on main: …` or `On main: …`. */
 function originBranch(subject: string): string | null {
   const match = /^(?:WIP on|On) ([^:]+): /.exec(subject);
   return match ? match[1] : null;
@@ -69,7 +69,7 @@ function FilePatch({
   );
 }
 
-/** Detalle de un stash embebido en la zona principal, como SourceTree (OG-046). */
+/** Detail of a stash embedded in the main area, like SourceTree (OG-046). */
 export function StashView() {
   const root = useRepoStore((state) => state.repo?.root ?? null);
   const reference = useStashStore((state) => state.diffReference);

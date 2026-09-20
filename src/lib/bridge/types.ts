@@ -53,7 +53,7 @@ export type Commit = {
   author_time: number;
   refs: string[];
   subject: string;
-  /** Cuerpo del mensaje (`%b`), sin el asunto. Cadena vacía si no hay. */
+  /** Message body (`%b`), without the subject. Empty string if there is none. */
   body: string;
 };
 
@@ -91,13 +91,13 @@ export type JobFinishedEvent = {
   cancelled: boolean;
 };
 
-/** Resultado de un merge: `conflicted` deja el flujo de OG-019/OG-020. */
+/** Result of a merge: `conflicted` leaves the OG-019/OG-020 flow. */
 export type MergeResult = {
   conflicted: boolean;
   output: string;
 };
 
-/** Identidad efectiva que git usaría al firmar un commit. */
+/** Effective identity git would use when signing a commit. */
 export type AuthorIdent = {
   name: string;
   email: string;
@@ -192,11 +192,11 @@ export type RefEntry = {
   object_type: string;
   upstream: string | null;
   track: string | null;
-  /** Objeto al que resuelve: en un tag anotado, el commit pelado. */
+  /** Object it resolves to: in an annotated tag, the peeled commit. */
   target: string;
 };
 
-/** Error serializado por el núcleo Rust (campo `kind` discriminante). */
+/** Error serialized by the Rust core (discriminant `kind` field). */
 export type GitErrorPayload = {
   kind: string;
   [key: string]: unknown;

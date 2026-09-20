@@ -24,26 +24,26 @@ afterEach(() => {
 });
 
 describe("matchesShortcut", () => {
-  it("fuera de macOS usa Ctrl como modificador primario", () => {
+  it("outside macOS uses Ctrl as the primary modifier", () => {
     expect(matchesShortcut(keydown({ key: "o", ctrlKey: true }), "mod+o")).toBe(true);
     expect(matchesShortcut(keydown({ key: "o", metaKey: true }), "mod+o")).toBe(false);
     expect(matchesShortcut(keydown({ key: "o" }), "mod+o")).toBe(false);
   });
 
-  it("en macOS usa Cmd", () => {
+  it("on macOS uses Cmd", () => {
     vi.spyOn(navigator, "platform", "get").mockReturnValue("MacIntel");
     expect(isMacPlatform()).toBe(true);
     expect(matchesShortcut(keydown({ key: "o", metaKey: true }), "mod+o")).toBe(true);
     expect(matchesShortcut(keydown({ key: "o", ctrlKey: true }), "mod+o")).toBe(false);
   });
 
-  it("ignora combinaciones con Alt", () => {
+  it("ignores combinations with Alt", () => {
     expect(matchesShortcut(keydown({ key: "o", ctrlKey: true, altKey: true }), "mod+o")).toBe(
       false,
     );
   });
 
-  it("reconoce ?, / con Shift, Enter y Escape", () => {
+  it("recognizes ?, / with Shift, Enter and Escape", () => {
     expect(matchesShortcut(keydown({ key: "?" }), "?")).toBe(true);
     expect(matchesShortcut(keydown({ key: "/", shiftKey: true }), "?")).toBe(true);
     expect(matchesShortcut(keydown({ key: "/" }), "?")).toBe(false);
@@ -53,7 +53,7 @@ describe("matchesShortcut", () => {
 });
 
 describe("formatKeys", () => {
-  it("etiqueta los atajos según la plataforma", () => {
+  it("labels shortcuts according to the platform", () => {
     expect(formatKeys("mod+o")).toBe("Ctrl+O");
     expect(formatKeys("mod+enter")).toBe("Ctrl+Enter");
     expect(formatKeys("escape")).toBe("Esc");
@@ -65,14 +65,14 @@ describe("formatKeys", () => {
 });
 
 describe("parseKeys", () => {
-  it("separa mod de la tecla", () => {
+  it("separates mod from the key", () => {
     expect(parseKeys("mod+enter")).toEqual({ mod: true, key: "enter" });
     expect(parseKeys("escape")).toEqual({ mod: false, key: "escape" });
   });
 });
 
 describe("isEditableTarget", () => {
-  it("detecta campos de texto y selects", () => {
+  it("detects text fields and selects", () => {
     expect(isEditableTarget(document.createElement("input"))).toBe(true);
     expect(isEditableTarget(document.createElement("textarea"))).toBe(true);
     expect(isEditableTarget(document.createElement("select"))).toBe(true);

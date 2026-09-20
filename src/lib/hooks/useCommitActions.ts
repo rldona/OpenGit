@@ -15,7 +15,7 @@ export type CommitActions = {
   rebase: (commit: Commit) => Promise<void>;
 };
 
-/** Acciones de un commit, compartidas por el panel de detalle y el menú contextual. */
+/** Actions for a commit, shared by the detail panel and the context menu. */
 export function useCommitActions(): CommitActions {
   const root = useRepoStore((state) => state.repo?.root ?? null);
   const currentBranch = useRefsStore((state) => state.current);

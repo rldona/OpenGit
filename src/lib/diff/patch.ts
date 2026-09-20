@@ -1,6 +1,6 @@
 /**
- * Utilidades para presentar el parche de git. Git es la fuente de verdad:
- * aquí solo se separa el parche en sus dos versiones para el modo lado a lado.
+ * Utilities to present the git patch. Git is the source of truth:
+ * here the patch is only split into its two versions for side-by-side mode.
  */
 
 export type SplitPatch = {
@@ -9,20 +9,20 @@ export type SplitPatch = {
   hunks: number;
 };
 
-/** Altura de fila del visor de parches (staging por hunks/líneas). */
+/** Row height of the patch viewer (staging by hunks/lines). */
 export const PATCH_ROW_HEIGHT = 20;
 
 export type PatchLineType = "hunk" | "add" | "del" | "context" | "meta";
 
 export type ClassifiedPatchLine = {
-  /** Índice global de la línea dentro del parche (lo que espera el backend). */
+  /** Global index of the line within the patch (what the backend expects). */
   index: number;
   text: string;
   type: PatchLineType;
   hunk: number | null;
-  /** Número de línea en la versión original; `null` si no existe ahí. */
+  /** Line number in the original version; `null` if it does not exist there. */
   oldLine: number | null;
-  /** Número de línea en la versión nueva; `null` si no existe ahí. */
+  /** Line number in the new version; `null` if it does not exist there. */
   newLine: number | null;
 };
 
@@ -34,7 +34,7 @@ export type HunkHeader = {
   section: string;
 };
 
-/** Parsea `@@ -a[,b] +c[,d] @@ sección`; `null` si no encaja. */
+/** Parses `@@ -a[,b] +c[,d] @@ section`; `null` if it does not match. */
 export function parseHunkHeader(text: string): HunkHeader | null {
   const match = /^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@ ?(.*)$/.exec(text);
   if (!match) {
@@ -49,7 +49,7 @@ export function parseHunkHeader(text: string): HunkHeader | null {
   };
 }
 
-/** Clasifica las líneas del parche para pintarlas, seleccionarlas y numerarlas. */
+/** Classifies patch lines to paint, select and number them. */
 export function classifyPatchLines(patch: string): ClassifiedPatchLine[] {
   const raw = patch.split("\n");
   if (raw.length > 0 && raw[raw.length - 1] === "") {
@@ -99,7 +99,7 @@ export type FilePatch = {
   patch: string;
 };
 
-/** Ruta del fichero nuevo a partir de `diff --git a/… b/…`. */
+/** Path of the new file from `diff --git a/… b/…`. */
 function pathFromDiffHeader(line: string): string {
   const rest = line.slice("diff --git ".length);
   const marker = rest.lastIndexOf(" b/");
@@ -108,8 +108,8 @@ function pathFromDiffHeader(line: string): string {
 }
 
 /**
- * Divide un parche con varios ficheros en trozos por `diff --git`.
- * Lo usa la vista de stash, que recibe todo el parche de una vez.
+ * Splits a multi-file patch into chunks by `diff --git`.
+ * Used by the stash view, which receives the whole patch at once.
  */
 export function splitPatchByFile(patch: string): FilePatch[] {
   const files: FilePatch[] = [];
@@ -135,7 +135,7 @@ export function splitPatchByFile(patch: string): FilePatch[] {
   return files;
 }
 
-/** Suma de líneas añadidas y borradas de un parche de un solo fichero. */
+/** Sum of added and deleted lines of a single-file patch. */
 export function patchCounts(patch: string): { added: number; deleted: number } {
   let added = 0;
   let deleted = 0;
@@ -156,8 +156,8 @@ export function isBinaryPatch(patch: string): boolean {
 }
 
 /**
- * Divide un parche unificado en el texto original y el modificado.
- * Devuelve `null` si no hay hunks (binario, solo modo de fichero o vacío).
+ * Splits a unified patch into the original and modified text.
+ * Returns `null` if there are no hunks (binary, file mode only or empty).
  */
 export function splitPatch(patch: string): SplitPatch | null {
   if (patch.trim() === "" || isBinaryPatch(patch)) {
@@ -173,7 +173,7 @@ export function splitPatch(patch: string): SplitPatch | null {
       continue;
     }
     if (hunks === 0) {
-      // Cabeceras (`diff --git`, `index`, `---`, `+++`, modos, rename...).
+      // Headers (`diff --git`, `index`, `---`, `+++`, modes, rename...).
       continue;
     }
     if (line.startsWith("\\ No newline")) {
@@ -201,12 +201,12 @@ export function splitPatch(patch: string): SplitPatch | null {
 }
 
 /**
- * Descarta las cabeceras del parche anteriores al primer hunk
+ * Discards the patch headers before the first hunk
  * (`diff --git`, `index`, `---`, `+++`).
  *
- * No aportan nada al leer un diff y se comen cuatro filas de alto. Se filtran
- * al pintar, no al parsear: `index` y `hunk` de cada línea siguen siendo los
- * del parche original, que es lo que usa el staging por líneas y por hunks.
+ * They add nothing when reading a diff and eat up four rows of height. They
+ * are filtered when painting, not when parsing: each line's `index` and `hunk`
+ * remain those of the original patch, which is what line and hunk staging uses.
  */
 export function stripPatchHeader(lines: ClassifiedPatchLine[]): ClassifiedPatchLine[] {
   const firstHunk = lines.findIndex((line) => line.type === "hunk");

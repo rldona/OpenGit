@@ -52,14 +52,14 @@ describe("useStashStore", () => {
     vi.mocked(statusRepo).mockResolvedValue(CLEAN);
   });
 
-  it("carga la lista de stashes", async () => {
+  it("loads the stash list", async () => {
     await useStashStore.getState().load("/tmp/repo");
 
     expect(useStashStore.getState().stashes).toHaveLength(1);
     expect(useStashStore.getState().stashes[0].reference).toBe("stash@{0}");
   });
 
-  it("crea un stash con mensaje y untracked", async () => {
+  it("creates a stash with message and untracked", async () => {
     await useStashStore.getState().load("/tmp/repo");
 
     const ok = await useStashStore.getState().create("/tmp/repo", "mi stash", true);
@@ -70,7 +70,7 @@ describe("useStashStore", () => {
     expect(statusRepo).toHaveBeenCalled();
   });
 
-  it("pop aplica con drop y refresca", async () => {
+  it("pop applies with drop and refreshes", async () => {
     await useStashStore.getState().load("/tmp/repo");
 
     await useStashStore.getState().pop("/tmp/repo", "stash@{0}");
@@ -79,7 +79,7 @@ describe("useStashStore", () => {
     expect(useUiStore.getState().outputLines.join("\n")).toContain("Popped stash@{0}");
   });
 
-  it("un conflicto al aplicar conserva el stash y expone el error", async () => {
+  it("a conflict on apply keeps the stash and exposes the error", async () => {
     vi.mocked(stashApply).mockRejectedValue({
       kind: "command_failed",
       exit_code: 1,
@@ -95,7 +95,7 @@ describe("useStashStore", () => {
     expect(stashList).toHaveBeenCalled();
   });
 
-  it("borra un stash", async () => {
+  it("deletes a stash", async () => {
     await useStashStore.getState().load("/tmp/repo");
 
     await useStashStore.getState().drop("/tmp/repo", "stash@{0}");
@@ -103,7 +103,7 @@ describe("useStashStore", () => {
     expect(stashDrop).toHaveBeenCalledWith("/tmp/repo", "stash@{0}");
   });
 
-  it("select carga el parche del stash para la vista", async () => {
+  it("select loads the stash patch for the view", async () => {
     await useStashStore.getState().select("/tmp/repo", "stash@{0}");
 
     expect(stashShow).toHaveBeenCalledWith("/tmp/repo", "stash@{0}");
@@ -113,7 +113,7 @@ describe("useStashStore", () => {
     expect(useStashStore.getState().diffError).toBeNull();
   });
 
-  it("select registra el error", async () => {
+  it("select records the error", async () => {
     vi.mocked(stashShow).mockRejectedValue(new Error("boom"));
 
     await useStashStore.getState().select("/tmp/repo", "stash@{0}");
@@ -122,7 +122,7 @@ describe("useStashStore", () => {
     expect(useStashStore.getState().diffLoading).toBe(false);
   });
 
-  it("clearSelection limpia la referencia y el parche", async () => {
+  it("clearSelection clears the reference and the patch", async () => {
     await useStashStore.getState().select("/tmp/repo", "stash@{0}");
 
     useStashStore.getState().clearSelection();
@@ -131,7 +131,7 @@ describe("useStashStore", () => {
     expect(useStashStore.getState().diffPatch).toBe("");
   });
 
-  it("pop y drop deseleccionan: los stash@{n} se renumeran", async () => {
+  it("pop and drop deselect: stash@{n} entries are renumbered", async () => {
     await useStashStore.getState().load("/tmp/repo");
     await useStashStore.getState().select("/tmp/repo", "stash@{0}");
 

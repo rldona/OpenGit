@@ -75,7 +75,7 @@ export const useRepoStore = create<RepoState>((set, get) => ({
     try {
       await closeRepo();
     } catch {
-      // Aunque falle en Rust, la UI se cierra igual.
+      // Even if it fails in Rust, the UI closes anyway.
     }
     useLogStore.getState().reset();
     useStatusStore.getState().reset();

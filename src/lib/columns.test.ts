@@ -26,14 +26,14 @@ function commit(overrides: Partial<Commit> = {}): Commit {
 }
 
 describe("widthAfterDrag", () => {
-  it("ensancha al arrastrar hacia la izquierda", () => {
-    // Las columnas fijas están a la derecha: arrastrar su borde izquierdo
-    // hacia la izquierda las hace más anchas.
+  it("widens when dragging to the left", () => {
+    // Fixed columns are on the right: dragging their left edge
+    // to the left makes them wider.
     expect(widthAfterDrag(100, -30)).toBe(130);
     expect(widthAfterDrag(100, 30)).toBe(70);
   });
 
-  it("respeta el mínimo y el máximo", () => {
+  it("respects the minimum and the maximum", () => {
     expect(widthAfterDrag(COLUMN_MIN, 500)).toBe(COLUMN_MIN);
     expect(widthAfterDrag(COLUMN_MAX, -500)).toBe(COLUMN_MAX);
   });
@@ -46,11 +46,11 @@ describe("sortCommits", () => {
     commit({ hash: "bbbb", subject: "b", author_time: 200, author_name: "Luis" }),
   ];
 
-  it("sin orden devuelve el topológico tal cual", () => {
+  it("with no sort returns the topological order as is", () => {
     expect(sortCommits(commits, null)).toBe(commits);
   });
 
-  it("ordena por descripción, hash, autor y fecha en ambos sentidos", () => {
+  it("sorts by description, hash, author and date in both directions", () => {
     expect(
       sortCommits(commits, { column: "description", direction: "asc" }).map((c) => c.subject),
     ).toEqual(["a", "b", "c"]);
@@ -69,7 +69,7 @@ describe("sortCommits", () => {
 });
 
 describe("nextSort", () => {
-  it("cicla ascendente → descendente → topológico", () => {
+  it("cycles ascending → descending → topological", () => {
     const asc = nextSort(null, "description");
     expect(asc).toEqual({ column: "description", direction: "asc" });
 
@@ -79,7 +79,7 @@ describe("nextSort", () => {
     expect(nextSort(desc, "description")).toBeNull();
   });
 
-  it("cambiar de columna empieza ascendente", () => {
+  it("changing column starts ascending", () => {
     expect(nextSort({ column: "date", direction: "desc" }, "hash")).toEqual({
       column: "hash",
       direction: "asc",
@@ -90,17 +90,17 @@ describe("nextSort", () => {
 describe("loadColumnWidths", () => {
   beforeEach(() => localStorage.clear());
 
-  it("devuelve los valores por defecto sin nada guardado", () => {
+  it("returns the defaults with nothing saved", () => {
     expect(loadColumnWidths()).toEqual(COLUMN_DEFAULTS);
   });
 
-  it("recupera lo guardado", () => {
+  it("recovers what was saved", () => {
     saveColumnWidths({ hash: 90, author: 200, date: 130 });
 
     expect(loadColumnWidths()).toEqual({ hash: 90, author: 200, date: 130 });
   });
 
-  it("sanea valores corruptos en vez de romper la tabla", () => {
+  it("sanitizes corrupt values instead of breaking the table", () => {
     localStorage.setItem(
       "opengit.columns.commit-table",
       JSON.stringify({ hash: 9999, author: "ancho", date: -40 }),
@@ -113,7 +113,7 @@ describe("loadColumnWidths", () => {
     expect(widths.date).toBe(COLUMN_MIN);
   });
 
-  it("aguanta un JSON inválido", () => {
+  it("tolerates invalid JSON", () => {
     localStorage.setItem("opengit.columns.commit-table", "{no es json");
 
     expect(loadColumnWidths()).toEqual(COLUMN_DEFAULTS);

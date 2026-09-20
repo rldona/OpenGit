@@ -17,12 +17,12 @@ import { FileTree } from "./FileTree";
 
 type SortMode = "path" | "status";
 
-/** Un fichero con cambios en el index va a "Staged"; el resto, a "Unstaged". */
+/** A file with changes in the index goes to "Staged"; the rest, to "Unstaged". */
 function isStaged(entry: FileStatus): boolean {
   return entry.kind !== "untracked" && entry.kind !== "unmerged" && entry.xy[0] !== ".";
 }
 
-/** Glifo y color por estado, como los iconos de la lista de SourceTree. */
+/** Glyph and color per status, like the icons in the SourceTree list. */
 function statusBadge(entry: FileStatus, staged: boolean): { glyph: string; tone: string } {
   if (entry.kind === "unmerged") {
     return { glyph: "!", tone: "conflict" };
@@ -87,8 +87,8 @@ export function StatusView() {
       setActiveView("conflict");
       return;
     }
-    // A diferencia de antes, no se salta a la vista Diff: el contenido se
-    // pinta al lado, como la ventana de commit de SourceTree.
+    // Unlike before, it does not jump to the Diff view: the content is
+    // rendered alongside, like SourceTree's commit window.
     await openWorktreeFile(root, entry.path, staged);
   };
 
@@ -187,7 +187,7 @@ export function StatusView() {
     entries.filter((entry) => !isStaged(entry)),
     sort,
   );
-  // Un conflicto no se "stagea": primero se resuelve.
+  // A conflict is not "staged": it is resolved first.
   const stageable = unstaged.filter((entry) => entry.kind !== "unmerged");
   const total = report?.entries.length ?? 0;
 

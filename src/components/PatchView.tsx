@@ -12,14 +12,14 @@ const OVERSCAN = 8;
 
 type Props = {
   patch: string;
-  /** Hay staging disponible (working tree o index; nunca en commits). */
+  /** Staging is available (working tree or index; never on commits). */
   staging: boolean;
-  /** El parche viene del index: las acciones son unstage. */
+  /** The patch comes from the index: the actions are unstage. */
   stagedSide: boolean;
   selectedLines: number[];
   onToggleLine: (index: number) => void;
   onApply: (selection: HunkSelection) => void;
-  /** Presente en el lado unstaged: descarta el hunk del working tree. */
+  /** Present on the unstaged side: discards the hunk from the working tree. */
   onDiscard?: (selection: HunkSelection) => void;
 };
 

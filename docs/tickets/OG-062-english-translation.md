@@ -18,15 +18,15 @@ between them and without touching behaviour.
 
 ## Alcance
 
-- Root docs: `AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`,
-  `ROADMAP.md`, `CONTRIBUTING.md`.
-- Release notes of published releases and the wording the release workflow
-  generates.
-- Frontend comments and test descriptions.
-- Rust comments, doc comments and test names/messages.
-- `docs/tickets/` (title, states and prose) and its index.
-- `docs/architecture/`, `docs/decisions/` and `docs/guides/`.
-- `.ai/` (agents, skills, workflows, memory).
+- [x] Root docs: `AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`,
+  `ROADMAP.md`, `CONTRIBUTING.md` (PR #47).
+- [x] Release notes of published releases (v0.1.0 edited on GitHub) and the
+  wording the release workflow generates (already English).
+- [x] Frontend comments and test descriptions (~107 files).
+- [ ] Rust comments, doc comments and test names/messages.
+- [ ] `docs/tickets/` (title, states and prose) and its index.
+- [ ] `docs/architecture/`, `docs/decisions/` and `docs/guides/`.
+- [ ] `.ai/` (agents, skills, workflows, memory).
 
 ## Criterios de aceptación
 

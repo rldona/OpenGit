@@ -8,7 +8,7 @@ type Item = { path: string };
 const ITEMS: Item[] = [{ path: "src/a.ts" }, { path: "src/lib/b.ts" }, { path: "README.md" }];
 
 describe("FileTree", () => {
-  it("pinta directorios y ficheros con su nombre", () => {
+  it("renders directories and files with their name", () => {
     render(
       <FileTree
         items={ITEMS}
@@ -24,7 +24,7 @@ describe("FileTree", () => {
     expect(screen.getByText("b.ts")).toBeInTheDocument();
   });
 
-  it("pliega y despliega un directorio", async () => {
+  it("collapses and expands a directory", async () => {
     const user = userEvent.setup();
     render(
       <FileTree
@@ -49,7 +49,7 @@ describe("FileTree", () => {
     expect(screen.getByText("a.ts")).toBeInTheDocument();
   });
 
-  it("ofrece extras por directorio", () => {
+  it("offers per-directory extras", () => {
     render(
       <FileTree
         items={[{ path: "src/a.ts" }]}

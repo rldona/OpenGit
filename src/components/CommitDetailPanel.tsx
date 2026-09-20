@@ -10,7 +10,7 @@ import { DiffFilesPanel } from "./DiffFilesPanel";
 import { DiffPatchPanel } from "./DiffPatchPanel";
 import { SplitPane } from "./SplitPane";
 
-/** Espera antes de pedir el diff, para no lanzar una llamada a git por tecla. */
+/** Delay before requesting the diff, so as not to launch a git call per keystroke. */
 export const COMMIT_DIFF_DEBOUNCE_MS = 120;
 
 type Props = {
@@ -18,12 +18,12 @@ type Props = {
 };
 
 /**
- * Zona inferior del historial, con la disposición de SourceTree:
- * a la izquierda los controles, la lista de ficheros y, debajo en su propio
- * panel, los metadatos del commit; a la derecha el diff del fichero elegido.
+ * Lower area of the history, with the SourceTree layout:
+ * on the left the controls, the file list and, below in its own panel,
+ * the commit metadata; on the right the diff of the selected file.
  *
- * Las acciones sobre el commit (cherry-pick, revert, reset, rebase) no viven
- * aquí: están en el menú contextual de la fila del commit.
+ * Actions on the commit (cherry-pick, revert, reset, rebase) do not live
+ * here: they are in the context menu of the commit row.
  */
 export function CommitDetailPanel({ commit }: Props) {
   const root = useRepoStore((state) => state.repo?.root ?? null);
@@ -41,8 +41,8 @@ export function CommitDetailPanel({ commit }: Props) {
     if (!root) {
       return;
     }
-    // Navegar con el teclado cambia la selección muy rápido: esperamos a que se
-    // estabilice. Las respuestas obsoletas las descarta el propio store.
+    // Navigating with the keyboard changes the selection very fast: we wait for
+    // it to settle. Stale responses are discarded by the store itself.
     const timer = window.setTimeout(() => {
       void openCommit(root, hash);
     }, COMMIT_DIFF_DEBOUNCE_MS);

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useRemoteStore } from "../lib/stores/remote";
 
-/** Último porcentaje que git escribe en su progreso ("Receiving objects: 42%"). */
+/** Last percentage git writes in its progress ("Receiving objects: 42%"). */
 function lastPercent(lines: string[]): number | null {
   for (let index = lines.length - 1; index >= 0; index -= 1) {
     const match = lines[index].match(/(\d{1,3})%/);
@@ -13,8 +13,8 @@ function lastPercent(lines: string[]): number | null {
 }
 
 /**
- * Ventana de progreso y de error de los jobs de red, como SourceTree: mientras
- * corre enseña la barra y la última línea; si falla, la salida completa y Close.
+ * Progress and error window for network jobs, like SourceTree: while it runs it
+ * shows the bar and the last line; if it fails, the full output and Close.
  */
 export function RemoteJobModal() {
   const running = useRemoteStore((state) => state.running);

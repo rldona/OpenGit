@@ -5,7 +5,7 @@ type Props<T> = {
   items: T[];
   pathOf: (item: T) => string;
   renderFile: (item: T, name: string) => ReactNode;
-  /** Extra para la cabecera del directorio (p. ej. contadores agregados). */
+  /** Extra content for the directory header (e.g. aggregated counters). */
   renderDirExtra?: (dir: FileTreeDir<T>) => ReactNode;
 };
 

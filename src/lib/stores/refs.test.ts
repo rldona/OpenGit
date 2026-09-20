@@ -103,7 +103,7 @@ describe("useRefsStore", () => {
     vi.mocked(confirmDestructive).mockResolvedValue(true);
   });
 
-  it("carga refs y tracking de la rama actual", async () => {
+  it("loads refs and tracking of the current branch", async () => {
     vi.mocked(branchTracking).mockResolvedValue({
       current: "main",
       upstream: "origin/main",
@@ -126,7 +126,7 @@ describe("useRefsStore", () => {
     expect(useRefsStore.getState().outgoing).toEqual(["local1"]);
   });
 
-  it("sin upstream no pide los conjuntos de commits", async () => {
+  it("without upstream does not request the commit sets", async () => {
     await useRefsStore.getState().load("/tmp/repo");
 
     expect(trackingCommits).not.toHaveBeenCalled();
@@ -134,7 +134,7 @@ describe("useRefsStore", () => {
     expect(useRefsStore.getState().outgoing).toEqual([]);
   });
 
-  it("hace checkout de una rama local", async () => {
+  it("checks out a local branch", async () => {
     await useRefsStore.getState().load("/tmp/repo");
     const feature = REFS[1];
 
@@ -143,7 +143,7 @@ describe("useRefsStore", () => {
     expect(checkoutRef).toHaveBeenCalledWith("/tmp/repo", "feature", false);
   });
 
-  it("hace checkout de una remota creando la local con tracking", async () => {
+  it("checks out a remote creating the local branch with tracking", async () => {
     await useRefsStore.getState().load("/tmp/repo");
     const remote = REFS[2];
 
@@ -152,7 +152,7 @@ describe("useRefsStore", () => {
     expect(checkoutRef).toHaveBeenCalledWith("/tmp/repo", "origin/remota", true);
   });
 
-  it("fusiona una rama en la actual y refresca", async () => {
+  it("merges a branch into the current one and refreshes", async () => {
     vi.mocked(mergeBranch).mockResolvedValue({ conflicted: false, output: "Fast-forward\n" });
     await useRefsStore.getState().load("/tmp/repo");
 
@@ -163,7 +163,7 @@ describe("useRefsStore", () => {
     expect(useUiStore.getState().outputLines.join("\n")).toContain("Merged feature");
   });
 
-  it("un merge con conflicto no es un error y lo comunica", async () => {
+  it("a merge with conflicts is not an error and is reported", async () => {
     vi.mocked(mergeBranch).mockResolvedValue({
       conflicted: true,
       output: "CONFLICT (content): Merge conflict in a.txt\n",
@@ -178,7 +178,7 @@ describe("useRefsStore", () => {
     expect(useUiStore.getState().outputLines.join("\n")).toContain("Merge conflicts from feature");
   });
 
-  it("expone el fallo real de un merge", async () => {
+  it("exposes the real failure of a merge", async () => {
     vi.mocked(mergeBranch).mockRejectedValue({
       kind: "command_failed",
       exit_code: 128,
@@ -194,7 +194,7 @@ describe("useRefsStore", () => {
     expect(useRefsStore.getState().error).toContain("not something we can merge");
   });
 
-  it("avisa si hay cambios sin commitear y respeta la cancelación", async () => {
+  it("warns about uncommitted changes and respects cancellation", async () => {
     useStatusStore.setState({
       report: {
         ...CLEAN,
@@ -210,7 +210,7 @@ describe("useRefsStore", () => {
     expect(checkoutRef).not.toHaveBeenCalled();
   });
 
-  it("pide borrar con force cuando la rama no está mergeada", async () => {
+  it("asks to delete with force when the branch is not merged", async () => {
     vi.mocked(deleteBranch).mockRejectedValue({
       kind: "command_failed",
       exit_code: 1,
@@ -226,7 +226,7 @@ describe("useRefsStore", () => {
     expect(useRefsStore.getState().error).toContain("not fully merged");
   });
 
-  it("el force delete exige teclear el nombre", async () => {
+  it("force delete requires typing the name", async () => {
     await useRefsStore.getState().load("/tmp/repo");
 
     await useRefsStore.getState().forceRemove("/tmp/repo", "feature", "otra");

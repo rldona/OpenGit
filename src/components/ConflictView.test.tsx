@@ -57,7 +57,7 @@ describe("ConflictView", () => {
     useStatusStore.setState({ root: REPO.root, report: REPORT });
   });
 
-  it("abre el primer conflicto y muestra ours/theirs", async () => {
+  it("opens the first conflict and shows ours/theirs", async () => {
     render(<ConflictView />);
 
     expect(await screen.findByText("Ours (HEAD)")).toBeInTheDocument();
@@ -66,7 +66,7 @@ describe("ConflictView", () => {
     expect(screen.getByText("suya")).toBeInTheDocument();
   });
 
-  it("solo permite guardar cuando todo está resuelto", async () => {
+  it("only allows saving when everything is resolved", async () => {
     const user = userEvent.setup();
     render(<ConflictView />);
 
@@ -81,7 +81,7 @@ describe("ConflictView", () => {
     expect(resolveConflict).toHaveBeenCalledWith("/tmp/repo", "a.txt", "comun\nsuya\n");
   });
 
-  it("permite deshacer la elección de un bloque", async () => {
+  it("allows undoing the choice of a hunk", async () => {
     const user = userEvent.setup();
     render(<ConflictView />);
 

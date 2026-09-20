@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { isImagePath } from "./images";
 
 describe("isImagePath", () => {
-  it("reconoce las extensiones de imagen", () => {
+  it("recognizes image extensions", () => {
     expect(isImagePath("assets/logo.PNG")).toBe(true);
     expect(isImagePath("foto.jpeg")).toBe(true);
     expect(isImagePath("anim.gif")).toBe(true);
@@ -11,7 +11,7 @@ describe("isImagePath", () => {
     expect(isImagePath("x.heic")).toBe(true);
   });
 
-  it("deja fuera lo que no es imagen", () => {
+  it("leaves out what is not an image", () => {
     expect(isImagePath("src/main.rs")).toBe(false);
     expect(isImagePath("icono.svg")).toBe(false);
     expect(isImagePath("datos.bin")).toBe(false);

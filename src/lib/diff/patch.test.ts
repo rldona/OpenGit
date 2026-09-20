@@ -10,11 +10,11 @@ import {
 } from "./patch";
 
 describe("patchCounts", () => {
-  it("cuenta añadidas y borradas sin contar ---/+++", () => {
+  it("counts added and deleted without counting ---/+++", () => {
     expect(patchCounts(PATCH)).toEqual({ added: 1, deleted: 1 });
   });
 
-  it("un parche sin cambios no cuenta nada", () => {
+  it("a patch with no changes counts nothing", () => {
     expect(patchCounts("diff --git a/a b/a\n@@ -1 +1 @@\n mismo")).toEqual({
       added: 0,
       deleted: 0,
@@ -43,7 +43,7 @@ const BINARY = [
 ].join("\n");
 
 describe("splitPatch", () => {
-  it("separa las dos versiones de un parche unificado", () => {
+  it("splits the two versions of a unified patch", () => {
     const split = splitPatch(PATCH);
 
     expect(split).toEqual({
@@ -53,12 +53,12 @@ describe("splitPatch", () => {
     });
   });
 
-  it("reconoce binarios y devuelve null", () => {
+  it("recognizes binaries and returns null", () => {
     expect(isBinaryPatch(BINARY)).toBe(true);
     expect(splitPatch(BINARY)).toBeNull();
   });
 
-  it("ignora cabeceras y marcadores de fin de fichero", () => {
+  it("ignores headers and end-of-file markers", () => {
     const patch = [
       "diff --git a/a.txt b/a.txt",
       "--- a/a.txt",
@@ -77,13 +77,13 @@ describe("splitPatch", () => {
     expect(split?.modified).toBe("nuevo");
   });
 
-  it("devuelve null cuando no hay hunks", () => {
+  it("returns null when there are no hunks", () => {
     const patch = ["diff --git a/a b/a", "old mode 100644", "new mode 100755", ""].join("\n");
     expect(splitPatch(patch)).toBeNull();
     expect(splitPatch("")).toBeNull();
   });
 
-  it("clasifica las líneas del parche para la vista de staging", () => {
+  it("classifies patch lines for the staging view", () => {
     const lines = classifyPatchLines(PATCH);
 
     expect(lines.map((line) => line.type)).toEqual([
@@ -102,24 +102,24 @@ describe("splitPatch", () => {
     expect(lines[8].hunk).toBe(0);
   });
 
-  it("numera las líneas antiguas y nuevas de cada tipo", () => {
+  it("numbers the old and new lines of each type", () => {
     const lines = classifyPatchLines(PATCH);
 
     const hunk = lines.find((line) => line.type === "hunk")!;
     expect(hunk.oldLine).toBeNull();
     expect(hunk.newLine).toBeNull();
 
-    // contexto: numeran en ambas versiones
+    // context: numbered in both versions
     expect(lines[5]).toMatchObject({ type: "context", oldLine: 1, newLine: 1 });
-    // borrada: solo antigua
+    // deleted: old only
     expect(lines[6]).toMatchObject({ type: "del", oldLine: 2, newLine: null });
-    // añadida: solo nueva
+    // added: new only
     expect(lines[7]).toMatchObject({ type: "add", oldLine: null, newLine: 2 });
-    // contexto tras el cambio: la nueva avanza por el añadido
+    // context after the change: the new side advances past the addition
     expect(lines[8]).toMatchObject({ type: "context", oldLine: 3, newLine: 3 });
   });
 
-  it("acepta cabeceras con conteos implícitos y sección", () => {
+  it("accepts headers with implicit counts and section", () => {
     expect(parseHunkHeader("@@ -1 +1 @@")).toEqual({
       oldStart: 1,
       oldCount: 1,
@@ -137,7 +137,7 @@ describe("splitPatch", () => {
     expect(parseHunkHeader("no es una cabecera")).toBeNull();
   });
 
-  it("no confunde líneas de contenido que empiezan por guiones", () => {
+  it("does not confuse content lines starting with dashes", () => {
     const patch = [
       "diff --git a/a.txt b/a.txt",
       "--- a/a.txt",
@@ -166,7 +166,7 @@ describe("stripPatchHeader", () => {
     " tres",
   ].join("\n");
 
-  it("quita las cabeceras anteriores al primer hunk", () => {
+  it("removes headers before the first hunk", () => {
     const lines = stripPatchHeader(classifyPatchLines(PATCH));
 
     expect(lines[0].type).toBe("hunk");
@@ -176,16 +176,16 @@ describe("stripPatchHeader", () => {
     expect(lines.some((line) => line.text.startsWith("+++ "))).toBe(false);
   });
 
-  it("conserva los índices originales, que son los que usa el staging", () => {
+  it("preserves the original indices, which are the ones staging uses", () => {
     const lines = stripPatchHeader(classifyPatchLines(PATCH));
     const added = lines.find((line) => line.type === "add");
 
-    // "+dos" es la línea 6 (base 0) del parche completo, no la 1 de lo pintado.
+    // "+dos" is line 6 (0-based) of the full patch, not line 1 of the rendered output.
     expect(added?.index).toBe(6);
     expect(added?.hunk).toBe(0);
   });
 
-  it("divide un parche de varios ficheros por `diff --git`", () => {
+  it("splits a multi-file patch by `diff --git`", () => {
     const multi = [
       "diff --git a/uno.txt b/uno.txt",
       "index 111..222 100644",
@@ -212,13 +212,13 @@ describe("stripPatchHeader", () => {
     expect(files[1].patch).toContain("+después");
   });
 
-  it("ignora texto previo al primer `diff --git`", () => {
+  it("ignores text before the first `diff --git`", () => {
     expect(splitPatchByFile("ruido suelto\ndiff --git a/a b/a\n@@ -1 +1 @@\n-a\n+b")).toHaveLength(
       1,
     );
   });
 
-  it("no toca un parche que ya empieza en un hunk ni uno sin hunks", () => {
+  it("does not touch a patch that already starts at a hunk nor one without hunks", () => {
     const soloHunk = classifyPatchLines("@@ -1 +1 @@\n-a\n+b");
     expect(stripPatchHeader(soloHunk)).toHaveLength(soloHunk.length);
 

@@ -3,7 +3,7 @@ import { useMergeBranch } from "../lib/hooks/useMergeBranch";
 import { useRepoStore } from "../lib/stores/repo";
 import { useRefsStore } from "../lib/stores/refs";
 
-/** Diálogo de merge, hermano del de Pull: rama a fusionar, destino y --no-ff. */
+/** Merge dialog, sibling of the Pull one: branch to merge, target and --no-ff. */
 export function MergeDialog({ onClose }: { onClose: () => void }) {
   const root = useRepoStore((state) => state.repo?.root ?? null);
   const refs = useRefsStore((state) => state.refs);

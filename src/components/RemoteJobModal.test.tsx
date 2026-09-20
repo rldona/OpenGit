@@ -15,13 +15,13 @@ describe("RemoteJobModal", () => {
     useRemoteStore.getState().reset();
   });
 
-  it("no pinta nada si no hay job ni error", () => {
+  it("renders nothing when there is no job or error", () => {
     const { container } = render(<RemoteJobModal />);
 
     expect(container).toBeEmptyDOMElement();
   });
 
-  it("muestra el progreso, la última línea y la salida completa", async () => {
+  it("shows the progress, the last line and the full output", async () => {
     const user = userEvent.setup();
     useRemoteStore.setState({
       running: true,
@@ -43,7 +43,7 @@ describe("RemoteJobModal", () => {
     expect(screen.getByText(/From github.com/)).toBeInTheDocument();
   });
 
-  it("cancela el job en curso", async () => {
+  it("cancels the running job", async () => {
     const user = userEvent.setup();
     useRemoteStore.setState({
       running: true,
@@ -58,7 +58,7 @@ describe("RemoteJobModal", () => {
     expect(cancelRemoteJob).toHaveBeenCalledWith("job-1");
   });
 
-  it("al fallar enseña el error, la salida y un Close que lo descarta", async () => {
+  it("on failure it shows the error, the output and a Close that dismisses it", async () => {
     const user = userEvent.setup();
     useRemoteStore.setState({
       running: false,
@@ -77,7 +77,7 @@ describe("RemoteJobModal", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
-  it("sin porcentaje en la salida la barra es indeterminada", () => {
+  it("without a percentage in the output the bar is indeterminate", () => {
     useRemoteStore.setState({
       running: true,
       jobId: "job-1",

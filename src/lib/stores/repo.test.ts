@@ -32,7 +32,7 @@ describe("useRepoStore", () => {
     vi.mocked(recentRepos).mockResolvedValue([]);
   });
 
-  it("abre un repositorio, lo guarda y recarga recientes", async () => {
+  it("opens a repository, stores it and reloads recents", async () => {
     vi.mocked(openRepo).mockResolvedValue(REPO);
     vi.mocked(recentRepos).mockResolvedValue([{ path: REPO.root, name: REPO.name, opened_at: 3 }]);
 
@@ -44,7 +44,7 @@ describe("useRepoStore", () => {
     expect(useUiStore.getState().outputLines.join("\n")).toContain("Repository opened: mi-repo");
   });
 
-  it("traduce el error de validación a un mensaje legible", async () => {
+  it("translates the validation error into a readable message", async () => {
     vi.mocked(openRepo).mockRejectedValue({ kind: "not_a_repository", path: "/tmp/x" });
 
     await useRepoStore.getState().open("/tmp/x");

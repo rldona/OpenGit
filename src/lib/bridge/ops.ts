@@ -1,16 +1,16 @@
 import { invoke } from "@tauri-apps/api/core";
 
-/** Cancela la operación en curso (merge, rebase, cherry-pick o revert). */
+/** Cancels the operation in progress (merge, rebase, cherry-pick or revert). */
 export function repoOpAbort(path: string): Promise<void> {
   return invoke<void>("repo_op_abort", { path });
 }
 
-/** Continúa la operación en curso aceptando el mensaje por defecto. */
+/** Continues the operation in progress accepting the default message. */
 export function repoOpContinue(path: string): Promise<void> {
   return invoke<void>("repo_op_continue", { path });
 }
 
-/** Salta el commit o patch conflictivo (no disponible en merge). */
+/** Skips the conflicting commit or patch (not available for merge). */
 export function repoOpSkip(path: string): Promise<void> {
   return invoke<void>("repo_op_skip", { path });
 }

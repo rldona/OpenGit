@@ -68,7 +68,7 @@ describe("useLogStore", () => {
     vi.mocked(logPage).mockResolvedValue([]);
   });
 
-  it("carga la primera página y construye el layout", async () => {
+  it("loads the first page and builds the layout", async () => {
     vi.mocked(logPage).mockResolvedValue([COMMIT]);
 
     await useLogStore.getState().load("/tmp/repo");
@@ -79,7 +79,7 @@ describe("useLogStore", () => {
     expect(logPage).toHaveBeenCalledWith("/tmp/repo", 0, 200, null, null);
   });
 
-  it("selecciona el primer commit al entrar en un proyecto", async () => {
+  it("selects the first commit when entering a project", async () => {
     vi.mocked(logPage).mockResolvedValue(page(3, "p"));
 
     await useLogStore.getState().load("/tmp/repo");
@@ -87,13 +87,13 @@ describe("useLogStore", () => {
     expect(useLogStore.getState().selected).toBe("p0");
   });
 
-  it("sin commits no selecciona nada al entrar en un proyecto", async () => {
+  it("with no commits selects nothing when entering a project", async () => {
     await useLogStore.getState().load("/tmp/repo");
 
     expect(useLogStore.getState().selected).toBeNull();
   });
 
-  it("al filtrar dentro del mismo repositorio no reselecciona", async () => {
+  it("when filtering within the same repository it does not reselect", async () => {
     vi.mocked(logPage).mockResolvedValue(page(3, "p"));
     await useLogStore.getState().load("/tmp/repo");
     useLogStore.getState().select("p2");
@@ -103,7 +103,7 @@ describe("useLogStore", () => {
     expect(useLogStore.getState().selected).toBeNull();
   });
 
-  it("acumula páginas y mantiene el layout incremental", async () => {
+  it("accumulates pages and keeps the layout incremental", async () => {
     vi.mocked(logPage).mockResolvedValueOnce(page(200, "p")).mockResolvedValueOnce(page(1, "r"));
 
     await useLogStore.getState().load("/tmp/repo");
@@ -117,14 +117,14 @@ describe("useLogStore", () => {
     expect(logPage).toHaveBeenLastCalledWith("/tmp/repo", 200, 200, null, null);
   });
 
-  it("recarga al cambiar el filtro de rama", async () => {
+  it("reloads when the branch filter changes", async () => {
     await useLogStore.getState().setFilter("/tmp/repo", "refs/heads/main");
 
     expect(useLogStore.getState().filter).toBe("refs/heads/main");
     expect(logPage).toHaveBeenLastCalledWith("/tmp/repo", 0, 200, "refs/heads/main", null);
   });
 
-  it("hace cherry-pick y refresca log, refs y status", async () => {
+  it("cherry-picks and refreshes log, refs and status", async () => {
     vi.mocked(cherryPick).mockResolvedValue(undefined);
     useUiStore.setState({ outputLines: [] });
     await useLogStore.getState().load("/tmp/repo");
@@ -138,7 +138,7 @@ describe("useLogStore", () => {
     expect(useUiStore.getState().outputLines.join("\n")).toContain("Cherry-picked abcdef1");
   });
 
-  it("expone el fallo de un cherry-pick en conflicto", async () => {
+  it("exposes the failure of a cherry-pick with conflicts", async () => {
     vi.mocked(cherryPick).mockRejectedValue({
       kind: "command_failed",
       exit_code: 1,
@@ -153,7 +153,7 @@ describe("useLogStore", () => {
     expect(useLogStore.getState().error).toContain("CONFLICT");
   });
 
-  it("revierte y hace reset mixed", async () => {
+  it("reverts and does a mixed reset", async () => {
     vi.mocked(revertCommit).mockResolvedValue(undefined);
     vi.mocked(resetMixed).mockResolvedValue(undefined);
     await useLogStore.getState().load("/tmp/repo");
@@ -165,7 +165,7 @@ describe("useLogStore", () => {
     expect(resetMixed).toHaveBeenCalledWith("/tmp/repo", "abcdef1234567890");
   });
 
-  it("expone el error de git sin romper el estado", async () => {
+  it("exposes the git error without breaking the state", async () => {
     vi.mocked(logPage).mockRejectedValue({
       kind: "command_failed",
       exit_code: 128,

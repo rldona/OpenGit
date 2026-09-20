@@ -12,15 +12,15 @@ type Props = {
   laneCount: number;
   selected: string | null;
   scrollRef: RefObject<HTMLDivElement | null>;
-  /** Filas que la lista antepone al historial (p. ej. Uncommitted changes). */
+  /** Rows the list prepends to the history (e.g. Uncommitted changes). */
   offset?: number;
-  /** Dibuja el nodo hueco de "Uncommitted changes" sobre HEAD. */
+  /** Draws the hollow "Uncommitted changes" node on top of HEAD. */
   worktree?: boolean;
 };
 
 /**
- * Capa de canvas fija sobre la lista (no se mueve con el scroll): lee
- * `scrollTop` al dibujar y repinta en el siguiente frame, antes del paint.
+ * Canvas layer fixed over the list (it does not move with the scroll): it reads
+ * `scrollTop` while drawing and repaints on the next frame, before paint.
  */
 export function GraphCanvas({
   rows,
@@ -73,7 +73,7 @@ export function GraphCanvas({
     const colorOf = (laneId: number) => colors[laneId] ?? GRAPH_COLORS[0];
 
     if (worktree && rows.length > 0) {
-      // Nodo hueco en la primera fila de la lista, conectado con HEAD.
+      // Hollow node on the first row of the list, connected to HEAD.
       const lane = rows[0].lane;
       const nodeCenter = ROW_HEIGHT / 2 - scrollTop;
       const headCenter = offset * ROW_HEIGHT + ROW_HEIGHT / 2 - scrollTop;

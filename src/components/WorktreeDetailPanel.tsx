@@ -5,7 +5,7 @@ import { DiffFilesPanel } from "./DiffFilesPanel";
 import { DiffPatchPanel } from "./DiffPatchPanel";
 import { SplitPane } from "./SplitPane";
 
-/** Panel inferior de la fila "Uncommitted changes": ficheros y parche del working tree. */
+/** Bottom panel of the "Uncommitted changes" row: files and working tree patch. */
 export function WorktreeDetailPanel({ root }: { root: string }) {
   const openWorktree = useDiffStore((state) => state.openWorktree);
 

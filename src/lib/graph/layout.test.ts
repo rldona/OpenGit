@@ -14,7 +14,7 @@ function commit(hash: string, parents: string[] = [], refs: string[] = []): Grap
 }
 
 describe("layoutPage", () => {
-  it("pinta una historia lineal en una sola lane", () => {
+  it("draws a linear history in a single lane", () => {
     const { rows, lanes } = layoutPage([commit("c", ["b"]), commit("b", ["a"]), commit("a")]);
 
     expect(rows.map((row) => row.lane)).toEqual([0, 0, 0]);
@@ -24,7 +24,7 @@ describe("layoutPage", () => {
     expect(lanes).toHaveLength(0);
   });
 
-  it("asigna lanes y colores estables por rama en un merge", () => {
+  it("assigns stable lanes and colors per branch in a merge", () => {
     const history = [
       commit("m", ["a", "f"], ["HEAD -> main"]),
       commit("f", ["a"], ["feature"]),
@@ -46,7 +46,7 @@ describe("layoutPage", () => {
     expect(lanes).toHaveLength(0);
   });
 
-  it("soporta octopus merges", () => {
+  it("supports octopus merges", () => {
     const { rows } = layoutPage([commit("o", ["a", "b", "c"], ["HEAD -> main"]), commit("a")]);
 
     const parents = rows[0].edges.filter((edge) => edge.kind === "parent");
@@ -54,7 +54,7 @@ describe("layoutPage", () => {
     expect(parents.map((edge) => edge.to)).toEqual([0, 1, 2]);
   });
 
-  it("coloca roots huérfanos reutilizando lanes con ids nuevos", () => {
+  it("places orphan roots reusing lanes with new ids", () => {
     const { rows } = layoutPage([commit("x"), commit("y")]);
 
     expect(rows[0].lane).toBe(0);
@@ -62,7 +62,7 @@ describe("layoutPage", () => {
     expect(rows[0].laneId).not.toBe(rows[1].laneId);
   });
 
-  it("es incremental: paginar da el mismo resultado que una sola pasada", () => {
+  it("is incremental: paging gives the same result as a single pass", () => {
     const history = [
       commit("m", ["a", "f"], ["HEAD -> main"]),
       commit("f", ["a"], ["feature"]),
@@ -81,7 +81,7 @@ describe("layoutPage", () => {
     expect(second.nextLaneId).toBe(whole.nextLaneId);
   });
 
-  it("produce los mismos colores entre ejecuciones", () => {
+  it("produces the same colors across runs", () => {
     const history = [
       commit("m", ["a", "f"], ["HEAD -> main"]),
       commit("f", ["a"], ["feature"]),
@@ -94,7 +94,7 @@ describe("layoutPage", () => {
     expect(colorForKey("main")).not.toBe(colorForKey("feature"));
   });
 
-  it("dispone 10 000 commits sin degenerar", () => {
+  it("lays out 10,000 commits without degrading", () => {
     const history = Array.from({ length: 10_000 }, (_, index) =>
       commit(`c${index}`, index === 9_999 ? [] : [`c${index + 1}`]),
     );
@@ -113,20 +113,20 @@ function row(lane: number): GraphRow {
 }
 
 describe("visibleLaneCount", () => {
-  it("mide solo el rango visible, no todo el historial", () => {
-    // 27 lanes al final del historial no deben indentar las filas de arriba.
+  it("measures only the visible range, not the whole history", () => {
+    // 27 lanes at the end of the history must not indent the rows above.
     const rows = [row(0), row(1), row(2), row(26)];
 
     expect(visibleLaneCount(rows, 0, 3)).toBe(3);
     expect(visibleLaneCount(rows, 3, 4)).toBe(MAX_GRAPH_LANES);
   });
 
-  it("nunca baja de una lane ni supera el tope", () => {
+  it("never goes below one lane nor exceeds the cap", () => {
     expect(visibleLaneCount([], 0, 0)).toBe(1);
     expect(visibleLaneCount([row(99)], 0, 1)).toBe(MAX_GRAPH_LANES);
   });
 
-  it("tolera rangos fuera de los límites", () => {
+  it("tolerates out-of-bounds ranges", () => {
     const rows = [row(0), row(1)];
 
     expect(visibleLaneCount(rows, -5, 99)).toBe(2);
@@ -134,8 +134,8 @@ describe("visibleLaneCount", () => {
 });
 
 describe("graphWidth", () => {
-  it("redondea a bloques para que el texto no tiemble al hacer scroll", () => {
-    // Cruzar de 1 a 4 lanes no debe mover el texto ni un píxel.
+  it("rounds to blocks so the text does not shake while scrolling", () => {
+    // Crossing from 1 to 4 lanes must not move the text even one pixel.
     const uno = graphWidth(1);
 
     expect(graphWidth(2)).toBe(uno);
@@ -144,11 +144,11 @@ describe("graphWidth", () => {
     expect(graphWidth(5)).toBeGreaterThan(uno);
   });
 
-  it("aplica el tope por muchas lanes que haya", () => {
+  it("applies the cap no matter how many lanes there are", () => {
     expect(graphWidth(999)).toBe(graphWidth(MAX_GRAPH_LANES));
   });
 
-  it("crece de forma monótona", () => {
+  it("grows monotonically", () => {
     const anchos = [1, 4, 5, 8, 9, 12].map(graphWidth);
 
     for (let i = 1; i < anchos.length; i += 1) {

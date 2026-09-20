@@ -13,7 +13,7 @@ export function stashPush(
   return invoke<void>("stash_push", { path, message, includeUntracked });
 }
 
-/** Con `drop` usa `pop`: solo borra el stash si se aplica bien. */
+/** With `drop` it uses `pop`: it only deletes the stash if it applies cleanly. */
 export function stashApply(path: string, reference: string, drop: boolean): Promise<void> {
   return invoke<void>("stash_apply", { path, reference, drop });
 }
@@ -22,7 +22,7 @@ export function stashDrop(path: string, reference: string): Promise<void> {
   return invoke<void>("stash_drop", { path, reference });
 }
 
-/** Parche completo del stash, incluidos los untracked guardados con `-u`. */
+/** Full stash patch, including untracked files saved with `-u`. */
 export function stashShow(path: string, reference: string): Promise<string> {
   return invoke<string>("stash_show", { path, reference });
 }

@@ -1,6 +1,6 @@
 import type { JobKind } from "../bridge/types";
 
-/** Título de la ventana de progreso, al estilo SourceTree. */
+/** Progress window title, SourceTree style. */
 export function describeRemoteJob(kind: JobKind): string {
   switch (kind.kind) {
     case "fetch":

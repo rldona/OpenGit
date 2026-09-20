@@ -3,7 +3,7 @@ import { SHORTCUTS, isEditableTarget, matchesShortcut, type ShortcutId } from ".
 
 export type ShortcutHandlers = Partial<Record<ShortcutId, () => void>>;
 
-/** Registra un único listener global; en campos de texto solo pasan los atajos con `mod`. */
+/** Registers a single global listener; in text fields only shortcuts with `mod` pass. */
 export function useShortcuts(handlers: ShortcutHandlers): void {
   const handlersRef = useRef(handlers);
 

@@ -77,13 +77,13 @@ describe("OpBanner", () => {
     vi.mocked(repoOpState).mockResolvedValue(CLEAN);
   });
 
-  it("no muestra nada si no hay operación en curso", () => {
+  it("shows nothing when there is no operation in progress", () => {
     render(<OpBanner />);
 
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 
-  it("muestra el merge en curso con Abort y Continue", async () => {
+  it("shows the ongoing merge with Abort and Continue", async () => {
     vi.mocked(repoOpState).mockResolvedValue({ ...CLEAN, merge: true });
     render(<OpBanner />);
 
@@ -92,7 +92,7 @@ describe("OpBanner", () => {
     expect(screen.getByRole("button", { name: "Continue" })).toBeInTheDocument();
   });
 
-  it("muestra el paso del rebase", async () => {
+  it("shows the rebase step", async () => {
     vi.mocked(repoOpState).mockResolvedValue({
       ...CLEAN,
       rebase: true,
@@ -104,7 +104,7 @@ describe("OpBanner", () => {
     expect(await screen.findByRole("status")).toHaveTextContent("rebase (2/5) in progress");
   });
 
-  it("aborta y continúa la operación", async () => {
+  it("aborts and continues the operation", async () => {
     vi.mocked(repoOpState).mockResolvedValue({ ...CLEAN, cherry_pick: true });
     const user = userEvent.setup();
     render(<OpBanner />);
@@ -116,7 +116,7 @@ describe("OpBanner", () => {
     expect(repoOpContinue).toHaveBeenCalledWith("/tmp/repo");
   });
 
-  it("ofrece Skip en rebase y cherry-pick", async () => {
+  it("offers Skip on rebase and cherry-pick", async () => {
     vi.mocked(repoOpState).mockResolvedValue({ ...CLEAN, rebase: true });
     const user = userEvent.setup();
     render(<OpBanner />);
@@ -126,7 +126,7 @@ describe("OpBanner", () => {
     expect(repoOpSkip).toHaveBeenCalledWith("/tmp/repo");
   });
 
-  it("no ofrece Skip en un merge", async () => {
+  it("does not offer Skip on a merge", async () => {
     vi.mocked(repoOpState).mockResolvedValue({ ...CLEAN, merge: true });
     render(<OpBanner />);
 

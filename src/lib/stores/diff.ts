@@ -72,9 +72,9 @@ function indexByPath(diffs: FileDiff[]): Map<string, FileDiff> {
 }
 
 /**
- * Token de la última petición de apertura. Al navegar rápido por el historial
- * se encadenan `openCommit`; sin esto, una respuesta lenta de un commit anterior
- * puede pisar la del commit que el usuario tiene seleccionado ahora.
+ * Token of the last open request. Navigating quickly through the history chains
+ * `openCommit` calls; without this, a slow response from a previous commit can
+ * overwrite the one for the commit the user has selected now.
  */
 let openToken = 0;
 
@@ -229,7 +229,7 @@ export const useDiffStore = create<DiffState>((set, get) => ({
   setMode: (mode) =>
     set((state) => ({
       mode,
-      // La elección a mano manda para ese fichero; el resto sigue el automático.
+      // The manual choice wins for that file; the rest follow the automatic one.
       modeByFile: state.selected
         ? { ...state.modeByFile, [state.selected.key]: mode }
         : state.modeByFile,
@@ -252,7 +252,7 @@ export const useDiffStore = create<DiffState>((set, get) => ({
 
   clearSelection: () => set({ selectedLines: [] }),
 
-  /// Aplica stage o unstage de la selección; solo en working tree/index.
+  /// Applies stage or unstage of the selection; only in working tree/index.
   applySelection: async (selection) => {
     const { root, target, selected } = get();
     if (!root || !target || !selected || target.kind !== "worktree" || selected.untracked) {
@@ -275,7 +275,7 @@ export const useDiffStore = create<DiffState>((set, get) => ({
     }
   },
 
-  /// Destructivo: descarta la selección del lado unstaged del working tree.
+  /// Destructive: discards the selection on the unstaged side of the working tree.
   discardSelection: async (selection) => {
     const { root, target, selected } = get();
     if (

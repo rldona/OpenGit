@@ -3,7 +3,7 @@ import { clampSize } from "./layout";
 
 export type ColumnName = "hash" | "author" | "date";
 
-/** Columnas por las que se puede ordenar (Description no es redimensionable). */
+/** Columns that can be sorted by (Description is not resizable). */
 export type SortColumn = "description" | ColumnName;
 
 export type SortOrder = {
@@ -25,7 +25,7 @@ export const COLUMN_LABELS: Record<ColumnName, string> = {
   date: "Date",
 };
 
-/** Anchos guardados, saneados: un valor corrupto no debe romper la tabla. */
+/** Saved widths, sanitized: a corrupt value must not break the table. */
 export function loadColumnWidths(): ColumnWidths {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -54,15 +54,15 @@ export function saveColumnWidths(widths: ColumnWidths): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(widths));
   } catch {
-    // Sin almacenamiento los anchos viven solo en memoria.
+    // Without storage the widths live only in memory.
   }
 }
 
 /**
- * Ancho resultante de arrastrar el borde izquierdo de una columna fija.
+ * Width resulting from dragging the left edge of a fixed column.
  *
- * Las columnas fijas están a la derecha y Description absorbe el resto, así que
- * arrastrar hacia la izquierda las ensancha: de ahí el signo invertido.
+ * The fixed columns are on the right and Description absorbs the rest, so
+ * dragging to the left widens them: hence the inverted sign.
  */
 export function widthAfterDrag(startWidth: number, deltaX: number): number {
   return clampSize(startWidth - deltaX, COLUMN_MIN, COLUMN_MAX);
@@ -82,8 +82,8 @@ function sortKey(commit: Commit, column: SortColumn): string | number {
 }
 
 /**
- * Orden de presentación de la tabla. Con `order = null` se devuelve el orden
- * de git (topológico), que es el único en el que el grafo tiene sentido.
+ * Presentation order of the table. With `order = null` the git order
+ * (topological) is returned, the only one in which the graph makes sense.
  */
 export function sortCommits(commits: Commit[], order: SortOrder | null): Commit[] {
   if (order === null) {
@@ -100,7 +100,7 @@ export function sortCommits(commits: Commit[], order: SortOrder | null): Commit[
   });
 }
 
-/** Ciclo al pulsar una cabecera: ascendente → descendente → topológico. */
+/** Cycle when clicking a header: ascending → descending → topological. */
 export function nextSort(current: SortOrder | null, column: SortColumn): SortOrder | null {
   if (current?.column !== column) {
     return { column, direction: "asc" };

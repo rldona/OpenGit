@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { subscribeJobEvents } from "../bridge/events";
 import { useRemoteStore } from "../stores/remote";
 
-/** Conecta los eventos de fetch/pull/push con el store (OG-011). */
+/** Connects fetch/pull/push events to the store (OG-011). */
 export function useJobEvents(): void {
   useEffect(() => {
     let disposed = false;
@@ -19,7 +19,7 @@ export function useJobEvents(): void {
         }
       })
       .catch(() => {
-        // Sin eventos la app sigue; las operaciones se ven por el watcher.
+        // Without events the app keeps going; operations show up via the watcher.
       });
     return () => {
       disposed = true;

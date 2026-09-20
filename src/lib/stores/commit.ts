@@ -33,7 +33,7 @@ type CommitState = {
   root: string | null;
   message: string;
   amend: boolean;
-  /** Identidad de git config, para la cabecera del panel de commit. */
+  /** Identity from git config, for the commit panel header. */
   author: AuthorIdent | null;
   opState: RepoOpState;
   loading: boolean;
@@ -81,15 +81,16 @@ export const useCommitStore = create<CommitState>((set, get) => ({
     try {
       set({ author: await authorIdent(root) });
     } catch {
-      // Sin identidad configurada el commit fallará al hacer git commit: el
-      // panel simplemente no pinta autor y el error real se ve al intentarlo.
+      // Without a configured identity the commit will fail on git commit: the
+      // panel simply does not paint an author and the real error is seen when
+      // trying.
       set({ author: null });
     }
   },
 
   setMessage: (message) => set({ message }),
 
-  /// El amend reescribe historia local: se confirma y se precarga el mensaje.
+  /// Amend rewrites local history: it is confirmed and the message is preloaded.
   setAmend: async (amend) => {
     if (!amend) {
       set({ amend: false, message: "" });
