@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, type RefObject } from "react";
 import { GRAPH_COLORS, LANE_WIDTH, ROW_HEIGHT, type GraphRow } from "../lib/graph/layout";
+import { useThemeStore } from "../lib/stores/theme";
+import { selectionRingColor } from "../lib/theme";
 
 const PADDING = 8;
 const NODE_RADIUS = 4;
@@ -20,6 +22,8 @@ export function GraphCanvas({ rows, colors, laneCount, selected, scrollRef }: Pr
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const frameRef = useRef<number | null>(null);
   const sizeRef = useRef({ width: 0, height: 0, ratio: 0 });
+  const theme = useThemeStore((state) => state.resolved);
+  const selectionColor = selectionRingColor(theme);
   const width = laneCount * LANE_WIDTH + PADDING * 2;
 
   const draw = useCallback(() => {
@@ -103,13 +107,13 @@ export function GraphCanvas({ rows, colors, laneCount, selected, scrollRef }: Pr
       context.arc(nodeX, center, NODE_RADIUS, 0, Math.PI * 2);
       context.fill();
       if (selected === row.hash) {
-        context.strokeStyle = "#ffffff";
+        context.strokeStyle = selectionColor;
         context.beginPath();
         context.arc(nodeX, center, NODE_RADIUS + 3, 0, Math.PI * 2);
         context.stroke();
       }
     }
-  }, [rows, colors, selected, scrollRef, width]);
+  }, [rows, colors, selected, scrollRef, width, selectionColor]);
 
   const schedule = useCallback(() => {
     if (frameRef.current !== null) {

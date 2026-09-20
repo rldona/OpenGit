@@ -15,7 +15,9 @@ import { useRefsStore } from "./lib/stores/refs";
 import { useRemoteStore } from "./lib/stores/remote";
 import { useRepoStore } from "./lib/stores/repo";
 import { useStatusStore } from "./lib/stores/status";
+import { useThemeStore } from "./lib/stores/theme";
 import { useUiStore } from "./lib/stores/ui";
+import type { ThemePreference } from "./lib/theme";
 
 function App() {
   const outputOpen = useUiStore((state) => state.outputOpen);
@@ -23,6 +25,11 @@ function App() {
   const outputLines = useUiStore((state) => state.outputLines);
   const activeView = useUiStore((state) => state.activeView);
   const setActiveView = useUiStore((state) => state.setActiveView);
+
+  const themePreference = useThemeStore((state) => state.preference);
+  const theme = useThemeStore((state) => state.resolved);
+  const setThemePreference = useThemeStore((state) => state.setPreference);
+  const setSystemDark = useThemeStore((state) => state.setSystemDark);
 
   const repo = useRepoStore((state) => state.repo);
   const recents = useRepoStore((state) => state.recents);
@@ -95,6 +102,21 @@ function App() {
     void loadRecents();
   }, [loadRecents]);
 
+  useEffect(() => {
+    const query = window.matchMedia?.("(prefers-color-scheme: dark)");
+    if (!query) {
+      return;
+    }
+    setSystemDark(query.matches);
+    const onChange = (event: MediaQueryListEvent) => setSystemDark(event.matches);
+    query.addEventListener("change", onChange);
+    return () => query.removeEventListener("change", onChange);
+  }, [setSystemDark]);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+  }, [theme]);
+
   return (
     <div className="app">
       <header className="toolbar">
@@ -102,6 +124,16 @@ function App() {
         <span className="tagline">{repo ? repo.root : "no repository open"}</span>
         <div className="toolbar-actions">
           <span className="core-version">{coreVersion ? `core v${coreVersion}` : "core —"}</span>
+          <select
+            className="theme-select"
+            aria-label="Theme"
+            value={themePreference}
+            onChange={(event) => setThemePreference(event.target.value as ThemePreference)}
+          >
+            <option value="system">System</option>
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </select>
           {repo && (
             <>
               <button type="button" onClick={runFetch} disabled={remoteRunning}>
