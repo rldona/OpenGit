@@ -33,3 +33,12 @@ export function stageSelection(request: {
 }): Promise<void> {
   return invoke<void>("stage_selection", request);
 }
+
+/** Destructivo: descarta hunks/líneas del working tree (confirmado en la UI). */
+export function discardSelection(request: {
+  path: string;
+  file: string;
+  selection: HunkSelection;
+}): Promise<void> {
+  return invoke<void>("discard_selection", request);
+}

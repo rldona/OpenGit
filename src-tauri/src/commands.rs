@@ -266,6 +266,19 @@ pub fn stage_selection(
     })
 }
 
+/// Destructivo: descarta hunks/líneas del working tree (confirmado en la UI).
+#[tauri::command]
+pub fn discard_selection(
+    path: String,
+    file: String,
+    selection: crate::git::patch::HunkSelection,
+    state: State<'_, AppState>,
+) -> Result<(), GitError> {
+    pause_while(&state, || {
+        crate::git::discard_selection(&state.runner, Path::new(&path), &file, &selection)
+    })
+}
+
 /// Destructivo: borra un fichero sin trackear (confirmado antes en la UI).
 #[tauri::command]
 pub fn delete_untracked(

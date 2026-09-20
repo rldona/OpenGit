@@ -1,7 +1,7 @@
 mod support;
 
 use opengit_lib::git::patch::{parse, HunkSelection};
-use opengit_lib::git::{stage_selection, worktree_diff_bytes, Runner};
+use opengit_lib::git::{discard_selection, stage_selection, worktree_diff_bytes, Runner};
 use support::TestRepo;
 
 fn runner() -> Runner {
@@ -215,5 +215,67 @@ fn rutas_con_espacios_y_utf8() {
     assert_eq!(
         repo.git_ok(&["show", &format!(":{name}")]).stdout,
         b"uno\ndos\n"
+    );
+}
+
+#[test]
+fn discard_de_un_hunk_solo_revierte_ese_hunk() {
+    let repo = TestRepo::init();
+    let original = numbered_file(20);
+    repo.write("a.txt", original.as_bytes());
+    repo.git_ok(&["add", "."]);
+    repo.git_ok(&["commit", "-q", "-m", "base"]);
+
+    let modified = original
+        .replace("linea 2\n", "LINEA 2\n")
+        .replace("linea 18\n", "LINEA 18\n");
+    repo.write("a.txt", modified.as_bytes());
+
+    assert!(
+        discard_selection(&runner(), repo.path(), "a.txt", &HunkSelection::File).is_err(),
+        "el descarte completo no se resuelve con parches"
+    );
+
+    discard_selection(
+        &runner(),
+        repo.path(),
+        "a.txt",
+        &HunkSelection::Hunk { index: 0 },
+    )
+    .expect("descartar el primer hunk");
+
+    let content = std::fs::read_to_string(repo.path().join("a.txt")).unwrap();
+    assert!(content.contains("linea 2\n"), "{content}");
+    assert!(!content.contains("LINEA 2"), "{content}");
+    assert!(content.contains("LINEA 18"), "{content}");
+
+    let cached = worktree_diff_bytes(&runner(), repo.path(), "a.txt", true).unwrap();
+    assert!(cached.is_empty(), "el index no debe cambiar");
+}
+
+#[test]
+fn discard_de_lineas_conserva_las_no_seleccionadas() {
+    let repo = TestRepo::init();
+    repo.write("a.txt", b"uno\ndos\n");
+    repo.git_ok(&["add", "."]);
+    repo.git_ok(&["commit", "-q", "-m", "base"]);
+
+    repo.write("a.txt", b"uno\ndos\ntres\ncuatro\n");
+    let diff = worktree_diff_bytes(&runner(), repo.path(), "a.txt", false).unwrap();
+    let index = line_index(&diff, b"+tres");
+
+    discard_selection(
+        &runner(),
+        repo.path(),
+        "a.txt",
+        &HunkSelection::Lines {
+            indices: vec![index],
+        },
+    )
+    .expect("descartar una línea");
+
+    assert_eq!(
+        std::fs::read_to_string(repo.path().join("a.txt")).unwrap(),
+        "uno\ndos\ncuatro\n"
     );
 }
