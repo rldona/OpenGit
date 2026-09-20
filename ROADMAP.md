@@ -2,7 +2,7 @@
 
 A milestone closes when its tickets are `done` and its exit criteria are met. Tickets live in [`docs/tickets/`](docs/tickets/README.md).
 
-**Current state:** latest release **v0.8.0** (2026-09-21) with Git LFS, hooks, and English/Spanish internationalization. M0–M20 are closed and there is no active milestone.
+**Current state:** latest release **v0.8.1** (2026-09-22) with drag-and-drop reordering of the session tabs. M0–M20 are closed and there is no active milestone.
 
 ## M0 — Foundation ✅ _(closed 2026-09-18)_
 
