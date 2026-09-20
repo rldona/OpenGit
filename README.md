@@ -6,7 +6,7 @@ Cliente de Git de escritorio, multiplataforma (Windows, macOS y Linux), inspirad
 
 ## Estado
 
-**M5 completado** el 2026-09-18. Además del MVP local, los remotos, el historial avanzado y el rebase con editor de conflictos, la app incluye temas claro/oscuro, atajos de teclado, submódulos y worktrees en lectura, avisos de Git LFS y releases sin firmar para los tres SO. El siguiente paso es la fase 2 de releases (firma y notarización) o los hitos que se prioricen.
+**M5 completado** el 2026-09-18. Además del MVP local, los remotos, el historial avanzado y el rebase con editor de conflictos, la app incluye temas claro/oscuro, atajos de teclado, submódulos y worktrees en lectura, avisos de Git LFS y releases para los tres SO con instaladores sin firmar. La firma y la notarización quedan descartadas: los certificados son de pago y el proyecto no los asume.
 
 | Área | Decisión | ADR |
 | --- | --- | --- |
@@ -15,6 +15,16 @@ Cliente de Git de escritorio, multiplataforma (Windows, macOS y Linux), inspirad
 | Motor git | binario `git` del sistema | ADR-0003 |
 | Grafo de commits | canvas + carga incremental | ADR-0004 |
 | Estado global | Zustand | ADR-0005 |
+
+## Instalación
+
+Los instaladores se publican en [Releases](https://github.com/rldona/opengit/releases) para macOS (`.dmg`), Linux (`.deb`, `.AppImage`) y Windows (`.msi`, `.exe`).
+
+**No están firmados ni notarizados** (los certificados son de pago y el proyecto no los asume), así que el sistema avisará al abrirlos:
+
+- **macOS:** Gatekeeper bloquea la app. Abre el `.dmg`, arrastra OpenGit a Aplicaciones y ábrela con clic derecho → **Abrir**; si sigue bloqueada, `xattr -cr /Applications/OpenGit.app`.
+- **Windows:** SmartScreen mostrará un aviso. Pulsa **Más información** → **Ejecutar de todas formas**.
+- **Linux:** `.deb` con `sudo apt install ./OpenGit_*.deb` o `.AppImage` con permiso de ejecución.
 
 ## Principios
 

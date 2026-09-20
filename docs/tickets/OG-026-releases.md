@@ -50,3 +50,4 @@
 - Bundle macOS validado sin firma (`CI=true npm run tauri build -- --bundles dmg`): dmg aarch64 en `bundle/dmg/`. Los flags de Linux/Windows se comprobaron contra `tauri build --help` (valores válidos por host).
 - Pendiente de validar en el primer tag real: `.deb`, `.AppImage`, `.msi`, `.exe` y creación del borrador.
 - Cerrado el 2026-09-18 con CI verde (Frontend 36 s, Rust 1m43s) en el PR #22. Con esto queda completo M5 salvo la validación del primer release.
+- Actualización (OG-028, 2026-09-18): la firma/notarización no es una fase 2 pendiente; se descarta por coste de certificados y los instaladores se distribuyen sin firmar.
