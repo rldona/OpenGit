@@ -87,6 +87,8 @@ git -C "$tmp" commit --allow-empty -m "root"
 
 Casos que conviene cubrir a mano al tocar parsers: repo vacío, detached HEAD, merge en curso, rename, fichero binario, CRLF, fichero sin newline final y nombres non-ASCII.
 
+Los fixtures de los parsers viven en `src-tauri/tests/fixtures/` y se regeneran con `src-tauri/tests/fixtures/generate.sh` (ver su README).
+
 ## Problemas conocidos
 
 - **Linux y WebKitGTK:** si la ventana sale en blanco, revisa las dependencias de sistema y los logs de `npm run tauri dev`; suele ser una versión de `webkit2gtk` desalineada.
