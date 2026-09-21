@@ -7,6 +7,7 @@ import {
   PATCH_ROW_HEIGHT,
 } from "../lib/diff/patch";
 import { sameRange, visibleRange, type VisibleRange } from "../lib/graph/viewport";
+import { useI18n } from "../lib/i18n";
 
 const OVERSCAN = 8;
 
@@ -32,6 +33,7 @@ export function PatchView({
   onApply,
   onDiscard,
 }: Props) {
+  const { t } = useI18n();
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const [range, setRange] = useState<VisibleRange>({ start: 0, end: 0 });
   const lines = stripPatchHeader(classifyPatchLines(patch));
@@ -55,7 +57,7 @@ export function PatchView({
     update();
   }, [update]);
 
-  const actionLabel = stagedSide ? "Unstage hunk" : "Stage hunk";
+  const actionLabel = stagedSide ? t("diff.hunk.unstage") : t("diff.hunk.stage");
 
   return (
     <div className="patch-view" ref={scrollerRef} onScroll={update}>
@@ -68,7 +70,11 @@ export function PatchView({
             const lastLine = header ? header.newStart + Math.max(header.newCount, 1) - 1 : null;
             const label =
               header && lastLine !== null
-                ? `Hunk ${(line.hunk ?? 0) + 1} · Lines ${header.newStart}–${lastLine}`
+                ? t("diff.hunk.label", {
+                    number: (line.hunk ?? 0) + 1,
+                    start: header.newStart,
+                    end: lastLine,
+                  })
                 : line.text;
             return (
               <div key={line.index} className="patch-line hunk" style={{ top }}>
@@ -91,7 +97,7 @@ export function PatchView({
                         className="patch-action danger"
                         onClick={() => onDiscard({ kind: "hunk", index: line.hunk ?? 0 })}
                       >
-                        Discard hunk
+                        {t("diff.hunk.discard")}
                       </button>
                     )}
                   </span>

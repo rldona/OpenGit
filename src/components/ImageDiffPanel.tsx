@@ -1,17 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 import { imageBlob, imagePair, type ImageRequest } from "../lib/bridge/diff";
+import { t as msg, useI18n } from "../lib/i18n";
 import { useDiffStore } from "../lib/stores/diff";
 
 type Sides = { before: string | null; after: string | null };
 
 function changeLabel(before: string | null, after: string | null): string {
   if (before === null && after !== null) {
-    return "New binary file";
+    return msg("diff.image.new");
   }
   if (after === null && before !== null) {
-    return "Deleted binary file";
+    return msg("diff.image.deleted");
   }
-  return "Modified binary file";
+  return msg("diff.image.modified");
 }
 
 /**
@@ -19,6 +20,7 @@ function changeLabel(before: string | null, after: string | null): string {
  * "Side by side" mode and only the resulting image in "Unified" mode.
  */
 export function ImageDiffPanel() {
+  const { t } = useI18n();
   const root = useDiffStore((state) => state.root);
   const target = useDiffStore((state) => state.target);
   const selected = useDiffStore((state) => state.selected);
@@ -106,9 +108,9 @@ export function ImageDiffPanel() {
           {error}
         </p>
       )}
-      {!images && !error && <p className="muted status-empty">Loading…</p>}
+      {!images && !error && <p className="muted status-empty">{t("common.loading")}</p>}
       {images && before === null && after === null && (
-        <p className="muted status-empty">No image content in this change.</p>
+        <p className="muted status-empty">{t("diff.image.noContent")}</p>
       )}
       {images && (before !== null || after !== null) && (
         <>
@@ -116,25 +118,28 @@ export function ImageDiffPanel() {
           {sideBySide ? (
             <div className="image-compare">
               <figure className="image-side">
-                <figcaption className="image-label before">Before</figcaption>
+                <figcaption className="image-label before">{t("diff.image.before")}</figcaption>
                 <div className="image-frame">
-                  <img src={before} alt="Before" />
+                  <img src={before} alt={t("diff.image.before")} />
                 </div>
               </figure>
               <figure className="image-side">
-                <figcaption className="image-label after">After</figcaption>
+                <figcaption className="image-label after">{t("diff.image.after")}</figcaption>
                 <div className="image-frame">
-                  <img src={after} alt="After" />
+                  <img src={after} alt={t("diff.image.after")} />
                 </div>
               </figure>
             </div>
           ) : (
             <figure className="image-side">
               <figcaption className={`image-label ${after !== null ? "after" : "before"}`}>
-                {after !== null ? "After" : "Before"}
+                {after !== null ? t("diff.image.after") : t("diff.image.before")}
               </figcaption>
               <div className="image-frame">
-                <img src={single ?? ""} alt={after !== null ? "After" : "Before"} />
+                <img
+                  src={single ?? ""}
+                  alt={after !== null ? t("diff.image.after") : t("diff.image.before")}
+                />
               </div>
             </figure>
           )}

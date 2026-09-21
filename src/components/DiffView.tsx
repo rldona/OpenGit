@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { confirmDestructive } from "../lib/bridge/dialog";
+import { useI18n } from "../lib/i18n";
 import { LAYOUT_KEYS } from "../lib/layout";
 import { useRepoStore } from "../lib/stores/repo";
 import { useDiffStore } from "../lib/stores/diff";
@@ -9,6 +10,7 @@ import { DiffPatchPanel } from "./DiffPatchPanel";
 import { SplitPane } from "./SplitPane";
 
 export function DiffView() {
+  const { t } = useI18n();
   const root = useRepoStore((state) => state.repo?.root ?? null);
   const storeRoot = useDiffStore((state) => state.root);
   const target = useDiffStore((state) => state.target);
@@ -36,16 +38,16 @@ export function DiffView() {
 
   const label =
     target?.kind === "commit"
-      ? `commit ${target.rev.slice(0, 7)}`
+      ? t("diff.commit", { rev: target.rev.slice(0, 7) })
       : target?.kind === "compare"
         ? `${target.base.slice(0, 7)}..${target.rev.slice(0, 7)}`
-        : "Working tree";
+        : t("diff.workingTree");
   // With the patch reversed the hunk/line indices do not match the diff the
   // backend re-reads, so no patch actions are offered.
   const patchActions = target?.kind === "worktree" && !reversed;
 
   const confirmDiscard = async (selection: Parameters<typeof discardSelection>[0]) => {
-    if (await confirmDestructive("Discard the selected changes? This cannot be undone.")) {
+    if (await confirmDestructive(t("diff.discardConfirm"))) {
       await discardSelection(selection);
     }
   };
@@ -56,7 +58,7 @@ export function DiffView() {
         <span className="muted">{label}</span>
         {target?.kind === "compare" && root && (
           <button type="button" onClick={() => void openWorktree(root)}>
-            Exit comparison
+            {t("diff.exitComparison")}
           </button>
         )}
         <div className="diff-modes">
@@ -65,14 +67,14 @@ export function DiffView() {
             className={mode === "unified" ? "active" : ""}
             onClick={() => setMode("unified")}
           >
-            Unified
+            {t("diff.unified")}
           </button>
           <button
             type="button"
             className={mode === "side" ? "active" : ""}
             onClick={() => setMode("side")}
           >
-            Side by side
+            {t("diff.sideBySide")}
           </button>
         </div>
         <div className="diff-modes">
@@ -81,14 +83,14 @@ export function DiffView() {
             className={fileTree ? "" : "active"}
             onClick={() => setFileTree(false)}
           >
-            List
+            {t("diff.list")}
           </button>
           <button
             type="button"
             className={fileTree ? "active" : ""}
             onClick={() => setFileTree(true)}
           >
-            Tree
+            {t("diff.tree")}
           </button>
         </div>
         <button
@@ -97,9 +99,9 @@ export function DiffView() {
           aria-pressed={reversed}
           disabled={!selected || selected.untracked}
         >
-          Reverse
+          {t("diff.reverse")}
         </button>
-        <div className="diff-modes" role="group" aria-label="Diff options">
+        <div className="diff-modes" role="group" aria-label={t("diff.options")}>
           <button
             type="button"
             className={options.ignore_all_space ? "active" : ""}
@@ -107,7 +109,7 @@ export function DiffView() {
             disabled={!selected || selected.untracked}
             onClick={() => void toggleOption("ignore_all_space")}
           >
-            Ignore whitespace
+            {t("diff.ignoreWhitespace")}
           </button>
           <button
             type="button"
@@ -116,7 +118,7 @@ export function DiffView() {
             disabled={!selected || selected.untracked}
             onClick={() => void toggleOption("ignore_blank_lines")}
           >
-            Ignore blank lines
+            {t("diff.ignoreBlankLines")}
           </button>
           <button
             type="button"
@@ -125,7 +127,7 @@ export function DiffView() {
             disabled={!selected || selected.untracked}
             onClick={() => void toggleOption("word_diff")}
           >
-            Word diff
+            {t("diff.wordDiff")}
           </button>
         </div>
         {patchActions && selected && !selected.untracked && (
@@ -134,7 +136,7 @@ export function DiffView() {
             onClick={() => void applySelection({ kind: "file" })}
             disabled={loading}
           >
-            {selected.staged ? "Unstage file" : "Stage file"}
+            {selected.staged ? t("diff.unstageFile") : t("diff.stageFile")}
           </button>
         )}
         {patchActions && selected && selectedLines.length > 0 && (
@@ -143,7 +145,9 @@ export function DiffView() {
             onClick={() => void applySelection({ kind: "lines", indices: selectedLines })}
             disabled={loading}
           >
-            {selected.staged ? "Unstage" : "Stage"} {selectedLines.length} line(s)
+            {selected.staged
+              ? t("diff.unstageLines", { count: selectedLines.length })
+              : t("diff.stageLines", { count: selectedLines.length })}
           </button>
         )}
         {patchActions &&
@@ -157,10 +161,10 @@ export function DiffView() {
               onClick={() => void confirmDiscard({ kind: "lines", indices: selectedLines })}
               disabled={loading}
             >
-              Discard {selectedLines.length} line(s)
+              {t("diff.discardLines", { count: selectedLines.length })}
             </button>
           )}
-        {loading && <span className="muted">Loading…</span>}
+        {loading && <span className="muted">{t("common.loading")}</span>}
       </div>
 
       <SplitPane
@@ -171,7 +175,7 @@ export function DiffView() {
         defaultSize={280}
         min={180}
         max={520}
-        label="Resize file list"
+        label={t("diff.resizeFileList")}
       >
         <DiffFilesPanel />
         <DiffPatchPanel />

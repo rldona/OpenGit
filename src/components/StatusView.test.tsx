@@ -8,6 +8,7 @@ import { logPage } from "../lib/bridge/log";
 import { discardPath, stagePath, statusRepo, unstagePath } from "../lib/bridge/status";
 import type { RepoInfo, StatusReport } from "../lib/bridge/types";
 import { useExtrasStore } from "../lib/stores/extras";
+import { useLocaleStore } from "../lib/stores/locale";
 import { useLogStore } from "../lib/stores/log";
 import { useRepoStore } from "../lib/stores/repo";
 import { useStatusStore } from "../lib/stores/status";
@@ -104,6 +105,7 @@ describe("StatusView", () => {
     useLogStore.getState().reset();
     useExtrasStore.setState({ lfs: null });
     useUiStore.setState({ fileTree: true });
+    useLocaleStore.setState({ preference: null, locale: "en" });
   });
 
   it("shows both sections with their files", async () => {
@@ -113,6 +115,15 @@ describe("StatusView", () => {
     expect(screen.getByRole("heading", { name: /Unstaged files/ })).toBeInTheDocument();
     expect(screen.getByText("modificado.txt")).toBeInTheDocument();
     expect(screen.getByText("nuevo.txt")).toBeInTheDocument();
+  });
+
+  it("renders the status view in Spanish", async () => {
+    useLocaleStore.setState({ preference: "es", locale: "es" });
+    render(<StatusView />);
+
+    expect(await screen.findByRole("heading", { name: /Archivos preparados/ })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Archivos sin preparar/ })).toBeInTheDocument();
+    expect(screen.getByText("Archivos pendientes,")).toBeInTheDocument();
   });
 
   it("stages a modified file with its checkbox", async () => {
