@@ -3,7 +3,7 @@
 - **Milestone:** M20 — Internationalization
 - **Status:** backlog
 - **Depends on:** OG-014
-- **References:** `docs/decisions/`, `ROADMAP.md`, `.ai/skills/tauri-ipc/SKILL.md`
+- **References:** `docs/decisions/ADR-0009-i18n.md`, `ROADMAP.md`, `.ai/skills/tauri-ipc/SKILL.md`
 
 ## Context
 
