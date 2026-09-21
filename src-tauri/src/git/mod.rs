@@ -14,8 +14,9 @@ pub use models::{
     StatusKind, StatusReport, Submodule, SubmoduleState, TrackingCommits, Worktree,
 };
 pub use parsers::{
-    parse_blame, parse_gitattributes_paths, parse_gitattributes_uses_lfs, parse_log, parse_numstat,
-    parse_refs, parse_stash_list, parse_status, parse_submodule_status, parse_worktree_list,
+    parse_blame, parse_gitattributes_paths, parse_gitattributes_uses_lfs, parse_lfs_patterns,
+    parse_log, parse_numstat, parse_refs, parse_stash_list, parse_status, parse_submodule_status,
+    parse_worktree_list,
 };
 pub use runner::{GitCommand, GitOutput, GitProcess, Runner, StdinMode, DEFAULT_TIMEOUT};
 pub use version::{GitVersion, MINIMUM_GIT_VERSION};
@@ -735,21 +736,69 @@ pub fn lfs_status(runner: &Runner, repo: &Path) -> Result<LfsStatus, GitError> {
     };
 
     let listed = runner.run_checked(&GitCommand::new(["ls-files", "-z"]).cwd(repo))?;
-    let mut configured = false;
+    let mut patterns: Vec<String> = Vec::new();
     for path in parse_gitattributes_paths(&listed.stdout) {
-        if std::fs::read(repo.join(&path))
-            .is_ok_and(|content| parse_gitattributes_uses_lfs(&content))
-        {
-            configured = true;
-            break;
+        let Ok(content) = std::fs::read(repo.join(&path)) else {
+            continue;
+        };
+        let directory = path.rsplit_once('/').map(|(dir, _)| dir).unwrap_or("");
+        for pattern in parse_lfs_patterns(&content) {
+            let pattern = if directory.is_empty() {
+                pattern
+            } else {
+                format!("{directory}/{pattern}")
+            };
+            if !patterns.contains(&pattern) {
+                patterns.push(pattern);
+            }
         }
     }
 
     Ok(LfsStatus {
         installed,
         version,
-        configured,
+        configured: !patterns.is_empty(),
+        patterns,
     })
+}
+
+/// Runs `git lfs version` to know whether the extension is available (OG-098).
+fn lfs_available(runner: &Runner, repo: &Path) -> bool {
+    runner
+        .run(&GitCommand::new(["lfs", "version"]).cwd(repo))
+        .is_ok_and(|output| output.success())
+}
+
+/// Rejects a pattern that would be unsafe or meaningless, before running git.
+pub(crate) fn validate_lfs_pattern(pattern: &str) -> Result<(), GitError> {
+    let pattern = pattern.trim();
+    if pattern.is_empty() {
+        return Err(GitError::invalid("the LFS pattern is required"));
+    }
+    if pattern.starts_with('-') {
+        return Err(GitError::invalid("the LFS pattern cannot start with '-'"));
+    }
+    if pattern.contains(['\n', '\r', '\0']) {
+        return Err(GitError::invalid("the LFS pattern has invalid characters"));
+    }
+    Ok(())
+}
+
+/// Starts tracking a pattern with Git LFS, writing/updating `.gitattributes` (OG-098).
+pub fn lfs_track(runner: &Runner, repo: &Path, pattern: &str) -> Result<(), GitError> {
+    validate_lfs_pattern(pattern)?;
+    if !lfs_available(runner, repo) {
+        return Err(GitError::invalid(
+            "git-lfs is not installed; install it to track patterns",
+        ));
+    }
+    runner
+        .run_checked(
+            &GitCommand::new(["lfs", "track", pattern.trim()])
+                .cwd(repo)
+                .write(),
+        )
+        .map(|_| ())
 }
 
 /// Converts a remote URL into its web equivalent (`https://…`).

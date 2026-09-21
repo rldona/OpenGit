@@ -17,5 +17,9 @@ export function describeRemoteJob(kind: JobKind): string {
       return `Pushing tag ${kind.tag}`;
     case "clone":
       return `Cloning ${kind.url}`;
+    case "lfs_pull":
+      return "Downloading LFS objects";
+    case "lfs_migrate":
+      return `Migrating ${kind.include} to LFS`;
   }
 }

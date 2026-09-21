@@ -55,9 +55,12 @@ vi.mock("../lib/bridge/repo", () => ({
   gitConfigPath: vi.fn().mockResolvedValue("/tmp/repo/.git/config"),
   submoduleStatus: vi.fn().mockResolvedValue([]),
   worktreeList: vi.fn().mockResolvedValue([]),
-  lfsStatus: vi
-    .fn()
-    .mockResolvedValue({ installed: true, version: "git-lfs/3.5.1", configured: false }),
+  lfsStatus: vi.fn().mockResolvedValue({
+    installed: true,
+    version: "git-lfs/3.5.1",
+    configured: false,
+    patterns: [],
+  }),
 }));
 
 vi.mock("../lib/bridge/dialog", () => ({

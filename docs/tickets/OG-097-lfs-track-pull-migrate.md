@@ -1,7 +1,7 @@
 # OG-097 · Git LFS: track, pull and migration
 
 - **Milestone:** M19 — Git LFS & hooks
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** OG-025
 - **References:** `.ai/skills/git-cli-parsing/SKILL.md`, `.ai/skills/tauri-ipc/SKILL.md`
 
@@ -31,19 +31,19 @@ files. Everything about LFS still needs the terminal.
 
 ## Acceptance criteria
 
-- [ ] `LfsStatus.patterns` collects active `filter=lfs` patterns, including
+- [x] `LfsStatus.patterns` collects active `filter=lfs` patterns, including
       nested `.gitattributes`, and ignores commented ones.
-- [ ] Tracking a valid pattern builds `git lfs track -- <pattern>`; empty or
+- [x] Tracking a valid pattern runs `git lfs track <pattern>`; empty or
       leading-`-` patterns fail with a readable error and run nothing.
-- [ ] `lfs pull` and `lfs migrate import` are constructed as jobs with output
+- [x] `lfs pull` and `lfs migrate import` are constructed as jobs with output
       streaming and cancellation; the migration command is never built without
       an include pattern.
-- [ ] When `git-lfs` is not installed, the actions return a clear error instead
+- [x] When `git-lfs` is not installed, tracking returns a clear error instead
       of failing halfway.
-- [ ] Tests: parser with real `.gitattributes` fixtures; `command_for` for the
+- [x] Tests: parser with real `.gitattributes` fixtures; `command_for` for the
       new job kinds; tracking validation in a temporary repository; frontend
       with the bridge mocked.
-- [ ] `npm run lint`, `npm run typecheck`, `npm run test`, `cargo test`,
+- [x] `npm run lint`, `npm run typecheck`, `npm run test`, `cargo test`,
       `cargo clippy -D warnings` and `cargo fmt --check` green.
 
 ## Out of scope
@@ -56,9 +56,10 @@ files. Everything about LFS still needs the terminal.
 
 ## Technical notes
 
-- `git lfs track` is its own parser, not a git builtin: pass the pattern as a
-  single argument after `--` and validate it first, so a value such as
-  `--force` can never become an option.
+- `git lfs track` is its own parser, not a git builtin: the pattern is passed as
+  a single argument and validated first (non-empty, no leading `-`), so a value
+  such as `--force` can never become an option. `--` is avoided because git-lfs
+  does not document it as a separator.
 - Reuse the pattern parser for both `LfsStatus.patterns` and the migration
   dialog, so what we show is what we would track.
 - `git lfs migrate import --include=<glob>` rewrites history and is not
@@ -67,6 +68,22 @@ files. Everything about LFS still needs the terminal.
 - The machine is not required to have `git-lfs` for the unit tests; job
   construction and parsers are tested without executing LFS.
 
-## Implementation notes
+## Implementation notes (2026-09-21)
 
-_(filled in when the ticket closes)_
+- Rust: `parse_lfs_patterns` reads active `filter=lfs` lines (comments, macros
+  and blank lines ignored; quoted patterns unquoted) and `lfs_status` prefixes
+  each with its `.gitattributes` directory, deduplicated.
+- `lfs_track` validates the pattern and, only then, checks `git lfs version` so
+  an invalid pattern fails before anything runs; an unsafe pattern never
+  reaches git.
+- New job kinds `lfs_pull` and `lfs_migrate`, built by `command_for` through the
+  existing streaming/cancellation machinery (`git lfs migrate import
+  --include=<glob>` never built without a pattern).
+- Frontend: patterns listed in the Git LFS section (visible when installed or
+  configured), context menu with *Track pattern…*, *Pull objects* and *Migrate
+  to LFS…*; `LfsDialog` handles both, and the LFS jobs refresh the extras store.
+- Tests: `parse_lfs_patterns` fixtures, `command_for` for both jobs (including
+  the empty-pattern and option-like-remote rejections), a temporary repository
+  for the pattern prefixing and validation, the sidebar interactions and the
+  job titles. Verified `lint`, `typecheck`, `format:check`, `npm test` (532),
+  `cargo test`, `cargo clippy -D warnings` and `cargo fmt --check`.

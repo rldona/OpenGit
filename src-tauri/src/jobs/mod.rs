@@ -54,6 +54,14 @@ pub enum JobKind {
         branch: Option<String>,
         recurse_submodules: bool,
     },
+    /// Download the LFS objects missing for the checked-out ref (OG-098).
+    LfsPull {
+        remote: Option<String>,
+    },
+    /// Rewrite the included paths so Git LFS manages them (OG-098). Destructive.
+    LfsMigrate {
+        include: String,
+    },
 }
 
 impl JobKind {
@@ -64,6 +72,8 @@ impl JobKind {
             Self::Push { .. } => "push",
             Self::PushTag { .. } => "push tag",
             Self::Clone { .. } => "clone",
+            Self::LfsPull { .. } => "lfs pull",
+            Self::LfsMigrate { .. } => "lfs migrate",
         }
     }
 }
@@ -258,6 +268,25 @@ pub fn command_for(runner: &Runner, repo: &Path, kind: &JobKind) -> Result<GitCo
             args.push(url.into());
             args.push(destination.into());
         }
+        JobKind::LfsPull { remote } => {
+            args.push("lfs".into());
+            args.push("pull".into());
+            if let Some(remote) = remote {
+                if !remote.trim().is_empty() {
+                    if remote.trim().starts_with('-') {
+                        return Err(GitError::invalid("invalid remote name"));
+                    }
+                    args.push(remote.trim().into());
+                }
+            }
+        }
+        JobKind::LfsMigrate { include } => {
+            crate::git::validate_lfs_pattern(include)?;
+            args.push("lfs".into());
+            args.push("migrate".into());
+            args.push("import".into());
+            args.push(format!("--include={}", include.trim()).into());
+        }
     }
     Ok(GitCommand::new(args)
         .cwd(cwd)
@@ -443,5 +472,61 @@ mod tests {
         .expect_err("un destino no vacío debe fallar");
         let _ = std::fs::remove_dir_all(&dir);
         assert!(error.to_string().contains("not empty"));
+    }
+
+    fn lfs_args(kind: JobKind) -> Vec<String> {
+        command_for(&Runner::locate(), Path::new("."), &kind)
+            .expect("comando de lfs")
+            .args()
+    }
+
+    #[test]
+    fn lfs_pull_maps_the_optional_remote() {
+        assert_eq!(
+            lfs_args(JobKind::LfsPull { remote: None }),
+            vec!["lfs", "pull"]
+        );
+        assert_eq!(
+            lfs_args(JobKind::LfsPull {
+                remote: Some("origin".into())
+            }),
+            vec!["lfs", "pull", "origin"]
+        );
+    }
+
+    #[test]
+    fn lfs_migrate_maps_the_include_pattern() {
+        assert_eq!(
+            lfs_args(JobKind::LfsMigrate {
+                include: "*.psd".into()
+            }),
+            vec!["lfs", "migrate", "import", "--include=*.psd"]
+        );
+    }
+
+    #[test]
+    fn lfs_migrate_rejects_an_empty_pattern() {
+        let error = command_for(
+            &Runner::locate(),
+            Path::new("."),
+            &JobKind::LfsMigrate {
+                include: "  ".into(),
+            },
+        )
+        .expect_err("un patrón vacío debe fallar");
+        assert!(error.to_string().contains("required"));
+    }
+
+    #[test]
+    fn lfs_pull_rejects_a_remote_that_looks_like_an_option() {
+        let error = command_for(
+            &Runner::locate(),
+            Path::new("."),
+            &JobKind::LfsPull {
+                remote: Some("--all".into()),
+            },
+        )
+        .expect_err("un remoto con guion debe fallar");
+        assert!(error.to_string().contains("remote"));
     }
 }

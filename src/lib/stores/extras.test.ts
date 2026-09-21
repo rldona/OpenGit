@@ -25,7 +25,7 @@ const WORKTREES: Worktree[] = [
   },
 ];
 
-const LFS: LfsStatus = { installed: false, version: null, configured: true };
+const LFS: LfsStatus = { installed: false, version: null, configured: true, patterns: [] };
 
 const REMOTES: Remote[] = [
   {

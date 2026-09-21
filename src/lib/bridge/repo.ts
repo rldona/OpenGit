@@ -90,6 +90,11 @@ export function lfsStatus(path: string): Promise<LfsStatus> {
   return invoke<LfsStatus>("lfs_status", { path });
 }
 
+/** Starts tracking a pattern with Git LFS, updating `.gitattributes` (OG-097). */
+export function lfsTrack(path: string, pattern: string): Promise<void> {
+  return invoke<void>("lfs_track", { path, pattern });
+}
+
 export function remoteUrls(path: string): Promise<Remote[]> {
   return invoke<Remote[]>("remote_urls", { path });
 }

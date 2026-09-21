@@ -5,11 +5,13 @@ import { formatGitError } from "../lib/bridge/errors";
 import { worktreeRemove, submoduleSync, submoduleUpdate } from "../lib/bridge/repo";
 import { shortRefName } from "../lib/format";
 import { useExtrasStore } from "../lib/stores/extras";
+import { useRemoteStore } from "../lib/stores/remote";
 import { useRepoStore } from "../lib/stores/repo";
 import { useStatusStore } from "../lib/stores/status";
 import { useUiStore } from "../lib/stores/ui";
 import { useContextMenu } from "../lib/hooks/useContextMenu";
 import { CollapsibleSection } from "./CollapsibleSection";
+import { LfsDialog } from "./LfsDialog";
 import { WorktreeDialog } from "./WorktreeDialog";
 
 const STATE_LABELS: Record<SubmoduleState, string> = {
@@ -41,6 +43,7 @@ export function ExtrasSidebar() {
   const [worktreeDialog, setWorktreeDialog] = useState(false);
   const [worktreeError, setWorktreeError] = useState<string | null>(null);
   const [submoduleError, setSubmoduleError] = useState<string | null>(null);
+  const [lfsDialog, setLfsDialog] = useState<"track" | "migrate" | null>(null);
 
   useEffect(() => {
     if (root) {
@@ -69,6 +72,18 @@ export function ExtrasSidebar() {
     } catch (err) {
       setSubmoduleError(formatGitError(err));
     }
+  };
+
+  const pullLfs = async () => {
+    if (!root) {
+      return;
+    }
+    if (
+      !(await confirmDestructive("Download the Git LFS objects missing for the current branch?"))
+    ) {
+      return;
+    }
+    void useRemoteStore.getState().start(root, { kind: "lfs_pull", remote: null });
   };
 
   const removeWorktree = async (path: string) => {
@@ -105,7 +120,7 @@ export function ExtrasSidebar() {
   }
   const showSubmodules = submodules.length > 0;
   const showWorktrees = worktrees.length >= 1;
-  const showLfs = lfs?.configured === true;
+  const showLfs = lfs !== null && (lfs.installed || lfs.configured);
   if (!showSubmodules && !showWorktrees && !showLfs && !error) {
     return null;
   }
@@ -215,10 +230,41 @@ export function ExtrasSidebar() {
       )}
 
       {showLfs && lfs && (
-        <CollapsibleSection id="lfs" title="Git LFS" icon="cloud">
+        <CollapsibleSection
+          id="lfs"
+          title="Git LFS"
+          icon="cloud"
+          onContextMenu={(event) =>
+            sectionMenu.open(event, [
+              { label: "Track pattern…", onSelect: () => setLfsDialog("track") },
+              {
+                label: "Pull objects",
+                disabled: !lfs.installed,
+                onSelect: () => void pullLfs(),
+              },
+              {
+                label: "Migrate to LFS…",
+                danger: true,
+                disabled: !lfs.installed,
+                onSelect: () => setLfsDialog("migrate"),
+              },
+            ])
+          }
+        >
           <p className={lfs.installed ? "muted" : "lfs-missing"}>
             {lfs.installed ? (lfs.version ?? "Installed") : "Not installed"}
           </p>
+          {lfs.patterns.length > 0 ? (
+            <ul className="refs-list">
+              {lfs.patterns.map((pattern) => (
+                <li key={pattern} className="refs-item">
+                  <span className="extra-name">{pattern}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="muted">No patterns tracked</p>
+          )}
         </CollapsibleSection>
       )}
 
@@ -247,6 +293,7 @@ export function ExtrasSidebar() {
       )}
 
       {worktreeDialog && <WorktreeDialog onClose={() => setWorktreeDialog(false)} />}
+      {lfsDialog && <LfsDialog mode={lfsDialog} onClose={() => setLfsDialog(null)} />}
       {sectionMenu.menu}
     </>
   );

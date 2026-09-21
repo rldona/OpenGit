@@ -196,6 +196,7 @@ pub fn run() {
             commands::worktree_add,
             commands::worktree_remove,
             commands::lfs_status,
+            commands::lfs_track,
             commands::remote_urls,
             commands::tracking_commits,
             commands::author_ident,

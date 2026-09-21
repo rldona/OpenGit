@@ -4,6 +4,7 @@ import { formatGitError } from "../bridge/errors";
 import type { JobFinishedEvent, JobKind, JobOutputEvent } from "../bridge/types";
 import { describeRemoteError } from "../remote/errors";
 import { describeRemoteJob } from "../remote/labels";
+import { useExtrasStore } from "./extras";
 import { useLogStore } from "./log";
 import { useRefsStore } from "./refs";
 import { useRepoStore } from "./repo";
@@ -149,6 +150,14 @@ export const useRemoteStore = create<RemoteState>((set, get) => ({
     if (log.root) {
       void log.reload(log.root);
       void useStatusStore.getState().refresh(log.root);
+    }
+
+    // LFS jobs change what the extras sidebar shows (patterns, objects).
+    if (kind === "lfs_pull" || kind === "lfs_migrate") {
+      const extras = useExtrasStore.getState();
+      if (extras.root) {
+        void extras.refresh(extras.root);
+      }
     }
 
     // A finished clone opens the new repository (OG-085).

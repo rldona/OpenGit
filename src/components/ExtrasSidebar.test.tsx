@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { confirmDestructive } from "../lib/bridge/dialog";
 import {
   lfsStatus,
+  lfsTrack,
   openRepo,
   remoteUrls,
   submoduleStatus,
@@ -13,8 +14,10 @@ import {
   worktreeList,
   worktreeRemove,
 } from "../lib/bridge/repo";
+import { startRemoteJob } from "../lib/bridge/jobs";
 import type { LfsStatus, RepoInfo, Submodule, Worktree } from "../lib/bridge/types";
 import { useExtrasStore } from "../lib/stores/extras";
+import { useRemoteStore } from "../lib/stores/remote";
 import { useRepoStore } from "../lib/stores/repo";
 import { ExtrasSidebar } from "./ExtrasSidebar";
 
@@ -32,7 +35,13 @@ vi.mock("../lib/bridge/repo", () => ({
   worktreeAdd: vi.fn().mockResolvedValue(undefined),
   worktreeRemove: vi.fn().mockResolvedValue(undefined),
   lfsStatus: vi.fn(),
+  lfsTrack: vi.fn().mockResolvedValue(undefined),
   remoteUrls: vi.fn(),
+}));
+
+vi.mock("../lib/bridge/jobs", () => ({
+  startRemoteJob: vi.fn().mockResolvedValue("job-1"),
+  cancelRemoteJob: vi.fn(),
 }));
 
 vi.mock("../lib/bridge/dialog", () => ({
@@ -75,7 +84,12 @@ const WORKTREES: Worktree[] = [
   },
 ];
 
-const LFS: LfsStatus = { installed: true, version: "git-lfs/3.5.1", configured: true };
+const LFS: LfsStatus = {
+  installed: true,
+  version: "git-lfs/3.5.1",
+  configured: true,
+  patterns: ["*.psd"],
+};
 
 describe("ExtrasSidebar", () => {
   beforeEach(() => {
@@ -84,6 +98,7 @@ describe("ExtrasSidebar", () => {
     vi.mocked(lfsStatus).mockResolvedValue(LFS);
     vi.mocked(remoteUrls).mockResolvedValue([]);
     vi.mocked(openRepo).mockResolvedValue(REPO);
+    useRemoteStore.getState().reset();
     useRepoStore.setState({ repo: REPO, recents: [], openTabs: [], loading: false, error: null });
     useExtrasStore.setState({
       root: REPO.root,
@@ -153,11 +168,12 @@ describe("ExtrasSidebar", () => {
       installed: true,
       version: "git-lfs/3.5.1",
       configured: false,
+      patterns: [],
     });
     useExtrasStore.setState({
       submodules: [],
       worktrees: [WORKTREES[0]],
-      lfs: { installed: true, version: "git-lfs/3.5.1", configured: false },
+      lfs: { installed: true, version: "git-lfs/3.5.1", configured: false, patterns: [] },
     });
 
     render(<ExtrasSidebar />);
@@ -208,12 +224,46 @@ describe("ExtrasSidebar", () => {
   });
 
   it("warns when LFS is configured but not installed", () => {
-    const missing: LfsStatus = { installed: false, version: null, configured: true };
+    const missing: LfsStatus = { installed: false, version: null, configured: true, patterns: [] };
     vi.mocked(lfsStatus).mockResolvedValue(missing);
     useExtrasStore.setState({ lfs: missing });
 
     render(<ExtrasSidebar />);
 
     expect(screen.getByText("Not installed")).toBeInTheDocument();
+  });
+
+  it("lists the tracked LFS patterns", () => {
+    render(<ExtrasSidebar />);
+
+    expect(screen.getByText("*.psd")).toBeInTheDocument();
+  });
+
+  it("tracks a pattern from the section menu", async () => {
+    const user = userEvent.setup();
+    render(<ExtrasSidebar />);
+
+    fireEvent.contextMenu(screen.getByRole("button", { name: "Git LFS" }));
+    await user.click(screen.getByRole("menuitem", { name: "Track pattern…" }));
+    await user.type(screen.getByLabelText("Pattern:"), "*.mp4");
+    await user.click(screen.getByRole("button", { name: "Track" }));
+
+    expect(lfsTrack).toHaveBeenCalledWith("/tmp/repo", "*.mp4");
+    expect(lfsStatus).toHaveBeenCalled();
+  });
+
+  it("migrates to LFS through a streaming job", async () => {
+    const user = userEvent.setup();
+    render(<ExtrasSidebar />);
+
+    fireEvent.contextMenu(screen.getByRole("button", { name: "Git LFS" }));
+    await user.click(screen.getByRole("menuitem", { name: "Migrate to LFS…" }));
+    await user.type(screen.getByLabelText("Include pattern:"), "*.psd");
+    await user.click(screen.getByRole("button", { name: "Migrate" }));
+
+    expect(startRemoteJob).toHaveBeenCalledWith("/tmp/repo", {
+      kind: "lfs_migrate",
+      include: "*.psd",
+    });
   });
 });

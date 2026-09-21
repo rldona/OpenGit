@@ -88,7 +88,9 @@ export type JobKind =
       depth: number | null;
       branch: string | null;
       recurse_submodules: boolean;
-    };
+    }
+  | { kind: "lfs_pull"; remote: string | null }
+  | { kind: "lfs_migrate"; include: string };
 
 export type Stash = {
   reference: string;
@@ -205,6 +207,7 @@ export type LfsStatus = {
   installed: boolean;
   version: string | null;
   configured: boolean;
+  patterns: string[];
 };
 
 export type Remote = {

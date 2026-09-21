@@ -1,7 +1,7 @@
 use opengit_lib::git::{
-    parse_blame, parse_gitattributes_paths, parse_gitattributes_uses_lfs, parse_log, parse_numstat,
-    parse_refs, parse_status, parse_submodule_status, parse_worktree_list, remote_web_url,
-    GitError, StatusKind, SubmoduleState,
+    parse_blame, parse_gitattributes_paths, parse_gitattributes_uses_lfs, parse_lfs_patterns,
+    parse_log, parse_numstat, parse_refs, parse_status, parse_submodule_status,
+    parse_worktree_list, remote_web_url, GitError, StatusKind, SubmoduleState,
 };
 
 const LOG_TOPO: &[u8] = include_bytes!("fixtures/log_topo.bin");
@@ -322,6 +322,31 @@ fn gitattributes_uses_lfs_detects_active_lines() {
     assert!(!parse_gitattributes_uses_lfs(b"# *.bin filter=lfs\n"));
     assert!(!parse_gitattributes_uses_lfs(b"*.txt text\n"));
     assert!(!parse_gitattributes_uses_lfs(b""));
+}
+
+#[test]
+fn lfs_patterns_collect_active_lines_in_order() {
+    let data = b"# *.jpg filter=lfs\n\
+        *.psd filter=lfs diff=lfs merge=lfs -text\n\
+        videos/** filter=lfs\n\
+        *.txt text\n\
+        \n\
+        [attr]lfs filter=lfs\n\
+        !ignored filter=lfs\n";
+    assert_eq!(
+        parse_lfs_patterns(data),
+        vec!["*.psd", "videos/**", "!ignored"]
+    );
+}
+
+#[test]
+fn lfs_patterns_unquote_and_keep_spaces() {
+    assert_eq!(
+        parse_lfs_patterns(b"\"con espacios/*.bin\" filter=lfs\n"),
+        vec!["con espacios/*.bin"]
+    );
+    assert_eq!(parse_lfs_patterns(b"*.bin\n"), Vec::<String>::new());
+    assert_eq!(parse_lfs_patterns(b""), Vec::<String>::new());
 }
 
 #[test]
