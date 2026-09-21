@@ -1,6 +1,6 @@
 [package]
 name = "opengit"
-version = "0.8.0"
+version = "0.8.1"
 description = "OpenGit — cross-platform Git desktop client"
 authors = ["Raúl López"]
 edition = "2021"
