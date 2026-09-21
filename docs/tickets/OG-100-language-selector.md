@@ -1,7 +1,7 @@
 # OG-100 · Language selector in Settings
 
 - **Milestone:** M20 — Internationalization
-- **Status:** backlog
+- **Status:** ready
 - **Depends on:** OG-099, OG-067
 - **References:** `docs/decisions/ADR-0009-i18n.md`, `src/components/SettingsWindow.tsx`
 

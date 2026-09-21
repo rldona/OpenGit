@@ -1,4 +1,5 @@
 import { openExternal, openTerminal, revealInFileManager } from "../lib/bridge/opener";
+import { useI18n } from "../lib/i18n";
 import { useExtrasStore } from "../lib/stores/extras";
 import { useRemoteStore } from "../lib/stores/remote";
 import { useRefsStore } from "../lib/stores/refs";
@@ -51,6 +52,7 @@ export function Toolbar({
   onSettings,
   refreshing = false,
 }: Props) {
+  const { t } = useI18n();
   const repo = useRepoStore((state) => state.repo);
   const loading = useRepoStore((state) => state.loading);
   // The active tab already names the repo: hide the header title while
@@ -79,14 +81,14 @@ export function Toolbar({
   // toolbar.
   const overlayTitle = isMacPlatform();
   const title = (
-    <div className="toolbar-title" title={root ?? "No repository open"}>
+    <div className="toolbar-title" title={root ?? t("toolbar.noRepo")}>
       {repo ? (
         <>
           <Icon name="folder" size={14} />
           <span className="toolbar-repo-name">{repo.name}</span>
         </>
       ) : (
-        <span className="muted">No repository open</span>
+        <span className="muted">{t("toolbar.noRepo")}</span>
       )}
     </div>
   );
@@ -104,30 +106,40 @@ export function Toolbar({
             <>
               <ToolButton
                 icon="commit"
-                label="Commit"
+                label={t("toolbar.commit")}
                 badge={changeCount}
                 onClick={() => setActiveView("status")}
               />
-              <ToolButton icon="download" label="Pull" disabled={busy} onClick={onPull} />
+              <ToolButton
+                icon="download"
+                label={t("toolbar.pull")}
+                disabled={busy}
+                onClick={onPull}
+              />
               <ToolButton
                 icon="upload"
-                label="Push"
+                label={t("toolbar.push")}
                 disabled={busy}
                 onClick={() => void runPush()}
               />
-              <ToolButton icon="download" label="Fetch" disabled={busy} onClick={onFetch} />
+              <ToolButton
+                icon="download"
+                label={t("toolbar.fetch")}
+                disabled={busy}
+                onClick={onFetch}
+              />
               <span className="toolbar-divider" />
-              <ToolButton icon="branch" label="Branch" onClick={requestNewBranch} />
+              <ToolButton icon="branch" label={t("toolbar.branch")} onClick={requestNewBranch} />
               <ToolButton
                 icon="merge"
-                label={merging ? "Merging…" : "Merge"}
+                label={merging ? t("toolbar.merging") : t("toolbar.merge")}
                 disabled={merging}
                 onClick={onMerge}
               />
-              <ToolButton icon="stash" label="Stash" onClick={requestNewStash} />
+              <ToolButton icon="stash" label={t("toolbar.stash")} onClick={requestNewStash} />
               <ToolButton
                 icon="refresh"
-                label={refreshing ? "Refreshing…" : "Refresh"}
+                label={refreshing ? t("toolbar.refreshing") : t("toolbar.refresh")}
                 disabled={refreshing}
                 onClick={onRefresh}
               />
@@ -135,7 +147,7 @@ export function Toolbar({
           ) : (
             <ToolButton
               icon="folder"
-              label={loading ? "Opening…" : "Open"}
+              label={loading ? t("toolbar.opening") : t("toolbar.open")}
               disabled={loading}
               onClick={() => void pickAndOpen()}
             />
@@ -147,23 +159,23 @@ export function Toolbar({
         <div className="toolbar-group toolbar-right">
           <ToolButton
             icon="cloud"
-            label="View Remote"
+            label={t("toolbar.viewRemote")}
             disabled={!webUrl}
             onClick={() => webUrl && void openExternal(webUrl)}
           />
           <ToolButton
             icon="folder"
-            label="Show in Finder"
+            label={t("toolbar.showInFinder")}
             disabled={!root}
             onClick={() => root && void revealInFileManager(root)}
           />
           <ToolButton
             icon="terminal"
-            label="Terminal"
+            label={t("toolbar.terminal")}
             disabled={!root}
             onClick={() => root && void openTerminal(root)}
           />
-          <ToolButton icon="settings" label="Settings" onClick={onSettings} />
+          <ToolButton icon="settings" label={t("toolbar.settings")} onClick={onSettings} />
         </div>
       </header>
     </>
