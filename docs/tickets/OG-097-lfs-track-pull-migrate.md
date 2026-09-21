@@ -1,4 +1,4 @@
-# OG-098 · Git LFS: track, pull and migration
+# OG-097 · Git LFS: track, pull and migration
 
 - **Milestone:** M19 — Git LFS & hooks
 - **Status:** in-progress
@@ -19,14 +19,12 @@ files. Everything about LFS still needs the terminal.
 - `lfs_track(path, pattern)`: runs `git lfs track` for a validated pattern,
   writing `.gitattributes`. Rejects empty patterns and patterns starting with
   `-`; the pattern goes as a single argv element, never through a shell.
-- `lfs_files(path)`: lists the files Git LFS manages, parsed from machine
-  output; capped like the other listings.
 - Streaming jobs (same machinery as fetch/pull/push) for:
   - `lfs pull` (download the missing objects for the checked-out ref).
   - `lfs migrate import` over an include pattern (rewrite history to LFS),
     which is destructive and requires explicit confirmation in the UI.
 - UI, in the existing **Git LFS** section of the extras sidebar:
-  - show the tracked patterns and the number of managed files;
+  - show the tracked patterns (or "not configured" when there are none);
   - context menu with *Track pattern…*, *Pull objects* and *Migrate to LFS…*;
   - the migration asks for the include pattern and warns that it rewrites
     history; output streams to the output panel and can be cancelled.
@@ -40,12 +38,11 @@ files. Everything about LFS still needs the terminal.
 - [ ] `lfs pull` and `lfs migrate import` are constructed as jobs with output
       streaming and cancellation; the migration command is never built without
       an include pattern.
-- [ ] Pulling the object list tolerates the "not a pointer" case and caps the
-      result.
 - [ ] When `git-lfs` is not installed, the actions return a clear error instead
       of failing halfway.
-- [ ] Tests: parsers with real fixtures; `command_for` for the new job kinds; a
-      temporary repository for `lfs_files`; frontend with the bridge mocked.
+- [ ] Tests: parser with real `.gitattributes` fixtures; `command_for` for the
+      new job kinds; tracking validation in a temporary repository; frontend
+      with the bridge mocked.
 - [ ] `npm run lint`, `npm run typecheck`, `npm run test`, `cargo test`,
       `cargo clippy -D warnings` and `cargo fmt --check` green.
 

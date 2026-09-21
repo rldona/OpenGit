@@ -255,8 +255,8 @@ cherry-pick a range, all from the app. ✅
 Move LFS past detection-only and manage repository hooks without the terminal.
 
 - [ ] Git LFS complete: track patterns, pull objects and migrate existing files
-  (OG-098).
-- [ ] Hooks manager: list, edit and enable/disable (OG-099).
+  (OG-097).
+- [ ] Hooks manager: list, edit and enable/disable (OG-098).
 
 **Exit:** track a pattern, download the missing LFS objects and migrate a file
 to LFS from the app; list a hook, edit it and enable/disable it without the
@@ -266,8 +266,8 @@ terminal.
 
 The UI is English-only (OG-014); this milestone makes the language a choice.
 
-- [ ] i18n framework plus the Spanish locale (OG-100).
-- [ ] Language selector in Settings, persisted (OG-101).
+- [ ] i18n framework plus the Spanish locale (OG-099).
+- [ ] Language selector in Settings, persisted (OG-100).
 
 **Exit:** switching the UI between English and Spanish from Settings and the
 choice survives a restart; the code has no hardcoded UI strings left.

@@ -1,4 +1,4 @@
-# OG-100 · Internationalization (framework + Spanish locale)
+# OG-099 · Internationalization (framework + Spanish locale)
 
 - **Milestone:** M20 — Internationalization
 - **Status:** backlog
@@ -38,7 +38,7 @@ locale.
 
 ## Out of scope
 
-- The language selector and persistence: OG-101.
+- The language selector and persistence: OG-100.
 - Translating documentation, comments, commit messages or the ROADMAP.
 - Locales beyond `en` and `es`.
 - Localizing git's own output; only the app's strings are translated.

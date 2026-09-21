@@ -1,4 +1,4 @@
-# OG-097 · Stabilize the watcher ignore test
+# OG-101 · Stabilize the watcher ignore test
 
 - **Milestone:** Next (post-M18)
 - **Status:** done

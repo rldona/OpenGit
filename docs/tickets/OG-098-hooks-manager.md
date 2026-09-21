@@ -1,4 +1,4 @@
-# OG-099 · Hooks manager
+# OG-098 · Hooks manager
 
 - **Milestone:** M19 — Git LFS & hooks
 - **Status:** ready

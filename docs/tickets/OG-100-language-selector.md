@@ -1,13 +1,13 @@
-# OG-101 · Language selector in Settings
+# OG-100 · Language selector in Settings
 
 - **Milestone:** M20 — Internationalization
 - **Status:** backlog
-- **Depends on:** OG-100, OG-067
+- **Depends on:** OG-099, OG-067
 - **References:** `src/components/SettingsWindow.tsx`
 
 ## Context
 
-Once the message catalog exists (OG-100), the language has to be a user choice.
+Once the message catalog exists (OG-099), the language has to be a user choice.
 Settings (OG-067) is the natural place, and the choice should survive a restart
 like the other preferences.
 
@@ -33,7 +33,7 @@ like the other preferences.
 
 ## Out of scope
 
-- Adding more locales (each is a catalog file, OG-100).
+- Adding more locales (each is a catalog file, OG-099).
 - Translating repository content, commit messages or diffs.
 - Per-window languages; the setting is global.
 

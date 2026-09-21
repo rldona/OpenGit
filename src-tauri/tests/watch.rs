@@ -83,7 +83,7 @@ fn ignores_changes_inside_gitignored_directories() {
     })
     .expect("arrancar watcher");
     // An event buffered before the watch settled is not a change to the
-    // ignored directory: let it drain before the write (OG-097).
+    // ignored directory: let it drain before the write (OG-101).
     std::thread::sleep(Duration::from_millis(300));
     while receiver.try_recv().is_ok() {}
     repo.write("ignored/otro.txt", b"dos\n");
