@@ -1,8 +1,10 @@
 import { useEffect } from "react";
+import { useI18n } from "../lib/i18n";
 import { useCommitStore } from "../lib/stores/commit";
 import { useRepoStore } from "../lib/stores/repo";
 
 export function OpBanner() {
+  const { t } = useI18n();
   const root = useRepoStore((state) => state.repo?.root ?? null);
   const opState = useCommitStore((state) => state.opState);
   const load = useCommitStore((state) => state.load);
@@ -17,13 +19,13 @@ export function OpBanner() {
   }, [root, load]);
 
   const operation = opState.rebase
-    ? "rebase"
+    ? t("opBanner.rebase")
     : opState.merge
-      ? "merge"
+      ? t("opBanner.merge")
       : opState.cherry_pick
-        ? "cherry-pick"
+        ? t("opBanner.cherryPick")
         : opState.revert
-          ? "revert"
+          ? t("opBanner.revert")
           : null;
 
   if (!operation || !root) {
@@ -37,21 +39,18 @@ export function OpBanner() {
 
   return (
     <div className="op-banner" role="status">
-      <span>
-        {operation}
-        {progress} in progress
-      </span>
+      <span>{t("opBanner.inProgress", { operation, progress })}</span>
       <div className="op-banner-actions">
         <button type="button" onClick={() => void abort(root)}>
-          Abort
+          {t("opBanner.abort")}
         </button>
-        {operation !== "merge" && (
+        {opState.rebase || opState.cherry_pick || opState.revert ? (
           <button type="button" onClick={() => void skipOp(root)}>
-            Skip
+            {t("opBanner.skip")}
           </button>
-        )}
+        ) : null}
         <button type="button" onClick={() => void continueOp(root)}>
-          Continue
+          {t("opBanner.continue")}
         </button>
       </div>
     </div>

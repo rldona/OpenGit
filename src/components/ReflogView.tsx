@@ -3,6 +3,7 @@ import { confirmDestructive } from "../lib/bridge/dialog";
 import type { ResetMode } from "../lib/bridge/history";
 import { copyText } from "../lib/clipboard";
 import { formatCommitDate } from "../lib/format";
+import { useI18n } from "../lib/i18n";
 import { useReflogStore } from "../lib/stores/reflog";
 import { useRepoStore } from "../lib/stores/repo";
 
@@ -11,6 +12,7 @@ import { useRepoStore } from "../lib/stores/repo";
  * branch, reset to an entry, check it out or copy its hash.
  */
 export function ReflogView() {
+  const { t } = useI18n();
   const root = useRepoStore((state) => state.repo?.root ?? null);
   const entries = useReflogStore((state) => state.entries);
   const loading = useReflogStore((state) => state.loading);
@@ -46,9 +48,7 @@ export function ReflogView() {
   const doReset = async (hash: string) => {
     if (
       mode === "hard" &&
-      !(await confirmDestructive(
-        `Hard reset to ${hash.slice(0, 7)}? Uncommitted changes are DISCARDED.`,
-      ))
+      !(await confirmDestructive(t("reflog.hardResetConfirm", { hash: hash.slice(0, 7) })))
     ) {
       return;
     }
@@ -58,17 +58,17 @@ export function ReflogView() {
   return (
     <div className="reflog-view">
       <div className="reflog-toolbar">
-        <span className="muted">Reflog</span>
+        <span className="muted">{t("reflog.title")}</span>
         <label className="reflog-mode">
-          <span>Reset mode:</span>
+          <span>{t("reflog.resetMode")}</span>
           <select
-            aria-label="Reset mode"
+            aria-label={t("reflog.resetModeAria")}
             value={mode}
             onChange={(event) => setMode(event.target.value as ResetMode)}
           >
-            <option value="soft">Soft</option>
-            <option value="mixed">Mixed</option>
-            <option value="hard">Hard</option>
+            <option value="soft">{t("reflog.soft")}</option>
+            <option value="mixed">{t("reflog.mixed")}</option>
+            <option value="hard">{t("reflog.hard")}</option>
           </select>
         </label>
       </div>
@@ -78,7 +78,7 @@ export function ReflogView() {
           {error}
         </p>
       )}
-      {loading && <p className="muted">Loading…</p>}
+      {loading && <p className="muted">{t("common.loading")}</p>}
 
       <ul className="reflog-list">
         {entries.map((entry) => (
@@ -99,16 +99,16 @@ export function ReflogView() {
                   setBranchName("");
                 }}
               >
-                Create branch
+                {t("reflog.createBranch")}
               </button>
               <button type="button" onClick={() => void doReset(entry.hash)}>
-                Reset
+                {t("reflog.reset")}
               </button>
               <button type="button" onClick={() => void checkout(root, entry.hash)}>
-                Checkout
+                {t("reflog.checkout")}
               </button>
               <button type="button" onClick={() => void copyText(entry.hash)}>
-                Copy
+                {t("reflog.copy")}
               </button>
             </div>
             {branchFor === entry.hash && (
@@ -120,17 +120,17 @@ export function ReflogView() {
                 }}
               >
                 <input
-                  aria-label="New branch name"
+                  aria-label={t("reflog.branchNameAria")}
                   autoFocus
                   value={branchName}
-                  placeholder="branch name"
+                  placeholder={t("reflog.branchPlaceholder")}
                   onChange={(event) => setBranchName(event.target.value)}
                 />
                 <button type="submit" disabled={branchName.trim() === ""}>
-                  Create
+                  {t("common.create")}
                 </button>
                 <button type="button" onClick={() => setBranchFor(null)}>
-                  Cancel
+                  {t("common.cancel")}
                 </button>
               </form>
             )}

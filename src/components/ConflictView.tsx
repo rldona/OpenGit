@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { conflictCount, resolvedContent, type ConflictBlock } from "../lib/conflict/parse";
+import { useI18n } from "../lib/i18n";
 import { useConflictStore } from "../lib/stores/conflict";
 import { useRepoStore } from "../lib/stores/repo";
 import { useStatusStore } from "../lib/stores/status";
@@ -21,6 +22,7 @@ function indexBlocks(blocks: ConflictBlock[]): IndexedBlock[] {
 }
 
 export function ConflictView() {
+  const { t } = useI18n();
   const root = useRepoStore((state) => state.repo?.root ?? null);
   const report = useStatusStore((state) => state.report);
   const file = useConflictStore((state) => state.file);
@@ -51,8 +53,10 @@ export function ConflictView() {
     <div className="conflict-view">
       <div className="conflict-toolbar">
         <span className="muted">
-          {conflicts.length} conflicted file(s)
-          {file && total > 0 ? ` · ${total - unresolved}/${total} blocks resolved` : ""}
+          {t("conflict.filesCount", { count: conflicts.length })}
+          {file && total > 0
+            ? t("conflict.blocksResolved", { resolved: total - unresolved, total })
+            : ""}
         </span>
         <button
           type="button"
@@ -63,7 +67,7 @@ export function ConflictView() {
             }
           }}
         >
-          Save and stage
+          {t("conflict.saveAndStage")}
         </button>
       </div>
 
@@ -83,20 +87,14 @@ export function ConflictView() {
               {entry.path}
             </button>
           ))}
-          {conflicts.length === 0 && <p className="muted status-empty">No conflicts</p>}
+          {conflicts.length === 0 && (
+            <p className="muted status-empty">{t("conflict.noConflicts")}</p>
+          )}
         </div>
 
         <div className="conflict-pane">
-          {binary && (
-            <p className="muted status-empty">
-              Binary or non-UTF-8 file: resolve it outside the app.
-            </p>
-          )}
-          {noMarkers && (
-            <p className="muted status-empty">
-              No conflict markers found (delete/modify?): resolve it outside the app.
-            </p>
-          )}
+          {binary && <p className="muted status-empty">{t("conflict.binary")}</p>}
+          {noMarkers && <p className="muted status-empty">{t("conflict.noMarkers")}</p>}
           {!binary &&
             indexed.map(({ block, conflictIndex }, position) =>
               block.kind === "common" ? (
@@ -108,13 +106,15 @@ export function ConflictView() {
                   <div className="conflict-sides">
                     <div className="conflict-side">
                       <span className="conflict-label">
-                        Ours{block.oursLabel ? ` (${block.oursLabel})` : ""}
+                        {t("conflict.ours")}
+                        {block.oursLabel ? ` (${block.oursLabel})` : ""}
                       </span>
                       <pre>{block.ours.join("\n")}</pre>
                     </div>
                     <div className="conflict-side">
                       <span className="conflict-label">
-                        Theirs{block.theirsLabel ? ` (${block.theirsLabel})` : ""}
+                        {t("conflict.theirs")}
+                        {block.theirsLabel ? ` (${block.theirsLabel})` : ""}
                       </span>
                       <pre>{block.theirs.join("\n")}</pre>
                     </div>
@@ -125,25 +125,25 @@ export function ConflictView() {
                       className={choices[conflictIndex!] === "ours" ? "active" : ""}
                       onClick={() => choose(conflictIndex!, "ours")}
                     >
-                      Take ours
+                      {t("conflict.takeOurs")}
                     </button>
                     <button
                       type="button"
                       className={choices[conflictIndex!] === "theirs" ? "active" : ""}
                       onClick={() => choose(conflictIndex!, "theirs")}
                     >
-                      Take theirs
+                      {t("conflict.takeTheirs")}
                     </button>
                     <button
                       type="button"
                       className={choices[conflictIndex!] === "both" ? "active" : ""}
                       onClick={() => choose(conflictIndex!, "both")}
                     >
-                      Take both
+                      {t("conflict.takeBoth")}
                     </button>
                     {choices[conflictIndex!] && (
                       <button type="button" onClick={() => undecide(conflictIndex!)}>
-                        Undo
+                        {t("conflict.undo")}
                       </button>
                     )}
                   </div>
