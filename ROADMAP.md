@@ -2,7 +2,7 @@
 
 A milestone closes when its tickets are `done` and its exit criteria are met. Tickets live in [`docs/tickets/`](docs/tickets/README.md).
 
-**Current state:** latest release **v0.7.0** (2026-09-20) with the repository lifecycle, recovery and history depth. M0–M18 are closed; **M19 (Git LFS & hooks)** is the active milestone.
+**Current state:** latest release **v0.7.0** (2026-09-20) with the repository lifecycle, recovery and history depth. M0–M19 are closed; the next milestone is **M20 (Internationalization)**.
 
 ## M0 — Foundation ✅ _(closed 2026-09-18)_
 
@@ -250,17 +250,17 @@ history with more detail.
 **Exit:** find a string across the worktree, export and apply a patch and
 cherry-pick a range, all from the app. ✅
 
-## M19 — Git LFS & hooks
+## M19 — Git LFS & hooks ✅ _(closed 2026-09-21)_
 
 Move LFS past detection-only and manage repository hooks without the terminal.
 
 - [x] Git LFS complete: track patterns, pull objects and migrate existing files
   (OG-097).
-- [ ] Hooks manager: list, edit and enable/disable (OG-098).
+- [x] Hooks manager: list, edit and enable/disable (OG-098).
 
 **Exit:** track a pattern, download the missing LFS objects and migrate a file
 to LFS from the app; list a hook, edit it and enable/disable it without the
-terminal.
+terminal. ✅
 
 ## M20 — Internationalization
 

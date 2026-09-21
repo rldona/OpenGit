@@ -10,7 +10,7 @@ pub mod version;
 
 pub use error::GitError;
 pub use models::{
-    AuthorIdent, BlameLine, Commit, FileDiff, FileStatus, LfsStatus, Ref, Remote, Stash,
+    AuthorIdent, BlameLine, Commit, FileDiff, FileStatus, Hook, LfsStatus, Ref, Remote, Stash,
     StatusKind, StatusReport, Submodule, SubmoduleState, TrackingCommits, Worktree,
 };
 pub use parsers::{
@@ -987,6 +987,229 @@ fn resolve_git_path(runner: &Runner, repo: &Path, name: &str) -> Result<String, 
         repo.join(path)
     };
     Ok(path.to_string_lossy().into_owned())
+}
+
+/// Absolute hooks directory of the repository (`core.hooksPath` respected).
+pub fn hooks_directory(runner: &Runner, repo: &Path) -> Result<PathBuf, GitError> {
+    Ok(PathBuf::from(resolve_git_path(runner, repo, "hooks")?))
+}
+
+/// Rejects anything that is not a single hook file name.
+fn validate_hook_name(name: &str) -> Result<(), GitError> {
+    let valid = !name.is_empty()
+        && name != "."
+        && name != ".."
+        && name.len() <= 128
+        && !name.starts_with('.')
+        && name.chars().all(|character| {
+            character.is_ascii_alphanumeric() || matches!(character, '-' | '_' | '.')
+        })
+        && !name.ends_with(".sample")
+        && !name.ends_with(".disabled");
+    if !valid {
+        return Err(GitError::invalid(format!("invalid hook name: {name}")));
+    }
+    Ok(())
+}
+
+/// The `<name>`, `<name>.sample` and `<name>.disabled` files of a hook.
+fn hook_paths(directory: &Path, name: &str) -> (PathBuf, PathBuf, PathBuf) {
+    (
+        directory.join(name),
+        directory.join(format!("{name}.sample")),
+        directory.join(format!("{name}.disabled")),
+    )
+}
+
+/// Canonicalises a path that may not exist yet, resolving its existing parents.
+fn canonical(path: &Path) -> PathBuf {
+    if let Ok(real) = path.canonicalize() {
+        return real;
+    }
+    match path.parent() {
+        Some(parent) => {
+            let mut resolved = canonical(parent);
+            if let Some(name) = path.file_name() {
+                resolved.push(name);
+            }
+            resolved
+        }
+        None => path.to_path_buf(),
+    }
+}
+
+/// A hook outside the repository (`core.hooksPath`) is listed but not written.
+fn ensure_repo_hooks(repo: &Path, directory: &Path) -> Result<(), GitError> {
+    if canonical(directory).starts_with(canonical(repo)) {
+        Ok(())
+    } else {
+        Err(GitError::invalid(
+            "the hooks directory is configured outside the repository",
+        ))
+    }
+}
+
+#[cfg(unix)]
+fn is_executable(path: &Path) -> bool {
+    use std::os::unix::fs::PermissionsExt;
+    std::fs::metadata(path).is_ok_and(|metadata| metadata.permissions().mode() & 0o111 != 0)
+}
+
+#[cfg(not(unix))]
+fn is_executable(path: &Path) -> bool {
+    path.exists()
+}
+
+#[cfg(unix)]
+fn set_executable(path: &Path) -> Result<(), GitError> {
+    use std::os::unix::fs::PermissionsExt;
+    let mut permissions = std::fs::metadata(path)
+        .map_err(|error| GitError::Io {
+            message: format!("could not read the hook permissions: {error}"),
+        })?
+        .permissions();
+    permissions.set_mode(permissions.mode() | 0o111);
+    std::fs::set_permissions(path, permissions).map_err(|error| GitError::Io {
+        message: format!("could not make the hook executable: {error}"),
+    })
+}
+
+#[cfg(not(unix))]
+fn set_executable(_path: &Path) -> Result<(), GitError> {
+    Ok(())
+}
+
+/// Lists the hooks present in the hooks directory (OG-098).
+pub fn hooks_list(runner: &Runner, repo: &Path) -> Result<Vec<Hook>, GitError> {
+    let directory = hooks_directory(runner, repo)?;
+    let Ok(entries) = std::fs::read_dir(&directory) else {
+        return Ok(Vec::new());
+    };
+
+    let mut names: Vec<String> = Vec::new();
+    for entry in entries.flatten() {
+        let file_name = entry.file_name().to_string_lossy().into_owned();
+        if file_name.starts_with('.') || entry.path().is_dir() {
+            continue;
+        }
+        let base = file_name
+            .strip_suffix(".sample")
+            .or_else(|| file_name.strip_suffix(".disabled"))
+            .unwrap_or(&file_name);
+        if validate_hook_name(base).is_err() {
+            continue;
+        }
+        if !names.iter().any(|known| known == base) {
+            names.push(base.to_string());
+        }
+    }
+    names.sort();
+
+    let mut hooks = Vec::new();
+    for name in names {
+        let (hook, sample, disabled) = hook_paths(&directory, &name);
+        let path = if hook.exists() {
+            hook.clone()
+        } else if disabled.exists() {
+            disabled.clone()
+        } else {
+            sample.clone()
+        };
+        hooks.push(Hook {
+            name,
+            path: path.to_string_lossy().into_owned(),
+            installed: hook.exists() || disabled.exists(),
+            active: hook.exists() && is_executable(&hook),
+            sample: sample.exists(),
+            disabled: disabled.exists(),
+        });
+    }
+    Ok(hooks)
+}
+
+/// Reads a hook, falling back to `.disabled` and then to its sample (OG-098).
+pub fn hook_read(runner: &Runner, repo: &Path, name: &str) -> Result<String, GitError> {
+    validate_hook_name(name)?;
+    let directory = hooks_directory(runner, repo)?;
+    let (hook, sample, disabled) = hook_paths(&directory, name);
+    let path = if hook.exists() {
+        hook
+    } else if disabled.exists() {
+        disabled
+    } else {
+        sample
+    };
+    Ok(std::fs::read(&path)
+        .map(|content| String::from_utf8_lossy(&content).into_owned())
+        .unwrap_or_default())
+}
+
+/// Writes a hook and marks it executable on Unix (OG-098).
+pub fn hook_write(
+    runner: &Runner,
+    repo: &Path,
+    name: &str,
+    contents: &str,
+) -> Result<(), GitError> {
+    validate_hook_name(name)?;
+    let directory = hooks_directory(runner, repo)?;
+    ensure_repo_hooks(repo, &directory)?;
+    std::fs::create_dir_all(&directory).map_err(|error| GitError::Io {
+        message: format!("could not create the hooks directory: {error}"),
+    })?;
+    let (hook, _sample, disabled) = hook_paths(&directory, name);
+    if disabled.exists() {
+        let _ = std::fs::remove_file(&disabled);
+    }
+    std::fs::write(&hook, contents).map_err(|error| GitError::Io {
+        message: format!("could not write the hook: {error}"),
+    })?;
+    set_executable(&hook)
+}
+
+/// Enables or disables a hook without deleting its contents (OG-098).
+pub fn hook_set_enabled(
+    runner: &Runner,
+    repo: &Path,
+    name: &str,
+    enabled: bool,
+) -> Result<(), GitError> {
+    validate_hook_name(name)?;
+    let directory = hooks_directory(runner, repo)?;
+    ensure_repo_hooks(repo, &directory)?;
+    let (hook, sample, disabled) = hook_paths(&directory, name);
+
+    if enabled {
+        std::fs::create_dir_all(&directory).map_err(|error| GitError::Io {
+            message: format!("could not create the hooks directory: {error}"),
+        })?;
+        if !hook.exists() {
+            if disabled.exists() {
+                std::fs::rename(&disabled, &hook).map_err(|error| GitError::Io {
+                    message: format!("could not enable the hook: {error}"),
+                })?;
+            } else if sample.exists() {
+                std::fs::copy(&sample, &hook).map_err(|error| GitError::Io {
+                    message: format!("could not create the hook from its sample: {error}"),
+                })?;
+            } else {
+                return Err(GitError::invalid(format!(
+                    "there is no {name} hook or sample to enable"
+                )));
+            }
+        }
+        set_executable(&hook)
+    } else {
+        if !hook.exists() {
+            return Ok(());
+        }
+        if disabled.exists() {
+            let _ = std::fs::remove_file(&disabled);
+        }
+        std::fs::rename(&hook, &disabled).map_err(|error| GitError::Io {
+            message: format!("could not disable the hook: {error}"),
+        })
+    }
 }
 
 /// Contents of the repository commit template; empty when there is none.

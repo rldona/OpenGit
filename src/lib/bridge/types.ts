@@ -210,6 +210,16 @@ export type LfsStatus = {
   patterns: string[];
 };
 
+/** A Git hook in the repository (OG-098). */
+export type Hook = {
+  name: string;
+  path: string;
+  installed: boolean;
+  active: boolean;
+  sample: boolean;
+  disabled: boolean;
+};
+
 export type Remote = {
   name: string;
   url: string;

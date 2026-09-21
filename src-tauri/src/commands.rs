@@ -1046,7 +1046,7 @@ pub fn lfs_status(
     crate::git::lfs_status(&state.runner, Path::new(&path))
 }
 
-/// Starts tracking a pattern with Git LFS, updating `.gitattributes` (OG-098).
+/// Starts tracking a pattern with Git LFS, updating `.gitattributes` (OG-097).
 #[tauri::command]
 pub fn lfs_track(
     path: String,
@@ -1055,6 +1055,48 @@ pub fn lfs_track(
 ) -> Result<(), GitError> {
     pause_while(&state, || {
         crate::git::lfs_track(&state.runner, Path::new(&path), &pattern)
+    })
+}
+
+#[tauri::command]
+pub fn hooks_list(
+    path: String,
+    state: State<'_, AppState>,
+) -> Result<Vec<crate::git::Hook>, GitError> {
+    crate::git::hooks_list(&state.runner, Path::new(&path))
+}
+
+#[tauri::command]
+pub fn hook_read(
+    path: String,
+    name: String,
+    state: State<'_, AppState>,
+) -> Result<String, GitError> {
+    crate::git::hook_read(&state.runner, Path::new(&path), &name)
+}
+
+/// Writes and enables a hook (OG-098).
+#[tauri::command]
+pub fn hook_write(
+    path: String,
+    name: String,
+    contents: String,
+    state: State<'_, AppState>,
+) -> Result<(), GitError> {
+    pause_while(&state, || {
+        crate::git::hook_write(&state.runner, Path::new(&path), &name, &contents)
+    })
+}
+
+#[tauri::command]
+pub fn hook_set_enabled(
+    path: String,
+    name: String,
+    enabled: bool,
+    state: State<'_, AppState>,
+) -> Result<(), GitError> {
+    pause_while(&state, || {
+        crate::git::hook_set_enabled(&state.runner, Path::new(&path), &name, enabled)
     })
 }
 

@@ -15,8 +15,10 @@ import {
   worktreeRemove,
 } from "../lib/bridge/repo";
 import { startRemoteJob } from "../lib/bridge/jobs";
-import type { LfsStatus, RepoInfo, Submodule, Worktree } from "../lib/bridge/types";
+import { hookRead, hookSetEnabled, hooksList } from "../lib/bridge/hooks";
+import type { Hook, LfsStatus, RepoInfo, Submodule, Worktree } from "../lib/bridge/types";
 import { useExtrasStore } from "../lib/stores/extras";
+import { useHooksStore } from "../lib/stores/hooks";
 import { useRemoteStore } from "../lib/stores/remote";
 import { useRepoStore } from "../lib/stores/repo";
 import { ExtrasSidebar } from "./ExtrasSidebar";
@@ -42,6 +44,13 @@ vi.mock("../lib/bridge/repo", () => ({
 vi.mock("../lib/bridge/jobs", () => ({
   startRemoteJob: vi.fn().mockResolvedValue("job-1"),
   cancelRemoteJob: vi.fn(),
+}));
+
+vi.mock("../lib/bridge/hooks", () => ({
+  hooksList: vi.fn().mockResolvedValue([]),
+  hookRead: vi.fn().mockResolvedValue("#!/bin/sh\n"),
+  hookWrite: vi.fn().mockResolvedValue(undefined),
+  hookSetEnabled: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("../lib/bridge/dialog", () => ({
@@ -91,14 +100,35 @@ const LFS: LfsStatus = {
   patterns: ["*.psd"],
 };
 
+const HOOKS: Hook[] = [
+  {
+    name: "pre-commit",
+    path: "/tmp/repo/.git/hooks/pre-commit",
+    installed: true,
+    active: true,
+    sample: true,
+    disabled: false,
+  },
+  {
+    name: "pre-push",
+    path: "/tmp/repo/.git/hooks/pre-push.sample",
+    installed: false,
+    active: false,
+    sample: true,
+    disabled: false,
+  },
+];
+
 describe("ExtrasSidebar", () => {
   beforeEach(() => {
     vi.mocked(submoduleStatus).mockResolvedValue(SUBMODULES);
     vi.mocked(worktreeList).mockResolvedValue(WORKTREES);
     vi.mocked(lfsStatus).mockResolvedValue(LFS);
+    vi.mocked(hooksList).mockResolvedValue(HOOKS);
     vi.mocked(remoteUrls).mockResolvedValue([]);
     vi.mocked(openRepo).mockResolvedValue(REPO);
     useRemoteStore.getState().reset();
+    useHooksStore.getState().reset();
     useRepoStore.setState({ repo: REPO, recents: [], openTabs: [], loading: false, error: null });
     useExtrasStore.setState({
       root: REPO.root,
@@ -265,5 +295,34 @@ describe("ExtrasSidebar", () => {
       kind: "lfs_migrate",
       include: "*.psd",
     });
+  });
+
+  it("lists hooks with their state", async () => {
+    render(<ExtrasSidebar />);
+
+    expect(await screen.findByRole("button", { name: "Hooks" })).toBeInTheDocument();
+    expect(screen.getByText("pre-commit")).toBeInTheDocument();
+    expect(screen.getByText("Active")).toBeInTheDocument();
+    expect(screen.getByText("Sample")).toBeInTheDocument();
+  });
+
+  it("toggles a hook from its context menu", async () => {
+    const user = userEvent.setup();
+    render(<ExtrasSidebar />);
+
+    fireEvent.contextMenu(await screen.findByText("pre-commit"));
+    await user.click(screen.getByRole("menuitem", { name: "Disable" }));
+
+    expect(hookSetEnabled).toHaveBeenCalledWith("/tmp/repo", "pre-commit", false);
+  });
+
+  it("opens the hook editor and loads its contents", async () => {
+    const user = userEvent.setup();
+    render(<ExtrasSidebar />);
+
+    await user.click(await screen.findByText("pre-commit"));
+
+    expect(hookRead).toHaveBeenCalledWith("/tmp/repo", "pre-commit");
+    expect(await screen.findByLabelText("Hook contents")).toBeInTheDocument();
   });
 });
