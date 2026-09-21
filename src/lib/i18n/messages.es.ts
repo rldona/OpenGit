@@ -28,6 +28,12 @@ export const es: Messages = {
     title: "Salida",
     resize: "Redimensionar salida",
   },
+  settings: {
+    language: "Idioma",
+    languageSystem: "Idioma del sistema",
+    languageEnglish: "Inglés",
+    languageSpanish: "Español",
+  },
   welcome: {
     title: "Ningún repositorio abierto",
     subtitle: "Abre un repositorio para ver su grafo de commits e historial.",

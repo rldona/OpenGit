@@ -132,7 +132,7 @@ One file per ticket, named `OG-NNN-slug.md`. Every change in the repository star
 | [OG-097](OG-097-lfs-track-pull-migrate.md) | Git LFS: track, pull and migration | M19 | done |
 | [OG-098](OG-098-hooks-manager.md) | Hooks manager | M19 | done |
 | [OG-099](OG-099-i18n-framework.md) | Internationalization (framework + Spanish locale) | M20 | done |
-| [OG-100](OG-100-language-selector.md) | Language selector in Settings | M20 | ready |
+| [OG-100](OG-100-language-selector.md) | Language selector in Settings | M20 | done |
 | [OG-101](OG-101-flaky-watcher-test.md) | Stabilize the watcher ignore test | Next | done |
 | [OG-102](OG-102-i18n-history.md) | i18n: history and commit views | M20 | backlog |
 | [OG-103](OG-103-i18n-diff-status.md) | i18n: diff, status and staging | M20 | backlog |

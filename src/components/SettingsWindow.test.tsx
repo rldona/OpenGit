@@ -22,8 +22,10 @@ import {
   setAutoRefresh,
 } from "../lib/bridge/settings";
 import type { GpgKey, Remote, RepoInfo } from "../lib/bridge/types";
+import { LOCALE_STORAGE_KEY } from "../lib/i18n/locale";
 import { loadStoredSession, saveStoredSession } from "../lib/tabs";
 import { useExtrasStore } from "../lib/stores/extras";
+import { useLocaleStore } from "../lib/stores/locale";
 import { useRepoStore } from "../lib/stores/repo";
 import {
   AUTO_REFRESH_STORAGE_KEY,
@@ -106,6 +108,7 @@ describe("SettingsWindow", () => {
     vi.mocked(gpgSecretKeys).mockResolvedValue(GPG_KEYS);
     useSettingsStore.setState({ autoRefresh: true, restoreTabs: false });
     useThemeStore.setState({ preference: "system", systemDark: true, resolved: "dark" });
+    useLocaleStore.setState({ preference: null, locale: "en" });
     vi.mocked(configGet).mockImplementation(async (_path, key, scope) => {
       if (key === "user.name") return scope === "local" ? "Local Name" : "Global Name";
       if (key === "user.email") {
@@ -226,6 +229,20 @@ describe("SettingsWindow", () => {
     await user.click(screen.getByRole("button", { name: "OK" }));
 
     expect(useThemeStore.getState().preference).toBe("light");
+  });
+
+  it("changes the language from the Appearance tab on OK", async () => {
+    const user = userEvent.setup();
+    render(<SettingsWindow onClose={() => {}} />);
+
+    await user.click(screen.getByRole("tab", { name: "Appearance" }));
+    await user.selectOptions(screen.getByLabelText("Language"), "es");
+    expect(useLocaleStore.getState().locale).toBe("en");
+
+    await user.click(screen.getByRole("button", { name: "OK" }));
+
+    expect(useLocaleStore.getState().locale).toBe("es");
+    expect(localStorage.getItem(LOCALE_STORAGE_KEY)).toBe("es");
   });
 
   it("lists the remotes and adds a new one", async () => {

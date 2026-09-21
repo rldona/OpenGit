@@ -20,8 +20,11 @@ import {
 } from "../lib/bridge/settings";
 import type { GpgKey } from "../lib/bridge/types";
 import { formatCommitDate } from "../lib/format";
+import { useI18n } from "../lib/i18n";
+import type { Locale } from "../lib/i18n/locale";
 import { syncStoredSession } from "../lib/tabs";
 import { useExtrasStore } from "../lib/stores/extras";
+import { useLocaleStore } from "../lib/stores/locale";
 import { useRepoStore } from "../lib/stores/repo";
 import { useSettingsStore } from "../lib/stores/settings";
 import { useThemeStore } from "../lib/stores/theme";
@@ -50,6 +53,7 @@ function errorMessage(error: unknown): string {
  * Security and Commit Template land in follow-ups, in that order.
  */
 export function SettingsWindow({ onClose }: { onClose: () => void }) {
+  const { t } = useI18n();
   const root = useRepoStore((state) => state.repo?.root ?? null);
   const autoRefresh = useSettingsStore((state) => state.autoRefresh);
   const setAutoRefresh = useSettingsStore((state) => state.setAutoRefresh);
@@ -57,6 +61,8 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
   const setTheme = useThemeStore((state) => state.setPreference);
   const restoreTabs = useSettingsStore((state) => state.restoreTabs);
   const setRestoreTabs = useSettingsStore((state) => state.setRestoreTabs);
+  const localePreference = useLocaleStore((state) => state.preference);
+  const setLocalePreference = useLocaleStore((state) => state.setPreference);
 
   const remotes = useExtrasStore((state) => state.remotes);
   const tabs: Array<{ id: Tab; label: string; icon: IconName }> = [
@@ -70,6 +76,7 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
   const [tab, setTab] = useState<Tab>(root ? "advanced" : "appearance");
 
   const [draftTheme, setDraftTheme] = useState<ThemePreference>(theme);
+  const [draftLocale, setDraftLocale] = useState<"system" | Locale>(localePreference ?? "system");
   const [draftAutoRefresh, setDraftAutoRefresh] = useState(autoRefresh);
   const [draftRestoreTabs, setDraftRestoreTabs] = useState(restoreTabs);
   const [ignorePath, setIgnorePath] = useState("");
@@ -278,6 +285,9 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
           useRepoStore.getState().openTabs,
           useRepoStore.getState().repo?.root ?? null,
         );
+      }
+      if (draftLocale !== (localePreference ?? "system")) {
+        setLocalePreference(draftLocale === "system" ? null : draftLocale);
       }
       setTheme(draftTheme);
       onClose();
@@ -598,6 +608,20 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
                   <option value="system">System</option>
                   <option value="light">Light</option>
                   <option value="dark">Dark</option>
+                </select>
+              </label>
+
+              <h3>{t("settings.language")}</h3>
+              <label className="settings-field">
+                <span>{t("settings.language")}:</span>
+                <select
+                  aria-label={t("settings.language")}
+                  value={draftLocale}
+                  onChange={(event) => setDraftLocale(event.target.value as "system" | Locale)}
+                >
+                  <option value="system">{t("settings.languageSystem")}</option>
+                  <option value="en">{t("settings.languageEnglish")}</option>
+                  <option value="es">{t("settings.languageSpanish")}</option>
                 </select>
               </label>
             </section>

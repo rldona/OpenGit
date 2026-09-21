@@ -1,7 +1,7 @@
 # OG-100 · Language selector in Settings
 
 - **Milestone:** M20 — Internationalization
-- **Status:** ready
+- **Status:** done
 - **Depends on:** OG-099, OG-067
 - **References:** `docs/decisions/ADR-0009-i18n.md`, `src/components/SettingsWindow.tsx`
 
@@ -23,13 +23,14 @@ like the other preferences.
 
 ## Acceptance criteria
 
-- [ ] Changing the language re-renders the UI in that locale immediately.
-- [ ] The choice persists across restarts; with "system", the OS locale decides
+- [x] Changing the language in Settings and confirming re-renders the UI in
+      that locale without a reload.
+- [x] The choice persists across restarts; with "system", the OS locale decides
       and falls back to English.
-- [ ] The selected language is reflected in Settings after a restart.
-- [ ] Tests: store/persistence and a Settings interaction with the bridge
+- [x] The selected language is reflected in Settings after a restart.
+- [x] Tests: store/persistence and a Settings interaction with the bridge
       mocked.
-- [ ] Checks green.
+- [x] Checks green.
 
 ## Out of scope
 
@@ -40,9 +41,18 @@ like the other preferences.
 ## Technical notes
 
 - Reuse the settings persistence already used by the other options instead of a
-  new store field.
-- Applying the locale must not remount the whole app or reload the window.
+  new store field: the locale store follows the theme store pattern
+  (`localStorage`, `null` = system).
+- Applying the locale must not remount the whole app or reload the window; the
+  `useI18n()` hook re-renders the components that use it.
 
-## Implementation notes
+## Implementation notes (2026-09-21)
 
-_(filled in when the ticket closes)_
+- `useLocaleStore` holds `preference: Locale | null` (`null` = system), persists
+  to `opengit.locale` and resolves the system locale from `navigator.language`,
+  falling back to English.
+- Settings → Appearance gained a **Language** select (System / English /
+  Español) that applies on OK like the theme, without reloading.
+- Tests: the store persists, clears and follows the system; Settings applies
+  the choice on OK. Verified `typecheck`, `lint`, `format:check` and `npm test`
+  (544).
