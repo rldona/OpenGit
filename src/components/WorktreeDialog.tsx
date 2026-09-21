@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import { formatGitError } from "../lib/bridge/errors";
 import { pickDirectory } from "../lib/bridge/dialog";
 import { worktreeAdd } from "../lib/bridge/repo";
+import { useI18n } from "../lib/i18n";
 import { useExtrasStore } from "../lib/stores/extras";
 import { useRepoStore } from "../lib/stores/repo";
 import { useUiStore } from "../lib/stores/ui";
 
 /** Creates a worktree on a new or existing branch (OG-058). */
 export function WorktreeDialog({ onClose }: { onClose: () => void }) {
+  const { t } = useI18n();
   const root = useRepoStore((state) => state.repo?.root ?? null);
   const [path, setPath] = useState("");
   const [branch, setBranch] = useState("");
@@ -40,7 +42,7 @@ export function WorktreeDialog({ onClose }: { onClose: () => void }) {
     const nextPath = path.trim();
     const nextBranch = branch.trim();
     if (nextPath === "" || nextBranch === "") {
-      setError("Worktree folder and branch are required");
+      setError(t("worktree.required"));
       return;
     }
     setBusy(true);
@@ -54,7 +56,9 @@ export function WorktreeDialog({ onClose }: { onClose: () => void }) {
         create ? startPoint.trim() || "HEAD" : null,
       );
       await useExtrasStore.getState().refresh(root);
-      useUiStore.getState().appendOutput(`Worktree ${nextBranch} at ${nextPath}`);
+      useUiStore
+        .getState()
+        .appendOutput(t("worktree.created", { branch: nextBranch, path: nextPath }));
       onClose();
     } catch (err) {
       setError(formatGitError(err));
@@ -64,26 +68,31 @@ export function WorktreeDialog({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="modal-overlay">
-      <div className="remote-dialog" role="dialog" aria-modal="true" aria-label="New worktree">
-        <h2 className="remote-dialog-title">New worktree</h2>
+      <div
+        className="remote-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-label={t("worktree.dialogAria")}
+      >
+        <h2 className="remote-dialog-title">{t("worktree.title")}</h2>
 
         <label className="remote-field">
-          <span>Folder:</span>
+          <span>{t("worktree.folder")}</span>
           <input
-            aria-label="Worktree folder"
+            aria-label={t("worktree.folderAria")}
             value={path}
             autoFocus
             onChange={(event) => setPath(event.target.value)}
           />
           <button type="button" className="remote-refresh" onClick={() => void browse()}>
-            Browse…
+            {t("worktree.browse")}
           </button>
         </label>
 
         <label className="remote-field">
-          <span>Branch:</span>
+          <span>{t("worktree.branch")}</span>
           <input
-            aria-label="Worktree branch"
+            aria-label={t("worktree.branchAria")}
             value={branch}
             onChange={(event) => setBranch(event.target.value)}
             onKeyDown={(event) => {
@@ -93,7 +102,7 @@ export function WorktreeDialog({ onClose }: { onClose: () => void }) {
         </label>
 
         <fieldset className="remote-options">
-          <legend>Branch</legend>
+          <legend>{t("worktree.branch")}</legend>
           <label>
             <input
               type="radio"
@@ -101,7 +110,7 @@ export function WorktreeDialog({ onClose }: { onClose: () => void }) {
               checked={create}
               onChange={() => setCreate(true)}
             />
-            Create a new branch
+            {t("worktree.createNew")}
           </label>
           <label>
             <input
@@ -110,15 +119,15 @@ export function WorktreeDialog({ onClose }: { onClose: () => void }) {
               checked={!create}
               onChange={() => setCreate(false)}
             />
-            Use an existing branch
+            {t("worktree.useExisting")}
           </label>
         </fieldset>
 
         {create && (
           <label className="remote-field">
-            <span>Start point:</span>
+            <span>{t("worktree.startPoint")}</span>
             <input
-              aria-label="Worktree start point"
+              aria-label={t("worktree.startPointAria")}
               value={startPoint}
               onChange={(event) => setStartPoint(event.target.value)}
             />
@@ -133,10 +142,10 @@ export function WorktreeDialog({ onClose }: { onClose: () => void }) {
 
         <div className="remote-dialog-actions">
           <button type="button" onClick={onClose}>
-            Cancel
+            {t("common.cancel")}
           </button>
           <button type="button" className="primary" disabled={busy} onClick={() => void submit()}>
-            OK
+            {t("common.ok")}
           </button>
         </div>
       </div>

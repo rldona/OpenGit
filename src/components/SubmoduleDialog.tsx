@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { formatGitError } from "../lib/bridge/errors";
 import { submoduleAdd } from "../lib/bridge/repo";
+import { useI18n } from "../lib/i18n";
 import { useExtrasStore } from "../lib/stores/extras";
 import { useRepoStore } from "../lib/stores/repo";
 import { useStatusStore } from "../lib/stores/status";
@@ -8,6 +9,7 @@ import { useUiStore } from "../lib/stores/ui";
 
 /** Registers and clones a new submodule from the Branches menu (OG-057). */
 export function SubmoduleDialog({ onClose }: { onClose: () => void }) {
+  const { t } = useI18n();
   const root = useRepoStore((state) => state.repo?.root ?? null);
   const [url, setUrl] = useState("");
   const [path, setPath] = useState("");
@@ -31,7 +33,7 @@ export function SubmoduleDialog({ onClose }: { onClose: () => void }) {
     const nextUrl = url.trim();
     const nextPath = path.trim();
     if (nextUrl === "" || nextPath === "") {
-      setError("Submodule URL and path are required");
+      setError(t("submodule.required"));
       return;
     }
     setBusy(true);
@@ -45,7 +47,7 @@ export function SubmoduleDialog({ onClose }: { onClose: () => void }) {
       }
       await useExtrasStore.getState().refresh(root);
       await useStatusStore.getState().refresh(root);
-      useUiStore.getState().appendOutput(`Submodule ${nextPath} added`);
+      useUiStore.getState().appendOutput(t("submodule.added", { path: nextPath }));
       onClose();
     } catch (err) {
       setError(formatGitError(err));
@@ -55,13 +57,18 @@ export function SubmoduleDialog({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="modal-overlay">
-      <div className="remote-dialog" role="dialog" aria-modal="true" aria-label="Add Submodule">
-        <h2 className="remote-dialog-title">Add Submodule</h2>
+      <div
+        className="remote-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-label={t("submodule.aria")}
+      >
+        <h2 className="remote-dialog-title">{t("submodule.title")}</h2>
 
         <label className="remote-field">
-          <span>URL:</span>
+          <span>{t("common.url")}</span>
           <input
-            aria-label="Submodule URL"
+            aria-label={t("submodule.urlAria")}
             value={url}
             autoFocus
             onChange={(event) => setUrl(event.target.value)}
@@ -69,9 +76,9 @@ export function SubmoduleDialog({ onClose }: { onClose: () => void }) {
         </label>
 
         <label className="remote-field">
-          <span>Path:</span>
+          <span>{t("common.path")}</span>
           <input
-            aria-label="Submodule path"
+            aria-label={t("submodule.pathAria")}
             value={path}
             onChange={(event) => setPath(event.target.value)}
             onKeyDown={(event) => {
@@ -88,10 +95,10 @@ export function SubmoduleDialog({ onClose }: { onClose: () => void }) {
 
         <div className="remote-dialog-actions">
           <button type="button" onClick={onClose}>
-            Cancel
+            {t("common.cancel")}
           </button>
           <button type="button" className="primary" disabled={busy} onClick={() => void submit()}>
-            OK
+            {t("common.ok")}
           </button>
         </div>
       </div>

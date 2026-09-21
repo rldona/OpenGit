@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { formatGitError } from "../lib/bridge/errors";
 import { remoteAdd, remoteRename, remoteSetUrl } from "../lib/bridge/repo";
+import { useI18n } from "../lib/i18n";
 import { useExtrasStore } from "../lib/stores/extras";
 import { useRefsStore } from "../lib/stores/refs";
 import { useRepoStore } from "../lib/stores/repo";
@@ -22,6 +23,7 @@ type Props = {
  * or the URL, so the sidebar can offer both actions without two forms.
  */
 export function RemoteDialog({ mode, field = "both", remote = null, onClose }: Props) {
+  const { t } = useI18n();
   const root = useRepoStore((state) => state.repo?.root ?? null);
   const [name, setName] = useState(remote?.name ?? "");
   const [url, setUrl] = useState(remote?.url ?? "");
@@ -41,7 +43,11 @@ export function RemoteDialog({ mode, field = "both", remote = null, onClose }: P
   const nameReadOnly = mode === "edit" && field === "url";
   const urlReadOnly = mode === "edit" && field === "name";
   const title =
-    mode === "add" ? "New Remote" : field === "name" ? "Rename Remote" : "Edit Remote URL";
+    mode === "add"
+      ? t("remoteDialog.newRemote")
+      : field === "name"
+        ? t("remoteDialog.renameRemote")
+        : t("remoteDialog.editUrl");
 
   const submit = async () => {
     if (!root || busy) {
@@ -50,11 +56,11 @@ export function RemoteDialog({ mode, field = "both", remote = null, onClose }: P
     const nextName = name.trim();
     const nextUrl = url.trim();
     if (!nameReadOnly && nextName === "") {
-      setError("Remote name is required");
+      setError(t("remoteDialog.nameRequired"));
       return;
     }
     if (!urlReadOnly && nextUrl === "") {
-      setError("Remote URL is required");
+      setError(t("remoteDialog.urlRequired"));
       return;
     }
     setBusy(true);
@@ -77,7 +83,9 @@ export function RemoteDialog({ mode, field = "both", remote = null, onClose }: P
       useUiStore
         .getState()
         .appendOutput(
-          `Remote ${mode === "add" ? nextName : remote?.name} ${mode === "add" ? "added" : "updated"}`,
+          mode === "add"
+            ? t("remoteDialog.added", { name: nextName })
+            : t("remoteDialog.updated", { name: remote?.name ?? "" }),
         );
       onClose();
     } catch (err) {
@@ -92,9 +100,9 @@ export function RemoteDialog({ mode, field = "both", remote = null, onClose }: P
         <h2 className="remote-dialog-title">{title}</h2>
 
         <label className="remote-field">
-          <span>Name:</span>
+          <span>{t("common.name")}</span>
           <input
-            aria-label="Remote name"
+            aria-label={t("remoteDialog.nameAria")}
             value={name}
             readOnly={nameReadOnly}
             autoFocus={!nameReadOnly}
@@ -106,9 +114,9 @@ export function RemoteDialog({ mode, field = "both", remote = null, onClose }: P
         </label>
 
         <label className="remote-field">
-          <span>URL:</span>
+          <span>{t("common.url")}</span>
           <input
-            aria-label="Remote URL"
+            aria-label={t("remoteDialog.urlAria")}
             value={url}
             readOnly={urlReadOnly}
             autoFocus={nameReadOnly}
@@ -127,10 +135,10 @@ export function RemoteDialog({ mode, field = "both", remote = null, onClose }: P
 
         <div className="remote-dialog-actions">
           <button type="button" onClick={onClose}>
-            Cancel
+            {t("common.cancel")}
           </button>
           <button type="button" className="primary" disabled={busy} onClick={() => void submit()}>
-            OK
+            {t("common.ok")}
           </button>
         </div>
       </div>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useI18n } from "../lib/i18n";
 import { useRemoteStore } from "../lib/stores/remote";
 
 /** Last percentage git writes in its progress ("Receiving objects: 42%"). */
@@ -17,6 +18,7 @@ function lastPercent(lines: string[]): number | null {
  * shows the bar and the last line; if it fails, the full output and Close.
  */
 export function RemoteJobModal() {
+  const { t } = useI18n();
   const running = useRemoteStore((state) => state.running);
   const title = useRemoteStore((state) => state.title);
   const error = useRemoteStore((state) => state.error);
@@ -36,7 +38,7 @@ export function RemoteJobModal() {
   }
 
   const percent = running ? lastPercent(recentLines) : null;
-  const heading = title ?? "Remote operation";
+  const heading = title ?? t("jobs.fallback");
 
   if (running) {
     return (
@@ -61,14 +63,14 @@ export function RemoteJobModal() {
           {showOutput && <pre className="remote-job-output">{recentLines.join("\n")}</pre>}
           <div className="remote-dialog-actions">
             <button type="button" onClick={() => void cancel()}>
-              Cancel
+              {t("common.cancel")}
             </button>
             <button
               type="button"
               aria-expanded={showOutput}
               onClick={() => setShowOutput(!showOutput)}
             >
-              {showOutput ? "Hide Full Output" : "Show Full Output"}
+              {showOutput ? t("jobs.hideFull") : t("jobs.showFull")}
             </button>
           </div>
         </div>
@@ -82,16 +84,16 @@ export function RemoteJobModal() {
         className="remote-dialog"
         role="dialog"
         aria-modal="true"
-        aria-label={`${heading} failed`}
+        aria-label={t("jobs.failed", { title: heading })}
       >
-        <h2 className="remote-dialog-title">Error</h2>
+        <h2 className="remote-dialog-title">{t("jobs.errorTitle")}</h2>
         <p className="remote-job-error" role="alert">
           {error}
         </p>
         <pre className="remote-job-output">{recentLines.join("\n")}</pre>
         <div className="remote-dialog-actions">
           <button type="button" className="primary" onClick={dismiss}>
-            Close
+            {t("common.close")}
           </button>
         </div>
       </div>

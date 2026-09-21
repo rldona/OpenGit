@@ -5,6 +5,7 @@ import { formatGitError } from "../lib/bridge/errors";
 import { hookSetEnabled } from "../lib/bridge/hooks";
 import { worktreeRemove, submoduleSync, submoduleUpdate } from "../lib/bridge/repo";
 import { shortRefName } from "../lib/format";
+import { t as msg, useI18n } from "../lib/i18n";
 import { useExtrasStore } from "../lib/stores/extras";
 import { useHooksStore } from "../lib/stores/hooks";
 import { useRemoteStore } from "../lib/stores/remote";
@@ -17,12 +18,18 @@ import { HookDialog } from "./HookDialog";
 import { LfsDialog } from "./LfsDialog";
 import { WorktreeDialog } from "./WorktreeDialog";
 
-const STATE_LABELS: Record<SubmoduleState, string> = {
-  clean: "Clean",
-  modified: "Different commit",
-  uninitialized: "Not initialized",
-  conflict: "Conflict",
-};
+function submoduleStateLabel(state: SubmoduleState): string {
+  switch (state) {
+    case "clean":
+      return msg("extras.submoduleClean");
+    case "modified":
+      return msg("extras.submoduleModified");
+    case "uninitialized":
+      return msg("extras.submoduleUninitialized");
+    case "conflict":
+      return msg("extras.submoduleConflict");
+  }
+}
 
 function baseName(path: string): string {
   const parts = path.split(/[\\/]/).filter(Boolean);
@@ -35,6 +42,7 @@ function pathsEqual(left: string, right: string): boolean {
 }
 
 export function ExtrasSidebar() {
+  const { t } = useI18n();
   const root = useRepoStore((state) => state.repo?.root ?? null);
   const open = useRepoStore((state) => state.open);
   const submodules = useExtrasStore((state) => state.submodules);
@@ -76,7 +84,11 @@ export function ExtrasSidebar() {
       await useStatusStore.getState().refresh(root);
       useUiStore
         .getState()
-        .appendOutput(`Submodule ${path} ${action === "update" ? "updated" : "synced"}`);
+        .appendOutput(
+          action === "update"
+            ? t("extras.submoduleUpdated", { path })
+            : t("extras.submoduleSynced", { path }),
+        );
     } catch (err) {
       setSubmoduleError(formatGitError(err));
     }
@@ -86,9 +98,7 @@ export function ExtrasSidebar() {
     if (!root) {
       return;
     }
-    if (
-      !(await confirmDestructive("Download the Git LFS objects missing for the current branch?"))
-    ) {
+    if (!(await confirmDestructive(t("extras.lfsPullConfirm")))) {
       return;
     }
     void useRemoteStore.getState().start(root, { kind: "lfs_pull", remote: null });
@@ -101,9 +111,12 @@ export function ExtrasSidebar() {
     try {
       await hookSetEnabled(root, hook.name, !hook.active);
       await useHooksStore.getState().refresh(root);
-      useUiStore
-        .getState()
-        .appendOutput(`${hook.active ? "Disabled" : "Enabled"} hook ${hook.name}`);
+      useUiStore.getState().appendOutput(
+        t("extras.hookToggled", {
+          action: hook.active ? t("extras.hookDisable") : t("extras.hookEnable"),
+          name: hook.name,
+        }),
+      );
     } catch (err) {
       setHookError(formatGitError(err));
     }
@@ -113,16 +126,14 @@ export function ExtrasSidebar() {
     if (!root) {
       return;
     }
-    if (!(await confirmDestructive(`Remove worktree ${baseName(path)}?`))) {
+    if (!(await confirmDestructive(t("worktree.removeConfirm", { name: baseName(path) })))) {
       return;
     }
     setWorktreeError(null);
     try {
       await worktreeRemove(root, path, false);
     } catch (err) {
-      const confirmed = await confirmDestructive(
-        "The worktree has uncommitted changes. Remove it anyway? This cannot be undone.",
-      );
+      const confirmed = await confirmDestructive(t("worktree.dirtyConfirm"));
       if (!confirmed) {
         setWorktreeError(formatGitError(err));
         return;
@@ -135,7 +146,7 @@ export function ExtrasSidebar() {
       }
     }
     await useExtrasStore.getState().refresh(root);
-    useUiStore.getState().appendOutput(`Worktree removed: ${path}`);
+    useUiStore.getState().appendOutput(t("worktree.removed", { path }));
   };
 
   if (!root) {
@@ -152,7 +163,7 @@ export function ExtrasSidebar() {
   return (
     <>
       {showSubmodules && (
-        <CollapsibleSection id="submodules" title="Submodules" icon="submodule">
+        <CollapsibleSection id="submodules" title={t("extras.submodules")} icon="submodule">
           <ul className="refs-list">
             {submodules.map((submodule) => (
               <li key={submodule.path} className="refs-item">
@@ -165,12 +176,15 @@ export function ExtrasSidebar() {
                   onContextMenu={(event) =>
                     sectionMenu.open(event, [
                       {
-                        label: "Update (init included)",
+                        label: t("extras.updateInit"),
                         onSelect: () => void runSubmodule("update", submodule.path),
                       },
-                      { label: "Sync", onSelect: () => void runSubmodule("sync", submodule.path) },
                       {
-                        label: "Open",
+                        label: t("extras.sync"),
+                        onSelect: () => void runSubmodule("sync", submodule.path),
+                      },
+                      {
+                        label: t("common.open"),
                         disabled: submodule.state === "uninitialized",
                         onSelect: () =>
                           void open(`${root.replace(/[\\/]+$/, "")}/${submodule.path}`),
@@ -180,7 +194,7 @@ export function ExtrasSidebar() {
                 >
                   <span className="extra-name">{submodule.path}</span>
                   <span className={`extra-state ${submodule.state}`}>
-                    {STATE_LABELS[submodule.state]}
+                    {submoduleStateLabel(submodule.state)}
                   </span>
                 </button>
                 {submodule.state === "uninitialized" && (
@@ -189,7 +203,7 @@ export function ExtrasSidebar() {
                     className="extra-action"
                     onClick={() => void runSubmodule("update", submodule.path)}
                   >
-                    Update
+                    {t("extras.update")}
                   </button>
                 )}
               </li>
@@ -201,11 +215,11 @@ export function ExtrasSidebar() {
       {showWorktrees && (
         <CollapsibleSection
           id="worktrees"
-          title="Worktrees"
+          title={t("extras.worktrees")}
           icon="folder"
           onContextMenu={(event) =>
             sectionMenu.open(event, [
-              { label: "New worktree…", onSelect: () => setWorktreeDialog(true) },
+              { label: t("extras.newWorktree"), onSelect: () => setWorktreeDialog(true) },
             ])
           }
         >
@@ -223,12 +237,12 @@ export function ExtrasSidebar() {
                     onContextMenu={(event) =>
                       sectionMenu.open(event, [
                         {
-                          label: "Open",
+                          label: t("common.open"),
                           disabled: current || worktree.bare,
                           onSelect: () => void open(worktree.path),
                         },
                         {
-                          label: "Remove",
+                          label: t("common.remove"),
                           danger: true,
                           disabled: current || worktree.bare,
                           onSelect: () => void removeWorktree(worktree.path),
@@ -237,13 +251,13 @@ export function ExtrasSidebar() {
                     }
                   >
                     <span className="extra-name">{baseName(worktree.path)}</span>
-                    {current && <span className="extra-flag">current</span>}
-                    {worktree.locked && <span className="extra-flag">locked</span>}
-                    {worktree.bare && <span className="extra-flag">bare</span>}
+                    {current && <span className="extra-flag">{t("extras.current")}</span>}
+                    {worktree.locked && <span className="extra-flag">{t("extras.locked")}</span>}
+                    {worktree.bare && <span className="extra-flag">{t("extras.bare")}</span>}
                     <span className="extra-state">
                       {worktree.detached
-                        ? "detached"
-                        : shortRefName(worktree.branch ?? "") || "unknown"}
+                        ? t("extras.detached")
+                        : shortRefName(worktree.branch ?? "") || t("extras.unknown")}
                     </span>
                   </button>
                 </li>
@@ -254,7 +268,7 @@ export function ExtrasSidebar() {
       )}
 
       {showHooks && (
-        <CollapsibleSection id="hooks" title="Hooks" icon="hook">
+        <CollapsibleSection id="hooks" title={t("extras.hooks")} icon="hook">
           <ul className="refs-list">
             {hooks.map((hook) => (
               <li key={hook.name} className="refs-item">
@@ -265,9 +279,9 @@ export function ExtrasSidebar() {
                   onClick={() => setHookDialog(hook)}
                   onContextMenu={(event) =>
                     sectionMenu.open(event, [
-                      { label: "Edit…", onSelect: () => setHookDialog(hook) },
+                      { label: t("extras.hookEdit"), onSelect: () => setHookDialog(hook) },
                       {
-                        label: hook.active ? "Disable" : "Enable",
+                        label: hook.active ? t("extras.hookDisable") : t("extras.hookEnable"),
                         onSelect: () => void toggleHook(hook),
                       },
                     ])
@@ -276,10 +290,10 @@ export function ExtrasSidebar() {
                   <span className="extra-name">{hook.name}</span>
                   <span className={`extra-state ${hook.active ? "clean" : "modified"}`}>
                     {hook.active
-                      ? "Active"
+                      ? t("extras.hookActive")
                       : hook.sample && !hook.installed
-                        ? "Sample"
-                        : "Disabled"}
+                        ? t("extras.hookSample")
+                        : t("extras.hookDisabled")}
                   </span>
                 </button>
               </li>
@@ -291,18 +305,18 @@ export function ExtrasSidebar() {
       {showLfs && lfs && (
         <CollapsibleSection
           id="lfs"
-          title="Git LFS"
+          title={t("extras.gitLfs")}
           icon="cloud"
           onContextMenu={(event) =>
             sectionMenu.open(event, [
-              { label: "Track pattern…", onSelect: () => setLfsDialog("track") },
+              { label: t("extras.lfsTrackPattern"), onSelect: () => setLfsDialog("track") },
               {
-                label: "Pull objects",
+                label: t("extras.lfsPull"),
                 disabled: !lfs.installed,
                 onSelect: () => void pullLfs(),
               },
               {
-                label: "Migrate to LFS…",
+                label: t("extras.lfsMigrate"),
                 danger: true,
                 disabled: !lfs.installed,
                 onSelect: () => setLfsDialog("migrate"),
@@ -311,7 +325,9 @@ export function ExtrasSidebar() {
           }
         >
           <p className={lfs.installed ? "muted" : "lfs-missing"}>
-            {lfs.installed ? (lfs.version ?? "Installed") : "Not installed"}
+            {lfs.installed
+              ? (lfs.version ?? t("extras.lfsInstalled"))
+              : t("extras.lfsNotInstalled")}
           </p>
           {lfs.patterns.length > 0 ? (
             <ul className="refs-list">
@@ -322,7 +338,7 @@ export function ExtrasSidebar() {
               ))}
             </ul>
           ) : (
-            <p className="muted">No patterns tracked</p>
+            <p className="muted">{t("extras.lfsNoPatterns")}</p>
           )}
         </CollapsibleSection>
       )}

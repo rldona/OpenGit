@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { MergeOptions } from "../lib/bridge/types";
 import { useMergeBranch } from "../lib/hooks/useMergeBranch";
+import { useI18n } from "../lib/i18n";
 import { DEFAULT_MERGE_OPTIONS } from "../lib/merge";
 import { useDiffStore } from "../lib/stores/diff";
 import { useRefsStore } from "../lib/stores/refs";
@@ -16,12 +17,13 @@ function MergeOptionsFields({
   options: MergeOptions;
   onChange: (options: MergeOptions) => void;
 }) {
+  const { t } = useI18n();
   // `--squash` does not commit either: the commit flags stop making sense.
   const commitFlagsDisabled = options.rebase || options.squash;
   return (
     <>
       <fieldset className="remote-options merge-options">
-        <legend>Options</legend>
+        <legend>{t("common.options")}</legend>
         <label>
           <input
             type="checkbox"
@@ -29,7 +31,7 @@ function MergeOptionsFields({
             disabled={commitFlagsDisabled}
             onChange={(event) => onChange({ ...options, noCommit: !event.target.checked })}
           />
-          Commit merge immediately (if no conflicts)
+          {t("merge.commitImmediately")}
         </label>
         <label>
           <input
@@ -38,7 +40,7 @@ function MergeOptionsFields({
             disabled={commitFlagsDisabled}
             onChange={(event) => onChange({ ...options, includeMessages: event.target.checked })}
           />
-          Include messages from commits being merged in merge commit
+          {t("merge.includeMessages")}
         </label>
         <label>
           <input
@@ -47,7 +49,7 @@ function MergeOptionsFields({
             disabled={commitFlagsDisabled}
             onChange={(event) => onChange({ ...options, noFf: event.target.checked })}
           />
-          Create a commit even if merge resolved via fast-forward
+          {t("merge.noFf")}
         </label>
         <label>
           <input
@@ -56,7 +58,7 @@ function MergeOptionsFields({
             disabled={options.rebase}
             onChange={(event) => onChange({ ...options, squash: event.target.checked })}
           />
-          Squash changes (stage them without committing)
+          {t("merge.squash")}
         </label>
         <label>
           <input
@@ -64,16 +66,16 @@ function MergeOptionsFields({
             checked={options.rebase}
             onChange={(event) => onChange({ ...options, rebase: event.target.checked })}
           />
-          Rebase instead of merge (WARNING: make sure you haven&apos;t pushed your changes)
+          {t("merge.rebase")}
         </label>
       </fieldset>
 
       <fieldset className="remote-options merge-options">
-        <legend>Advanced</legend>
+        <legend>{t("merge.advanced")}</legend>
         <div className="remote-field">
-          <span>Conflict resolution:</span>
+          <span>{t("merge.conflictResolution")}</span>
           <select
-            aria-label="Merge strategy"
+            aria-label={t("merge.strategyAria")}
             value={options.strategy ?? ""}
             disabled={options.rebase}
             onChange={(event) =>
@@ -83,15 +85,12 @@ function MergeOptionsFields({
               })
             }
           >
-            <option value="">Default</option>
-            <option value="ours">Prefer ours (current branch)</option>
-            <option value="theirs">Prefer theirs (merged branch)</option>
+            <option value="">{t("merge.strategyDefault")}</option>
+            <option value="ours">{t("merge.strategyOurs")}</option>
+            <option value="theirs">{t("merge.strategyTheirs")}</option>
           </select>
         </div>
-        <p className="muted">
-          -X ours/theirs only resolves content conflicts; rename/delete conflicts still need manual
-          resolution.
-        </p>
+        <p className="muted">{t("merge.strategyNote")}</p>
       </fieldset>
     </>
   );
@@ -99,6 +98,7 @@ function MergeOptionsFields({
 
 /** Branch picker tab; it reports the selected branch to the window. */
 function MergeFetchedPanel({ onPick }: { onPick: (rev: string) => void }) {
+  const { t } = useI18n();
   const refs = useRefsStore((state) => state.refs);
   const current = useRefsStore((state) => state.current);
   const [rev, setRev] = useState("");
@@ -119,9 +119,13 @@ function MergeFetchedPanel({ onPick }: { onPick: (rev: string) => void }) {
   return (
     <div className="merge-tab-panel">
       <div className="remote-field">
-        <span>Merge branch:</span>
-        <select aria-label="Merge branch" value={rev} onChange={(e) => setRev(e.target.value)}>
-          <option value="">Select a branch</option>
+        <span>{t("merge.branch")}</span>
+        <select
+          aria-label={t("merge.branchAria")}
+          value={rev}
+          onChange={(e) => setRev(e.target.value)}
+        >
+          <option value="">{t("merge.selectBranch")}</option>
           {branches.map((name) => (
             <option key={name} value={name}>
               {name}
@@ -130,8 +134,8 @@ function MergeFetchedPanel({ onPick }: { onPick: (rev: string) => void }) {
         </select>
       </div>
       <p className="remote-field">
-        <span>Into current branch:</span>
-        <span className="remote-value">{current ?? "detached HEAD"}</span>
+        <span>{t("merge.intoCurrent")}</span>
+        <span className="remote-value">{current ?? t("common.detachedHead")}</span>
       </p>
     </div>
   );
@@ -143,6 +147,7 @@ function MergeFetchedPanel({ onPick }: { onPick: (rev: string) => void }) {
  * shared at the bottom.
  */
 export function MergeWindow({ onClose }: { onClose: () => void }) {
+  const { t } = useI18n();
   const root = useRepoStore((state) => state.repo?.root ?? null);
   const runMerge = useMergeBranch(root);
   const [tab, setTab] = useState<Tab>("log");
@@ -181,7 +186,7 @@ export function MergeWindow({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="modal-overlay">
-      <div className="merge-window" role="dialog" aria-modal="true" aria-label="Merge">
+      <div className="merge-window" role="dialog" aria-modal="true" aria-label={t("merge.aria")}>
         <div className="merge-tabs" role="tablist">
           <button
             type="button"
@@ -190,7 +195,7 @@ export function MergeWindow({ onClose }: { onClose: () => void }) {
             aria-selected={tab === "log"}
             onClick={() => setTab("log")}
           >
-            Merge From Log
+            {t("merge.fromLog")}
           </button>
           <button
             type="button"
@@ -199,7 +204,7 @@ export function MergeWindow({ onClose }: { onClose: () => void }) {
             aria-selected={tab === "fetched"}
             onClick={() => setTab("fetched")}
           >
-            Merge Fetched
+            {t("merge.fetched")}
           </button>
         </div>
 
@@ -216,7 +221,7 @@ export function MergeWindow({ onClose }: { onClose: () => void }) {
 
         <div className="remote-dialog-actions">
           <button type="button" onClick={onClose}>
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             type="button"
@@ -224,7 +229,7 @@ export function MergeWindow({ onClose }: { onClose: () => void }) {
             disabled={!canSubmit}
             onClick={() => void submit()}
           >
-            OK
+            {t("common.ok")}
           </button>
         </div>
       </div>

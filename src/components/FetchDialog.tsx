@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useI18n } from "../lib/i18n";
 import { splitUpstream } from "../lib/remote/upstream";
 import { useExtrasStore } from "../lib/stores/extras";
 import { useRefsStore } from "../lib/stores/refs";
@@ -7,6 +8,7 @@ import { useRepoStore } from "../lib/stores/repo";
 
 /** Fetch dialog, sibling of the pull one: remote (or all) and prune. */
 export function FetchDialog({ onClose }: { onClose: () => void }) {
+  const { t } = useI18n();
   const root = useRepoStore((state) => state.repo?.root ?? null);
   const remotes = useExtrasStore((state) => state.remotes);
   const upstream = useRefsStore((state) => state.upstream);
@@ -51,18 +53,18 @@ export function FetchDialog({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="modal-overlay">
-      <div className="remote-dialog" role="dialog" aria-modal="true" aria-label="Fetch">
-        <h2 className="remote-dialog-title">Fetch</h2>
+      <div className="remote-dialog" role="dialog" aria-modal="true" aria-label={t("fetch.aria")}>
+        <h2 className="remote-dialog-title">{t("fetch.title")}</h2>
 
         <label className="remote-field">
-          <span>Fetch from repository:</span>
+          <span>{t("fetch.from")}</span>
           <select
-            aria-label="Fetch from repository"
+            aria-label={t("fetch.fromAria")}
             value={remote}
             disabled={allRemotes}
             onChange={(event) => setRemote(event.target.value)}
           >
-            {remoteNames.length === 0 && <option value="">No remotes</option>}
+            {remoteNames.length === 0 && <option value="">{t("fetch.noRemotes")}</option>}
             {remoteNames.map((name) => (
               <option key={name} value={name}>
                 {name}
@@ -73,14 +75,14 @@ export function FetchDialog({ onClose }: { onClose: () => void }) {
         {!allRemotes && selectedUrl && <p className="remote-url">{selectedUrl}</p>}
 
         <fieldset className="remote-options">
-          <legend>Options</legend>
+          <legend>{t("common.options")}</legend>
           <label>
             <input
               type="checkbox"
               checked={allRemotes}
               onChange={(event) => setAllRemotes(event.target.checked)}
             />
-            Fetch all remotes
+            {t("fetch.all")}
           </label>
           <label>
             <input
@@ -88,16 +90,16 @@ export function FetchDialog({ onClose }: { onClose: () => void }) {
               checked={prune}
               onChange={(event) => setPrune(event.target.checked)}
             />
-            Prune tracking branches that no longer exist on the remote
+            {t("fetch.prune")}
           </label>
         </fieldset>
 
         <div className="remote-dialog-actions">
           <button type="button" onClick={onClose}>
-            Cancel
+            {t("common.cancel")}
           </button>
           <button type="button" className="primary" disabled={!canSubmit} onClick={submit}>
-            OK
+            {t("common.ok")}
           </button>
         </div>
       </div>

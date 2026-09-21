@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
+import { useI18n } from "../lib/i18n";
 import { useRefsStore } from "../lib/stores/refs";
 import { useRepoStore } from "../lib/stores/repo";
 import { WORKTREE_SELECTION, useLogStore } from "../lib/stores/log";
 
 /** Creates a branch from the selected commit or HEAD, in a modal (OG-008/OG-041). */
 export function BranchDialog({ onClose }: { onClose: () => void }) {
+  const { t } = useI18n();
   const root = useRepoStore((state) => state.repo?.root ?? null);
   const selected = useLogStore((state) => state.selected);
   const current = useRefsStore((state) => state.current);
@@ -16,7 +18,7 @@ export function BranchDialog({ onClose }: { onClose: () => void }) {
   const fromCommit = selected && selected !== WORKTREE_SELECTION ? selected : null;
   const startPoint = fromCommit ?? "HEAD";
   const baseLabel = fromCommit
-    ? `commit ${fromCommit.slice(0, 7)}`
+    ? t("diff.commit", { rev: fromCommit.slice(0, 7) })
     : `HEAD${current ? ` (${current})` : ""}`;
 
   useEffect(() => {
@@ -46,16 +48,21 @@ export function BranchDialog({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="modal-overlay">
-      <div className="remote-dialog" role="dialog" aria-modal="true" aria-label="New Branch">
-        <h2 className="remote-dialog-title">New Branch</h2>
-        <p className="remote-dialog-subtitle">Create a new branch from {baseLabel}.</p>
+      <div
+        className="remote-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-label={t("branchDialog.aria")}
+      >
+        <h2 className="remote-dialog-title">{t("branchDialog.title")}</h2>
+        <p className="remote-dialog-subtitle">{t("branchDialog.subtitle", { base: baseLabel })}</p>
 
         <label className="remote-field">
-          <span>Name:</span>
+          <span>{t("branchDialog.name")}</span>
           <input
             autoFocus
-            aria-label="New branch name"
-            placeholder="New branch name"
+            aria-label={t("branchDialog.nameAria")}
+            placeholder={t("branchDialog.namePlaceholder")}
             value={name}
             onChange={(event) => setName(event.target.value)}
             onKeyDown={(event) => {
@@ -72,7 +79,7 @@ export function BranchDialog({ onClose }: { onClose: () => void }) {
 
         <div className="remote-dialog-actions">
           <button type="button" onClick={onClose}>
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             type="button"
@@ -80,7 +87,7 @@ export function BranchDialog({ onClose }: { onClose: () => void }) {
             disabled={!canSubmit}
             onClick={() => void submit()}
           >
-            Create
+            {t("common.create")}
           </button>
         </div>
       </div>

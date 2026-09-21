@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { startRemoteJob } from "../lib/bridge/jobs";
 import type { RepoInfo } from "../lib/bridge/types";
 import { useExtrasStore } from "../lib/stores/extras";
+import { useLocaleStore } from "../lib/stores/locale";
 import { useRefsStore } from "../lib/stores/refs";
 import { useRemoteStore } from "../lib/stores/remote";
 import { useRepoStore } from "../lib/stores/repo";
@@ -32,6 +33,15 @@ describe("FetchDialog", () => {
     });
     useRefsStore.setState({ root: REPO.root, current: "main", upstream: "origin/main", refs: [] });
     useRemoteStore.getState().reset();
+    useLocaleStore.setState({ preference: null, locale: "en" });
+  });
+
+  it("renders the dialog in Spanish", () => {
+    useLocaleStore.setState({ preference: "es", locale: "es" });
+    render(<FetchDialog onClose={() => {}} />);
+
+    expect(screen.getByLabelText("Descargar desde el repositorio")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Aceptar" })).toBeInTheDocument();
   });
 
   it("starts with the upstream remote", () => {

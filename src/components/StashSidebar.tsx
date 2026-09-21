@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { copyText } from "../lib/clipboard";
 import { confirmDestructive } from "../lib/bridge/dialog";
 import { formatDateTime } from "../lib/format";
+import { useI18n } from "../lib/i18n";
 import { useContextMenu } from "../lib/hooks/useContextMenu";
 import type { Stash } from "../lib/bridge/types";
 import { useRepoStore } from "../lib/stores/repo";
@@ -12,6 +13,7 @@ import { CollapsibleSection } from "./CollapsibleSection";
 import { StashDialog } from "./StashDialog";
 
 export function StashSidebar() {
+  const { t } = useI18n();
   const root = useRepoStore((state) => state.repo?.root ?? null);
   const stashes = useStashStore((state) => state.stashes);
   const error = useStashStore((state) => state.error);
@@ -48,7 +50,7 @@ export function StashSidebar() {
   }, [newStashRequest]);
 
   const confirmDrop = async (reference: string) => {
-    if (root && (await confirmDestructive(`Drop ${reference}? This cannot be undone.`))) {
+    if (root && (await confirmDestructive(t("stash.dropConfirm", { reference })))) {
       await drop(root, reference);
     }
   };
@@ -62,21 +64,27 @@ export function StashSidebar() {
   };
 
   const menuFor = (stash: Stash) => [
-    { label: "Open", onSelect: () => open(stash.reference) },
-    { label: "Apply", onSelect: () => root && void apply(root, stash.reference) },
-    { label: "Pop", onSelect: () => root && void pop(root, stash.reference) },
-    { label: "Drop", danger: true, onSelect: () => void confirmDrop(stash.reference) },
-    { label: "Copy reference", onSelect: () => void copyText(stash.reference) },
+    { label: t("stash.menuOpen"), onSelect: () => open(stash.reference) },
+    { label: t("stash.apply"), onSelect: () => root && void apply(root, stash.reference) },
+    { label: t("stash.pop"), onSelect: () => root && void pop(root, stash.reference) },
+    {
+      label: t("stash.drop"),
+      danger: true,
+      onSelect: () => void confirmDrop(stash.reference),
+    },
+    { label: t("stash.copyReference"), onSelect: () => void copyText(stash.reference) },
   ];
 
   return (
     <>
       <CollapsibleSection
         id="stashes"
-        title="Stashes"
+        title={t("stash.section")}
         icon="stash"
         onContextMenu={(event) =>
-          stashMenu.open(event, [{ label: "Stash Changes…", onSelect: () => setStashDialog(true) }])
+          stashMenu.open(event, [
+            { label: t("stash.newMenu"), onSelect: () => setStashDialog(true) },
+          ])
         }
       >
         <ul className="refs-list">
@@ -94,7 +102,7 @@ export function StashSidebar() {
               </button>
             </li>
           ))}
-          {stashes.length === 0 && <li className="muted">No stashes</li>}
+          {stashes.length === 0 && <li className="muted">{t("stash.noStashes")}</li>}
         </ul>
         {error && (
           <p role="alert" className="refs-error">
