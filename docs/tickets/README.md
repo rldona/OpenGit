@@ -134,7 +134,7 @@ One file per ticket, named `OG-NNN-slug.md`. Every change in the repository star
 | [OG-099](OG-099-i18n-framework.md) | Internationalization (framework + Spanish locale) | M20 | done |
 | [OG-100](OG-100-language-selector.md) | Language selector in Settings | M20 | done |
 | [OG-101](OG-101-flaky-watcher-test.md) | Stabilize the watcher ignore test | Next | done |
-| [OG-102](OG-102-i18n-history.md) | i18n: history and commit views | M20 | backlog |
+| [OG-102](OG-102-i18n-history.md) | i18n: history and commit views | M20 | done |
 | [OG-103](OG-103-i18n-diff-status.md) | i18n: diff, status and staging | M20 | backlog |
 | [OG-104](OG-104-i18n-sidebars-dialogs.md) | i18n: sidebars and repository dialogs | M20 | backlog |
 | [OG-105](OG-105-i18n-operations-settings.md) | i18n: operations, settings and help | M20 | backlog |
