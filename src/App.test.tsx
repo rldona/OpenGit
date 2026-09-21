@@ -6,6 +6,7 @@ import App from "./App";
 import { initialRepo } from "./lib/bridge/app";
 import { pickDirectory } from "./lib/bridge/dialog";
 import { startRemoteJob } from "./lib/bridge/jobs";
+import { setMenuLocale } from "./lib/bridge/menu";
 import { readConflictFile } from "./lib/bridge/conflict";
 import { subscribeRepoEvents } from "./lib/bridge/events";
 import { setWindowTitle } from "./lib/bridge/window";
@@ -23,6 +24,7 @@ import { useUpdateStore } from "./lib/stores/update";
 import { useCommitStore } from "./lib/stores/commit";
 import { useExtrasStore } from "./lib/stores/extras";
 import { useLogStore } from "./lib/stores/log";
+import { useLocaleStore } from "./lib/stores/locale";
 import { useRepoStore } from "./lib/stores/repo";
 import { useSettingsStore } from "./lib/stores/settings";
 import { useStatusStore } from "./lib/stores/status";
@@ -122,6 +124,10 @@ vi.mock("./lib/bridge/events", () => ({
     menuMock.handler = handler;
     return Promise.resolve(() => {});
   }),
+}));
+
+vi.mock("./lib/bridge/menu", () => ({
+  setMenuLocale: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("./lib/bridge/window", () => ({
@@ -273,6 +279,18 @@ describe("App", () => {
     localStorage.clear();
     delete document.documentElement.dataset.theme;
     useThemeStore.setState({ preference: "system", systemDark: true, resolved: "dark" });
+    useLocaleStore.setState({ preference: null, locale: "en" });
+  });
+
+  it("applies the native menu locale on startup and when it changes", async () => {
+    render(<App />);
+    await waitFor(() => expect(setMenuLocale).toHaveBeenCalledWith("en"));
+
+    act(() => {
+      useLocaleStore.setState({ preference: "es", locale: "es" });
+    });
+
+    await waitFor(() => expect(setMenuLocale).toHaveBeenCalledWith("es"));
   });
 
   it("shows the empty state with the Output panel hidden by default", async () => {

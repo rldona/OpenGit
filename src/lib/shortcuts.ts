@@ -16,22 +16,21 @@ export type ShortcutGroup = "Repository" | "Commit" | "Navigation" | "Help";
 export type Shortcut = {
   id: ShortcutId;
   keys: string;
-  label: string;
   group: ShortcutGroup;
 };
 
 export const SHORTCUTS: Shortcut[] = [
-  { id: "open", keys: "mod+o", label: "Open repository", group: "Repository" },
-  { id: "refresh", keys: "mod+r", label: "Refresh status, refs and history", group: "Repository" },
-  { id: "commit", keys: "mod+enter", label: "Commit staged changes", group: "Commit" },
-  { id: "search", keys: "mod+f", label: "Search commits", group: "Navigation" },
-  { id: "viewStatus", keys: "mod+1", label: "File status", group: "Navigation" },
-  { id: "viewHistory", keys: "mod+2", label: "History", group: "Navigation" },
-  { id: "viewDiff", keys: "mod+3", label: "Diff", group: "Navigation" },
-  { id: "prevTab", keys: "mod+shift+[", label: "Previous repository tab", group: "Navigation" },
-  { id: "nextTab", keys: "mod+shift+]", label: "Next repository tab", group: "Navigation" },
-  { id: "help", keys: "?", label: "Keyboard shortcuts", group: "Help" },
-  { id: "close", keys: "escape", label: "Close dialog or clear selection", group: "Help" },
+  { id: "open", keys: "mod+o", group: "Repository" },
+  { id: "refresh", keys: "mod+r", group: "Repository" },
+  { id: "commit", keys: "mod+enter", group: "Commit" },
+  { id: "search", keys: "mod+f", group: "Navigation" },
+  { id: "viewStatus", keys: "mod+1", group: "Navigation" },
+  { id: "viewHistory", keys: "mod+2", group: "Navigation" },
+  { id: "viewDiff", keys: "mod+3", group: "Navigation" },
+  { id: "prevTab", keys: "mod+shift+[", group: "Navigation" },
+  { id: "nextTab", keys: "mod+shift+]", group: "Navigation" },
+  { id: "help", keys: "?", group: "Help" },
+  { id: "close", keys: "escape", group: "Help" },
 ];
 
 export function isMacPlatform(): boolean {

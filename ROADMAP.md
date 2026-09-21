@@ -2,7 +2,7 @@
 
 A milestone closes when its tickets are `done` and its exit criteria are met. Tickets live in [`docs/tickets/`](docs/tickets/README.md).
 
-**Current state:** latest release **v0.7.0** (2026-09-20) with the repository lifecycle, recovery and history depth. M0–M19 are closed; the next milestone is **M20 (Internationalization)**.
+**Current state:** latest release **v0.7.0** (2026-09-20) with the repository lifecycle, recovery and history depth. M0–M20 are closed and there is no active milestone.
 
 ## M0 — Foundation ✅ _(closed 2026-09-18)_
 
@@ -262,7 +262,7 @@ Move LFS past detection-only and manage repository hooks without the terminal.
 to LFS from the app; list a hook, edit it and enable/disable it without the
 terminal. ✅
 
-## M20 — Internationalization
+## M20 — Internationalization ✅ _(closed 2026-09-21)_
 
 The UI is English-only (OG-014); this milestone makes the language a choice.
 
@@ -272,10 +272,11 @@ The UI is English-only (OG-014); this milestone makes the language a choice.
 - [x] Area migration: diff, status and staging (OG-103).
 - [x] Area migration: sidebars and repository dialogs (OG-104).
 - [x] Area migration: operations, settings and help (OG-105).
-- [ ] Native menu and Rust user-facing strings (OG-106).
+- [x] Native menu and Rust user-facing strings (OG-106).
 
 **Exit:** switching the UI between English and Spanish from Settings and the
-choice survives a restart; the code has no hardcoded UI strings left.
+choice survives a restart; no hardcoded UI strings left in the components or
+the native menu. ✅
 
 ## Translating documentation and comments to English
 

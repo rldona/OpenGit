@@ -1,90 +1,18 @@
 pub mod commands;
 pub mod git;
 pub mod jobs;
+pub mod menu;
 pub mod repo;
 pub mod watch;
 
 use std::sync::{Arc, Mutex};
 
-use tauri::menu::{AboutMetadata, MenuBuilder, MenuItemBuilder, SubmenuBuilder};
 use tauri::{Emitter, Manager};
 
 use crate::commands::AppState;
 use crate::git::Runner;
 use crate::jobs::JobManager;
 use crate::repo::recents::Recents;
-
-/// Native menu: clicks emit `menu-action` with the item id and the UI routes
-/// them to the same handlers as the shortcuts. No accelerators (except the
-/// Edit defaults) to avoid duplicating keyboard handling.
-fn build_menu(app: &tauri::App) -> tauri::Result<()> {
-    let app_menu = SubmenuBuilder::new(app, "OpenGit")
-        .about(Some(AboutMetadata::default()))
-        .item(&MenuItemBuilder::with_id("check-updates", "Check for Updates…").build(app)?)
-        .separator()
-        .quit()
-        .build()?;
-
-    let file_menu = SubmenuBuilder::new(app, "File")
-        .item(&MenuItemBuilder::with_id("open-repo", "Open Repository…").build(app)?)
-        .item(&MenuItemBuilder::with_id("clone-repo", "Clone Repository…").build(app)?)
-        .item(&MenuItemBuilder::with_id("create-repo", "Create Repository…").build(app)?)
-        .item(&MenuItemBuilder::with_id("apply-patch", "Apply Patch…").build(app)?)
-        .item(&MenuItemBuilder::with_id("close-repo", "Close Repository").build(app)?)
-        .separator()
-        .close_window()
-        .build()?;
-
-    let edit_menu = SubmenuBuilder::new(app, "Edit")
-        .undo()
-        .redo()
-        .separator()
-        .cut()
-        .copy()
-        .paste()
-        .select_all()
-        .build()?;
-
-    let view_menu = SubmenuBuilder::new(app, "View")
-        .item(&MenuItemBuilder::with_id("view-status", "File Status").build(app)?)
-        .item(&MenuItemBuilder::with_id("view-history", "History").build(app)?)
-        .item(&MenuItemBuilder::with_id("view-diff", "Diff").build(app)?)
-        .separator()
-        .item(&MenuItemBuilder::with_id("toggle-output", "Output").build(app)?)
-        .item(&MenuItemBuilder::with_id("shortcuts", "Keyboard Shortcuts").build(app)?)
-        .build()?;
-
-    let repository_menu = SubmenuBuilder::new(app, "Repository")
-        .item(&MenuItemBuilder::with_id("fetch", "Fetch").build(app)?)
-        .item(&MenuItemBuilder::with_id("pull", "Pull").build(app)?)
-        .item(&MenuItemBuilder::with_id("push", "Push").build(app)?)
-        .separator()
-        .item(&MenuItemBuilder::with_id("merge", "Merge…").build(app)?)
-        .item(&MenuItemBuilder::with_id("bisect", "Bisect…").build(app)?)
-        .separator()
-        .item(&MenuItemBuilder::with_id("refresh", "Refresh").build(app)?)
-        .build()?;
-
-    let help_menu = SubmenuBuilder::new(app, "Help")
-        .item(&MenuItemBuilder::with_id("documentation", "Documentation").build(app)?)
-        .build()?;
-
-    let menu = MenuBuilder::new(app)
-        .items(&[
-            &app_menu,
-            &file_menu,
-            &edit_menu,
-            &view_menu,
-            &repository_menu,
-            &help_menu,
-        ])
-        .build()?;
-    app.set_menu(menu)?;
-    app.on_menu_event(|app, event| {
-        let _ = app.emit("menu-action", event.id().as_ref().to_string());
-    });
-    Ok(())
-}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -108,7 +36,10 @@ pub fn run() {
         .setup(|app| {
             let data_dir = app.path().app_data_dir()?;
             std::fs::create_dir_all(&data_dir)?;
-            build_menu(app)?;
+            app.set_menu(menu::build_menu(app, menu::menu_labels("en"))?)?;
+            app.on_menu_event(|app, event| {
+                let _ = app.emit("menu-action", event.id().as_ref().to_string());
+            });
             app.manage(AppState {
                 runner: Runner::locate(),
                 recents: Mutex::new(Recents::new(data_dir.join("recent_repos.json"))),
@@ -124,6 +55,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::app_version,
             commands::git_version,
+            menu::set_menu_locale,
             commands::open_repo,
             commands::open_repo_in_new_window,
             commands::initial_repo,
