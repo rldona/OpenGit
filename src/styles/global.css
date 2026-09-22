@@ -779,6 +779,35 @@ body {
   color: var(--accent-fg);
 }
 
+/* Inline rename field (OG-108): replaces the tab button while editing and
+   sizes to its content, so the tab footprint does not jump when the rename
+   starts or is cancelled. `width` is the fallback for engines without
+   `field-sizing`; where it is supported the input tracks the typed label. */
+.repo-tab-input {
+  width: 14ch;
+  min-width: 6ch;
+  max-width: 100%;
+  padding: 7px 10px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  outline: none;
+  text-overflow: ellipsis;
+}
+
+@supports (field-sizing: content) {
+  .repo-tab-input {
+    field-sizing: content;
+    width: auto;
+  }
+}
+
+.repo-tab.active .repo-tab-input {
+  color: var(--accent-fg);
+}
+
 .repo-tab.active .repo-tab-close {
   color: var(--accent-fg);
 }
