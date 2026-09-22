@@ -33,7 +33,7 @@ cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings
 cargo fmt --manifest-path src-tauri/Cargo.toml --check
 ```
 
-Conventions: **documentation, issues, code and comments in English** since 2026-09-19 (UI strings were already in English; UI internationalization will be decided later). **Everything written to git is in English**: commit messages, PR titles and descriptions, review comments and issue notes. Text written before in Spanish is translated in a separate process (OG-062), tracked in `ROADMAP.md`. Commits follow Conventional Commits with an area scope (`feat(graph): ...`). Every change starts from a ticket (`OG-NNN`).
+Conventions: **documentation, issues, code and comments in English** since 2026-09-19 (UI strings were already in English; UI internationalization will be decided later). **Everything written to git is in English**: commit messages, PR titles and descriptions, review comments and issue notes. Text written before in Spanish is translated in a separate process (OG-062), tracked in `ROADMAP.md`. Commits follow Conventional Commits with an area scope (`feat(graph): ...`). Every change starts from a ticket (`OG-NNN`). Tauri commands that run git or blocking IO are **`async` and dispatched with `spawn_blocking`**; window and menu commands stay on the main thread (ADR-0010, `docs/decisions/ADR-0010-run-blocking-work-off-the-main-thread.md`).
 
 ## Rules
 

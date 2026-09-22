@@ -20,3 +20,10 @@
   - `notify`'s macOS backend keeps a single `FSEventStream`; every call to `watch()` appends a root and **restarts the stream**, and every event scans all roots (`recursive_info`). One root per directory would be O(dirs) per event plus a restart per directory, so we watch a single recursive root and filter per event.
   - The ignore set comes from `git ls-files -o -i --exclude-standard --directory -z`; `--directory` collapses fully ignored directories at any depth, so an ancestor-walk lookup covers descendants. A directory that does not exist yet is not listed, so the set is rebuilt while worktree changes keep arriving (throttled) and when a `.gitignore` is edited.
 - **Implication:** do not add per-directory `watch()` calls; keep the single root and the event filter. Any path math in the watcher must start from the canonical root.
+
+## `start` returns before the OS watch is registered
+
+- **Date:** 2026-09-22
+- **Context:** OG-109. `start` ran `git ls-files` for the ignore set and waited for the OS watch on the command thread, which is the GTK thread on Linux; registering a recursive watch is O(directories) with inotify.
+- **Design:** `start` is now infallible and non-blocking. It creates an empty `IgnoreMatcher` (no git), registers the notify watch, loads the ignore set, and signals a `Readiness` condvar exposed as `WatcherHandle::wait_ready(timeout)`. The polling fallback sleeps in 100 ms chunks so `stop` is noticed promptly, and `stop_detached` joins the thread off the caller's thread.
+- **Implication:** do not assume events arrive right after `start`; use `wait_ready` in tests and wherever the "watch is live" guarantee matters. A swap of watchers must not hold the `watchers` mutex while stopping the previous handle.

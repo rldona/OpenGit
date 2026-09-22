@@ -29,8 +29,11 @@ fn detects_index_changes() {
     let (sender, receiver) = mpsc::channel();
     let watcher = start(Runner::locate(), repo.path().to_path_buf(), move |kind| {
         let _ = sender.send(kind);
-    })
-    .expect("arrancar watcher");
+    });
+    assert!(
+        watcher.wait_ready(Duration::from_secs(5)),
+        "the watcher did not become ready"
+    );
     repo.write("a.txt", b"dos\n");
     repo.git_ok(&["add", "a.txt"]);
 
@@ -53,8 +56,11 @@ fn detects_external_worktree_edits() {
     let (sender, receiver) = mpsc::channel();
     let watcher = start(Runner::locate(), repo.path().to_path_buf(), move |kind| {
         let _ = sender.send(kind);
-    })
-    .expect("arrancar watcher");
+    });
+    assert!(
+        watcher.wait_ready(Duration::from_secs(5)),
+        "the watcher did not become ready"
+    );
     // Edit a tracked file without running any git command.
     repo.write("a.txt", b"dos\n");
 
@@ -80,8 +86,11 @@ fn ignores_changes_inside_gitignored_directories() {
     let (sender, receiver) = mpsc::channel();
     let watcher = start(Runner::locate(), repo.path().to_path_buf(), move |kind| {
         let _ = sender.send(kind);
-    })
-    .expect("arrancar watcher");
+    });
+    assert!(
+        watcher.wait_ready(Duration::from_secs(5)),
+        "the watcher did not become ready"
+    );
     // An event buffered before the watch settled is not a change to the
     // ignored directory: let it drain before the write (OG-101).
     std::thread::sleep(Duration::from_millis(300));
@@ -107,8 +116,11 @@ fn the_pause_silences_our_own_changes() {
     let (sender, receiver) = mpsc::channel();
     let watcher = start(Runner::locate(), repo.path().to_path_buf(), move |kind| {
         let _ = sender.send(kind);
-    })
-    .expect("arrancar watcher");
+    });
+    assert!(
+        watcher.wait_ready(Duration::from_secs(5)),
+        "the watcher did not become ready"
+    );
     watcher.pause();
     repo.write("a.txt", b"tres\n");
     repo.git_ok(&["add", "a.txt"]);
