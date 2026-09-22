@@ -13,5 +13,6 @@ Record of decisions with a high cost to revert. An accepted ADR **is not edited*
 | [0007](ADR-0007-auto-updates.md) | In-app auto-updates with tauri-plugin-updater | accepted |
 | [0008](ADR-0008-window-per-repository.md) | A window per repository | accepted |
 | [0009](ADR-0009-i18n.md) | Internationalization with a typed in-house catalog | accepted |
+| [0010](ADR-0010-run-blocking-work-off-the-main-thread.md) | Run blocking work off the main thread | accepted |
 
 To propose a new one, copy [`TEMPLATE.md`](TEMPLATE.md) and follow the `.ai/workflows/adr.md` flow.
