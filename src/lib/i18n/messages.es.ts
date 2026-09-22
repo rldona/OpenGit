@@ -111,6 +111,8 @@ export const es: Messages = {
     close: "Cerrar {name}",
     openAnother: "Abrir otro repositorio",
     openInNewWindow: "Abrir en una ventana nueva",
+    rename: "Renombrar la pestaña",
+    renameAria: "Renombrar {name}",
   },
   toolbar: {
     noRepo: "Ningún repositorio abierto",

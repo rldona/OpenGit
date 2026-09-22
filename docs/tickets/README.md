@@ -140,3 +140,4 @@ One file per ticket, named `OG-NNN-slug.md`. Every change in the repository star
 | [OG-105](OG-105-i18n-operations-settings.md) | i18n: operations, settings and help | M20 | done |
 | [OG-106](OG-106-i18n-native-menu.md) | i18n: native menu and Rust strings | M20 | done |
 | [OG-107](OG-107-tab-reorder.md) | Reorder repository tabs by drag & drop | Next | done |
+| [OG-108](OG-108-tab-rename.md) | Rename repository tabs inline | Next | ready |
