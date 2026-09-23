@@ -44,6 +44,7 @@ import { refreshRepo } from "./lib/refresh";
 import { loadStoredSession } from "./lib/tabs";
 import { hasActiveOperation, stagedEntries, useCommitStore } from "./lib/stores/commit";
 import { useLogStore } from "./lib/stores/log";
+import { usePaletteStore } from "./lib/stores/palette";
 import { useRefsStore } from "./lib/stores/refs";
 import { useRemoteStore } from "./lib/stores/remote";
 import { useRepoStore } from "./lib/stores/repo";
@@ -71,6 +72,7 @@ function App() {
 
   const theme = useThemeStore((state) => state.resolved);
   const setSystemDark = useThemeStore((state) => state.setSystemDark);
+  const palette = usePaletteStore((state) => state.palette);
 
   const repo = useRepoStore((state) => state.repo);
   const loading = useRepoStore((state) => state.loading);
@@ -195,6 +197,14 @@ function App() {
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
+
+  useEffect(() => {
+    if (palette === "default") {
+      delete document.documentElement.dataset.palette;
+    } else {
+      document.documentElement.dataset.palette = palette;
+    }
+  }, [palette]);
 
   useEffect(() => {
     // The native menu is built in Rust; it follows the active UI locale (OG-106).
