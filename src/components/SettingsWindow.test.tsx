@@ -26,6 +26,7 @@ import { LOCALE_STORAGE_KEY } from "../lib/i18n/locale";
 import { loadStoredSession, saveStoredSession } from "../lib/tabs";
 import { useExtrasStore } from "../lib/stores/extras";
 import { useLocaleStore } from "../lib/stores/locale";
+import { usePaletteStore } from "../lib/stores/palette";
 import { useRepoStore } from "../lib/stores/repo";
 import {
   AUTO_REFRESH_STORAGE_KEY,
@@ -108,6 +109,7 @@ describe("SettingsWindow", () => {
     vi.mocked(gpgSecretKeys).mockResolvedValue(GPG_KEYS);
     useSettingsStore.setState({ autoRefresh: true, restoreTabs: false });
     useThemeStore.setState({ preference: "system", systemDark: true, resolved: "dark" });
+    usePaletteStore.setState({ palette: "default" });
     useLocaleStore.setState({ preference: null, locale: "en" });
     vi.mocked(configGet).mockImplementation(async (_path, key, scope) => {
       if (key === "user.name") return scope === "local" ? "Local Name" : "Global Name";
@@ -232,6 +234,19 @@ describe("SettingsWindow", () => {
     await user.click(screen.getByRole("button", { name: "OK" }));
 
     expect(useThemeStore.getState().preference).toBe("light");
+  });
+
+  it("changes the palette from the Appearance tab on OK", async () => {
+    const user = userEvent.setup();
+    render(<SettingsWindow onClose={() => {}} />);
+
+    await user.click(screen.getByRole("tab", { name: "Appearance" }));
+    await user.selectOptions(screen.getByLabelText("Color palette"), "github");
+    expect(usePaletteStore.getState().palette).toBe("default");
+
+    await user.click(screen.getByRole("button", { name: "OK" }));
+
+    expect(usePaletteStore.getState().palette).toBe("github");
   });
 
   it("changes the language from the Appearance tab on OK", async () => {

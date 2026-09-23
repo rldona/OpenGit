@@ -19,6 +19,26 @@
           dark = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)").matches : true;
         }
         document.documentElement.dataset.theme = dark ? "dark" : "light";
+
+        var palette = null;
+        try {
+          palette = localStorage.getItem("opengit.palette");
+        } catch (error) {
+          palette = null;
+        }
+        // Keep in sync with `PaletteName` in src/lib/theme.ts ("default" excluded: it needs no attribute).
+        var palettes = [
+          "purple",
+          "classic",
+          "sublime",
+          "sublime-dark",
+          "github",
+          "copilot",
+          "vercel",
+        ];
+        if (palette !== null && palettes.indexOf(palette) !== -1) {
+          document.documentElement.dataset.palette = palette;
+        }
       })();
     </script>
   </head>

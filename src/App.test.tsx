@@ -25,6 +25,7 @@ import { useCommitStore } from "./lib/stores/commit";
 import { useExtrasStore } from "./lib/stores/extras";
 import { useLogStore } from "./lib/stores/log";
 import { useLocaleStore } from "./lib/stores/locale";
+import { usePaletteStore } from "./lib/stores/palette";
 import { useRepoStore } from "./lib/stores/repo";
 import { useSettingsStore } from "./lib/stores/settings";
 import { useStatusStore } from "./lib/stores/status";
@@ -32,7 +33,7 @@ import { saveStoredSession } from "./lib/tabs";
 import { useRefsStore } from "./lib/stores/refs";
 import { useThemeStore } from "./lib/stores/theme";
 import { useUiStore } from "./lib/stores/ui";
-import { THEME_STORAGE_KEY } from "./lib/theme";
+import { PALETTE_STORAGE_KEY, THEME_STORAGE_KEY } from "./lib/theme";
 
 vi.mock("./lib/bridge/dialog", () => ({
   pickDirectory: vi.fn(),
@@ -278,7 +279,9 @@ describe("App", () => {
     });
     localStorage.clear();
     delete document.documentElement.dataset.theme;
+    delete document.documentElement.dataset.palette;
     useThemeStore.setState({ preference: "system", systemDark: true, resolved: "dark" });
+    usePaletteStore.setState({ palette: "default" });
     useLocaleStore.setState({ preference: null, locale: "en" });
   });
 
@@ -863,6 +866,33 @@ describe("App", () => {
 
     expect(document.documentElement.dataset.theme).toBe("light");
     expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe("light");
+  });
+
+  it("applies the colour palette to the document on OK and clears it on Default", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    const select = screen.getByRole("combobox", { name: "Color palette" });
+    expect(select).toHaveValue("default");
+
+    await user.selectOptions(select, "vercel");
+    expect(select).toHaveValue("vercel");
+    // Cancel would discard it: the palette is applied on OK.
+    expect(document.documentElement.dataset.palette).toBeUndefined();
+
+    await user.click(screen.getByRole("button", { name: "OK" }));
+
+    expect(document.documentElement.dataset.palette).toBe("vercel");
+    expect(localStorage.getItem(PALETTE_STORAGE_KEY)).toBe("vercel");
+
+    // Going back to Default removes the attribute instead of setting "default".
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    await user.selectOptions(screen.getByRole("combobox", { name: "Color palette" }), "default");
+    await user.click(screen.getByRole("button", { name: "OK" }));
+
+    expect(document.documentElement.dataset.palette).toBeUndefined();
+    expect(localStorage.getItem(PALETTE_STORAGE_KEY)).toBe("default");
   });
 
   it("opens the shortcuts help with ? and closes it with Esc", async () => {

@@ -25,10 +25,11 @@ import type { Locale } from "../lib/i18n/locale";
 import { syncStoredSession } from "../lib/tabs";
 import { useExtrasStore } from "../lib/stores/extras";
 import { useLocaleStore } from "../lib/stores/locale";
+import { usePaletteStore } from "../lib/stores/palette";
 import { useRepoStore } from "../lib/stores/repo";
 import { useSettingsStore } from "../lib/stores/settings";
 import { useThemeStore } from "../lib/stores/theme";
-import type { ThemePreference } from "../lib/theme";
+import type { PaletteName, ThemePreference } from "../lib/theme";
 import { Icon, type IconName } from "./Icon";
 
 type Tab = "general" | "advanced" | "remotes" | "security" | "template" | "appearance";
@@ -59,6 +60,8 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
   const setAutoRefresh = useSettingsStore((state) => state.setAutoRefresh);
   const theme = useThemeStore((state) => state.preference);
   const setTheme = useThemeStore((state) => state.setPreference);
+  const palette = usePaletteStore((state) => state.palette);
+  const setPalette = usePaletteStore((state) => state.setPalette);
   const restoreTabs = useSettingsStore((state) => state.restoreTabs);
   const setRestoreTabs = useSettingsStore((state) => state.setRestoreTabs);
   const localePreference = useLocaleStore((state) => state.preference);
@@ -108,6 +111,7 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
   const [tab, setTab] = useState<Tab>(root ? "advanced" : "appearance");
 
   const [draftTheme, setDraftTheme] = useState<ThemePreference>(theme);
+  const [draftPalette, setDraftPalette] = useState<PaletteName>(palette);
   const [draftLocale, setDraftLocale] = useState<"system" | Locale>(localePreference ?? "system");
   const [draftAutoRefresh, setDraftAutoRefresh] = useState(autoRefresh);
   const [draftRestoreTabs, setDraftRestoreTabs] = useState(restoreTabs);
@@ -322,6 +326,7 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
         setLocalePreference(draftLocale === "system" ? null : draftLocale);
       }
       setTheme(draftTheme);
+      setPalette(draftPalette);
       onClose();
     } catch (err) {
       setError(errorMessage(err));
@@ -644,6 +649,25 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
                   <option value="system">{t("settings.themeSystem")}</option>
                   <option value="light">{t("settings.themeLight")}</option>
                   <option value="dark">{t("settings.themeDark")}</option>
+                </select>
+              </label>
+
+              <h3>{t("settings.palette")}</h3>
+              <label className="settings-field">
+                <span>{t("settings.paletteLabel")}</span>
+                <select
+                  aria-label={t("settings.paletteAria")}
+                  value={draftPalette}
+                  onChange={(event) => setDraftPalette(event.target.value as PaletteName)}
+                >
+                  <option value="default">{t("settings.paletteDefault")}</option>
+                  <option value="purple">{t("settings.palettePurple")}</option>
+                  <option value="classic">{t("settings.paletteClassic")}</option>
+                  <option value="sublime">{t("settings.paletteSublime")}</option>
+                  <option value="sublime-dark">{t("settings.paletteSublimeDark")}</option>
+                  <option value="github">{t("settings.paletteGithub")}</option>
+                  <option value="copilot">{t("settings.paletteCopilot")}</option>
+                  <option value="vercel">{t("settings.paletteVercel")}</option>
                 </select>
               </label>
 
