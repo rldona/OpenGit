@@ -104,6 +104,7 @@ export const es: Messages = {
     paletteGithub: "GitHub",
     paletteCopilot: "Copilot",
     paletteVercel: "Vercel",
+    paletteCode: "Code",
     editConfig: "Editar archivo de configuración…",
   },
   welcome: {

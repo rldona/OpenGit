@@ -143,3 +143,4 @@ One file per ticket, named `OG-NNN-slug.md`. Every change in the repository star
 | [OG-108](OG-108-tab-rename.md) | Rename repository tabs inline | Next | done |
 | [OG-109](OG-109-off-main-commands.md) | Run blocking commands off the main thread | Next | done |
 | [OG-110](OG-110-flupcode-theme-palettes.md) | Port FlupCode color palettes | Next | done |
+| [OG-111](OG-111-code-theme-palette.md) | Add the "Code" colour palette | Next | done |

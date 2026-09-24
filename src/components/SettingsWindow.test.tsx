@@ -241,6 +241,7 @@ describe("SettingsWindow", () => {
     render(<SettingsWindow onClose={() => {}} />);
 
     await user.click(screen.getByRole("tab", { name: "Appearance" }));
+    expect(screen.getByRole("option", { name: "Code" })).toBeInTheDocument();
     await user.selectOptions(screen.getByLabelText("Color palette"), "github");
     expect(usePaletteStore.getState().palette).toBe("default");
 

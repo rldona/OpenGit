@@ -668,6 +668,7 @@ export function SettingsWindow({ onClose }: { onClose: () => void }) {
                   <option value="github">{t("settings.paletteGithub")}</option>
                   <option value="copilot">{t("settings.paletteCopilot")}</option>
                   <option value="vercel">{t("settings.paletteVercel")}</option>
+                  <option value="code">{t("settings.paletteCode")}</option>
                 </select>
               </label>
 

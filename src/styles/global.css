@@ -473,6 +473,84 @@
   --ref-tag-fg: #6ad57a;
 }
 
+[data-palette="code"] {
+  /* OG-111: FlupCode's "Code" palette (VS Code editor pair), light. */
+  --bg: #ffffff;
+  --bg-elevated: #ffffff;
+  --bg-panel: #f3f3f3;
+  --border: #d4d4d4;
+  --text: #1f1f1f;
+  --text-muted: #6e6e6e;
+  --accent: #0b6bcb;
+  --accent-fg: #ffffff;
+  --hover: color-mix(in srgb, var(--text) 4%, transparent);
+  --warning-bg: color-mix(in srgb, #9a6700 15%, transparent);
+  --warning-border: #9a6700;
+  --warning-text: #9a6700;
+  --danger: #cf222e;
+  --danger-bg: color-mix(in srgb, #cf222e 12%, transparent);
+  --danger-border: #cf222e;
+  --danger-text: #cf222e;
+  --add: #1a7f37;
+  --del: #cf222e;
+  --add-bg: color-mix(in srgb, #2da44e 15%, transparent);
+  --del-bg: color-mix(in srgb, #cf222e 15%, transparent);
+  --tag-annotated: #8250df;
+  --overlay: color-mix(in srgb, var(--text) 35%, transparent);
+  --row-selected: color-mix(in srgb, #0b6bcb 20%, transparent);
+  --ref-head-bg: #0b6bcb;
+  --ref-head-border: #0b6bcb;
+  --ref-head-fg: #ffffff;
+  --ref-branch-bg: color-mix(in srgb, #8250df 20%, transparent);
+  --ref-branch-border: #8250df;
+  --ref-branch-fg: #8250df;
+  --ref-remote-bg: color-mix(in srgb, #9a6700 20%, transparent);
+  --ref-remote-border: #9a6700;
+  --ref-remote-fg: #9a6700;
+  --ref-tag-bg: color-mix(in srgb, #1a7f37 20%, transparent);
+  --ref-tag-border: #1a7f37;
+  --ref-tag-fg: #1a7f37;
+}
+
+[data-palette="code"][data-theme="dark"] {
+  /* OG-111: FlupCode's "Code" palette (VS Code editor pair), dark. */
+  --bg: #191a1b;
+  --bg-elevated: #202122;
+  --bg-panel: #121314;
+  --border: #303132;
+  --text: #e6e6e6;
+  --text-muted: #a0a0a0;
+  --accent: #6da5f7;
+  --accent-fg: #0c0c0f;
+  --hover: color-mix(in srgb, var(--text) 4%, transparent);
+  --warning-bg: color-mix(in srgb, #e0b34d 15%, transparent);
+  --warning-border: #e0b34d;
+  --warning-text: #e0b34d;
+  --danger: #e86060;
+  --danger-bg: color-mix(in srgb, #e86060 12%, transparent);
+  --danger-border: #e86060;
+  --danger-text: #e86060;
+  --add: #6ad57a;
+  --del: #ff8080;
+  --add-bg: color-mix(in srgb, #37b24d 15%, transparent);
+  --del-bg: color-mix(in srgb, #e03131 15%, transparent);
+  --tag-annotated: #b39df3;
+  --overlay: color-mix(in srgb, var(--bg) 50%, transparent);
+  --row-selected: color-mix(in srgb, #6da5f7 20%, transparent);
+  --ref-head-bg: #6da5f7;
+  --ref-head-border: #6da5f7;
+  --ref-head-fg: #0c0c0f;
+  --ref-branch-bg: color-mix(in srgb, #b39df3 20%, transparent);
+  --ref-branch-border: #b39df3;
+  --ref-branch-fg: #b39df3;
+  --ref-remote-bg: color-mix(in srgb, #e0b34d 20%, transparent);
+  --ref-remote-border: #e0b34d;
+  --ref-remote-fg: #e0b34d;
+  --ref-tag-bg: color-mix(in srgb, #6ad57a 20%, transparent);
+  --ref-tag-border: #6ad57a;
+  --ref-tag-fg: #6ad57a;
+}
+
 [data-palette="sublime-dark"] {
   color-scheme: dark;
   --bg: #17191e;
