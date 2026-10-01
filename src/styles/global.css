@@ -3297,6 +3297,11 @@ body {
   overflow-wrap: anywhere;
 }
 
+.refs-error button {
+  display: block;
+  margin-top: 6px;
+}
+
 .commit-panel {
   display: flex;
   flex-direction: column;

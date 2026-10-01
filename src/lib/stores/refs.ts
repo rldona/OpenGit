@@ -3,7 +3,7 @@ import { confirmDestructive } from "../bridge/dialog";
 import { formatGitError } from "../bridge/errors";
 import { t } from "../i18n";
 import { listRefs } from "../bridge/log";
-import { worktreeList } from "../bridge/repo";
+import { worktreeList, worktreeRemove } from "../bridge/repo";
 import {
   branchTracking,
   checkoutRef,
@@ -15,6 +15,7 @@ import {
 } from "../bridge/refs";
 import { tagCreate, tagDelete } from "../bridge/tags";
 import type { MergeOptions, MergeResult, RefEntry, TrackingCommits } from "../bridge/types";
+import { useExtrasStore } from "./extras";
 import { useLogStore } from "./log";
 import { useStatusStore } from "./status";
 
@@ -78,6 +79,8 @@ type RefsState = {
   merging: boolean;
   error: string | null;
   pendingForceDelete: string | null;
+  /** Worktree that blocks deleting `branch` (OG-114), offered for removal. */
+  blockingWorktree: { branch: string; path: string } | null;
   load: (root: string) => Promise<void>;
   refresh: (root: string) => Promise<void>;
   checkout: (root: string, ref: RefEntry) => Promise<void>;
@@ -88,6 +91,8 @@ type RefsState = {
   remove: (root: string, name: string) => Promise<void>;
   forceRemove: (root: string, name: string, typed: string) => Promise<void>;
   cancelForceDelete: () => void;
+  /** Removes the blocking worktree (confirmed) and retries the branch delete. */
+  removeBlockingWorktree: (root: string) => Promise<void>;
   createTag: (
     root: string,
     name: string,
@@ -111,6 +116,7 @@ export const useRefsStore = create<RefsState>((set, get) => ({
   merging: false,
   error: null,
   pendingForceDelete: null,
+  blockingWorktree: null,
 
   load: async (root) => {
     set({ root, loading: true, error: null });
@@ -238,10 +244,13 @@ export const useRefsStore = create<RefsState>((set, get) => ({
   },
 
   remove: async (root, name) => {
-    set({ error: null, pendingForceDelete: null });
+    set({ error: null, pendingForceDelete: null, blockingWorktree: null });
     const usedBy = await worktreeUsingBranch(root, name);
     if (usedBy) {
-      set({ error: t("refs.branchInWorktree", { branch: name, path: usedBy }) });
+      set({
+        blockingWorktree: { branch: name, path: usedBy },
+        error: t("refs.branchInWorktree", { branch: name, path: usedBy }),
+      });
       return;
     }
     try {
@@ -271,6 +280,7 @@ export const useRefsStore = create<RefsState>((set, get) => ({
     if (usedBy) {
       set({
         pendingForceDelete: null,
+        blockingWorktree: { branch: name, path: usedBy },
         error: t("refs.branchInWorktree", { branch: name, path: usedBy }),
       });
       return;
@@ -285,7 +295,35 @@ export const useRefsStore = create<RefsState>((set, get) => ({
     }
   },
 
-  cancelForceDelete: () => set({ pendingForceDelete: null, error: null }),
+  removeBlockingWorktree: async (root) => {
+    const blocking = get().blockingWorktree;
+    if (!blocking) return;
+    const name = blocking.path.split(/[\\/]/).filter(Boolean).pop() ?? blocking.path;
+    if (!(await confirmDestructive(t("worktree.removeConfirm", { name })))) {
+      return;
+    }
+    set({ error: null });
+    try {
+      await worktreeRemove(root, blocking.path, false);
+    } catch (error) {
+      if (!(await confirmDestructive(t("worktree.dirtyConfirm")))) {
+        set({ error: formatGitError(error) });
+        return;
+      }
+      try {
+        await worktreeRemove(root, blocking.path, true);
+      } catch (forceError) {
+        set({ error: formatGitError(forceError) });
+        return;
+      }
+    }
+    output(t("worktree.removed", { path: blocking.path }));
+    set({ blockingWorktree: null });
+    await useExtrasStore.getState().refresh(root);
+    await get().remove(root, blocking.branch);
+  },
+
+  cancelForceDelete: () => set({ pendingForceDelete: null, blockingWorktree: null, error: null }),
 
   createTag: async (root, name, target, message) => {
     set({ error: null });
@@ -325,5 +363,6 @@ export const useRefsStore = create<RefsState>((set, get) => ({
       merging: false,
       error: null,
       pendingForceDelete: null,
+      blockingWorktree: null,
     }),
 }));
