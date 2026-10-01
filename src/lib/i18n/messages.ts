@@ -404,6 +404,8 @@ export const en = {
     showInHistory: "Show in history",
     push: "Push",
     noTags: "No tags",
+    branchInWorktree:
+      "Cannot delete branch {branch}: it is checked out in the worktree at {path}. Remove that worktree or switch it to another branch first.",
     deleteTagConfirm: "Delete tag {name}? This cannot be undone.",
     removeRemoteConfirm: "Remove remote {name}? Its remote branches disappear from the repo.",
     remoteRemoved: "Remote {name} removed",

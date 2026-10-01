@@ -8,6 +8,7 @@ import {
   mergeBranch,
   trackingCommits,
 } from "../bridge/refs";
+import { worktreeList } from "../bridge/repo";
 import { statusRepo } from "../bridge/status";
 import type { RefEntry, StatusReport } from "../bridge/types";
 import { DEFAULT_MERGE_OPTIONS } from "../merge";
@@ -23,6 +24,10 @@ vi.mock("../bridge/refs", () => ({
   renameBranch: vi.fn(),
   deleteBranch: vi.fn(),
   mergeBranch: vi.fn(),
+}));
+
+vi.mock("../bridge/repo", () => ({
+  worktreeList: vi.fn(),
 }));
 
 vi.mock("../bridge/log", () => ({
@@ -102,6 +107,7 @@ describe("useRefsStore", () => {
     vi.mocked(statusRepo).mockResolvedValue(CLEAN);
     vi.mocked(logPage).mockResolvedValue([]);
     vi.mocked(confirmDestructive).mockResolvedValue(true);
+    vi.mocked(worktreeList).mockResolvedValue([]);
   });
 
   it("loads refs and tracking of the current branch", async () => {
@@ -252,6 +258,43 @@ describe("useRefsStore", () => {
 
     expect(useRefsStore.getState().pendingForceDelete).toBe("feature");
     expect(useRefsStore.getState().error).toContain("not fully merged");
+  });
+
+  it("explains a branch checked out in another worktree without calling git (OG-113)", async () => {
+    vi.mocked(worktreeList).mockResolvedValue([
+      {
+        path: "/tmp/repo",
+        head: "a",
+        branch: "refs/heads/main",
+        detached: false,
+        bare: false,
+        locked: false,
+      },
+      {
+        path: "/tmp/wt-feature",
+        head: "b",
+        branch: "refs/heads/feature",
+        detached: false,
+        bare: false,
+        locked: false,
+      },
+    ]);
+    await useRefsStore.getState().load("/tmp/repo");
+
+    await useRefsStore.getState().remove("/tmp/repo", "feature");
+
+    expect(deleteBranch).not.toHaveBeenCalled();
+    expect(useRefsStore.getState().error).toContain("feature");
+    expect(useRefsStore.getState().error).toContain("/tmp/wt-feature");
+  });
+
+  it("still asks git when the worktree lookup fails", async () => {
+    vi.mocked(worktreeList).mockRejectedValue(new Error("boom"));
+    await useRefsStore.getState().load("/tmp/repo");
+
+    await useRefsStore.getState().remove("/tmp/repo", "feature");
+
+    expect(deleteBranch).toHaveBeenCalledWith("/tmp/repo", "feature", false);
   });
 
   it("force delete requires typing the name", async () => {

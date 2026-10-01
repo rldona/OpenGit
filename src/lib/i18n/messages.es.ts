@@ -404,6 +404,8 @@ export const es: Messages = {
     showInHistory: "Ver en el historial",
     push: "Push",
     noTags: "Sin etiquetas",
+    branchInWorktree:
+      "No se puede borrar la rama {branch}: está en uso por el worktree de {path}. Quita ese worktree o cámbialo de rama primero.",
     deleteTagConfirm: "¿Eliminar la etiqueta {name}? No se puede deshacer.",
     removeRemoteConfirm: "¿Quitar el remoto {name}? Sus ramas remotas desaparecen del repositorio.",
     remoteRemoved: "Remoto {name} quitado",
