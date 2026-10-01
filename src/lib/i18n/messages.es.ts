@@ -284,6 +284,7 @@ export const es: Messages = {
         "Puntero de Git LFS (oid {oid}…, {size} bytes): el contenido real no está disponible localmente.",
       noFile: "Ningún archivo seleccionado",
       emptyFile: "Archivo vacío",
+      untrackedDir: "Directorio sin seguimiento o repositorio anidado: no hay diff disponible.",
       binary: "Archivo binario: no hay diff de texto disponible.",
     },
     hunk: {

@@ -285,6 +285,7 @@ export const en = {
         "Git LFS pointer (oid {oid}…, {size} bytes): the real content is not available locally.",
       noFile: "No file selected",
       emptyFile: "Empty file",
+      untrackedDir: "Untracked directory or nested repository: no diff available.",
       binary: "Binary file: no text diff available.",
     },
     hunk: {

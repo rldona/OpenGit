@@ -132,6 +132,16 @@ fn diff_of_untracked_text_binary_empty_and_missing() {
     assert!(untracked_file_diff(&runner(), repo.path(), "noexiste.txt").is_err());
 }
 
+/// OG-112: `diff --no-index /dev/null <dir>` fails (git reads `<dir>/null`), so
+/// the UI never asks for it; this pins the behaviour the guard relies on.
+#[test]
+fn untracked_directory_cannot_be_diffed_against_dev_null() {
+    let repo = TestRepo::init();
+    repo.write("dir/a.txt", b"hola\n");
+    let err = untracked_file_diff(&runner(), repo.path(), "dir/").unwrap_err();
+    assert!(err.to_string().contains("null"), "{err}");
+}
+
 #[test]
 fn numstat_of_working_tree() {
     let repo = TestRepo::init();

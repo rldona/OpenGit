@@ -149,6 +149,23 @@ describe("useDiffStore", () => {
     expect(useDiffStore.getState().error).toBeNull();
   });
 
+  it("does not request a diff for an untracked directory (OG-112)", async () => {
+    await useDiffStore.getState().openWorktree("/tmp/repo");
+    vi.mocked(untrackedFileDiff).mockClear();
+    const dir = {
+      ...useDiffStore.getState().files.find((file) => file.untracked)!,
+      key: "untracked:.claude/worktrees/agent-x/",
+      path: ".claude/worktrees/agent-x/",
+    };
+
+    await useDiffStore.getState().selectFile(dir);
+
+    expect(untrackedFileDiff).not.toHaveBeenCalled();
+    expect(useDiffStore.getState().patch).toBe("");
+    expect(useDiffStore.getState().error).toBeNull();
+    expect(useDiffStore.getState().selected?.path).toBe(dir.path);
+  });
+
   it("flags a binary untracked preview without staging actions", async () => {
     vi.mocked(untrackedFileDiff).mockResolvedValue(
       "diff --git a/logo.png b/logo.png\nnew file mode 100644\nindex 0000000..8352675\nBinary files /dev/null and b/logo.png differ\n",
