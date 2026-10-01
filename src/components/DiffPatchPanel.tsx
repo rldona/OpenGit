@@ -41,6 +41,7 @@ export function DiffPatchPanel() {
   const previewOnly = selected?.untracked === true;
   const pointer = selected && !previewOnly && !binary ? parseLfsPointerPatch(patch) : null;
   const imagePreview = selected && binary && isImagePath(selected.path);
+  const untrackedDir = previewOnly && selected.path.endsWith("/");
   const untrackedEmpty = previewOnly && !binary && patch !== "" && splitPatch(patch) === null;
   const untrackedCounts =
     previewOnly && !binary && patch !== "" && !untrackedEmpty ? patchCounts(patch) : null;
@@ -106,6 +107,7 @@ export function DiffPatchPanel() {
         </p>
       )}
       {!selected && !error && <p className="muted status-empty">{t("diff.patch.noFile")}</p>}
+      {untrackedDir && <p className="muted status-empty">{t("diff.patch.untrackedDir")}</p>}
       {selected?.untracked && untrackedEmpty && (
         <p className="muted status-empty">{t("diff.patch.emptyFile")}</p>
       )}

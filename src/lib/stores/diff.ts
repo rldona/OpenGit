@@ -322,6 +322,12 @@ export const useDiffStore = create<DiffState>((set, get) => ({
     if (entry.untracked) {
       // Read-only preview as a new-file patch (OG-071); staging from the
       // preview stays disabled in applySelection/discardSelection below.
+      if (entry.path.endsWith("/")) {
+        // Untracked directory or nested repo/worktree (OG-112): `diff
+        // --no-index` against /dev/null fails on directories, so no patch.
+        set({ selected: entry, patch: "", binary: false, loading: false, error: null });
+        return;
+      }
       set({ selected: entry, loading: true, error: null });
       try {
         const patch = await untrackedFileDiff(root, entry.path);
