@@ -43,6 +43,8 @@ export function RefsSidebar() {
   const rename = useRefsStore((state) => state.rename);
   const remove = useRefsStore((state) => state.remove);
   const forceRemove = useRefsStore((state) => state.forceRemove);
+  const blockingWorktree = useRefsStore((state) => state.blockingWorktree);
+  const removeBlockingWorktree = useRefsStore((state) => state.removeBlockingWorktree);
   const cancelForceDelete = useRefsStore((state) => state.cancelForceDelete);
   const selectedCommit = useLogStore((state) => state.selected);
   const revealCommit = useLogStore((state) => state.revealCommit);
@@ -544,6 +546,15 @@ export function RefsSidebar() {
       {error && (
         <p role="alert" className="refs-error">
           {error}
+          {blockingWorktree && (
+            <button
+              type="button"
+              className="danger"
+              onClick={() => root && void removeBlockingWorktree(root)}
+            >
+              {t("refs.removeBlockingWorktree")}
+            </button>
+          )}
         </p>
       )}
       {remoteError && (

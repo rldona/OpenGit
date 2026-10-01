@@ -8,7 +8,7 @@ import {
   mergeBranch,
   trackingCommits,
 } from "../bridge/refs";
-import { worktreeList } from "../bridge/repo";
+import { worktreeList, worktreeRemove } from "../bridge/repo";
 import { statusRepo } from "../bridge/status";
 import type { RefEntry, StatusReport } from "../bridge/types";
 import { DEFAULT_MERGE_OPTIONS } from "../merge";
@@ -28,6 +28,11 @@ vi.mock("../bridge/refs", () => ({
 
 vi.mock("../bridge/repo", () => ({
   worktreeList: vi.fn(),
+  worktreeRemove: vi.fn(),
+}));
+
+vi.mock("./extras", () => ({
+  useExtrasStore: { getState: () => ({ refresh: vi.fn() }) },
 }));
 
 vi.mock("../bridge/log", () => ({
@@ -286,6 +291,61 @@ describe("useRefsStore", () => {
     expect(deleteBranch).not.toHaveBeenCalled();
     expect(useRefsStore.getState().error).toContain("feature");
     expect(useRefsStore.getState().error).toContain("/tmp/wt-feature");
+  });
+
+  it("removes the blocking worktree and retries the delete (OG-114)", async () => {
+    const blocking = [
+      {
+        path: "/tmp/repo",
+        head: "a",
+        branch: "refs/heads/main",
+        detached: false,
+        bare: false,
+        locked: false,
+      },
+      {
+        path: "/tmp/wt-feature",
+        head: "b",
+        branch: "refs/heads/feature",
+        detached: false,
+        bare: false,
+        locked: false,
+      },
+    ];
+    vi.mocked(worktreeList).mockResolvedValueOnce(blocking).mockResolvedValue([blocking[0]]);
+    await useRefsStore.getState().load("/tmp/repo");
+    await useRefsStore.getState().remove("/tmp/repo", "feature");
+    expect(useRefsStore.getState().blockingWorktree).toEqual({
+      branch: "feature",
+      path: "/tmp/wt-feature",
+    });
+
+    await useRefsStore.getState().removeBlockingWorktree("/tmp/repo");
+
+    expect(worktreeRemove).toHaveBeenCalledWith("/tmp/repo", "/tmp/wt-feature", false);
+    expect(deleteBranch).toHaveBeenCalledWith("/tmp/repo", "feature", false);
+    expect(useRefsStore.getState().blockingWorktree).toBeNull();
+  });
+
+  it("does nothing when the worktree removal is not confirmed", async () => {
+    vi.mocked(worktreeList).mockResolvedValue([
+      {
+        path: "/tmp/wt-feature",
+        head: "b",
+        branch: "refs/heads/feature",
+        detached: false,
+        bare: false,
+        locked: false,
+      },
+    ]);
+    await useRefsStore.getState().load("/tmp/repo");
+    await useRefsStore.getState().remove("/tmp/repo", "feature");
+    vi.mocked(confirmDestructive).mockResolvedValue(false);
+
+    await useRefsStore.getState().removeBlockingWorktree("/tmp/repo");
+
+    expect(worktreeRemove).not.toHaveBeenCalled();
+    expect(deleteBranch).not.toHaveBeenCalled();
   });
 
   it("still asks git when the worktree lookup fails", async () => {
