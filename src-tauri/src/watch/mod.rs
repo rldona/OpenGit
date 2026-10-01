@@ -236,7 +236,7 @@ impl WatcherHandle {
     pub fn resume(&self) {
         let previous = self
             .paused
-            .fetch_update(Ordering::SeqCst, Ordering::SeqCst, |value| {
+            .try_update(Ordering::SeqCst, Ordering::SeqCst, |value| {
                 value.checked_sub(1)
             })
             .unwrap_or(0);
