@@ -1,7 +1,9 @@
 import { create } from "zustand";
 import { confirmDestructive } from "../bridge/dialog";
 import { formatGitError } from "../bridge/errors";
+import { t } from "../i18n";
 import { listRefs } from "../bridge/log";
+import { worktreeList } from "../bridge/repo";
 import {
   branchTracking,
   checkoutRef,
@@ -15,6 +17,27 @@ import { tagCreate, tagDelete } from "../bridge/tags";
 import type { MergeOptions, MergeResult, RefEntry, TrackingCommits } from "../bridge/types";
 import { useLogStore } from "./log";
 import { useStatusStore } from "./status";
+
+const trimSlash = (path: string) => path.replace(/[\\/]+$/, "");
+
+/**
+ * Path of another worktree that has `name` checked out (OG-113), or null.
+ * git refuses to delete such a branch; asking first avoids showing its raw
+ * stderr. A failed lookup is not fatal: git still gives the final answer.
+ */
+async function worktreeUsingBranch(root: string, name: string): Promise<string | null> {
+  try {
+    const worktrees = await worktreeList(root);
+    const current = trimSlash(root);
+    const found = worktrees.find(
+      (worktree) =>
+        worktree.branch === `refs/heads/${name}` && trimSlash(worktree.path) !== current,
+    );
+    return found ? found.path : null;
+  } catch {
+    return null;
+  }
+}
 
 /** Incoming/outgoing sets; without upstream there is no git call. */
 async function loadTrackingCommits(
@@ -216,6 +239,11 @@ export const useRefsStore = create<RefsState>((set, get) => ({
 
   remove: async (root, name) => {
     set({ error: null, pendingForceDelete: null });
+    const usedBy = await worktreeUsingBranch(root, name);
+    if (usedBy) {
+      set({ error: t("refs.branchInWorktree", { branch: name, path: usedBy }) });
+      return;
+    }
     try {
       await deleteBranch(root, name, false);
       output(`Deleted branch ${name}`);
@@ -239,6 +267,14 @@ export const useRefsStore = create<RefsState>((set, get) => ({
       return;
     }
     set({ error: null });
+    const usedBy = await worktreeUsingBranch(root, name);
+    if (usedBy) {
+      set({
+        pendingForceDelete: null,
+        error: t("refs.branchInWorktree", { branch: name, path: usedBy }),
+      });
+      return;
+    }
     try {
       await deleteBranch(root, name, true);
       output(`Force deleted branch ${name}`);

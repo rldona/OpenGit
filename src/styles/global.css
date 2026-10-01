@@ -3294,6 +3294,7 @@ body {
   background: var(--danger-bg);
   color: var(--danger-text);
   font-size: 12px;
+  overflow-wrap: anywhere;
 }
 
 .commit-panel {

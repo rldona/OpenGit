@@ -145,4 +145,5 @@ One file per ticket, named `OG-NNN-slug.md`. Every change in the repository star
 | [OG-110](OG-110-flupcode-theme-palettes.md) | Port FlupCode color palettes | Next | done |
 | [OG-111](OG-111-code-theme-palette.md) | Add the "Code" colour palette | Next | done |
 | [OG-112](OG-112-untracked-directory-diff.md) | Do not diff untracked directories as files | Next | done |
+| [OG-113](OG-113-branch-delete-worktree-message.md) | Friendly error when deleting a branch checked out in a worktree | Next | done |
 | [OG-115](OG-115-atomic-try-update.md) | Replace the deprecated `fetch_update` with `try_update` | Next | done |
