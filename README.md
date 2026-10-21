@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/open-git-logo-trans.png" alt="OpenGit" width="140" />
+  <img src="assets/cover.png" alt="OpenGit: a readable graph, hunk staging. Git without the terminal." width="860" />
 </p>
 
 <p align="center">
@@ -13,10 +13,6 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="License: MIT" /></a>
   <img src="https://img.shields.io/badge/platforms-Windows%20%7C%20macOS%20%7C%20Linux-informational" alt="Platforms" />
   <img src="https://img.shields.io/badge/Tauri-2-24C8DB?logo=tauri&logoColor=white" alt="Tauri 2" />
-</p>
-
-<p align="center">
-  <img src="assets/opengit-screenshot.png" alt="OpenGit showing the history with graph, files and diff" width="100%" />
 </p>
 
 ---

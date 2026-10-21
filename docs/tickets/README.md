@@ -148,3 +148,4 @@ One file per ticket, named `OG-NNN-slug.md`. Every change in the repository star
 | [OG-113](OG-113-branch-delete-worktree-message.md) | Friendly error when deleting a branch checked out in a worktree | Next | done |
 | [OG-114](OG-114-remove-blocking-worktree.md) | Offer to remove the worktree that blocks a branch delete | Next | done |
 | [OG-115](OG-115-atomic-try-update.md) | Replace the deprecated `fetch_update` with `try_update` | Next | done |
+| [OG-117](OG-117-readme-cover.md) | README cover with logo, name and screenshot | Next | done |
